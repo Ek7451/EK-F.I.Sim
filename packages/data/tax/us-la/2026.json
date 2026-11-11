@@ -1,0 +1,69 @@
+{
+  "header": {
+    "source": "https://dam.ldr.la.gov/lawspolicies/RIB%2026-005-Updated%20Withholding%20Tables.pdf",
+    "publisher": "Louisiana Department of Revenue (Revenue Information Bulletin No. 26-005; Notice of Intent LAC 61:I.1311, Louisiana Register Vol. 52 No. 6)",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "La. R.S. 47:32 (flat 3% rate; Act 11 of the 2024 Third Extraordinary Session)",
+      "La. R.S. 47:294 (standard deduction $12,500 / $25,000, CPI-U indexed from 2026)",
+      "La. R.S. 47:44.1 (annual retirement income exemption for persons 65 or older; $12,000 indexed)",
+      "LAC 61:I.1311; LAC 61:I.1501",
+      "La. R.S. 47:44.2 (Social Security exclusion)"
+    ],
+    "sha256": "7bc677c4c9981c13a3c83599c63a597adcd35954f0c2b4560c667e59a5deac26",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: flat 3% of Louisiana taxable income (since 2025). Standard deduction: statutory $12,500 single/MFS and $25,000 joint / qualifying surviving spouse / head of household, CPI-U indexed from 2026. LDR RIB 26-005 (Jan 12, 2026): for the 2026 withholding tables \"a standard deduction of $12,875 was used for single and married-filing-separately taxpayers, and $25,750 for married-filing-jointly, qualifying surviving spouse, and head-of-household taxpayers. The official 2026 standard deduction amounts may be slightly different based on CPI-U data released in January 2026\". The official final 2026 return amounts were not located, so these provisional amounts are used and status is \"projected\"; LDR's published 2026 retirement exemption ($12,324 = $12,000 x 1.027) suggests the final figures could be nearer $12,838 / $25,675. Tax Foundation 2026 shows no personal or dependent exemptions. Starts from federal AGI. Social Security benefits are not taxed. Retirement income exemption for persons 65 or older: $12,324 per person for 2026 (LDR Notice of Intent, Louisiana Register June 20, 2026: \"For tax year 2026, this amount is $12,324 after being adjusted for inflation\"; https://dam.ldr.la.gov/lawspolicies/NOI-1311.pdf); many Louisiana state/local and federal public retirement benefits are separately exempt in full (not modeled). No general capital-gains exclusion. No local income taxes. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026). Tax Foundation 2026 also shows $12,875 / $25,750.",
+    "flags": {
+      "standardDeduction": "unverified: provisional 2026 amounts from LDR withholding guidance (RIB 26-005); final CPI-adjusted return amounts may differ slightly (possibly about $12,838 / $25,675)",
+      "retirementIncomeExclusion": "simplified: $12,324 per person at 65+ for other retirement income; many Louisiana and federal public pensions are fully exempt at any age"
+    }
+  },
+  "year": 2026,
+  "state": "LA",
+  "name": "Louisiana",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.03
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.03
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.03
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.03
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 12875,
+    "mfj": 25750,
+    "mfs": 12875,
+    "hoh": 25750
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 12324,
+    "minAge": 65
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

@@ -1,0 +1,85 @@
+{
+  "header": {
+    "source": "https://tax.idaho.gov/taxes/income-tax/individual-income/individual-income-tax-rate-schedule/",
+    "publisher": "Idaho State Tax Commission; Idaho Legislature (Idaho Code)",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "Idaho Code § 63-3024 (5.3% of taxable income over $2,500, or $5,000 for joint returns; thresholds inflation-indexed)",
+      "H.B. 40 (2025) (rate cut from 5.695% to 5.3%, retroactive to Jan 1 2025)",
+      "H.B. 559 (2026) (conformity to federal OBBBA changes)",
+      "Idaho Code § 63-3022A (retirement benefits deduction)"
+    ],
+    "sha256": "49e294e2effc231d5090094df69aaadd0e281ba576051f87064163726d6a4ba0",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: flat 5.3% (H.B. 40 of 2025; not changed in the 2026 session) of Idaho taxable income above an inflation-indexed zero-rate threshold. Idaho Code 63-3024 sets the threshold at $2,500 ($5,000 for joint returns; surviving spouses and heads of household are treated as joint returns), indexed from 1998; the Tax Commission's published 2025 amounts are $4,811 single/MFS and $9,622 joint/HOH. The 2026 thresholds were not yet published on the retrieval date (rate schedule page last updated Dec 29 2025), so the 2025 thresholds are used and status is \"projected\". The zero band is encoded as a 0% bracket; kind stays \"flat\". Starting point is federal taxable income (Idaho uses the federal standard or itemized deduction, including the federal additional amounts for age 65+), so standardDeduction is 0 here; no state personal exemption. Social Security benefits are not taxed. Retirement income: no general exclusion; a retirement benefits deduction exists only for certain federal civil service, Idaho firefighter/police and military pensions for recipients 65+ (or 62+ and disabled). Idaho's capital gains deduction applies only to qualifying Idaho real and certain tangible property (not securities) and is not modeled. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026). Tax Foundation 2026 also shows 5.30% over $4,811 / $9,622 (2025 bracket widths).",
+    "flags": {
+      "brackets": "unverified for 2026: zero-rate thresholds $4,811 / $9,622 are the published 2025 amounts; 2026 inflation-adjusted thresholds not yet published",
+      "retirementIncomeExclusion": "simplified: no general exclusion; certain civil-service / public-safety / military pensions deductible at 65+ (62+ disabled), not modeled",
+      "standardDeduction": "0 because the base starts from federal taxable income"
+    }
+  },
+  "year": 2026,
+  "state": "ID",
+  "name": "Idaho",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 4811,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.053
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 9622,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.053
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 4811,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.053
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 9622,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.053
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalTaxableIncome",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

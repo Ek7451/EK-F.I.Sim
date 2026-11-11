@@ -1,0 +1,330 @@
+{
+  "header": {
+    "source": "https://www.irs.gov/pub/irs-drop/rp-26-35.pdf",
+    "publisher": "Internal Revenue Service",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Rev. Proc. 2026-35",
+      "P.L. 119-21 (One Big Beautiful Bill Act) secs. 70101-70107, 70120",
+      "IRC 1(j), 1(h), 24, 55, 63, 86, 121, 151(d)(5), 164(b)(6)-(7), 1211, 1411, 2010, 2503, 3101",
+      "SSA 2027 contribution and benefit base determination (Oct. 14, 2026)"
+    ],
+    "sha256": "87b383c6ce6e616fd006a61f5eed46fe67099b9c23fb1e1c42ff5359474513b8",
+    "schema": "federal-tax.v1",
+    "notes": "sha256 is of the raw source PDF (rp-26-35.pdf). Rev. Proc. 2026-35 (2027 inflation adjustments) was published and is the source, so this file is enacted, not projected. Brackets, standard deduction, additional standard deduction, capital-gain thresholds, AMT amounts, CTC amounts, estate basic exclusion and gift exclusion are transcribed from the Rev. Proc. Statutory (non-Rev.-Proc.) items were checked against the U.S. Code text at law.cornell.edu on the retrieval date: senior deduction IRC 151(d)(5)(C) ($6,000 per qualified individual age 65+, tax years 2025-2028, reduced by 6% of MAGI over $75,000 / $150,000 joint; the 6% reduction applies to each qualified individual's $6,000; MFS filers cannot claim it); SALT cap IRC 164(b)(7) (MFS gets half the cap and half the threshold; cap reverts to $10,000 in 2030); NIIT IRC 1411; Social Security taxation thresholds IRC 86(c) (MFS = $0 assumes the spouses lived together at any time in the year; MFS living apart all year uses the single amounts); FICA rates and Additional Medicare thresholds IRC 3101; capital-loss limit IRC 1211(b); home-sale exclusion IRC 121; penalties IRC 72(t), 223(f)(4), 529(c)(6)/530(d)(4); estate top rate IRC 2001(c). CTC phase-out thresholds ($200,000 / $400,000 joint), $500 other-dependent credit and $2,500 earned-income floor are statutory and not indexed (IRC 24). AMT: head of household uses the unmarried amounts; phaseoutRate 0.50 is IRC 55(d)(2) as amended by OBBBA sec. 70107 and is confirmed by the Rev. Proc. complete-phaseout amounts (exemption / (complete phaseout - threshold) = 0.5); rate28Threshold is halved for MFS. seNetEarningsFactor = 1 - 7.65%. fica.socialSecurityWageBase is from SSA (ssa.gov/oact/cola/cbb.html). capitalGainsBrackets encode the 0% / 15% / 20% maximum-rate amounts; the 25% unrecaptured sec. 1250 and 28% collectibles rates are not represented. qss uses mfj. salt.cap ($40,804) and salt.phaseDownStart ($510,050) are not in the Rev. Proc.; they are computed from the statute (101% of the 2026 amounts, IRC 164(b)(7)(A)(iii) and (B)(ii)(III)), which states no rounding rule.",
+    "flags": {
+      "salt.cap": "computed from statute (101% of $40,400); no IRS-published figure found",
+      "salt.phaseDownStart": "computed from statute (101% of $505,000); no IRS-published figure found"
+    }
+  },
+  "year": 2027,
+  "ordinaryBrackets": {
+    "single": [
+      {
+        "upTo": 12800,
+        "rate": 0.1
+      },
+      {
+        "upTo": 52025,
+        "rate": 0.12
+      },
+      {
+        "upTo": 109125,
+        "rate": 0.22
+      },
+      {
+        "upTo": 208325,
+        "rate": 0.24
+      },
+      {
+        "upTo": 264550,
+        "rate": 0.32
+      },
+      {
+        "upTo": 661375,
+        "rate": 0.35
+      },
+      {
+        "upTo": null,
+        "rate": 0.37
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 25600,
+        "rate": 0.1
+      },
+      {
+        "upTo": 104050,
+        "rate": 0.12
+      },
+      {
+        "upTo": 218250,
+        "rate": 0.22
+      },
+      {
+        "upTo": 416650,
+        "rate": 0.24
+      },
+      {
+        "upTo": 529100,
+        "rate": 0.32
+      },
+      {
+        "upTo": 793650,
+        "rate": 0.35
+      },
+      {
+        "upTo": null,
+        "rate": 0.37
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 12800,
+        "rate": 0.1
+      },
+      {
+        "upTo": 52025,
+        "rate": 0.12
+      },
+      {
+        "upTo": 109125,
+        "rate": 0.22
+      },
+      {
+        "upTo": 208325,
+        "rate": 0.24
+      },
+      {
+        "upTo": 264550,
+        "rate": 0.32
+      },
+      {
+        "upTo": 396825,
+        "rate": 0.35
+      },
+      {
+        "upTo": null,
+        "rate": 0.37
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 18250,
+        "rate": 0.1
+      },
+      {
+        "upTo": 69650,
+        "rate": 0.12
+      },
+      {
+        "upTo": 109100,
+        "rate": 0.22
+      },
+      {
+        "upTo": 208300,
+        "rate": 0.24
+      },
+      {
+        "upTo": 264550,
+        "rate": 0.32
+      },
+      {
+        "upTo": 661350,
+        "rate": 0.35
+      },
+      {
+        "upTo": null,
+        "rate": 0.37
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 16600,
+    "mfj": 33200,
+    "mfs": 16600,
+    "hoh": 24925
+  },
+  "additionalStandardDeduction": {
+    "unmarried": 2100,
+    "married": 1700
+  },
+  "seniorDeduction": {
+    "perPerson": 6000,
+    "phaseoutStart": {
+      "single": 75000,
+      "mfj": 150000
+    },
+    "phaseoutRate": 0.06
+  },
+  "salt": {
+    "cap": 40804,
+    "phaseDownStart": 510050,
+    "phaseDownRate": 0.3,
+    "floor": 10000
+  },
+  "capitalGainsBrackets": {
+    "single": [
+      {
+        "upTo": 51050,
+        "rate": 0
+      },
+      {
+        "upTo": 563200,
+        "rate": 0.15
+      },
+      {
+        "upTo": null,
+        "rate": 0.2
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 102100,
+        "rate": 0
+      },
+      {
+        "upTo": 633600,
+        "rate": 0.15
+      },
+      {
+        "upTo": null,
+        "rate": 0.2
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 51050,
+        "rate": 0
+      },
+      {
+        "upTo": 316800,
+        "rate": 0.15
+      },
+      {
+        "upTo": null,
+        "rate": 0.2
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 68350,
+        "rate": 0
+      },
+      {
+        "upTo": 598400,
+        "rate": 0.15
+      },
+      {
+        "upTo": null,
+        "rate": 0.2
+      }
+    ]
+  },
+  "niit": {
+    "rate": 0.038,
+    "threshold": {
+      "single": 200000,
+      "mfj": 250000,
+      "mfs": 125000,
+      "hoh": 200000
+    }
+  },
+  "amt": {
+    "exemption": {
+      "single": 93000,
+      "mfj": 144700,
+      "mfs": 72350,
+      "hoh": 93000
+    },
+    "phaseoutStart": {
+      "single": 515950,
+      "mfj": 1031900,
+      "mfs": 515950,
+      "hoh": 515950
+    },
+    "phaseoutRate": 0.5,
+    "rate28Threshold": 252500,
+    "rates": [
+      0.26,
+      0.28
+    ]
+  },
+  "childTaxCredit": {
+    "perChild": 2300,
+    "refundableMax": 1800,
+    "otherDependent": 500,
+    "phaseoutStart": {
+      "single": 200000,
+      "mfj": 400000,
+      "mfs": 200000,
+      "hoh": 200000
+    },
+    "phaseoutPer1000": 50,
+    "refundableEarnedIncomeFloor": 2500,
+    "refundableRate": 0.15
+  },
+  "fica": {
+    "socialSecurityRate": 0.062,
+    "socialSecurityWageBase": 192300,
+    "medicareRate": 0.0145,
+    "additionalMedicareRate": 0.009,
+    "additionalMedicareThreshold": {
+      "single": 200000,
+      "mfj": 250000,
+      "mfs": 125000,
+      "hoh": 200000
+    },
+    "seNetEarningsFactor": 0.9235
+  },
+  "socialSecurityTaxation": {
+    "base": {
+      "single": 25000,
+      "mfj": 32000,
+      "mfs": 0,
+      "hoh": 25000
+    },
+    "adjusted": {
+      "single": 34000,
+      "mfj": 44000,
+      "mfs": 0,
+      "hoh": 34000
+    }
+  },
+  "capitalLossLimit": {
+    "default": 3000,
+    "mfs": 1500
+  },
+  "estate": {
+    "exemption": 15480000,
+    "rate": 0.4
+  },
+  "giftExclusion": 20000,
+  "homeSaleExclusion": {
+    "single": 250000,
+    "mfj": 500000
+  },
+  "penalties": {
+    "earlyRetirement": 0.1,
+    "hsaNonQualified": 0.2,
+    "education529": 0.1
+  },
+  "indexed": [
+    "ordinaryBrackets",
+    "standardDeduction",
+    "additionalStandardDeduction",
+    "salt.cap",
+    "salt.phaseDownStart",
+    "capitalGainsBrackets",
+    "amt.exemption",
+    "amt.phaseoutStart",
+    "amt.rate28Threshold",
+    "childTaxCredit.perChild",
+    "childTaxCredit.refundableMax",
+    "fica.socialSecurityWageBase",
+    "estate.exemption",
+    "giftExclusion"
+  ]
+}

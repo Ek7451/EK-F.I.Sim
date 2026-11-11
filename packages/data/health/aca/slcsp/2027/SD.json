@@ -1,0 +1,489 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2027/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "74bc775e60d2427b55bda0e9bbd9f5769924042d52f53cff5b3a615269df024f",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2027. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2027,
+ "state": "SD",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "46003": {
+   "name": "Aurora",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46005": {
+   "name": "Beadle",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46007": {
+   "name": "Bennett",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46009": {
+   "name": "Bon Homme",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46011": {
+   "name": "Brookings",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46013": {
+   "name": "Brown",
+   "slcspAge21": 474.64,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 370.86,
+   "lowestGoldAge21": 498
+  },
+  "46015": {
+   "name": "Brule",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46017": {
+   "name": "Buffalo",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46019": {
+   "name": "Butte",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46021": {
+   "name": "Campbell",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46023": {
+   "name": "Charles Mix",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46025": {
+   "name": "Clark",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46027": {
+   "name": "Clay",
+   "slcspAge21": 466.4,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 354.45,
+   "lowestGoldAge21": 471.06
+  },
+  "46029": {
+   "name": "Codington",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46031": {
+   "name": "Corson",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46033": {
+   "name": "Custer",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46035": {
+   "name": "Davison",
+   "slcspAge21": 456.82,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 353.47,
+   "lowestGoldAge21": 510.79
+  },
+  "46037": {
+   "name": "Day",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46039": {
+   "name": "Deuel",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46041": {
+   "name": "Dewey",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46043": {
+   "name": "Douglas",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46045": {
+   "name": "Edmunds",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46047": {
+   "name": "Fall River",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46049": {
+   "name": "Faulk",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46051": {
+   "name": "Grant",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46053": {
+   "name": "Gregory",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46055": {
+   "name": "Haakon",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46057": {
+   "name": "Hamlin",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46059": {
+   "name": "Hand",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46061": {
+   "name": "Hanson",
+   "slcspAge21": 456.82,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 353.47,
+   "lowestGoldAge21": 510.79
+  },
+  "46063": {
+   "name": "Harding",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46065": {
+   "name": "Hughes",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46067": {
+   "name": "Hutchinson",
+   "slcspAge21": 456.82,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 353.47,
+   "lowestGoldAge21": 510.79
+  },
+  "46069": {
+   "name": "Hyde",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46071": {
+   "name": "Jackson",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46073": {
+   "name": "Jerauld",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46075": {
+   "name": "Jones",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46077": {
+   "name": "Kingsbury",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46079": {
+   "name": "Lake",
+   "slcspAge21": 562.24,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 396.73,
+   "lowestGoldAge21": 571.44
+  },
+  "46081": {
+   "name": "Lawrence",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46083": {
+   "name": "Lincoln",
+   "slcspAge21": 443.59,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 343.23,
+   "lowestGoldAge21": 471.06
+  },
+  "46085": {
+   "name": "Lyman",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46087": {
+   "name": "McCook",
+   "slcspAge21": 443.59,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 343.23,
+   "lowestGoldAge21": 495.99
+  },
+  "46089": {
+   "name": "McPherson",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46091": {
+   "name": "Marshall",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46093": {
+   "name": "Meade",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46095": {
+   "name": "Mellette",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46097": {
+   "name": "Miner",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46099": {
+   "name": "Minnehaha",
+   "slcspAge21": 443.59,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 343.23,
+   "lowestGoldAge21": 471.06
+  },
+  "46101": {
+   "name": "Moody",
+   "slcspAge21": 562.24,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 396.73,
+   "lowestGoldAge21": 571.44
+  },
+  "46102": {
+   "name": "Oglala Lakota",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46103": {
+   "name": "Pennington",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46105": {
+   "name": "Perkins",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46107": {
+   "name": "Potter",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46109": {
+   "name": "Roberts",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46111": {
+   "name": "Sanborn",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46115": {
+   "name": "Spink",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46117": {
+   "name": "Stanley",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46119": {
+   "name": "Sully",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46121": {
+   "name": "Todd",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  },
+  "46123": {
+   "name": "Tripp",
+   "slcspAge21": 609.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 456.71,
+   "lowestGoldAge21": 641.91
+  },
+  "46125": {
+   "name": "Turner",
+   "slcspAge21": 466.4,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 354.45,
+   "lowestGoldAge21": 471.06
+  },
+  "46127": {
+   "name": "Union",
+   "slcspAge21": 466.4,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 354.45,
+   "lowestGoldAge21": 471.06
+  },
+  "46129": {
+   "name": "Walworth",
+   "slcspAge21": 599.93,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 424.37,
+   "lowestGoldAge21": 611.26
+  },
+  "46135": {
+   "name": "Yankton",
+   "slcspAge21": 456.82,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 353.47,
+   "lowestGoldAge21": 510.79
+  },
+  "46137": {
+   "name": "Ziebach",
+   "slcspAge21": 627.14,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 442.45,
+   "lowestGoldAge21": 637.3
+  }
+ },
+ "stateAverageAge21": 584.13
+}

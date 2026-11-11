@@ -1,0 +1,85 @@
+{
+  "header": {
+    "source": "https://revenue.mt.gov/news/recent-news/HB-337",
+    "publisher": "Montana Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "2025 Mont. Laws HB 337 (2026-2027 rates and brackets)",
+      "Mont. Code Ann. § 15-30-2103 (rates; long-term capital gains rates)",
+      "Mont. Code Ann. § 15-30-2120 (adjustments to federal taxable income; 65+ subtraction)",
+      "2021 SB 399 (federal taxable income starting point from 2024)"
+    ],
+    "sha256": "f4f87df1b772e2ed6f80970b605d7e7cd22498f51c6358e8324254b9bd490565",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Marked 'projected' ONLY because the 2026 inflation-indexed 65+ subtraction has not been published (2026 Form 2 instructions not yet released); the 2025 amount ($5,660) is used. Rates and brackets are enacted law, per the Department of Revenue's HB 337 notice (2025-11-14): 4.7% on taxable income up to $47,500 (single/MFS), $71,250 (HOH), $95,000 (MFJ); 5.65% above (2027: 4.7% to $65,000/$97,500/$130,000 and 5.4% above). Montana starts from FEDERAL TAXABLE INCOME, so the federal standard deduction (2026: $16,100 single / $32,200 MFJ) or itemized deductions are already embedded: standardDeduction and personalExemption are 0 here. Note the federal OBBBA senior deduction and other federal deductions flow through to the extent Montana conforms. Net long-term capital gains (and qualified dividends) are taxed separately at lower rates: 3.0% on gains that fall below the ordinary-bracket threshold ($47,500/$71,250/$95,000) after stacking on ordinary income, 4.1% above; the brackets above apply to taxable income excluding net long-term gains. Roughly equivalent to a 27%-36% exclusion relative to the ordinary rates. Social Security is taxed to the same extent as federally (included in federal taxable income; no state exemption). No general pension/IRA exclusion since 2024; taxpayers 65+ subtract $5,660 each (2025 amount, indexed); a partial military-retirement subtraction exists for some working retirees. Montana EITC is 20% of the federal credit from 2026.",
+    "flags": {
+      "seniorExtraDeduction": "unverified: 2025 indexed amount (5,660); 2026 amount not yet published",
+      "standardDeduction": "0 because the state starts from federal taxable income (federal standard/itemized deduction embedded)",
+      "longTermGainExclusionPct": "simplified: no exclusion; net long-term gains taxed at separate rates of 3.0% (up to the first-bracket threshold, stacked on ordinary income) and 4.1%"
+    }
+  },
+  "year": 2026,
+  "state": "MT",
+  "name": "Montana",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 47500,
+        "rate": 0.047
+      },
+      {
+        "upTo": null,
+        "rate": 0.0565
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 95000,
+        "rate": 0.047
+      },
+      {
+        "upTo": null,
+        "rate": 0.0565
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 47500,
+        "rate": 0.047
+      },
+      {
+        "upTo": null,
+        "rate": 0.0565
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 71250,
+        "rate": 0.047
+      },
+      {
+        "upTo": null,
+        "rate": 0.0565
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 5660,
+  "startingPoint": "federalTaxableIncome",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

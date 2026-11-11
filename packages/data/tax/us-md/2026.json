@@ -1,0 +1,218 @@
+{
+  "header": {
+    "source": "https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/legal-publications/alerts/tax-alert-changes-to-standard-and-itemized-deductions-and-to-state-and-local-income-tax-rates-from-the-2025-legislative-session.pdf",
+    "publisher": "Comptroller of Maryland",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "Md. Code, Tax-General 10-105 (rates, as amended by the Budget Reconciliation and Financing Act of 2025, ch. 604: 6.25% and 6.50% brackets; 2% tax on net capital gains when federal AGI exceeds $350,000)",
+      "Tax-General 10-217 (standard deduction $3,350 / $6,700 for 2025; cost-of-living increase after 2025, rounded down to $50)",
+      "Tax-General 10-211 (personal exemptions)",
+      "Tax-General 10-209 (pension exclusion)",
+      "Tax-General 10-218 (itemized deduction phase-out)"
+    ],
+    "sha256": "a2f2444f3020d4638cbaed0e3182e6e777f859f1af5ebe508665e350681dc25e",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Status is 'projected' only because two 2026 amounts could not be confirmed on a primary Comptroller document (see flags); the rate schedule itself is enacted law in effect for 2026. Brackets: Comptroller Tax Alert (rev. 2025-12-22) for the 5.75% / 6.25% / 6.50% tiers; lower tiers cross-checked against Tax Foundation 2026. Schedule I applies to single, MFS and dependent filers; Schedule II to MFJ, HOH and surviving spouse. Standard deduction: the Comptroller's 2026 Employer Withholding Guide (https://www.marylandcomptroller.gov/content/dam/mdcomp/tax/instructions/withholding/2026/withholding-guide.pdf) states $3,400 for 2026; the 2026 joint/HOH amount was not found on a primary source and is computed from the statute as $6,700 plus the cost-of-living increase rounded down to $50 (COLA of about 2.37% gives $6,850; it would be $6,800 if the COLA were below 2.24%). A 2026-session bill (HB 411) proposing $4,100 / $8,200 was not confirmed as enacted and is not reflected. Starting point is federal AGI. personalExemption of $3,200 per exemption is reduced once federal AGI exceeds $100,000 (single/MFS) or $150,000 (MFJ/HOH) and is eliminated at higher incomes. seniorExtraDeduction is the additional $1,000 exemption for age 65+ (or blind). Social Security is fully subtracted. Pension exclusion (age 65+ or totally disabled): up to $40,600 for 2026 ($41,200 for 2025) per Comptroller guidance dated 2026-04-08 as reported by Bloomberg Tax; the maximum is REDUCED by Social Security and Railroad Retirement benefits received, and it applies to employer retirement plan income (pensions, 401(k), 403(b), 457(b)) but NOT to IRA, Roth IRA, SEP or Keogh distributions. Itemized deductions are reduced by 7.5% of federal AGI over $200,000 ($100,000 MFS). Special regimes not modeled: the additional 2% tax on net capital gains when federal AGI exceeds $350,000 (subject to statutory exceptions); mandatory county / Baltimore City income tax of 2.25% to 3.30% of Maryland taxable income (some counties use graduated local rates) - a material omission since every resident pays it. Brackets and exemptions are not indexed; the standard deduction is indexed from 2026.",
+    "flags": {
+      "standardDeduction.mfj": "unverified: computed from Tax-General 10-217(c) ($6,700 + COLA increase rounded down to $50); could be $6,800",
+      "standardDeduction.hoh": "unverified: same as mfj",
+      "retirementIncomeExclusion": "simplified: $40,600 maximum (secondary source: Bloomberg Tax report of Comptroller guidance) is reduced dollar-for-dollar by Social Security received and does not cover IRA distributions",
+      "personalExemption": "phases down above federal AGI $100,000 single / $150,000 joint; not modeled",
+      "longTermGainExclusionPct": "0; additional 2% tax on net capital gains when federal AGI > $350,000 (not modeled)",
+      "localTax": "county income tax 2.25%-3.30% not included",
+      "indexed": "false for brackets/exemptions; standard deduction is COLA-indexed from 2026"
+    }
+  },
+  "year": 2026,
+  "state": "MD",
+  "name": "Maryland",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 1000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 2000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 125000,
+        "rate": 0.05
+      },
+      {
+        "upTo": 150000,
+        "rate": 0.0525
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0575
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0625
+      },
+      {
+        "upTo": null,
+        "rate": 0.065
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 1000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 2000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 150000,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 175000,
+        "rate": 0.05
+      },
+      {
+        "upTo": 225000,
+        "rate": 0.0525
+      },
+      {
+        "upTo": 300000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 600000,
+        "rate": 0.0575
+      },
+      {
+        "upTo": 1200000,
+        "rate": 0.0625
+      },
+      {
+        "upTo": null,
+        "rate": 0.065
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 1000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 2000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 125000,
+        "rate": 0.05
+      },
+      {
+        "upTo": 150000,
+        "rate": 0.0525
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0575
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0625
+      },
+      {
+        "upTo": null,
+        "rate": 0.065
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 1000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 2000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 150000,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 175000,
+        "rate": 0.05
+      },
+      {
+        "upTo": 225000,
+        "rate": 0.0525
+      },
+      {
+        "upTo": 300000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 600000,
+        "rate": 0.0575
+      },
+      {
+        "upTo": 1200000,
+        "rate": 0.0625
+      },
+      {
+        "upTo": null,
+        "rate": 0.065
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 3400,
+    "mfj": 6850,
+    "mfs": 3400,
+    "hoh": 6850
+  },
+  "personalExemption": 3200,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 40600,
+    "minAge": 65
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

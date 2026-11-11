@@ -1,0 +1,85 @@
+{
+  "header": {
+    "source": "https://codes.ohio.gov/ohio-revised-code/section-5747.02",
+    "publisher": "Ohio Legislative Service Commission (Ohio Revised Code); Ohio Department of Taxation",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Ohio Rev. Code 5747.02(A)(3)(c) (2026 and thereafter: $332.00 plus 2.75% of excess over $26,050)",
+      "Ohio Rev. Code 5747.025 (personal exemptions; none at MAGI of $500,000 or more from 2026)",
+      "Am. Sub. H.B. 96, 136th General Assembly (FY2026-27 budget), incl. uncodified Section 757.120(A) suspending indexing for taxable years 2025 and 2026",
+      "Ohio Rev. Code 5747.01(A)(5) (Social Security deduction)"
+    ],
+    "sha256": "3c2adf9b2fbea829a0e34f25856172ea44767373edd08f5ea78177459e69c2bb",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from R.C. 5747.02 as amended by H.B. 96 (effective 9/30/2025) and the LSC final analysis of H.B. 96; sha256 is of the canonical body. As of retrieval the Department of Taxation annual-tax-rates page listed years only through 2025, so the statute is the source. Law for taxable years beginning in 2026 and thereafter (nonbusiness income): if Ohio AGI less business income and exemptions is $26,050 or less, no tax; if greater, tax = $332.00 + 2.75% of the amount over $26,050. The $332 lump sum (a cliff at $26,050) cannot be expressed as marginal brackets: the brackets here (0% to 26,050, then 2.75%) UNDERSTATE tax by $332 for every taxpayer above $26,050. Same schedule for all filing statuses (joint filers get a joint filing credit instead of wider brackets). kind is \"graduated\" because of the zero band; economically it is a single 2.75% rate above the exempt band. Personal exemption per taxpayer/spouse/dependent is tiered by MAGI: $2,400 if MAGI <= $40,000; $2,150 if $40,001-$80,000; $1,900 if above $80,000; no exemption (and no joint filing credit) if MAGI is $500,000 or more in 2026. Amounts are the 2024/2025 indexed values (per 2025 IT 1040 instructions), unchanged for 2026 because H.B. 96 suspended indexing for 2025 and 2026. The maximum ($2,400) is encoded. No standard deduction. Bracket threshold and exemptions are indexed by statute to the GDP deflator (R.C. 5747.02(A)(5), 5747.025(C)) but indexing has been suspended by successive budgets, most recently for 2025-2026. Social Security and railroad retirement benefits are fully deductible. No pension exclusion; instead small credits: a small retirement income credit, a $50 senior citizen credit (65+) and lump-sum credits - each only if MAGI less exemptions is under $100,000. Business income: first $250,000 ($125,000 MFS) deductible, remainder taxed at flat 3%. Not modelled: municipal income taxes (levied by most cities on earned income, commonly 1%-3%) and school district income taxes; joint filing credit; other credits.",
+    "flags": {
+      "brackets": "simplified: statute imposes $332 + 2.75% of excess over $26,050 once income exceeds $26,050 (zero below); the $332 base amount is not representable and is omitted, understating tax by $332 above the threshold",
+      "personalExemption": "simplified: maximum tier; $2,400 (MAGI <= $40,000), $2,150 ($40,001-$80,000), $1,900 (> $80,000), $0 at MAGI >= $500,000",
+      "indexed": "statutory GDP-deflator indexing suspended for taxable years 2025 and 2026 (H.B. 96 Sec. 757.120)"
+    }
+  },
+  "year": 2026,
+  "state": "OH",
+  "name": "Ohio",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 26050,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.0275
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 26050,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.0275
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 26050,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.0275
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 26050,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.0275
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 2400,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

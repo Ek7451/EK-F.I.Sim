@@ -1,0 +1,200 @@
+{
+  "header": {
+    "source": "https://www.tax.ny.gov/pdf/current_forms/it/it2105i.pdf",
+    "publisher": "New York State Department of Taxation and Finance",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "N.Y. Tax Law 601(a)-(c) (rate schedules, as amended by the FY 2025-26 enacted budget: 2026 rates 3.9% / 4.4% / 5.15% / 5.4% / 5.9%)",
+      "N.Y. Tax Law 601(d) et seq. (tax benefit recapture)",
+      "N.Y. Tax Law 614 (standard deduction)",
+      "N.Y. Tax Law 616 (dependent exemption $1,000)",
+      "N.Y. Tax Law 612(c)(3-a) (pension and annuity exclusion $20,000)",
+      "N.Y. Tax Law 612(c)(3) (government pensions)",
+      "N.Y. Tax Law 612(c)(3-c) (Social Security)"
+    ],
+    "sha256": "4e7cf8eb1ed742a0d61870ef0a9d78acbc10e75eea2d1869e0aca51a6d95de93",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Brackets and standard deductions are from Form IT-2105-I (2026), Instructions for Estimated Tax ('New York State tax rates' and the standard deduction table); cross-checked against Tax Foundation 2026. Starting point is federal AGI with New York additions/subtractions (NYAGI). There is no personal exemption for the filer or spouse; dependents get $1,000 each. Social Security included in federal AGI is fully subtracted. Pension/annuity exclusion: up to $20,000 per person age 59.5+ (each spouse has a separate $20,000 limit; unused amounts cannot be shared) for private pensions, annuities and IRA distributions; New York State/local and federal government pensions are fully exempt regardless of age. NOT modeled - tax benefit recapture: once NYAGI exceeds $107,650 the benefit of the lower brackets is progressively recaptured (IT-2105-I worksheets), so at high incomes tax approaches a flat rate on all taxable income. Itemized deductions are limited above $100,000 NYAGI. Local taxes not included: New York City resident tax 3.078% / 3.762% / 3.819% / 3.876% (bracket tops: single/MFS $12,000 / $25,000 / $50,000; MFJ $21,600 / $45,000 / $90,000; HOH $14,400 / $30,000 / $60,000), Yonkers resident surcharge, and MCTMT on self-employment earnings in the MTA district. The 10.3% and 10.9% brackets are temporary under current law. Brackets and deductions are not inflation-indexed.",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: $20,000 per person at 59.5 applies to private pensions/IRA/annuity income; NY and federal government pensions are fully exempt at any age",
+      "brackets": "tax benefit recapture above $107,650 NYAGI not modeled (understates tax for high incomes)",
+      "localTax": "NYC / Yonkers / MCTMT not included"
+    }
+  },
+  "year": 2026,
+  "state": "NY",
+  "name": "New York",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 8500,
+        "rate": 0.039
+      },
+      {
+        "upTo": 11700,
+        "rate": 0.044
+      },
+      {
+        "upTo": 13900,
+        "rate": 0.0515
+      },
+      {
+        "upTo": 80650,
+        "rate": 0.054
+      },
+      {
+        "upTo": 215400,
+        "rate": 0.059
+      },
+      {
+        "upTo": 1077550,
+        "rate": 0.0685
+      },
+      {
+        "upTo": 5000000,
+        "rate": 0.0965
+      },
+      {
+        "upTo": 25000000,
+        "rate": 0.103
+      },
+      {
+        "upTo": null,
+        "rate": 0.109
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 17150,
+        "rate": 0.039
+      },
+      {
+        "upTo": 23600,
+        "rate": 0.044
+      },
+      {
+        "upTo": 27900,
+        "rate": 0.0515
+      },
+      {
+        "upTo": 161550,
+        "rate": 0.054
+      },
+      {
+        "upTo": 323200,
+        "rate": 0.059
+      },
+      {
+        "upTo": 2155350,
+        "rate": 0.0685
+      },
+      {
+        "upTo": 5000000,
+        "rate": 0.0965
+      },
+      {
+        "upTo": 25000000,
+        "rate": 0.103
+      },
+      {
+        "upTo": null,
+        "rate": 0.109
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 8500,
+        "rate": 0.039
+      },
+      {
+        "upTo": 11700,
+        "rate": 0.044
+      },
+      {
+        "upTo": 13900,
+        "rate": 0.0515
+      },
+      {
+        "upTo": 80650,
+        "rate": 0.054
+      },
+      {
+        "upTo": 215400,
+        "rate": 0.059
+      },
+      {
+        "upTo": 1077550,
+        "rate": 0.0685
+      },
+      {
+        "upTo": 5000000,
+        "rate": 0.0965
+      },
+      {
+        "upTo": 25000000,
+        "rate": 0.103
+      },
+      {
+        "upTo": null,
+        "rate": 0.109
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 12800,
+        "rate": 0.039
+      },
+      {
+        "upTo": 17650,
+        "rate": 0.044
+      },
+      {
+        "upTo": 20900,
+        "rate": 0.0515
+      },
+      {
+        "upTo": 107650,
+        "rate": 0.054
+      },
+      {
+        "upTo": 269300,
+        "rate": 0.059
+      },
+      {
+        "upTo": 1616450,
+        "rate": 0.0685
+      },
+      {
+        "upTo": 5000000,
+        "rate": 0.0965
+      },
+      {
+        "upTo": 25000000,
+        "rate": 0.103
+      },
+      {
+        "upTo": null,
+        "rate": 0.109
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 8000,
+    "mfj": 16050,
+    "mfs": 8000,
+    "hoh": 11200
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 20000,
+    "minAge": 59.5
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

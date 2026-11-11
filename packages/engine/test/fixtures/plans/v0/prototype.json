@@ -1,0 +1,33 @@
+{
+  "id": "legacy-prototype",
+  "name": "Prototype plan (schema v0)",
+  "createdAt": "2025-03-01T00:00:00.000Z",
+  "updatedAt": "2025-03-01T00:00:00.000Z",
+  "settings": { "startYear": 2026 },
+  "filingStatus": "single",
+  "people": [{ "id": "p1", "name": "Alex", "birthDate": "1985-05-05" }],
+  "accounts": [
+    {
+      "id": "a1",
+      "ownerId": "p1",
+      "name": "Brokerage",
+      "kind": "brokerage",
+      "balance": 85000,
+      "costBasis": 60000
+    },
+    { "id": "a2", "ownerId": "p1", "name": "401k", "kind": "401k", "balance": 140000 },
+    { "id": "a3", "ownerId": "p1", "name": "Roth", "kind": "roth", "balance": 30000 },
+    { "id": "a4", "ownerId": "p1", "name": "Savings", "kind": "savings", "balance": 12000 }
+  ],
+  "incomes": [
+    {
+      "id": "i1",
+      "ownerId": "p1",
+      "name": "Salary",
+      "kind": "wages",
+      "amount": 88000,
+      "end": { "type": "age", "personId": "p1", "age": 62 }
+    }
+  ],
+  "expenses": [{ "id": "e1", "name": "Living", "category": "other", "amount": 52000 }]
+}

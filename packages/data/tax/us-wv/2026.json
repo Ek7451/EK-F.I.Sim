@@ -1,0 +1,132 @@
+{
+  "header": {
+    "source": "https://code.wvlegislature.gov/signed_bills/2026/2026-RS-SB392-SUB1%20ENR_signed.pdf",
+    "publisher": "West Virginia Legislature / West Virginia Tax Division",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "W. Va. Code § 11-21-4j (rates for taxable years beginning on and after 2026-01-01; 2026 SB 392, approved 2026-03-31)",
+      "W. Va. Code § 11-21-4h (contingent future rate reductions)",
+      "W. Va. Code § 11-21-16 (personal exemption)",
+      "W. Va. Code § 11-21-12(c)(8) (Social Security modification, 100% from 2026; 2024 HB 4880)",
+      "W. Va. Code § 11-21-12(c)(9) ($8,000 senior/disabled modification)"
+    ],
+    "sha256": "5221c6a5cbadd668171cfc23a604880011c8880d29cb5b7ab1ea548aa64f0eac",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Rates are from enrolled SB 392 (2026), which cut every rate about 5% retroactive to 2026-01-01: 2.11% to $10,000, 2.81% to $25,000, 3.16% to $40,000, 4.22% to $60,000, 4.58% above (Tax Foundation's January 2026 table and the Tax Division's undated IT-140ES instructions still show older rates: 2.22%-4.82% / 2.36%-5.12%). Single, MFJ and HOH share one schedule (no doubling for joint filers); MFS uses half-width brackets ($5,000 / $12,500 / $20,000 / $30,000). No standard deduction. Personal exemption $2,000 per exemption including dependents ($500 if zero exemptions). Social Security: 100% of federally taxable benefits are subtracted for all taxpayers beginning tax year 2026. Senior modification: taxpayers 65+ (or permanently disabled) may subtract up to $8,000 of income from ANY source, but it is reduced by other decreasing modifications claimed, including the Social Security and public-pension modifications (taxpayer effectively gets the greater), so retirees with $8,000+ of taxable Social Security get no additional benefit. Separate modifications exist for certain public, military and public-safety pensions (not modeled). Municipal service fees excluded.",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: 8,000 at 65+ applies to income of any kind and is reduced dollar-for-dollar by the Social Security and public-pension modifications claimed"
+    }
+  },
+  "year": 2026,
+  "state": "WV",
+  "name": "West Virginia",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 10000,
+        "rate": 0.0211
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.0281
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.0316
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0422
+      },
+      {
+        "upTo": null,
+        "rate": 0.0458
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 10000,
+        "rate": 0.0211
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.0281
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.0316
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0422
+      },
+      {
+        "upTo": null,
+        "rate": 0.0458
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 5000,
+        "rate": 0.0211
+      },
+      {
+        "upTo": 12500,
+        "rate": 0.0281
+      },
+      {
+        "upTo": 20000,
+        "rate": 0.0316
+      },
+      {
+        "upTo": 30000,
+        "rate": 0.0422
+      },
+      {
+        "upTo": null,
+        "rate": 0.0458
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 10000,
+        "rate": 0.0211
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.0281
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.0316
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0422
+      },
+      {
+        "upTo": null,
+        "rate": 0.0458
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 2000,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 8000,
+    "minAge": 65
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

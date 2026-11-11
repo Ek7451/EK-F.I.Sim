@@ -1,0 +1,419 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2027/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "74bc775e60d2427b55bda0e9bbd9f5769924042d52f53cff5b3a615269df024f",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2027. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2027,
+ "state": "MT",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "30001": {
+   "name": "Beaverhead",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30003": {
+   "name": "Big Horn",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30005": {
+   "name": "Blaine",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30007": {
+   "name": "Broadwater",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30009": {
+   "name": "Carbon",
+   "slcspAge21": 572.25,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 378.4,
+   "lowestGoldAge21": 503.34
+  },
+  "30011": {
+   "name": "Carter",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30013": {
+   "name": "Cascade",
+   "slcspAge21": 763.98,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 502.44,
+   "lowestGoldAge21": 670.26
+  },
+  "30015": {
+   "name": "Chouteau",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30017": {
+   "name": "Custer",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30019": {
+   "name": "Daniels",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30021": {
+   "name": "Dawson",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30023": {
+   "name": "Deer Lodge",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30025": {
+   "name": "Fallon",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30027": {
+   "name": "Fergus",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30029": {
+   "name": "Flathead",
+   "slcspAge21": 681.67,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 456.67,
+   "lowestGoldAge21": 608.48
+  },
+  "30031": {
+   "name": "Gallatin",
+   "slcspAge21": 763.98,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 502.44,
+   "lowestGoldAge21": 670.26
+  },
+  "30033": {
+   "name": "Garfield",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30035": {
+   "name": "Glacier",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30037": {
+   "name": "Golden Valley",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30039": {
+   "name": "Granite",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30041": {
+   "name": "Hill",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30043": {
+   "name": "Jefferson",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30045": {
+   "name": "Judith Basin",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30047": {
+   "name": "Lake",
+   "slcspAge21": 681.67,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 456.67,
+   "lowestGoldAge21": 608.48
+  },
+  "30049": {
+   "name": "Lewis and Clark",
+   "slcspAge21": 763.98,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 502.44,
+   "lowestGoldAge21": 670.26
+  },
+  "30051": {
+   "name": "Liberty",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30053": {
+   "name": "Lincoln",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30055": {
+   "name": "McCone",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30057": {
+   "name": "Madison",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30059": {
+   "name": "Meagher",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30061": {
+   "name": "Mineral",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30063": {
+   "name": "Missoula",
+   "slcspAge21": 681.67,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 456.67,
+   "lowestGoldAge21": 608.48
+  },
+  "30065": {
+   "name": "Musselshell",
+   "slcspAge21": 572.25,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 378.4,
+   "lowestGoldAge21": 503.34
+  },
+  "30067": {
+   "name": "Park",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30069": {
+   "name": "Petroleum",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30071": {
+   "name": "Phillips",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30073": {
+   "name": "Pondera",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30075": {
+   "name": "Powder River",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30077": {
+   "name": "Powell",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30079": {
+   "name": "Prairie",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30081": {
+   "name": "Ravalli",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30083": {
+   "name": "Richland",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30085": {
+   "name": "Roosevelt",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30087": {
+   "name": "Rosebud",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30089": {
+   "name": "Sanders",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30091": {
+   "name": "Sheridan",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30093": {
+   "name": "Silver Bow",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30095": {
+   "name": "Stillwater",
+   "slcspAge21": 650.7,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 378.4,
+   "lowestGoldAge21": 503.34
+  },
+  "30097": {
+   "name": "Sweet Grass",
+   "slcspAge21": 572.25,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 378.4,
+   "lowestGoldAge21": 503.34
+  },
+  "30099": {
+   "name": "Teton",
+   "slcspAge21": 767.49,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 545.51,
+   "lowestGoldAge21": 716.21
+  },
+  "30101": {
+   "name": "Toole",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30103": {
+   "name": "Treasure",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30105": {
+   "name": "Valley",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30107": {
+   "name": "Wheatland",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30109": {
+   "name": "Wibaux",
+   "slcspAge21": 692.3,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 478.56,
+   "lowestGoldAge21": 665.35
+  },
+  "30111": {
+   "name": "Yellowstone",
+   "slcspAge21": 572.25,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 378.4,
+   "lowestGoldAge21": 503.34
+  }
+ },
+ "stateAverageAge21": 695.65
+}

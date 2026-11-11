@@ -1,0 +1,26 @@
+{
+ "header": {
+  "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+  "publisher": "KFF State Health Facts (analysis of state exchange data)",
+  "retrieved": "2026-11-10",
+  "status": "projected",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102"
+  ],
+  "sha256": "69429847814d1e8eafe9ea44a379362de2d6fe0650f65ed876fd3356686aa721",
+  "schema": "slcsp-state.v1",
+  "notes": "APPROXIMATION. DC runs a state-based exchange for plan year 2027 and is not in the CMS HealthCare.gov landscape file; no county-level machine-readable benchmark data was ingested. stateAverageAge21 = KFF average benchmark premium for a 40-year-old ($678/month, weighted by county plan selections) / 1.34 (age-40 factor of the applicable age curve). The real benchmark varies by rating area; the app lets the user enter their own SLCSP. sha256 is of the canonical JSON body (file without header).",
+  "flags": {
+   "stateAverageAge21": "approximated from KFF statewide average (age 40: $678)",
+   "counties": "not available for state-based exchanges"
+  }
+ },
+ "year": 2027,
+ "state": "DC",
+ "exchange": "sbe",
+ "quality": "state-average",
+ "counties": {},
+ "stateAverageAge21": 505.54
+}

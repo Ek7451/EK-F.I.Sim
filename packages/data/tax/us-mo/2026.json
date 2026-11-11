@@ -1,0 +1,183 @@
+{
+  "header": {
+    "source": "https://dor.mo.gov/forms/MO-1040ES_2026.pdf",
+    "publisher": "Missouri Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Mo. Rev. Stat. 143.011 (rates; top rate 4.7% for 2026; revenue-triggered future reductions under S.B. 3 & 5 (2022 1st Extra Session))",
+      "Mo. Rev. Stat. 143.131 (Missouri standard deduction = federal standard deduction)",
+      "Mo. Rev. Stat. 143.121 as amended by H.B. 594 (2025) (100% subtraction of federally reported capital gains for individuals from January 1, 2025)",
+      "Mo. Rev. Stat. 143.124 and 143.125 (public pension, private pension and Social Security exemptions; S.B. 190 (2023) removed income limits for public pension and Social Security from 2024)",
+      "Mo. Rev. Stat. 143.171 (federal income tax deduction)"
+    ],
+    "sha256": "00fa35ac5ebe6983d6eb5a5a9507b3fc0b69d52451b062a6415b854c38fcbf1d",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the 2026 Form MO-1040ES tax rate chart and instructions; sha256 is of the canonical body. 2026 chart: $0 on the first $1,348 of Missouri taxable income, then 2.0%/2.5%/3.0%/3.5%/4.0%/4.5% in $1,348 steps, 4.7% over $9,436 (matches Tax Foundation 2026). One schedule for all filing statuses; on a combined (joint) return EACH SPOUSE computes tax separately on his or her own share of income using the same chart, so a joint return gets the low brackets twice (worth at most about $180). Standard deduction equals the federal basic standard deduction: 2026 $16,100 single/MFS, $24,150 HoH, $32,200 married filing combined. Filers 65+ or blind also get the federal additional standard deduction ($1,650 each if married, $2,050 if single/HoH in 2026); the married amount is encoded as seniorExtraDeduction. OBBBA deductions (enhanced senior deduction, tips, overtime, car-loan interest) are not allowed. No personal exemption ($1,400 additional exemption for HoH/qualifying widow(er)). Capital gains: H.B. 594 lets individuals subtract 100% of capital gains reported federally (short- and long-term) from 2025 on, so longTermGainExclusionPct is 1 (short-term gains are exempt too). Social Security benefits: fully exempt for recipients age 62+ and SSDI recipients, no income limit (from 2024). Public (federal/state/local government) pensions: exempt up to the maximum Social Security benefit ($47,633 per person on the 2025 return), less any Social Security exemption claimed, no income limit. Private pensions, annuities, IRAs and 401(k) distributions: exemption of up to $6,000 per taxpayer, reduced dollar-for-dollar by Missouri AGI (excluding taxable Social Security) above $25,000 single/HoH, $32,000 married filing combined, $16,000 MFS - i.e. zero for most middle-income retirees. The $6,000 maximum is encoded. Military retirement is fully exempt. Federal income tax deduction: 35% of federal tax if Missouri AGI <= $25,000, 25% to $50,000, 15% to $100,000, 5% to $125,000, 0% above; capped at $5,000 ($10,000 combined) - not modelled. Further 0.1-point reductions of the top rate are contingent on statutory net-general-revenue triggers; 4.7% applies for 2026 per the 2026 MO-1040ES. Brackets are indexed annually for inflation. Not modelled: 1% earnings taxes in Kansas City and St. Louis (wages/self-employment only).",
+    "flags": {
+      "brackets": "simplified: on a married-filing-combined return each spouse applies the schedule separately to own income; mfj shown with the single schedule",
+      "seniorExtraDeduction": "simplified: federal additional standard deduction, $1,650 per married filer 65+; $2,050 if single or head of household",
+      "retirementIncomeExclusion": "simplified: maximum private pension/IRA/401(k) exemption $6,000 per person, phased out dollar-for-dollar above Missouri AGI $25,000 single / $32,000 married; public pensions are fully exempt",
+      "longTermGainExclusionPct": "100% subtraction applies to all federally reported capital gains, short-term included (H.B. 594)"
+    }
+  },
+  "year": 2026,
+  "state": "MO",
+  "name": "Missouri",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 1348,
+        "rate": 0
+      },
+      {
+        "upTo": 2696,
+        "rate": 0.02
+      },
+      {
+        "upTo": 4044,
+        "rate": 0.025
+      },
+      {
+        "upTo": 5392,
+        "rate": 0.03
+      },
+      {
+        "upTo": 6740,
+        "rate": 0.035
+      },
+      {
+        "upTo": 8088,
+        "rate": 0.04
+      },
+      {
+        "upTo": 9436,
+        "rate": 0.045
+      },
+      {
+        "upTo": null,
+        "rate": 0.047
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 1348,
+        "rate": 0
+      },
+      {
+        "upTo": 2696,
+        "rate": 0.02
+      },
+      {
+        "upTo": 4044,
+        "rate": 0.025
+      },
+      {
+        "upTo": 5392,
+        "rate": 0.03
+      },
+      {
+        "upTo": 6740,
+        "rate": 0.035
+      },
+      {
+        "upTo": 8088,
+        "rate": 0.04
+      },
+      {
+        "upTo": 9436,
+        "rate": 0.045
+      },
+      {
+        "upTo": null,
+        "rate": 0.047
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 1348,
+        "rate": 0
+      },
+      {
+        "upTo": 2696,
+        "rate": 0.02
+      },
+      {
+        "upTo": 4044,
+        "rate": 0.025
+      },
+      {
+        "upTo": 5392,
+        "rate": 0.03
+      },
+      {
+        "upTo": 6740,
+        "rate": 0.035
+      },
+      {
+        "upTo": 8088,
+        "rate": 0.04
+      },
+      {
+        "upTo": 9436,
+        "rate": 0.045
+      },
+      {
+        "upTo": null,
+        "rate": 0.047
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 1348,
+        "rate": 0
+      },
+      {
+        "upTo": 2696,
+        "rate": 0.02
+      },
+      {
+        "upTo": 4044,
+        "rate": 0.025
+      },
+      {
+        "upTo": 5392,
+        "rate": 0.03
+      },
+      {
+        "upTo": 6740,
+        "rate": 0.035
+      },
+      {
+        "upTo": 8088,
+        "rate": 0.04
+      },
+      {
+        "upTo": 9436,
+        "rate": 0.045
+      },
+      {
+        "upTo": null,
+        "rate": 0.047
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 16100,
+    "mfj": 32200,
+    "mfs": 16100,
+    "hoh": 24150
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1650,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 6000,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 1,
+  "indexed": true
+}

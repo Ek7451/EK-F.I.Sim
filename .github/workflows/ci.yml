@@ -1,0 +1,296 @@
+# CI chain from plan §14.2. Runs on every pull request, and is reused by deploy.yml (workflow_call)
+# so that a push to main runs exactly the same checks before anything is deployed.
+#
+# Third-party actions are pinned to full commit SHAs (plan §14.2). Dependabot keeps them current.
+name: CI
+
+on:
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+# Literal prefix on purpose: inside a reusable workflow `github.workflow` is the caller's name, and a
+# group shared with the caller would make the run cancel itself.
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  PAGES_PROJECT: ek-fi-sim
+
+jobs:
+  lint:
+    name: Lint and format
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: ESLint
+        run: pnpm lint
+      - name: Prettier
+        run: pnpm format:check
+
+  typecheck:
+    name: Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: tsc --noEmit (all packages)
+        run: pnpm typecheck
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      # Plan §12.1: pnpm audit in CI. Fails on high or critical advisories in shipped dependencies.
+      - name: pnpm audit
+        run: pnpm audit --prod --audit-level high
+
+  test:
+    name: Unit and property tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      # Runs every Vitest project (engine, data, crypto, sync, web, validation), including the
+      # fast-check property tests.
+      - name: Vitest
+        run: pnpm test
+
+  data:
+    name: Data schema validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Validate every dataset against its JSON Schema
+        run: pnpm validate:data
+
+  validation:
+    name: Validation suite (V-01 to V-09)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Vitest project "validation"
+        run: pnpm test:validation
+
+  taxcalc-fixtures:
+    name: Tax-Calculator oracle fixtures
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Install Python
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: tests/validation/taxcalc/requirements.txt
+      - name: Install the pinned taxcalc oracle
+        run: python -m pip install --requirement tests/validation/taxcalc/requirements.txt
+      - name: Regenerate fixtures
+        run: python tests/validation/taxcalc/generate_fixtures.py
+      # The committed fixtures must be exactly what the pinned oracle produces (plan §7.4, V-04).
+      # --intent-to-add makes brand-new fixture files show up in the diff as well.
+      - name: Fail if the fixtures differ from the committed ones
+        run: |
+          git add --intent-to-add tests/validation/fixtures
+          if ! git diff --exit-code --stat -- tests/validation/fixtures; then
+            echo "::error::Regenerated taxcalc fixtures differ from the committed files. Run tests/validation/taxcalc/generate_fixtures.py locally and commit the result."
+            exit 1
+          fi
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Build the web app
+        run: pnpm build
+      # Plan §13: initial JS (gzip) <= 250 KB. "Initial" means the scripts and modulepreload links in
+      # index.html; lazy-loaded chunks (charts, heavy editors) are not counted.
+      - name: Initial JS budget
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync } from 'node:fs';
+          import { gzipSync } from 'node:zlib';
+          import { join } from 'node:path';
+
+          const dist = 'apps/web/dist';
+          const budget = 250 * 1024;
+          const html = readFileSync(join(dist, 'index.html'), 'utf8');
+          const files = new Set();
+          for (const tag of html.match(/<(script|link) [^>]*>/g) ?? []) {
+            const isScript = tag.startsWith('<script');
+            const isPreload = /rel=["']modulepreload["']/.test(tag);
+            if (!isScript && !isPreload) continue;
+            const url = tag.match(/(?:src|href)=["']([^"']+)["']/)?.[1];
+            if (url && url.endsWith('.js') && !/^https?:/.test(url)) files.add(url.replace(/^\.?\//, ''));
+          }
+          let total = 0;
+          for (const file of files) {
+            const size = gzipSync(readFileSync(join(dist, file))).length;
+            total += size;
+            console.log(`${(size / 1024).toFixed(1).padStart(8)} KB  ${file}`);
+          }
+          console.log(`${(total / 1024).toFixed(1).padStart(8)} KB  total (budget ${budget / 1024} KB)`);
+          if (files.size === 0) {
+            console.error('::error::No initial scripts found in index.html; the budget check is not measuring anything.');
+            process.exit(1);
+          }
+          if (total > budget) {
+            console.error(`::error::Initial JS is ${(total / 1024).toFixed(1)} KB gzip, over the 250 KB budget (plan §13).`);
+            process.exit(1);
+          }
+          NODE
+      - name: Upload build
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: web-dist
+          path: apps/web/dist
+          if-no-files-found: error
+          retention-days: 7
+
+  e2e:
+    name: Playwright (e2e, tours, axe)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Download build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: web-dist
+          path: apps/web/dist
+      - name: Install Playwright browsers
+        run: pnpm --filter @fisim/e2e exec playwright install --with-deps
+      # One run covers every spec on the phone, tablet and desktop projects: user flows and visual
+      # regression, tours.spec.ts (every tour end to end, every data-tour target exists) and
+      # a11y.spec.ts (axe, WCAG 2.2 AA).
+      - name: Run Playwright
+        run: pnpm e2e
+        env:
+          CI: 'true'
+      - name: Upload Playwright report
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: playwright-report
+          path: |
+            tests/e2e/playwright-report
+            tests/e2e/test-results
+          if-no-files-found: warn
+          retention-days: 14
+
+  lighthouse:
+    name: Lighthouse budgets
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Download build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: web-dist
+          path: apps/web/dist
+      # Budgets are in lighthouserc.json at the repo root (plan §13).
+      - name: Lighthouse CI
+        run: pnpm dlx @lhci/cli@0.16.0 autorun --config=lighthouserc.json
+      - name: Upload Lighthouse reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: lighthouse-report
+          path: .lighthouseci
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 14
+
+  bench:
+    name: Engine benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      # Writes packages/engine/bench/latest.json, compares it with bench/baseline.json and exits
+      # non-zero on a regression above 20% (plan §13).
+      - name: Run the benchmark
+        run: pnpm bench
+      - name: Upload benchmark result
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: engine-bench
+          path: packages/engine/bench/latest.json
+          if-no-files-found: warn
+          retention-days: 30
+
+  preview:
+    name: Pages preview deploy
+    # Pull requests only (deploy.yml handles main). Skipped for forks and Dependabot, which get no
+    # repository secrets.
+    if: >-
+      ${{ github.event_name == 'pull_request'
+      && github.event.pull_request.head.repo.full_name == github.repository
+      && github.actor != 'dependabot[bot]' }}
+    needs: [lint, typecheck, audit, test, data, validation, taxcalc-fixtures, build, e2e, lighthouse, bench]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: ./.github/actions/setup
+      - name: Download build
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: web-dist
+          path: apps/web/dist
+      # Runs from workers/sync so the action uses the wrangler version pinned by the lockfile there
+      # instead of trying to install its own into the workspace root.
+      - name: Deploy to Cloudflare Pages (preview)
+        id: pages
+        uses: cloudflare/wrangler-action@953926a2e2182532811c01a25e53647d93bf07c0 # v4.1.3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
+          workingDirectory: workers/sync
+          command: >-
+            pages deploy ../../apps/web/dist
+            --project-name=${{ env.PAGES_PROJECT }}
+            --branch=pr-${{ github.event.pull_request.number }}
+            --commit-hash=${{ github.event.pull_request.head.sha }}
+      - name: Report the preview URL
+        env:
+          PREVIEW_URL: ${{ steps.pages.outputs.deployment-url }}
+          ALIAS_URL: ${{ steps.pages.outputs.pages-deployment-alias-url }}
+        run: |
+          {
+            echo "### Pages preview"
+            echo ""
+            echo "- Deployment: ${PREVIEW_URL}"
+            echo "- Branch alias: ${ALIAS_URL}"
+            echo ""
+            echo "Previews sit behind Cloudflare Access (plan §14.1)."
+          } >> "$GITHUB_STEP_SUMMARY"

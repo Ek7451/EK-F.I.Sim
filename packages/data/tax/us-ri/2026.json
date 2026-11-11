@@ -1,0 +1,100 @@
+{
+  "header": {
+    "source": "https://tax.ri.gov/sites/g/files/xkgbur541/files/2025-11/ADV_2025_22_Inflation_Adjustments.pdf",
+    "publisher": "Rhode Island Division of Taxation",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "R.I. Gen. Laws § 44-30-2.6 (rates, standard deduction, exemptions, indexing)",
+      "R.I. Gen. Laws § 44-30-12 (Social Security and pension/annuity modifications)",
+      "2026 budget (high-income surtax and Social Security changes effective tax year 2027, not 2026)"
+    ],
+    "sha256": "708af23cfb45c01f89ef2d4f9f838800fd28530414a93cc7e5f88f451a306c76",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Brackets, standard deduction and exemption are the Tax Year 2026 amounts in Advisory 2025-22 (2025-11-03). One uniform rate schedule for all filing statuses. Standard deduction $11,200 single/MFS, $22,400 MFJ, $16,800 HOH; personal and dependency exemption $5,250 each. Standard deduction and exemptions phase out for modified federal AGI between $261,000 and $290,800 (phase-out increment $7,450) and are zero above that. Social Security: federally taxable benefits are fully subtracted only if the taxpayer has reached Social Security full retirement age AND federal AGI is below an indexed limit; the Tax Year 2026 limits were not yet published at retrieval (Tax Year 2025: $107,000 single/HOH/MFS, $133,750 MFJ; expect roughly 2-3% higher). Otherwise benefits are taxed as federally. Pension/401(k)/403(b)/annuity modification: up to $50,000 per person (raised from $20,000 starting Tax Year 2025) under the same full-retirement-age and AGI-limit conditions (cliff, not phased); military pensions fully exempt. From Tax Year 2027 (not in this file) the 2026 budget adds a high-income surtax (1% over $1 million in 2027, 2% in 2028, 3% from 2029) and removes the age test for the Social Security modification.",
+    "flags": {
+      "taxesSocialSecurity": "partial: exempt only at SSA full retirement age with federal AGI under ~107,000 single/HOH/MFS or ~133,750 MFJ (2025 limits; 2026 indexed limits not yet published)",
+      "retirementIncomeExclusion": "simplified: 50,000 per person only at SSA full retirement age (about 67, minAge is approximate) and only if federal AGI is under the same limits; nothing above the limit",
+      "standardDeduction": "simplified: maximum shown; standard deduction and exemptions phase out over modified federal AGI 261,000-290,800"
+    }
+  },
+  "year": 2026,
+  "state": "RI",
+  "name": "Rhode Island",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 82050,
+        "rate": 0.0375
+      },
+      {
+        "upTo": 186450,
+        "rate": 0.0475
+      },
+      {
+        "upTo": null,
+        "rate": 0.0599
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 82050,
+        "rate": 0.0375
+      },
+      {
+        "upTo": 186450,
+        "rate": 0.0475
+      },
+      {
+        "upTo": null,
+        "rate": 0.0599
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 82050,
+        "rate": 0.0375
+      },
+      {
+        "upTo": 186450,
+        "rate": 0.0475
+      },
+      {
+        "upTo": null,
+        "rate": 0.0599
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 82050,
+        "rate": 0.0375
+      },
+      {
+        "upTo": 186450,
+        "rate": 0.0475
+      },
+      {
+        "upTo": null,
+        "rate": 0.0599
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 11200,
+    "mfj": 22400,
+    "mfs": 11200,
+    "hoh": 16800
+  },
+  "personalExemption": 5250,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 50000,
+    "minAge": 67
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

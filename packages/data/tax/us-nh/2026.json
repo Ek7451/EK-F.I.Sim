@@ -1,0 +1,41 @@
+{
+  "header": {
+    "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+    "publisher": "Tax Foundation (New Hampshire Department of Revenue Administration)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "N.H. RSA 77 (Interest and Dividends Tax), repealed for taxable periods beginning after Dec 31 2024 (2023 HB 2)"
+    ],
+    "sha256": "3d7ce68ec9fb49fb70ac9667d124af09b532ca369fd13d61f54872877650cd9c",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. New Hampshire never taxed wages. Its Interest and Dividends Tax was repealed effective 2025, so for tax year 2026 there is no individual income tax of any kind (Tax Foundation 2026: \"New Hampshire, which repealed its interest and dividends tax as of 2025\"; listed as \"none\"). The NH DRA page returned HTTP 403, so the Tax Foundation page is the cited source."
+  },
+  "year": 2026,
+  "state": "NH",
+  "name": "New Hampshire",
+  "kind": "none",
+  "brackets": {
+    "single": [],
+    "mfj": [],
+    "mfs": [],
+    "hoh": []
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

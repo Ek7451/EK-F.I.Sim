@@ -1,0 +1,152 @@
+{
+  "description": "Published reference results for validating the historical-backtest engine. Every number below was transcribed on the retrieval date from the cited source; nothing is estimated. Where a source does not state something, the field is null and a note says so.",
+  "retrieved": "2026-11-10",
+  "bengen1994": {
+    "citation": "William P. Bengen, \"Determining Withdrawal Rates Using Historical Data\", Journal of Financial Planning, October 1994, pp. 14-24 (reprinted March 2004 in the Journal's \"Best of 25 Years\" series).",
+    "sources": [
+      "https://www.financialplanningassociation.org/sites/default/files/2021-04/MAR04%20Determining%20Withdrawal%20Rates%20Using%20Historical%20Data.pdf",
+      "https://freefincal.com/wp-content/uploads/2023/10/Bengen1.pdf"
+    ],
+    "inputs": {
+      "data": "Ibbotson Associates, Stocks, Bonds, Bills and Inflation: 1992 Yearbook (annual returns from 1926): common stocks, intermediate-term Treasury notes, CPI inflation.",
+      "allocation": { "stocks": 0.5, "intermediateTreasuries": 0.5 },
+      "rebalancing": "annual, back to the target allocation at the beginning of each year",
+      "initialWithdrawalRate": 0.04,
+      "withdrawals": "inflation-adjusted; one withdrawal at the END of each calendar year",
+      "firstWithdrawal": "In the article's appendix example the first end-of-year withdrawal is already inflated: a $1,000,000 portfolio at 4% with 3% inflation in year 1 withdraws $41,200 at the end of year 1, then $41,200 x (1 + year-2 inflation), and so on.",
+      "retirementStartYears": [1926, 1976],
+      "startYearCount": 51,
+      "startDate": "January 1 of each start year",
+      "longevityCapYears": 50,
+      "taxesAndFees": "none (assets assumed held in tax-deferred accounts)",
+      "yearsAfterData": "The data end in 1992, so longevities that run past 1992 (every start year from the 1960s on) depend on Bengen's assumed future returns. The paragraph of the appendix that states them was not legible in either retrieved copy. The body of the article quotes the Ibbotson long-run averages as 10.3% (common stocks), 5.1% (intermediate-term Treasuries) and 3% (inflation); whether exactly those were used for post-1992 years is NOT verified here."
+    },
+    "results": {
+      "minimumPortfolioLongevityYears": 33,
+      "minimumPortfolioLongevityQuote": "\"In no past case has it caused a portfolio to be exhausted before 33 years, and in most cases it will lead to portfolio lives of 50 years or longer.\"",
+      "worstStartYears": [
+        {
+          "startYear": 1966,
+          "longevityYears": 33,
+          "evidence": "Comparing the 75/25 chart with the 50/50 chart at 4%: \"portfolio year 1966, which is shortened by one year, from 33 to 32 years, and in 1969, which is shortened from 36 years to 34\"."
+        },
+        { "startYear": 1969, "longevityYears": 36, "evidence": "same sentence" }
+      ],
+      "worstStartYearsNote": "The article gives per-start-year longevity only as a bar chart (Figure 1(b)); 1966 and 1969 are the only start years whose 4% / 50-50 longevity is stated in the text. The shortest lives cluster in retirements begun in the mid/late 1960s (hit by 1973-74). 1966 = 33 years equals the stated minimum, so it is the worst start year. Longevities for other 1960s start years (1965, 1967, 1968) are not stated numerically and are null here.",
+      "startYearsReachingThe50YearCap": 40,
+      "startYearsReachingThe50YearCapOf": 51,
+      "inconsistencyInSource": "Describing Figure 1(b) the article also says \"no client enjoys less than about 35 years before his retirement money is used up\"; the later, more specific statement is 33 years.",
+      "related": {
+        "rate3pct_5050": "portfolio longevity never less than 50 years (also true up to about 3.5%)",
+        "rate4_25pct_5050": "could exhaust a portfolio in as little as 28 years",
+        "rate5pct_5050": "retirements begun in the late 1960s and early 1970s might have had only 20 years of funds",
+        "rate6pct_5050": "31 start years would not last 30 years, 20 would",
+        "rate4pct_7525": { "startYearsReachingThe50YearCap": 47, "longevity1966": 32, "longevity1969": 34 }
+      }
+    },
+    "replicationNotes": "Our datasets do not contain Ibbotson intermediate-term Treasuries; shiller-annual.json usBonds (10-year constant maturity, January-to-January) or damodaran.json tBond10y (December-to-December) are stand-ins with longer duration, and actual post-1992 returns differ from Bengen's assumed ones. Expect the engine to reproduce the shape (4% never fails within 30 years from 1926-1976 starts; the worst start years are in the mid/late 1960s; minimum longevity in the low 30s) rather than every bar."
+  },
+  "trinity1998": {
+    "citation": "Philip L. Cooley, Carl M. Hubbard and Daniel T. Walz, \"Retirement Savings: Choosing a Withdrawal Rate That Is Sustainable\", AAII Journal, February 1998, vol. 20 no. 2, pp. 16-21. Table 3, \"Inflation-Adjusted Portfolio Success Rates: 1926 to 1995 (Percentage of all past payout periods supported by the portfolio after adjusting withdrawals for inflation)\".",
+    "sources": [
+      "https://www.aaii.com/files/pdf/6794_retirement-savings-choosing-a-withdrawal-rate-that-is-sustainable.pdf"
+    ],
+    "inputs": {
+      "data": "Ibbotson Associates, Stocks, Bonds, Bills, and Inflation, 1996 Yearbook: annual total returns 1926-1995. Stocks = Standard & Poor's 500 index; bonds = long-term, high-grade corporate bonds; inflation/deflation = CPI.",
+      "dataYears": [1926, 1995],
+      "frequency": "annual returns, annual dollar withdrawals",
+      "withdrawals": "first-year withdrawal = rate x initial portfolio value; each later year's dollar withdrawal is increased by that year's inflation rate (or decreased by deflation)",
+      "withdrawalTiming": null,
+      "withdrawalTimingNote": "The article does not say whether the annual withdrawal is taken at the start or the end of the year, nor how rebalancing is done; it only says \"historical annual return data were used to calculate ending portfolio values after annual dollar withdrawals\" and points to an algorithm illustration on the AAII web site (not retrieved). End-of-year withdrawal with annual rebalancing is the usual replication assumption. The authors' 1999 follow-up paper switched to monthly withdrawals.",
+      "successDefinition": "ending portfolio value greater than $0 at the end of the payout period",
+      "taxesAndFees": "none",
+      "overlappingPeriods": { "15": 56, "20": 51, "25": 46, "30": 41 },
+      "periodExample": "first 15-year period 1926-1940, second 1927-1941, ...; last 30-year period 1966-1995"
+    },
+    "table3": {
+      "unit": "percent of payout periods that succeeded, rounded to the nearest whole percent",
+      "withdrawalRatesPct": [3, 4, 5, 6, 7, 8, 9, 10, 11, 12],
+      "successRatePct": {
+        "100/0": {
+          "15": [100, 100, 100, 91, 79, 70, 63, 55, 43, 34],
+          "20": [100, 100, 88, 75, 63, 53, 43, 33, 29, 24],
+          "25": [100, 100, 87, 70, 59, 46, 35, 30, 26, 20],
+          "30": [100, 95, 85, 68, 59, 41, 34, 34, 27, 15]
+        },
+        "75/25": {
+          "15": [100, 100, 100, 95, 82, 68, 64, 46, 36, 27],
+          "20": [100, 100, 90, 75, 61, 51, 37, 27, 20, 12],
+          "25": [100, 100, 85, 65, 50, 37, 30, 22, 7, 2],
+          "30": [100, 98, 83, 68, 49, 34, 22, 7, 2, 0]
+        },
+        "50/50": {
+          "15": [100, 100, 100, 93, 79, 64, 50, 32, 23, 13],
+          "20": [100, 100, 90, 75, 55, 33, 22, 10, 0, 0],
+          "25": [100, 100, 80, 57, 37, 20, 7, 0, 0, 0],
+          "30": [100, 95, 76, 51, 17, 5, 0, 0, 0, 0]
+        },
+        "25/75": {
+          "15": [100, 100, 100, 89, 70, 50, 32, 18, 13, 7],
+          "20": [100, 100, 82, 47, 31, 16, 8, 4, 0, 0],
+          "25": [100, 93, 48, 24, 15, 4, 2, 0, 0, 0],
+          "30": [100, 71, 27, 20, 5, 0, 0, 0, 0, 0]
+        },
+        "0/100": {
+          "15": [100, 100, 100, 71, 39, 21, 18, 16, 14, 9],
+          "20": [100, 90, 47, 20, 14, 12, 10, 2, 0, 0],
+          "25": [100, 46, 17, 15, 11, 2, 0, 0, 0, 0],
+          "30": [80, 20, 17, 12, 0, 0, 0, 0, 0, 0]
+        }
+      },
+      "keys": "allocation is stocks/bonds in percent; inner key is the payout period in years; array positions follow withdrawalRatesPct",
+      "transcriptionNote": "Transcribed from the text layer of the AAII PDF, in which the four payout-period row labels of each block are detached from their rows; rows were assigned in the printed order 15, 20, 25, 30 years. Cross-check: a later AAII Journal summary of the study (\"Will Your Savings Last? What the Withdrawal Rate Studies Show\") quotes 50/50, 30 years, 4% = 95% and 41 thirty-year periods."
+    },
+    "replicationNotes": "damodaran.json has S&P 500 (1928+) and Baa corporate returns, not Ibbotson's 1926+ long-term high-grade corporates, and shiller-annual.json has Treasuries rather than corporates. A replication on our data over start years 1928-1966 should land near these cells (especially the stock-heavy rows) but not match them exactly; bond-heavy rows are the most sensitive to the bond series."
+  },
+  "firecalc": {
+    "scenario": {
+      "portfolio": 1000000,
+      "annualSpending": 40000,
+      "spending": "constant, inflation-adjusted (CPI)",
+      "years": 30,
+      "equityPct": 75,
+      "fixedIncomePct": 25,
+      "feesPct": 0.18
+    },
+    "firecalc": {
+      "url": "https://www.firecalc.com/",
+      "version": "FIRECalc 3.0",
+      "retrieved": "2026-11-10",
+      "howToReproduce": "On the start page set Spending = 40000, Portfolio = 1000000, Years = 30 and submit; every other field is left at its default (total market 75% equities, fixed income = \"Long Interest Rate\", expense ratio 0.18%, inflation = CPI, history from 1871, retirement year 2026, no Social Security or other adjustments). Equivalent to POSTing those form fields to https://www.firecalc.com/firecalcresults.php.",
+      "dataVintage": "126 thirty-year cycles starting in 1871 (the page does not print a data-through date; 126 thirty-year cycles starting 1871-1996 implies data through 2025)",
+      "cycles": 126,
+      "failedCycles": 6,
+      "successRatePct": 95.2,
+      "endingBalanceLowest": -400986,
+      "endingBalanceHighest": 5679475,
+      "endingBalanceAverage": 1911061,
+      "endingBalanceMedian": null,
+      "notes": "Ending balances are in dollars of the start of each cycle (inflation-adjusted), as stated on the results page. FIRECalc does not report a median ending balance. FIRECalc's fixed-income default is its long-interest-rate series, not a total-return 10-year bond series."
+    },
+    "cfiresim": {
+      "url": "https://www.cfiresim.com/",
+      "version": "cFIREsim 3.0",
+      "retrieved": "2026-11-10",
+      "howToReproduce": "Open the page and press \"Run Simulation\" without changing anything. The defaults on the retrieval date were: retirement year 2026, end year 2055 (30 years), Historical Data - All, portfolio $1,000,000, initial yearly spending $40,000, spending plan Inflation Adjusted (CPI), 75% equities / 25% bonds / 0% gold / 0% cash, fees 0.18%, rebalance annually, constant allocation, no Social Security or adjustments.",
+      "dataVintage": "page banner: \"Most Recent Data: Aug. 1, 2026\"",
+      "resultPermalink": "https://www.cfiresim.com/247f6678-c072-4879-a1e1-10fc5447665a",
+      "cycles": 127,
+      "failedCycles": 5,
+      "successRatePct": 96.06,
+      "endingBalanceMedian": 1719109,
+      "endingBalanceAverage": 2091484,
+      "endingBalanceStdDev": 1546378,
+      "endingBalanceHighest": 5968228,
+      "endingBalanceLowest": 0,
+      "endingBalanceLowest10Pct": 388580,
+      "endingBalanceLowest5Pct": 61888,
+      "notes": "Ending portfolio figures are inflation-adjusted dollars, as labelled on the results page. cFIREsim reports 127 cycles against FIRECalc's 126; neither page explains the difference."
+    },
+    "replicationNotes": "Both tools are built on Shiller's annual data from 1871, like shiller-annual.json, but differ from each other and from our construction in the bond series, intra-year withdrawal timing and how fees are applied. A success rate of roughly 95-96% for this scenario is the target; treat the ending balances as order-of-magnitude checks."
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "header": {
+    "source": "https://dor.sd.gov/individuals/taxes/",
+    "publisher": "South Dakota Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "No individual income tax is imposed by South Dakota Codified Laws Title 10"
+    ],
+    "sha256": "7cd3b3c819a031de203d4482d2626e292e8a8dac62e5f7c7e40e29a92aa7ff9d",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. South Dakota Department of Revenue: the state \"does not impose a state income tax\". Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026)."
+  },
+  "year": 2026,
+  "state": "SD",
+  "name": "South Dakota",
+  "kind": "none",
+  "brackets": {
+    "single": [],
+    "mfj": [],
+    "mfs": [],
+    "hoh": []
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

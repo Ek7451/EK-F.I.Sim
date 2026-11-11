@@ -1,0 +1,36 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "name": "@fisim/web",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fisim/crypto": "workspace:*",
+    "@fisim/data": "workspace:*",
+    "@fisim/engine": "workspace:*",
+    "@fisim/ui": "workspace:*",
+    "@floating-ui/react": "^0.26.28",
+    "comlink": "^4.4.2",
+    "echarts": "^5.5.1",
+    "idb": "^8.0.0",
+    "immer": "^10.1.1",
+    "pdf-lib": "^1.17.1",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.28.0",
+    "zustand": "^5.0.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.3",
+    "vite": "^5.4.11",
+    "vite-plugin-pwa": "^0.21.0",
+    "workbox-window": "^7.4.1"
+  }
+}

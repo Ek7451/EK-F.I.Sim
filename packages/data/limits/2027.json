@@ -1,0 +1,106 @@
+{
+  "header": {
+    "source": "https://www.irs.gov/pub/irs-drop/rp-26-24.pdf",
+    "publisher": "Internal Revenue Service (HSA); retirement-plan limits projected from Milliman/Marsh forecasts",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "Rev. Proc. 2026-24 (HSA, enacted)",
+      "IRC 415(d), 219(b)(5), 408A(c)(3), 414(v) (cost-of-living adjustment rules used for the projection)",
+      "IRS Notice 2025-67 (2026 base amounts)",
+      "IRC 529(c)(3)(E); 31 CFR 359.29"
+    ],
+    "schema": "limits.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). As of 2026-11-10 the IRS had NOT published the 2027 retirement-plan cost-of-living notice (successor to Notice 2025-67): irs.gov/pub/irs-drop/n-26-60 through n-26-80 were probed and the IRS COLA table page still ends at 2026. Retirement-plan amounts are therefore projections computed from CPI through September 2026: the 401(k)/415 amounts match the final Milliman and Marsh forecasts as reported by 401kspecialistmag.com; IRA and SIMPLE amounts and IRA phase-out ranges are from thefinancebuff.com calculations (updated 2026-10-14). Replace with the IRS notice when issued. HSA amounts are final (Rev. Proc. 2026-24, sha256 of raw PDF bcb6b41a835b84d4315f738a7250801831021829e39d70225424e2f45afcb715). rothCatchUpWageThreshold is the 2026-wages threshold governing 2027 catch-ups. MFS IRA ranges, hsa.catchUp55, sep.pctOfCompensation, rollover529ToRoth and iBondPurchaseCap are statutory/regulatory and unchanged.",
+    "flags": {
+      "electiveDeferral": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "catchUp50": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "catchUp60to63": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "rothCatchUpWageThreshold": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "annualAdditions": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "compensationCap": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "sep.limit": "projected: Milliman/Marsh final forecast (Oct. 2026); IRS notice not yet published",
+      "ira.limit": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "ira.catchUp50": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "rothIraPhaseout.single": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "rothIraPhaseout.mfj": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "tradIraDeductionPhaseout.single": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "tradIraDeductionPhaseout.mfj": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "tradIraDeductionPhaseout.mfjSpouseNotCovered": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "simple.limit": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "simple.catchUp50": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published",
+      "simple.catchUp60to63": "projected: third-party calculation from Sept. 2026 CPI (thefinancebuff.com); IRS notice not yet published"
+    },
+    "sha256": "f54618cdfb71833b99bcc332505f863bc3a7ae4d599985d122fe9e38550de6e1"
+  },
+  "year": 2027,
+  "electiveDeferral": 25500,
+  "catchUp50": 8500,
+  "catchUp60to63": 11750,
+  "rothCatchUpWageThreshold": 155000,
+  "annualAdditions": 75000,
+  "compensationCap": 375000,
+  "ira": {
+    "limit": 7500,
+    "catchUp50": 1100
+  },
+  "rothIraPhaseout": {
+    "single": [
+      158000,
+      173000
+    ],
+    "mfj": [
+      250000,
+      260000
+    ],
+    "mfs": [
+      0,
+      10000
+    ]
+  },
+  "tradIraDeductionPhaseout": {
+    "single": [
+      83000,
+      93000
+    ],
+    "mfj": [
+      133000,
+      153000
+    ],
+    "mfjSpouseNotCovered": [
+      250000,
+      260000
+    ],
+    "mfs": [
+      0,
+      10000
+    ]
+  },
+  "simple": {
+    "limit": 17500,
+    "catchUp50": 4000,
+    "catchUp60to63": 5250
+  },
+  "sep": {
+    "pctOfCompensation": 0.25,
+    "limit": 75000
+  },
+  "hsa": {
+    "self": 4500,
+    "family": 9000,
+    "catchUp55": 1000,
+    "hdhpMinDeductible": {
+      "self": 1750,
+      "family": 3500
+    },
+    "hdhpMaxOop": {
+      "self": 8700,
+      "family": 17400
+    }
+  },
+  "rollover529ToRoth": {
+    "lifetimeCap": 35000,
+    "minAccountAgeYears": 15
+  },
+  "iBondPurchaseCap": 10000
+}

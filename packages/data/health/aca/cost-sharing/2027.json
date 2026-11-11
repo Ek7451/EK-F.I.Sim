@@ -1,0 +1,99 @@
+{
+  "header": {
+    "source": "https://www.cms.gov/files/document/2027-papi-parameters-guidance-2026-01-29.pdf",
+    "publisher": "CMS (CCIIO); plan designs computed from the CMS HealthCare.gov QHP landscape file; employer premiums from KFF",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "CMS guidance \"Premium Adjustment Percentage, Maximum Annual Limitation on Cost Sharing, Reduced Maximum Annual Limitation on Cost Sharing, and Required Contribution Percentage for the 2027 Benefit Year\" (2026-01-29)",
+      "42 U.S.C. 18022(c)-(e) (cost-sharing limit, metal levels, catastrophic plans)",
+      "42 U.S.C. 18071 (cost-sharing reductions)",
+      "45 CFR 156.130, 156.140, 156.420",
+      "CMS QHP Landscape Individual Market Medical PY2027 (https://data.healthcare.gov/datafile/py2027/individual_market_medical.zip, sha256 74bc775e60d2427b55bda0e9bbd9f5769924042d52f53cff5b3a615269df024f)",
+      "KFF 2026 Employer Health Benefits Survey (https://www.kff.org/health-costs/2026-employer-health-benefits-survey/)"
+    ],
+    "sha256": "4ab95a4899a4fb93aafe312e07b00e3a4d6c4e70be3a1becf603f2dd0cc35a7c",
+    "schema": "aca-cost-sharing.v1",
+    "notes": "oopMax is the federal maximum annual limitation on cost sharing for 2027. Federal REDUCED maxima for the CSR silver variants (self-only): 94% $4,000, 87% $4,000, 73% $9,600. `tiers` and `csr` hold TYPICAL plan designs, not legal limits: median individual medical deductible and out-of-pocket maximum over the 3717 distinct plans in the PY2027 HealthCare.gov landscape (bronze includes expanded bronze; CSR rows are the medians of the same silver plans' 94/87/73 variants), capped at the federal limits. premiumRatioToSilver is the median across counties of (lowest-cost plan in the tier / second-lowest-cost silver); gold is near 1.0 because CSR costs are loaded onto silver premiums, and platinum is offered in few counties. Metal actuarial values are the statutory targets. Utilization profiles are documented assumptions (low: a few visits and generics; typical: about a quarter of the limit; high: a hospitalisation or chronic specialty drug reaches the limit). Employer premiums are KFF EHBS headline averages (annual total premium and worker contribution), cited as benchmarks. sha256 is of the raw source document as downloaded.",
+    "flags": {
+      "tiers.catastrophic.actuarialValue": "assumption: catastrophic plans have no AV target (below 60%)",
+      "tiers.platinum": "few plans (37) in 191 counties; medians are not representative nationally",
+      "utilization": "modelling assumption, not from a source",
+      "employerPremium": "2026 KFF EHBS values carried forward; the 2027 survey is not published until autumn 2027 (reason this file is not marked enacted; oopMax and reduced maxima are final)"
+    }
+  },
+  "year": 2027,
+  "oopMax": {
+    "self": 12000,
+    "family": 24000
+  },
+  "tiers": {
+    "catastrophic": {
+      "actuarialValue": 0.57,
+      "deductible": 12000,
+      "oopMax": 12000,
+      "premiumRatioToSilver": 0.64
+    },
+    "bronze": {
+      "actuarialValue": 0.6,
+      "deductible": 7500,
+      "oopMax": 12000,
+      "premiumRatioToSilver": 0.74
+    },
+    "silver": {
+      "actuarialValue": 0.7,
+      "deductible": 6400,
+      "oopMax": 10300,
+      "premiumRatioToSilver": 1
+    },
+    "gold": {
+      "actuarialValue": 0.8,
+      "deductible": 2000,
+      "oopMax": 8600,
+      "premiumRatioToSilver": 1.01
+    },
+    "platinum": {
+      "actuarialValue": 0.9,
+      "deductible": 0,
+      "oopMax": 5900,
+      "premiumRatioToSilver": 1.34
+    }
+  },
+  "csr": [
+    {
+      "fplTo": 1.5,
+      "actuarialValue": 0.94,
+      "deductible": 0,
+      "oopMax": 2950
+    },
+    {
+      "fplTo": 2,
+      "actuarialValue": 0.87,
+      "deductible": 800,
+      "oopMax": 3600
+    },
+    {
+      "fplTo": 2.5,
+      "actuarialValue": 0.73,
+      "deductible": 3100,
+      "oopMax": 9000
+    }
+  ],
+  "utilization": {
+    "low": {
+      "pctOfOopMax": 0.05
+    },
+    "typical": {
+      "pctOfOopMax": 0.25
+    },
+    "high": {
+      "pctOfOopMax": 1
+    }
+  },
+  "employerPremium": {
+    "single": 9804,
+    "family": 28303,
+    "employeeShareSingle": 1672,
+    "employeeShareFamily": 7471
+  }
+}

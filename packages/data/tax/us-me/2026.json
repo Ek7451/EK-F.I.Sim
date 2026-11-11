@@ -1,0 +1,121 @@
+{
+  "header": {
+    "source": "https://www.maine.gov/revenue/sites/maine.gov.revenue/files/2026-05/ind_tax_rate_sched_2026_rev.pdf",
+    "publisher": "Maine Revenue Services",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "36 M.R.S. § 5111 sub-§§ 1-F, 2-F, 3-F (rates) and income tax surcharge enacted by P.L. 2025, ch. 650, Pt. N",
+      "36 M.R.S. § 5124-C (standard deduction)",
+      "36 M.R.S. § 5126-A (personal exemption)",
+      "36 M.R.S. § 5403 (indexing)",
+      "36 M.R.S. § 5122(2)(M-2) (pension income deduction)",
+      "36 M.R.S. § 5122(2)(C) (Social Security subtraction)"
+    ],
+    "sha256": "ced7c1f3cfaa013c11502ccec44e2d4efacc5752a60cdf4faddb65d2413c69e3",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. From MRS '2026 Individual Income Tax Rates' (revised 2026-05-20) and the revised 2026 Form 1040ES-ME (July 2026). 2026 law change: a new 2% income tax surcharge applies to Maine taxable income above $1,000,000 (single), $750,000 (MFS) or $1,500,000 (MFJ and HOH), indexed from 2027. Because the threshold varies by filing status it is encoded here as a fourth bracket at 9.15% (7.15% + 2%) and NOT as a `surtax` entry. The same law set the 2026 standard deduction at $15,700 single/MFS, $23,550 HOH, $31,400 MFJ (Tax Foundation's January 2026 table shows the superseded $8,350/$16,700). The standard (or itemized) deduction phases out for Maine AGI above $102,250 (single/MFS, per the 2026 Form 1040ES-ME; HOH and MFJ thresholds are about 1.5x and 2x) over a range of about $75,000 (about $112,500 HOH, $150,000 MFJ). Personal exemption $5,300 for taxpayer and spouse only (dependents get a credit instead), phased out above Maine AGI $341,000 (single). Additional standard deduction for age 65+/blind follows IRC § 63(c)(3): $2,050 unmarried, $1,650 per married spouse. Social Security and Railroad Retirement benefits are fully exempt. Pension income deduction: up to $49,824 per person for 2026 (the maximum annual Social Security benefit at full retirement age) of pension, 401(k)/403(b)/457 and IRA distributions, any age, REDUCED by Social Security and Railroad Retirement benefits the recipient received; military retirement fully exempt.",
+    "flags": {
+      "brackets": "top 9.15% bracket is the 7.15% rate plus the 2026 2% surcharge (thresholds 1,000,000 single / 750,000 MFS / 1,500,000 MFJ and HOH); no separate surtax entry",
+      "standardDeduction": "simplified: maximum shown; phases out over Maine AGI 102,250-177,250 single/MFS (about 153,375-265,875 HOH, 204,500-354,500 MFJ)",
+      "personalExemption": "simplified: phases out above Maine AGI 341,000 (single); taxpayer and spouse only, dependents receive a credit",
+      "seniorExtraDeduction": "simplified: 2,050 if unmarried; 1,650 per spouse if married",
+      "retirementIncomeExclusion": "simplified: 49,824 cap is reduced dollar-for-dollar by the person's Social Security/Railroad Retirement benefits"
+    }
+  },
+  "year": 2026,
+  "state": "ME",
+  "name": "Maine",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 27400,
+        "rate": 0.058
+      },
+      {
+        "upTo": 64850,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0715
+      },
+      {
+        "upTo": null,
+        "rate": 0.0915
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 54850,
+        "rate": 0.058
+      },
+      {
+        "upTo": 129750,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 1500000,
+        "rate": 0.0715
+      },
+      {
+        "upTo": null,
+        "rate": 0.0915
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 27400,
+        "rate": 0.058
+      },
+      {
+        "upTo": 64850,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 750000,
+        "rate": 0.0715
+      },
+      {
+        "upTo": null,
+        "rate": 0.0915
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 41100,
+        "rate": 0.058
+      },
+      {
+        "upTo": 97300,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 1500000,
+        "rate": 0.0715
+      },
+      {
+        "upTo": null,
+        "rate": 0.0915
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 15700,
+    "mfj": 31400,
+    "mfs": 15700,
+    "hoh": 23550
+  },
+  "personalExemption": 5300,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 2050,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 49824,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

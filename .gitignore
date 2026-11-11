@@ -1,0 +1,19 @@
+.playwright-mcp/
+__pycache__/
+node_modules/
+dist/
+dev-dist/
+.wrangler/
+.env
+.env.*
+!.env.example
+*.tsbuildinfo
+test-results/
+playwright-report/
+coverage/
+tools/ingest/.cache/
+# Third-party copyrighted reference material (plan §10.1, O2): never committed or bundled.
+research/
+.venv/
+.lighthouseci/
+packages/engine/bench/latest.json

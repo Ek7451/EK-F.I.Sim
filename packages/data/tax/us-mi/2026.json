@@ -1,0 +1,68 @@
+{
+  "header": {
+    "source": "https://www.michigan.gov/taxes/-/media/Project/Websites/taxes/Forms/SUW/TY2026/446_Withholding-Guide_2026.pdf",
+    "publisher": "Michigan Department of Treasury (Form 446, 2026 Michigan Income Tax Withholding Guide)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "MCL 206.51 (4.25% rate)",
+      "MCL 206.30 (personal exemption, indexed; retirement and pension subtraction, subsections (9)-(11))",
+      "Public Act 4 of 2023 (Lowering MI Costs Plan)",
+      "Public Act 24 of 2025",
+      "City Income Tax Act, MCL 141.501 et seq."
+    ],
+    "sha256": "e30fd53f9bab43d86583b26b05b36644ce4fb455918b7e9ad303f806ccba4641",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate and exemption: Treasury 2026 Withholding Guide: \"Withholding Rate: 4.25% Personal Exemption Amount: $5,900\". No standard deduction; the personal exemption is $5,900 per taxpayer, spouse and dependent for 2026 (indexed). Starts from federal AGI. Social Security benefits are not taxed. Retirement/pension subtraction: 2026 is the first year of the fully phased-in Lowering MI Costs Plan (PA 4 of 2023; Treasury: \"2026 (and beyond) ... up to 100%\") - regardless of birth year a taxpayer may subtract all qualifying PUBLIC pension benefits, and private retirement benefits (pensions, IRA distributions, most defined-contribution plan payments) \"up to the remaining balance of $67,610 if single or married filing separately, or $135,220 if married and filing a joint return\" for 2026 (Form 446); public benefits subtracted reduce that cap, which is CPI-indexed. Alternative elections not modeled: the birth-year tier rules, including the Michigan standard deduction against all income for taxpayers born after 1952 who have reached age 67, and the public-safety retiree subtraction; PA 24 of 2025 lets those 67+ claim both that standard deduction and the Social Security deduction for 2026-2028. NOT MODELED: city income taxes levied by a number of Michigan cities (e.g. Detroit) on residents and on nonresidents working there. No capital-gains exclusion. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: $67,610 per person ($135,220 joint) cap on private retirement income; public pensions are fully subtractable but count against the cap; minAge 59 approximates the qualified-distribution requirement (pension benefits can qualify earlier); birth-year tier and age-67 standard-deduction elections not modeled"
+    }
+  },
+  "year": 2026,
+  "state": "MI",
+  "name": "Michigan",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.0425
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.0425
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.0425
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.0425
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 5900,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 67610,
+    "minAge": 59
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

@@ -1,0 +1,46 @@
+{
+  "header": {
+    "source": "https://dor.wa.gov/taxes-rates/income-tax",
+    "publisher": "Washington State Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "RCW 82.87 (capital gains excise tax; ESSB 5096, 2021)",
+      "ESSB 5813, Laws of 2025 ch. 421 (tiered capital gains rate from tax year 2025)",
+      "SB 6346 (2026) (9.9% income tax on income over $1 million, effective Jan 1 2028)"
+    ],
+    "sha256": "4b561e5359d1d4f623f4fbbca31d23438a6adcd4a8f0b47abd36ac56315b1334",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Washington DOR: \"Washington does not currently have an individual income tax.\" No tax on wages, interest, dividends, pensions or Social Security in 2026, so kind is \"none\". NOT EXPRESSIBLE IN THIS SCHEMA: Washington levies a capital gains EXCISE tax (RCW 82.87) on net long-term capital gains allocated to Washington: 7% on the first $1,000,000 of taxable gains and 9.9% (7% plus an additional 2.9%) on the excess (tiered from tax year 2025), after an annual standard deduction per individual OR per married couple/domestic partnership (not doubled for couples): $270,000 for 2024 and $278,000 for 2025. The deduction is inflation-adjusted annually and the 2026 amount had not been published by DOR on the retrieval date. Real estate, assets held in retirement accounts and several other asset classes are exempt; a charitable deduction applies above a floor (capped at $111,000 in 2025). Future law: SB 6346 (signed March 30, 2026) imposes a 9.9% income tax on adjusted gross income above $1 million beginning January 1, 2028 (first returns due 2029); it does not apply to 2026. The WA Cares payroll premium (0.58% of wages) is also outside this schema. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "longTermGainExclusionPct": "not applicable: no income tax, but a separate 7% / 9.9% capital-gains excise applies above an annual standard deduction (2025: $278,000; 2026 amount not yet published) - see notes; the engine needs a separate rule for it"
+    }
+  },
+  "year": 2026,
+  "state": "WA",
+  "name": "Washington",
+  "kind": "none",
+  "brackets": {
+    "single": [],
+    "mfj": [],
+    "mfs": [],
+    "hoh": []
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

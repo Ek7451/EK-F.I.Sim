@@ -1,0 +1,153 @@
+{
+  "header": {
+    "source": "https://www.nmlegis.gov/Sessions/24%20Regular/final/HB0252.pdf",
+    "publisher": "New Mexico Legislature (Laws 2024, ch. 67); New Mexico Taxation and Revenue Department",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "NMSA 1978 7-2-7 as amended by Laws 2024, ch. 67 (H.B. 252), sec. 5 - rates for any taxable year beginning on or after January 1, 2025",
+      "NMSA 1978 7-2-2 (net income: federal AGI less federal standard or itemized deduction)",
+      "NMSA 1978 7-2-5.2 (exemption for persons 65 or older or blind)",
+      "NMSA 1978 7-2-5.14 (Social Security income exemption)",
+      "NMSA 1978 7-2-34 (net capital gain deduction, as amended by H.B. 252)",
+      "NMSA 1978 7-2-39 (deduction for dependents)",
+      "IRS Rev. Proc. 2025-32 / P.L. 119-21 (2026 federal standard deduction amounts)"
+    ],
+    "sha256": "e5cc5acdea36f8afdbf844f171d9a0ac058f45b5bcc244ebf2d3ad694893fe70",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Brackets hand-transcribed from the enrolled text of H.B. 252 (2024), which sets the schedule for all taxable years beginning on or after January 1, 2025; sha256 is of the canonical body. The Taxation and Revenue Department's 2026 PIT-ES/PIT-1 materials could not be located at retrieval; the 2025 PIT-1 and PIT-ADJ instructions were used for the deduction rules, and the 2026 omnibus tax act (S.B. 151, Laws 2026) was checked and makes no change to personal income tax rates, brackets or these exemptions. Head of household and surviving spouse use the joint schedule. New Mexico starts from federal AGI and then subtracts the federal standard (or itemized) deduction actually allowed on the federal return (PIT-1 line 12); the 2026 federal basic standard deduction amounts ($16,100 single/MFS, $32,200 MFJ, $24,150 HoH) are encoded as standardDeduction. The federal additional standard deduction for age 65+/blind ($2,050 unmarried, $1,650 married in 2026) also flows through but is not included in seniorExtraDeduction. seniorExtraDeduction is the state exemption for persons 65+ (or blind) at its MAXIMUM of $8,000 per person; it is income-limited and steps down to zero above federal AGI of $28,500 single / $51,000 MFJ-HoH (full $8,000 only up to $18,000 single / $30,000 joint). Social Security: federally taxable benefits are fully exempt when federal AGI is at or below $100,000 single, $150,000 MFJ/HoH/surviving spouse, $75,000 MFS; above the threshold benefits are fully taxable (cliff, no phase-out). Capital gains: deduction of up to $2,500 of net capital gain (or 40% of up to $1,000,000 of gain from the sale of a New Mexico business); no percentage exclusion for ordinary investment gains. No general pension/IRA exclusion (armed forces retirement pay has its own exemption). Also not modelled: $4,000 deduction per dependent beyond the first; low- and middle-income exemption (up to $2,500 per exemption, AGI up to $36,667 single / $55,000 joint); rebates and credits. Brackets are not inflation-indexed (the embedded federal standard deduction is). No local income taxes.",
+    "flags": {
+      "seniorExtraDeduction": "simplified: maximum $8,000 per person 65+; income-limited, zero above federal AGI $28,500 single / $51,000 MFJ-HoH",
+      "taxesSocialSecurity": "partial: exempt if federal AGI <= $100,000 single, $150,000 MFJ/HoH, $75,000 MFS; fully taxable above (cliff)",
+      "longTermGainExclusionPct": "simplified: flat deduction of up to $2,500 of net capital gain per return (not a percentage); 40% only for sale of a New Mexico business",
+      "standardDeduction": "federal 2026 basic standard deduction (state conforms via PIT-1 line 12); 2026 TRD forms not yet located"
+    }
+  },
+  "year": 2026,
+  "state": "NM",
+  "name": "New Mexico",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 5500,
+        "rate": 0.015
+      },
+      {
+        "upTo": 16500,
+        "rate": 0.032
+      },
+      {
+        "upTo": 33500,
+        "rate": 0.043
+      },
+      {
+        "upTo": 66500,
+        "rate": 0.047
+      },
+      {
+        "upTo": 210000,
+        "rate": 0.049
+      },
+      {
+        "upTo": null,
+        "rate": 0.059
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 8000,
+        "rate": 0.015
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.032
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.043
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.047
+      },
+      {
+        "upTo": 315000,
+        "rate": 0.049
+      },
+      {
+        "upTo": null,
+        "rate": 0.059
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 4000,
+        "rate": 0.015
+      },
+      {
+        "upTo": 12500,
+        "rate": 0.032
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.043
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.047
+      },
+      {
+        "upTo": 157500,
+        "rate": 0.049
+      },
+      {
+        "upTo": null,
+        "rate": 0.059
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 8000,
+        "rate": 0.015
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.032
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.043
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.047
+      },
+      {
+        "upTo": 315000,
+        "rate": 0.049
+      },
+      {
+        "upTo": null,
+        "rate": 0.059
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 16100,
+    "mfj": 32200,
+    "mfs": 16100,
+    "hoh": 24150
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 8000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

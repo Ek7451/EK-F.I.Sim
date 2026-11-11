@@ -1,0 +1,14 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "name": "@fisim/e2e",
+  "scripts": {
+    "test": "playwright test",
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.10.1",
+    "@playwright/test": "^1.48.2"
+  }
+}

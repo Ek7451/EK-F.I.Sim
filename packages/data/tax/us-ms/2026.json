@@ -1,0 +1,84 @@
+{
+  "header": {
+    "source": "https://www.dor.ms.gov/individual/tax-rates",
+    "publisher": "Mississippi Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Miss. Code Ann. § 27-7-5 (rate: 4% for 2026 on taxable income over $10,000; H.B. 531 of 2022 and H.B. 1 of 2025)",
+      "Miss. Code Ann. § 27-7-21 (exemptions)",
+      "Miss. Code Ann. § 27-7-17 (standard deduction)",
+      "Miss. Code Ann. § 27-7-15 (retirement income and Social Security exclusions)"
+    ],
+    "sha256": "3d540eb932b2e04f5a0e34056050444a999af8c490ddf91115f7716f905cd16a",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: 4% for tax year 2026 on taxable income above $10,000; the first $10,000 is taxed at 0% (Mississippi DOR tax rates page; scheduled 3.75% in 2027, then 3.5%, 3.25% and 3% by 2030 under H.B. 1 of 2025). The $10,000 zero band is encoded as a 0% bracket and is the same for every filing status; kind stays \"flat\". Standard deduction: $2,300 single, $4,600 married joint/combined, $2,300 married separate, $3,400 head of family. Personal exemption by filing status: $6,000 single, $12,000 married (i.e. $6,000 per spouse), $6,000 married separate, $8,000 head of family (personalExemption = 6000 per person; the $8,000 head-of-family amount is not expressible); additional $1,500 for each dependent, each taxpayer/spouse over 65 (seniorExtraDeduction) and each blind taxpayer/spouse. Starts from federal AGI as an approximation of Mississippi gross income. Social Security benefits are not taxed. Retirement income, pensions and annuities are not taxed once the recipient has met the retirement plan requirements; \"early distributions are not considered retirement income and may be subject to tax\" (DOR FAQ) - minAge 59 approximates that condition. No general capital-gains exclusion. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: all qualifying retirement income exempt once plan retirement requirements are met; minAge 59 approximates the early-distribution rule",
+      "personalExemption": "simplified: $6,000 per person; head of family exemption is $8,000"
+    }
+  },
+  "year": 2026,
+  "state": "MS",
+  "name": "Mississippi",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 10000,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.04
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 10000,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.04
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 10000,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.04
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 10000,
+        "rate": 0
+      },
+      {
+        "upTo": null,
+        "rate": 0.04
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 2300,
+    "mfj": 4600,
+    "mfs": 2300,
+    "hoh": 3400
+  },
+  "personalExemption": 6000,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1500,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": "all",
+    "minAge": 59
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

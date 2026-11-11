@@ -1,0 +1,145 @@
+{
+  "header": {
+    "source": "https://www.cms.gov/newsroom/fact-sheets/2026-medicare-parts-b-premiums-deductibles",
+    "publisher": "Centers for Medicare & Medicaid Services",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "CMS fact sheet \"2026 Medicare Parts A & B Premiums and Deductibles\" (2025-11-14)",
+      "42 U.S.C. 1395r(i) (IRMAA)",
+      "42 U.S.C. 1395w-113(a)(7) (Part D IRMAA)",
+      "2026 Medicare Trustees Report, Table V.E2 (Part D base beneficiary premium $38.99, deductible $615, out-of-pocket threshold $2,100)"
+    ],
+    "sha256": "fe508573d716b23961d25dd0ea47574412d7bf347ba482741aec1d1b4d063d28",
+    "schema": "medicare.v1",
+    "notes": "Parts A/B amounts and all IRMAA tiers transcribed from the CMS fact sheet (HTML). Part D parameters from the 2026 Medicare Trustees Report Table V.E2 and the CY2026 Rate Announcement. The `defaults` block is NOT law: it holds editable planning estimates (benchmarks) that the user can override. IRMAA `magiOver` semantics: the top tier legally starts AT the threshold (\"greater than or equal to\" $500,000 / $750,000; MFS second tier ends \"less than\" its upper bound), all other tiers start ABOVE it. Premiums are dollars and cents. sha256 is of the raw source document as downloaded.",
+    "flags": {
+      "defaults.medigapGMonthlyAt65": "estimate; consumer rate surveys for a 65-year-old range about $150-$190/month (2026); varies widely by state and insurer",
+      "defaults.medigapNMonthlyAt65": "estimate; consumer rate surveys range about $120-$140/month (2026)",
+      "defaults.medigapAgeRating": "assumption (attained-age rating of roughly 2-3% a year above trend); not from a primary source",
+      "defaults.advantageMonthly": "CMS projected enrollment-weighted average MA premium for 2026 (press release 2026-09-28)",
+      "defaults.advantageTypicalOop": "assumption; not from a primary source",
+      "defaults.advantageMaxOop": "KFF enrollment-weighted average in-network out-of-pocket limit for 2026 ($5,421); the federal ceiling is $9,250",
+      "defaults.partDPlanMonthly": "CMS projected average stand-alone PDP total premium for 2026 (press release 2026-09-28)",
+      "defaults.dentalVisionHearingAnnual": "assumption; not from a primary source",
+      "defaults.medigapGTypicalOop": "Plan G leaves only the Part B deductible",
+      "defaults.medigapNTypicalOop": "assumption: Part B deductible plus about six $20 office-visit copays",
+      "defaults.partDTypicalOop": "assumption; `high` is the statutory out-of-pocket cap"
+    }
+  },
+  "year": 2026,
+  "partB": {
+    "standardMonthlyPremium": 202.9,
+    "annualDeductible": 283
+  },
+  "partA": {
+    "premiumUnder30Quarters": 565,
+    "premium30to39Quarters": 311,
+    "inpatientDeductible": 1736
+  },
+  "partD": {
+    "nationalBaseBeneficiaryPremium": 38.99,
+    "outOfPocketCap": 2100,
+    "deductibleMax": 615
+  },
+  "irmaa": {
+    "single": [
+      {
+        "magiOver": 0,
+        "partBMonthly": 202.9,
+        "partDSurchargeMonthly": 0
+      },
+      {
+        "magiOver": 109000,
+        "partBMonthly": 284.1,
+        "partDSurchargeMonthly": 14.5
+      },
+      {
+        "magiOver": 137000,
+        "partBMonthly": 405.8,
+        "partDSurchargeMonthly": 37.5
+      },
+      {
+        "magiOver": 171000,
+        "partBMonthly": 527.5,
+        "partDSurchargeMonthly": 60.4
+      },
+      {
+        "magiOver": 205000,
+        "partBMonthly": 649.2,
+        "partDSurchargeMonthly": 83.3
+      },
+      {
+        "magiOver": 500000,
+        "partBMonthly": 689.9,
+        "partDSurchargeMonthly": 91
+      }
+    ],
+    "mfj": [
+      {
+        "magiOver": 0,
+        "partBMonthly": 202.9,
+        "partDSurchargeMonthly": 0
+      },
+      {
+        "magiOver": 218000,
+        "partBMonthly": 284.1,
+        "partDSurchargeMonthly": 14.5
+      },
+      {
+        "magiOver": 274000,
+        "partBMonthly": 405.8,
+        "partDSurchargeMonthly": 37.5
+      },
+      {
+        "magiOver": 342000,
+        "partBMonthly": 527.5,
+        "partDSurchargeMonthly": 60.4
+      },
+      {
+        "magiOver": 410000,
+        "partBMonthly": 649.2,
+        "partDSurchargeMonthly": 83.3
+      },
+      {
+        "magiOver": 750000,
+        "partBMonthly": 689.9,
+        "partDSurchargeMonthly": 91
+      }
+    ],
+    "mfs": [
+      {
+        "magiOver": 0,
+        "partBMonthly": 202.9,
+        "partDSurchargeMonthly": 0
+      },
+      {
+        "magiOver": 109000,
+        "partBMonthly": 649.2,
+        "partDSurchargeMonthly": 83.3
+      },
+      {
+        "magiOver": 391000,
+        "partBMonthly": 689.9,
+        "partDSurchargeMonthly": 91
+      }
+    ]
+  },
+  "defaults": {
+    "medigapGMonthlyAt65": 170,
+    "medigapNMonthlyAt65": 130,
+    "medigapAgeRating": 0.025,
+    "advantageMonthly": 14.37,
+    "advantageTypicalOop": 1500,
+    "advantageMaxOop": 5421,
+    "partDPlanMonthly": 35.09,
+    "dentalVisionHearingAnnual": 1000,
+    "medigapGTypicalOop": 283,
+    "medigapNTypicalOop": 400,
+    "partDTypicalOop": {
+      "low": 100,
+      "typical": 600,
+      "high": 2100
+    }
+  }
+}

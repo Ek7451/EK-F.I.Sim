@@ -1,0 +1,115 @@
+{
+  "header": {
+    "source": "https://www.tax.virginia.gov/sites/default/files/taxforms/individual-income-tax/2026/760es-2026.pdf",
+    "publisher": "Virginia Department of Taxation",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Va. Code 58.1-320 (rates)",
+      "Va. Code 58.1-322.03 (standard deduction $8,750 / $17,500 for taxable year 2026; rises to $9,200 / $18,400 for 2027 and $9,300 / $18,600 for 2028-2029 under the 2026 Appropriation Act, HB 30, Special Session I ch. 1; personal exemptions $930 and $800 age 65+/blind; $12,000 age deduction)",
+      "Va. Code 58.1-322.02 (Social Security subtraction)"
+    ],
+    "sha256": "23a600f517203b3c59552d6ecfed97c3770dd87078f74a1795d93e79f75bde2c",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Rate schedule and exemption amounts ($930 personal; $800 additional for age 65+ or blind) are from the 2026 Form 760ES; standard deduction from https://www.tax.virginia.gov/deductions and Virginia Tax legislative summary 26-82 (2026 unchanged at $8,750 single/MFS and $17,500 MFJ; the increase begins in 2027); age deduction and Social Security rules from https://www.tax.virginia.gov/subtractions; cross-checked against Tax Foundation 2026. One rate schedule applies to all filing statuses. Virginia has no head-of-household status (such filers use the single amounts). Starting point is federal AGI with Virginia additions/subtractions. Social Security and Tier 1 Railroad Retirement are fully subtracted. Age 65+: seniorExtraDeduction = $12,800 = the $12,000 age deduction plus the $800 additional personal exemption. The $12,000 age deduction applies to income of any kind (it is not a retirement-income exclusion, so retirementIncomeExclusion is 0), but for taxpayers born after 1939-01-01 it is reduced $1 for every $1 that adjusted federal AGI (federal AGI minus taxable Social Security) exceeds $50,000 (single) or $75,000 (married, combined income, also for MFS) - i.e. fully gone at AFAGI $62,000 for a single filer and $99,000 for a couple who are both 65+. A filer who used the federal standard deduction must use the Virginia standard deduction. Not modeled: spouse tax adjustment, military retirement subtraction, other subtractions and credits. Brackets and exemptions are not indexed.",
+    "flags": {
+      "seniorExtraDeduction": "simplified: $12,000 age deduction (reduced $1-for-$1 above AFAGI $50,000 single / $75,000 married) + $800 exemption (no phase-out); the engine will overstate the deduction for seniors above those incomes",
+      "standardDeduction.hoh": "Virginia has no HOH status; single amount used"
+    }
+  },
+  "year": 2026,
+  "state": "VA",
+  "name": "Virginia",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 3000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 17000,
+        "rate": 0.05
+      },
+      {
+        "upTo": null,
+        "rate": 0.0575
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 3000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 17000,
+        "rate": 0.05
+      },
+      {
+        "upTo": null,
+        "rate": 0.0575
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 3000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 17000,
+        "rate": 0.05
+      },
+      {
+        "upTo": null,
+        "rate": 0.0575
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 3000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.03
+      },
+      {
+        "upTo": 17000,
+        "rate": 0.05
+      },
+      {
+        "upTo": null,
+        "rate": 0.0575
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 8750,
+    "mfj": 17500,
+    "mfs": 8750,
+    "hoh": 8750
+  },
+  "personalExemption": 930,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 12800,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

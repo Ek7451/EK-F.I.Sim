@@ -1,0 +1,136 @@
+{
+  "header": {
+    "source": "https://arkleg.state.ar.us/Home/FTPDocument?path=%2FACTS%2F2026S1%2FPublic%2FACT1.pdf",
+    "publisher": "Arkansas General Assembly / Arkansas Department of Finance and Administration",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Ark. Code § 26-51-201(a)(4) as amended by Act 1 of the First Extraordinary Session of 2026 (HB 1001, approved 2026-05-06)",
+      "Ark. Code § 26-51-201(d) (annual indexing)",
+      "Ark. Code § 26-51-430 (standard deduction)",
+      "Ark. Code § 26-51-501 (personal tax credits)",
+      "Ark. Code § 26-51-307 ($6,000 retirement exemption; Social Security exempt)",
+      "Ark. Code § 26-51-815 (capital gains)"
+    ],
+    "sha256": "5fba626c283e3564f66da3d1ed6774b7c7c9ad488be850bc95cfc1e8135a71f0",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Brackets are the statutory tax-year-2026 table enacted by Act 1 of the May 2026 special session, which cut the top rate from 3.9% to 3.7% retroactive to 2026-01-01 (Tax Foundation's January 2026 table still shows 3.9%). Arkansas has TWO tables chosen by total net income: the table encoded here applies to net income <= $94,700 (0% to $5,599, 2% to $11,199, 3% to $15,999, 3.4% to $26,399, 3.7% to $94,700). Taxpayers with net income > $94,700 instead use: 2% on $0-$4,700 and 3.7% above, less a bracket adjustment of $290 at $94,701-$94,800 declining $10 per $100 to $0 above $97,600. At high incomes the upper table yields about $290 more tax than the encoded table. Same table for every filing status; married couples may file separately on the same return (each spouse taxed individually), which usually lowers tax. Standard deduction $2,470 per taxpayer ($4,940 MFJ) and $29 personal tax credit per exemption are from the DFA Withholding Tax Formula effective 01/01/2026 (indexed 2026 amounts; Tax Foundation 2026 agrees). Extra $29 credit for age 65+ (or a $29 '65 special' credit if not claiming a retirement exemption) is a credit, not a deduction. Starting point is Arkansas's own gross-income computation (federalAGI used as proxy). Social Security fully exempt. First $6,000 of employer-sponsored pension income is exempt at any age; IRA distributions qualify only after age 59 1/2; one $6,000 total per taxpayer. 50% of net long-term capital gain is exempt (gain above $10 million fully exempt).",
+    "flags": {
+      "brackets": "simplified: table for net income <= 94,700; above that a second table (2% to 4,700, then 3.7%, no 0% band) applies with a phase-in adjustment through 97,600",
+      "retirementIncomeExclusion": "simplified: 6,000 at any age for employer pensions; IRA distributions only after 59 1/2; military retirement fully exempt",
+      "seniorExtraDeduction": "65+ benefit is an additional 29 tax credit, not a deduction",
+      "startingPoint": "simplified: Arkansas gross income is state-defined, not federal AGI"
+    }
+  },
+  "year": 2026,
+  "state": "AR",
+  "name": "Arkansas",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 5599,
+        "rate": 0
+      },
+      {
+        "upTo": 11199,
+        "rate": 0.02
+      },
+      {
+        "upTo": 15999,
+        "rate": 0.03
+      },
+      {
+        "upTo": 26399,
+        "rate": 0.034
+      },
+      {
+        "upTo": null,
+        "rate": 0.037
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 5599,
+        "rate": 0
+      },
+      {
+        "upTo": 11199,
+        "rate": 0.02
+      },
+      {
+        "upTo": 15999,
+        "rate": 0.03
+      },
+      {
+        "upTo": 26399,
+        "rate": 0.034
+      },
+      {
+        "upTo": null,
+        "rate": 0.037
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 5599,
+        "rate": 0
+      },
+      {
+        "upTo": 11199,
+        "rate": 0.02
+      },
+      {
+        "upTo": 15999,
+        "rate": 0.03
+      },
+      {
+        "upTo": 26399,
+        "rate": 0.034
+      },
+      {
+        "upTo": null,
+        "rate": 0.037
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 5599,
+        "rate": 0
+      },
+      {
+        "upTo": 11199,
+        "rate": 0.02
+      },
+      {
+        "upTo": 15999,
+        "rate": 0.03
+      },
+      {
+        "upTo": 26399,
+        "rate": 0.034
+      },
+      {
+        "upTo": null,
+        "rate": 0.037
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 2470,
+    "mfj": 4940,
+    "mfs": 2470,
+    "hoh": 2470
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 29,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 6000,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0.5,
+  "indexed": true
+}

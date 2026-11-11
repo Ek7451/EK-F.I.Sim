@@ -1,0 +1,248 @@
+{
+  "header": {
+    "source": "https://files.hawaii.gov/tax/news/announce/ann24-03.pdf",
+    "publisher": "Hawaii Department of Taxation",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Act 46, Session Laws of Hawaii 2024 (H.B. 2404)",
+      "Haw. Rev. Stat. 235-51 (rates and brackets)",
+      "Haw. Rev. Stat. 235-2.4 (standard deduction)",
+      "Haw. Rev. Stat. 235-54 (personal exemptions)",
+      "Haw. Rev. Stat. 235-7(a)(2),(3) (pension and Social Security exclusions)",
+      "Haw. Rev. Stat. 235-51(f) (7.25% maximum rate on net capital gain)",
+      "Act 24, Session Laws of Hawaii 2026 (S.B. 3125) - changes begin tax year 2027",
+      "Department of Taxation Announcement No. 2024-03"
+    ],
+    "sha256": "cc27884681aae2b9a8a772034ff155e469d6671d8b966b9370614aeb1ad13fe9",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from Department of Taxation Announcement No. 2024-03 (Act 46, SLH 2024) and cross-checked against the Department's May 2026 Tax Review Commission legislative update (\"Actual 2025-2026 tax schedule - Act 46\"); sha256 is of the canonical body. Under Act 46 the bracket schedule that took effect in tax year 2025 also applies in 2026, and the standard deduction rises in 2026 to $8,000 single/MFS, $12,000 HoH, $16,000 joint/surviving spouse (Tax Foundation's 2026 table still shows the 2025 $4,400/$8,800 and is out of date on this point). Personal exemption $1,144 per person; a taxpayer or spouse age 65+ gets one additional $1,144 exemption (encoded as seniorExtraDeduction). Social Security is not taxed. Pensions: distributions from employer-funded pension plans and government retirement systems (including the employer-contribution share of defined-contribution plans) are exempt; distributions attributable to employee elective deferrals (401(k), 457, TSP) and from self-funded IRAs are taxable. retirementIncomeExclusion is therefore encoded as 0 for the 401(k)/IRA case - employer-funded pension income should be treated as fully exempt. Net long-term capital gains are taxed at a maximum rate of 7.25% (alternative tax), not expressible in this schema. Brackets and deductions are not inflation-indexed; they change only on the statutory schedule: Act 46 widens brackets again in 2027 and 2029 and raises the standard deduction in 2028, 2030 and 2031; Act 24 (SLH 2026) modifies the 2027+ schedule (lower rates on low brackets, freeze above $175,000 single/$350,000 joint, new 13% top bracket) effective January 1, 2027. No local income taxes.",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: employer-funded pensions and government retirement benefits are fully exempt; IRA and employee-deferral (401(k)/457/TSP) distributions are taxable, so 0 is encoded",
+      "longTermGainExclusionPct": "simplified: no exclusion, but net capital gains are capped at a 7.25% alternative rate (not modelled)"
+    }
+  },
+  "year": 2026,
+  "state": "HI",
+  "name": "Hawaii",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 9600,
+        "rate": 0.014
+      },
+      {
+        "upTo": 14400,
+        "rate": 0.032
+      },
+      {
+        "upTo": 19200,
+        "rate": 0.055
+      },
+      {
+        "upTo": 24000,
+        "rate": 0.064
+      },
+      {
+        "upTo": 36000,
+        "rate": 0.068
+      },
+      {
+        "upTo": 48000,
+        "rate": 0.072
+      },
+      {
+        "upTo": 125000,
+        "rate": 0.076
+      },
+      {
+        "upTo": 175000,
+        "rate": 0.079
+      },
+      {
+        "upTo": 225000,
+        "rate": 0.0825
+      },
+      {
+        "upTo": 275000,
+        "rate": 0.09
+      },
+      {
+        "upTo": 325000,
+        "rate": 0.1
+      },
+      {
+        "upTo": null,
+        "rate": 0.11
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 19200,
+        "rate": 0.014
+      },
+      {
+        "upTo": 28800,
+        "rate": 0.032
+      },
+      {
+        "upTo": 38400,
+        "rate": 0.055
+      },
+      {
+        "upTo": 48000,
+        "rate": 0.064
+      },
+      {
+        "upTo": 72000,
+        "rate": 0.068
+      },
+      {
+        "upTo": 96000,
+        "rate": 0.072
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.076
+      },
+      {
+        "upTo": 350000,
+        "rate": 0.079
+      },
+      {
+        "upTo": 450000,
+        "rate": 0.0825
+      },
+      {
+        "upTo": 550000,
+        "rate": 0.09
+      },
+      {
+        "upTo": 650000,
+        "rate": 0.1
+      },
+      {
+        "upTo": null,
+        "rate": 0.11
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 9600,
+        "rate": 0.014
+      },
+      {
+        "upTo": 14400,
+        "rate": 0.032
+      },
+      {
+        "upTo": 19200,
+        "rate": 0.055
+      },
+      {
+        "upTo": 24000,
+        "rate": 0.064
+      },
+      {
+        "upTo": 36000,
+        "rate": 0.068
+      },
+      {
+        "upTo": 48000,
+        "rate": 0.072
+      },
+      {
+        "upTo": 125000,
+        "rate": 0.076
+      },
+      {
+        "upTo": 175000,
+        "rate": 0.079
+      },
+      {
+        "upTo": 225000,
+        "rate": 0.0825
+      },
+      {
+        "upTo": 275000,
+        "rate": 0.09
+      },
+      {
+        "upTo": 325000,
+        "rate": 0.1
+      },
+      {
+        "upTo": null,
+        "rate": 0.11
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 14400,
+        "rate": 0.014
+      },
+      {
+        "upTo": 21600,
+        "rate": 0.032
+      },
+      {
+        "upTo": 28800,
+        "rate": 0.055
+      },
+      {
+        "upTo": 36000,
+        "rate": 0.064
+      },
+      {
+        "upTo": 54000,
+        "rate": 0.068
+      },
+      {
+        "upTo": 72000,
+        "rate": 0.072
+      },
+      {
+        "upTo": 187500,
+        "rate": 0.076
+      },
+      {
+        "upTo": 262500,
+        "rate": 0.079
+      },
+      {
+        "upTo": 337500,
+        "rate": 0.0825
+      },
+      {
+        "upTo": 412500,
+        "rate": 0.09
+      },
+      {
+        "upTo": 487500,
+        "rate": 0.1
+      },
+      {
+        "upTo": null,
+        "rate": 0.11
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 8000,
+    "mfj": 16000,
+    "mfs": 8000,
+    "hoh": 12000
+  },
+  "personalExemption": 1144,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1144,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

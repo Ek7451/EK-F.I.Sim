@@ -1,0 +1,103 @@
+{
+  "header": {
+    "source": "https://www.revenue.alabama.gov/wp-content/uploads/2026/01/whbooklet_0126.pdf",
+    "publisher": "Alabama Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Ala. Code § 40-18-5 (rates)",
+      "Ala. Code § 40-18-15 (deductions, incl. federal income tax and standard deduction)",
+      "Ala. Code § 40-18-19 (exemptions; retirement income)",
+      "Ala. Act 2022-294 ($6,000 retirement exemption at 65)",
+      "2026 Ala. HB 527 (overtime deduction up to $1,000, tax years 2026-2028)"
+    ],
+    "sha256": "085f52c8102ff6eb018b34fa64be34998839a06e7a867d3e2ee0a2c7b2a482a4",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Rates, personal exemption and the standard-deduction schedule are from the ADOR Withholding Tax Tables booklet revised 01/2026 and cross-checked against the 2025 Form 40 booklet and Tax Foundation 2026; all are fixed by statute (not indexed). 2025 bills HB 388 ($12,000 retirement exemption) and HB 389 (larger standard deduction) died and are NOT law. Rates: 2% on first $500 ($1,000 MFJ), 4% on next $2,500 ($5,000 MFJ), 5% above; head of family and MFS use the single schedule. Standard deduction is a sliding scale on Alabama AGI: the maximum shown here (single $3,000, MFJ $8,500, MFS $4,250, head of family $5,200) applies at AGI up to $25,999 ($12,999 MFS) and falls by $25 (single), $175 (MFJ), $88 (MFS) or $135 (HOF) per $500 of AGI ($250 MFS) to a floor of $2,500 (single, MFS, HOF) or $5,000 (MFJ) at AGI of $35,500+ ($17,750+ MFS). Personal exemption: $1,500 single/MFS, $3,000 MFJ and head of family (so HOF gets $3,000, not $1,500). Dependent exemption $1,000 (AGI <= $50,000), $500 ($50,001-$100,000), $300 above. Federal income tax paid is deductible (net federal liability). Starting point is Alabama's own gross-income definition (federalAGI used as the closest proxy). Social Security is fully exempt. Defined-benefit pension income (private, government, military) is fully exempt; in addition taxpayers 65+ may exempt the first $6,000 of other taxable retirement income (IRA/401(k) distributions). Local occupational taxes are excluded.",
+    "flags": {
+      "standardDeduction": "simplified: maximum of AGI sliding scale; floor is 2,500 single/MFS/HOH and 5,000 MFJ at AL AGI >= 35,500 (17,750 MFS)",
+      "personalExemption": "simplified: head of family receives 3,000 rather than 1,500; dependent exemption 1,000/500/300 by AGI not modeled",
+      "retirementIncomeExclusion": "simplified: 6,000 at 65+ covers defined-contribution/IRA income only; defined-benefit pensions are fully exempt at any age",
+      "startingPoint": "simplified: Alabama gross income is state-defined; federal income tax paid is deductible (not modeled)"
+    }
+  },
+  "year": 2026,
+  "state": "AL",
+  "name": "Alabama",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 500,
+        "rate": 0.02
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 1000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 6000,
+        "rate": 0.04
+      },
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 500,
+        "rate": 0.02
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 500,
+        "rate": 0.02
+      },
+      {
+        "upTo": 3000,
+        "rate": 0.04
+      },
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 3000,
+    "mfj": 8500,
+    "mfs": 4250,
+    "hoh": 5200
+  },
+  "personalExemption": 1500,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 6000,
+    "minAge": 65
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

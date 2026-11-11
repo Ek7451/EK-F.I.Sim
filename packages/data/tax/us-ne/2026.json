@@ -1,0 +1,99 @@
+{
+  "header": {
+    "source": "https://revenue.nebraska.gov/sites/default/files/doc/tax-forms/2025/f_1040N-ES.pdf",
+    "publisher": "Nebraska Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Neb. Rev. Stat. § 77-2715.03 (rates; 2023 LB 754 phase-down: top rate 4.55% for 2026, 3.99% for 2027)",
+      "Neb. Rev. Stat. § 77-2716.01 (standard deduction; personal exemption credit)",
+      "Neb. Rev. Stat. § 77-2716(15) (Social Security fully excluded from 2024)"
+    ],
+    "sha256": "62ee4d9ad64bf34c9787e043ae8cc950a276675784c43a5806a714e000dc0a18",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. From the 2026 Form 1040N-ES and cross-checked against the draft 2026 Form 1040N and 2026 Tax Calculation Schedule (drafts dated 8/17/2026). For 2026 the third and fourth statutory brackets share the 4.55% rate under LB 754 (statutory break points $39,900 single / $79,800 MFJ / $59,160 HOH are merged here). The 2026 legislative session did not pause the scheduled cut. Standard deduction: $8,850 single/MFS, $17,700 MFJ, $12,950 HOH; additional amount for 65+/blind $2,050 if unmarried, $1,700 per married spouse. Personal exemption credit $176 per exemption (including dependents), nonrefundable. Social Security benefits included in federal AGI are fully excluded. No general pension/IRA exclusion; military retirement is 100% excluded.",
+    "flags": {
+      "seniorExtraDeduction": "simplified: 2,050 if unmarried; 1,700 per spouse if married",
+      "retirementIncomeExclusion": "simplified: none for private pensions/IRA/401(k); military retirement fully excluded"
+    }
+  },
+  "year": 2026,
+  "state": "NE",
+  "name": "Nebraska",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 4130,
+        "rate": 0.0246
+      },
+      {
+        "upTo": 24760,
+        "rate": 0.0351
+      },
+      {
+        "upTo": null,
+        "rate": 0.0455
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 8250,
+        "rate": 0.0246
+      },
+      {
+        "upTo": 49530,
+        "rate": 0.0351
+      },
+      {
+        "upTo": null,
+        "rate": 0.0455
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 4130,
+        "rate": 0.0246
+      },
+      {
+        "upTo": 24760,
+        "rate": 0.0351
+      },
+      {
+        "upTo": null,
+        "rate": 0.0455
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 7700,
+        "rate": 0.0246
+      },
+      {
+        "upTo": 39620,
+        "rate": 0.0351
+      },
+      {
+        "upTo": null,
+        "rate": 0.0455
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 8850,
+    "mfj": 17700,
+    "mfs": 8850,
+    "hoh": 12950
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 176,
+  "seniorExtraDeduction": 2050,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

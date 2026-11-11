@@ -1,0 +1,37 @@
+# Plan §14.2: Dependabot weekly. GitHub Actions stay pinned to commit SHAs; Dependabot updates the SHA
+# together with the version comment.
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 10
+    groups:
+      dev-dependencies:
+        dependency-type: development
+        update-types: [minor, patch]
+      production-dependencies:
+        dependency-type: production
+        update-types: [minor, patch]
+
+  - package-ecosystem: github-actions
+    directories:
+      - /
+      - /.github/actions/setup
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      actions:
+        patterns: ['*']
+
+  # The Tax-Calculator oracle (test-time only, plan §7.4). An update changes the regenerated fixtures,
+  # so the PR must also commit new tests/validation/fixtures/taxcalc-<year>.json files or the
+  # "Tax-Calculator oracle fixtures" check fails.
+  - package-ecosystem: pip
+    directory: /tests/validation/taxcalc
+    schedule:
+      interval: weekly
+      day: monday

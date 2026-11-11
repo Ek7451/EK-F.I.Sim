@@ -1,0 +1,13 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "name": "@fisim/validation",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "dependencies": {
+    "@fisim/data": "workspace:*",
+    "@fisim/engine": "workspace:*"
+  }
+}

@@ -1,0 +1,70 @@
+{
+  "header": {
+    "source": "https://www.azleg.gov/ars/43/01041.htm",
+    "publisher": "Arizona State Legislature (Arizona Revised Statutes); Arizona Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "A.R.S. § 43-1011 (2.5% flat rate)",
+      "A.R.S. § 43-1041 (standard deduction, as amended by HB 4168 of 2026)",
+      "A.R.S. § 43-1023(E) (age-65 exemption)",
+      "A.R.S. § 43-1022 (subtractions: Social Security, public pensions, 25% of long-term capital gains)",
+      "HB 4168, 57th Leg., 2nd Reg. Sess. (signed June 13, 2026)"
+    ],
+    "sha256": "a7a5279eac3fa051e228bff62cff4245eb8e283312cb8365bacc40e1bcb01147",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: flat 2.5% of Arizona taxable income (starts from federal AGI). Standard deduction: HB 4168 (2026 omnibus tax / conformity bill) reset the statutory base in A.R.S. 43-1041(A) to $15,750 single and MFS, $23,625 head of household, $31,500 joint, retroactive to tax year 2025, and subsection H requires ADOR to adjust these for inflation \"in the same manner\" as the federal basic standard deduction. The 2026 figures here ($16,100 / $24,150 / $32,200) are the federal 2026 basic standard deduction amounts that this rule produces; an ADOR publication of the 2026 amounts was not located on the retrieval date, hence status \"projected\". (Tax Foundation's February 2026 table shows $8,350 / $16,700, which pre-dates HB 4168 and is superseded.) From 2026 a standard-deduction filer may add charitable contributions up to $1,000 ($2,000 joint). Arizona has no personal exemption; seniorExtraDeduction is the $2,100 exemption for each taxpayer/spouse 65 or older (A.R.S. 43-1023(E)); blind $1,500. Dependent credit (not modeled): $125 per dependent under 17 from 2026, $25 for 17 and older, phased out above $200,000 / $400,000 federal AGI. Social Security is fully subtracted. Retirement income: no general exclusion; up to $2,500 of federal civil service and Arizona state/local government pensions, and military retired pay, are subtracted. Long-term capital gains: the 25% subtraction applies only to net LTCG on assets acquired after December 31, 2011. HB 4168 also added subtractions for federally deducted tips, overtime and the federal senior deduction and capped the itemized SALT deduction at $10,000 from 2026. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "standardDeduction": "unverified: 2026 amounts derived from A.R.S. 43-1041(A),(H) (2025 base $15,750 / $23,625 / $31,500 indexed like the federal basic standard deduction); ADOR publication of 2026 amounts not located",
+      "retirementIncomeExclusion": "simplified: no general exclusion; $2,500 for federal/Arizona public pensions and military retired pay not modeled",
+      "longTermGainExclusionPct": "simplified: 25% subtraction applies only to assets acquired after 2011-12-31"
+    }
+  },
+  "year": 2026,
+  "state": "AZ",
+  "name": "Arizona",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 16100,
+    "mfj": 32200,
+    "mfs": 16100,
+    "hoh": 24150
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 2100,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0.25,
+  "indexed": true
+}

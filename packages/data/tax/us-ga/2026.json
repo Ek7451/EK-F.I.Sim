@@ -1,0 +1,67 @@
+{
+  "header": {
+    "source": "https://www.legis.ga.gov/api/legislation/document/20252026/249080",
+    "publisher": "Georgia General Assembly (HB 463 as passed; signed May 11, 2026); Office of the Governor of Georgia",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "HB 463 (2025-2026 Reg. Sess.), signed May 11 2026, applicable to taxable years beginning on or after Jan 1 2026",
+      "O.C.G.A. § 48-7-20(a.1) (rate 4.99%)",
+      "O.C.G.A. § 48-7-26(b) (dependent exemption $5,000)",
+      "O.C.G.A. § 48-7-27(a)(1)(B) (standard deduction); (a)(5) (retirement income exclusion)"
+    ],
+    "sha256": "6d2d1cde8514b306e92ce2d054b10c9574d2996a81b850d68039fe3af7da8b9a",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: HB 463 (signed May 11, 2026) cut the flat rate from 5.19% to 4.99% for taxable years beginning on or after January 1, 2026 (Tax Foundation's February 2026 table shows the superseded 5.19%). Further cuts of 0.125 points per year from 2027 toward 3.99% are subject to revenue triggers. Standard deduction for 2026 (HB 463): $30,000 married filing jointly; $15,000 single, head of household and married filing separately (scheduled to rise $750 / $375 a year from 2027 to $36,000 / $18,000, subject to the same trigger delays - these are scheduled steps, not inflation indexing). No additional standard deduction for age or blindness and no taxpayer/spouse personal exemption; the dependent exemption is $5,000 per dependent for 2026 (rising $125 a year from 2027 to $6,000) - not expressible in this schema. Starts from federal AGI. Social Security is fully excluded. Retirement income exclusion per person: $35,000 at age 62-64 (or permanently disabled), $65,000 at 65 and older (rises to $70,000 for 65+ from 2027); it covers pensions, annuities and investment income plus a limited amount of earned income. HB 463 also excludes up to $1,750 each of qualified overtime and cash tips for a limited period beginning 2026. No capital-gains exclusion.",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: $65,000 per person at 65+; $35,000 at 62-64 or disabled; the exclusion also covers investment income and a limited amount of earned income"
+    }
+  },
+  "year": 2026,
+  "state": "GA",
+  "name": "Georgia",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.0499
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.0499
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.0499
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.0499
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 15000,
+    "mfj": 30000,
+    "mfs": 15000,
+    "hoh": 15000
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 65000,
+    "minAge": 65
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

@@ -1,0 +1,3 @@
+# Copy to .dev.vars for `wrangler dev`. Never uploaded by wrangler; ignored by git.
+# Accepted only while ENVIRONMENT is "local": every request is treated as this user, without a JWT.
+DEV_USER=local-dev-user

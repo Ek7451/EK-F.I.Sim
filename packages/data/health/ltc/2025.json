@@ -1,0 +1,40 @@
+{
+  "header": {
+    "source": "https://www.carescout.com/cost-of-care",
+    "publisher": "CareScout (Genworth) Cost of Care Survey 2025; incidence from HHS ASPE",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "CareScout 2025 Cost of Care Survey, national medians (press release 2026-03-02, https://investor.genworth.com/news-events/press-releases/detail/1054)",
+      "HHS ASPE, Favreault & Dey, \"Long-Term Services and Supports for Older Americans: Risks and Financing\" (2015, revised Feb 2016), Table 2 (https://aspe.hhs.gov/reports/long-term-services-supports-older-americans-risks-financing-research-brief-0)"
+    ],
+    "sha256": "6f082849fb275c07b877418f8065be3e646c650af4f7b50c0936753b6e682a05",
+    "schema": "ltc.v1",
+    "notes": "Annual costs are the survey's headline national medians, cited as benchmarks (survey fielded July-November 2025): in-home non-medical caregiver $35/hour x 44 hours/week = $80,080; assisted living $6,200/month; nursing home semi-private $315/day, private $355/day. CareScout merged homemaker and home health aide into one \"non-medical caregiver\" category. stateFactor is empty (state tables were not copied; the app treats a missing state as 1.0). Incidence: ASPE projects that 42.0% of men and 52.1% of women turning 65 will use some paid LTSS, for an unconditional average of 0.7 / 1.3 years; avgYears here is conditional on any use (0.7/0.420 and 1.3/0.521). A newer ASPE/Urban study (Johnson, 2019) gives 38% / 55%. sha256 is of the canonical JSON body (this file without `header`, JSON.stringify with no whitespace).",
+    "flags": {
+      "incidence.*.avgYears": "derived (unconditional average years / probability of any paid use); ASPE does not publish the conditional figure",
+      "typicalOnsetAge": "assumption; not from a cited source",
+      "stateFactor": "not populated",
+      "annualCost": "third-party survey medians (benchmark, not law); taken from the press release, survey tables not copied"
+    }
+  },
+  "year": 2025,
+  "annualCost": {
+    "homeCare": 80080,
+    "assistedLiving": 74400,
+    "nursingHomeSemiPrivate": 114975,
+    "nursingHomePrivate": 129575
+  },
+  "stateFactor": {},
+  "incidence": {
+    "male": {
+      "probability": 0.42,
+      "avgYears": 1.7
+    },
+    "female": {
+      "probability": 0.521,
+      "avgYears": 2.5
+    }
+  },
+  "typicalOnsetAge": 80
+}

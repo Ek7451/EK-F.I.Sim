@@ -1,0 +1,26 @@
+{
+ "header": {
+  "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+  "publisher": "KFF State Health Facts (analysis of state exchange data)",
+  "retrieved": "2026-11-10",
+  "status": "projected",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102"
+  ],
+  "sha256": "90e5c90ce11c477d03085166ae5a1aeba3c0b4746115021a08be40e1878c62c4",
+  "schema": "slcsp-state.v1",
+  "notes": "APPROXIMATION. VA runs a state-based exchange for plan year 2027 and is not in the CMS HealthCare.gov landscape file; no county-level machine-readable benchmark data was ingested. stateAverageAge21 = KFF average benchmark premium for a 40-year-old ($549/month, weighted by county plan selections) / 1.28 (age-40 factor of the applicable age curve). The real benchmark varies by rating area; the app lets the user enter their own SLCSP. sha256 is of the canonical JSON body (file without header).",
+  "flags": {
+   "stateAverageAge21": "approximated from KFF statewide average (age 40: $549)",
+   "counties": "not available for state-based exchanges"
+  }
+ },
+ "year": 2027,
+ "state": "VA",
+ "exchange": "sbe",
+ "quality": "state-average",
+ "counties": {},
+ "stateAverageAge21": 429.58
+}

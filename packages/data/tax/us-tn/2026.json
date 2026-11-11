@@ -1,0 +1,41 @@
+{
+  "header": {
+    "source": "https://www.tn.gov/revenue/taxes/hall-income-tax.html",
+    "publisher": "Tennessee Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Tenn. Code Ann. Title 67, ch. 2 (Hall income tax on interest and dividends; repealed for tax periods beginning on or after Jan 1 2021)"
+    ],
+    "sha256": "0620df5555f19c66b44b60ec100349323b147a9e454dfc78c4b7d4051174175f",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Tennessee has no tax on wages; its Hall income tax on interest and dividends \"was repealed for tax periods that begin on January 1, 2021, or later\" (Tennessee DOR). Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026)."
+  },
+  "year": 2026,
+  "state": "TN",
+  "name": "Tennessee",
+  "kind": "none",
+  "brackets": {
+    "single": [],
+    "mfj": [],
+    "mfs": [],
+    "hoh": []
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

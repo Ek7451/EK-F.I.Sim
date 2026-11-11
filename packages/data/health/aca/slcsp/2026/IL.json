@@ -1,0 +1,26 @@
+{
+ "header": {
+  "source": "https://www.kff.org/affordable-care-act/state-indicator/marketplace-average-benchmark-premiums/",
+  "publisher": "KFF State Health Facts (analysis of state exchange data)",
+  "retrieved": "2026-11-10",
+  "status": "projected",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102"
+  ],
+  "sha256": "431d946e3f2b269674aad13c8c25f29c7f183b438e6ca32fffe91eb695279202",
+  "schema": "slcsp-state.v1",
+  "notes": "APPROXIMATION. IL runs a state-based exchange for plan year 2026 and is not in the CMS HealthCare.gov landscape file; no county-level machine-readable benchmark data was ingested. stateAverageAge21 = KFF average benchmark premium for a 40-year-old ($646/month, weighted by county plan selections) / 1.28 (age-40 factor of the applicable age curve). The real benchmark varies by rating area; the app lets the user enter their own SLCSP. sha256 is of the canonical JSON body (file without header).",
+  "flags": {
+   "stateAverageAge21": "approximated from KFF statewide average (age 40: $646)",
+   "counties": "not available for state-based exchanges"
+  }
+ },
+ "year": 2026,
+ "state": "IL",
+ "exchange": "sbe",
+ "quality": "state-average",
+ "counties": {},
+ "stateAverageAge21": 505.48
+}

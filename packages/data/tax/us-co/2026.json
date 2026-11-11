@@ -1,0 +1,70 @@
+{
+  "header": {
+    "source": "https://tax.colorado.gov/individual-income-tax-guide",
+    "publisher": "Colorado Department of Revenue; Colorado Legislative Council Staff (September 2026 forecast)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "C.R.S. § 39-22-104 (4.40% rate; Proposition 121 of 2022)",
+      "C.R.S. § 39-22-627 (temporary TABOR rate reduction)",
+      "C.R.S. § 39-22-104(4) (pension/annuity and Social Security subtractions)",
+      "C.R.S. § 39-22-104(3) (add-back of federal deductions for AGI over $300,000)",
+      "Legislative Council Staff Economic & Revenue Forecast, September 2026 (State Controller TABOR certification of Sept 8 2026)"
+    ],
+    "sha256": "3a9aee223c29914b2e269c3635b5b24eb325b30f5d3981569950a533fcd18809",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: flat 4.40% of Colorado taxable income for 2026. The temporary TABOR rate reduction (C.R.S. 39-22-627) does NOT apply to tax year 2026: the State Controller certified on September 8, 2026 that FY 2025-26 revenue fell short of the Referendum C cap, so no TABOR refunds are made for tax year 2026 (LCS September 2026 forecast, https://content.leg.colorado.gov/sites/default/files/2026-09/sept2026-forecast-with-cover-for-remediation-and-posting-accessible.pdf). Starting point is federal taxable income, so the federal standard/itemized deduction is already embedded and standardDeduction is 0 here; there are no state personal exemptions. Taxpayers with federal AGI over $300,000 must add back federal standard/itemized deductions above $1,000 (single) / $2,000 (joint) for 2026 and later (the limits were $12,000 / $16,000 for 2023-2025) - not expressible in this schema. Pension/annuity subtraction (per person; for those under 65 the cap also covers taxable Social Security): $20,000 at age 55-64, $24,000 at age 65+; under 55 only for death benefits. Social Security: age 65+ subtract all federally taxable benefits; age 55-64 subtract all if AGI does not exceed $75,000 (single) / $95,000 (joint), otherwise the $20,000 cap applies; under 55 taxable (except death benefits). Other Colorado additions to federal taxable income are not modeled. No general capital-gains exclusion. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "taxesSocialSecurity": "partial: 65+ fully exempt; 55-64 exempt if AGI <= $75,000 single / $95,000 joint, else combined $20,000 cap with pensions; under 55 taxable",
+      "retirementIncomeExclusion": "simplified: $20,000 per person at 55-64 rises to $24,000 at 65+; cap is shared with taxable Social Security for those under 65",
+      "standardDeduction": "0 because the base starts from federal taxable income; AGI > $300,000 must add back federal deductions above $1,000 single / $2,000 joint (2026+)"
+    }
+  },
+  "year": 2026,
+  "state": "CO",
+  "name": "Colorado",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.044
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.044
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.044
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.044
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalTaxableIncome",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 20000,
+    "minAge": 55
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

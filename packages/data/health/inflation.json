@@ -1,0 +1,33 @@
+{
+  "header": {
+    "source": "https://www.cms.gov/files/zip/nhe-projections-tables.zip",
+    "publisher": "CMS Office of the Actuary, National Health Expenditure Projections 2025-2034",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "CMS National Health Expenditure Projections 2025-2034, Table 1 (per capita NHE; CPI-U)"
+    ],
+    "sha256": "264f822618a5e1829138aea57cc6c8bf45bbaf072a72898fef5547f7ece6cd70",
+    "schema": "health-inflation.v1",
+    "notes": "All values are derived from Table 1 of the CMS NHE projections (historical through 2024, projected 2025-2034). nheProjection = year-over-year growth of per capita national health expenditures, computed from the per capita dollar amounts. defaultNominal = compound annual growth of per capita NHE 2024-2034; excessOverCpi = defaultNominal minus the compound annual CPI-U growth in the same table (2.45%). excessStdDev = sample standard deviation of (per capita NHE growth - CPI-U growth) over the historical years 2014-2024 in the same table (11 observations, including the 2020 pandemic spike and 2022 inflation; historical mean excess 2.28%). Per capita NHE measures total spending per person (price and utilisation), not any one premium. sha256 is of the raw source document as downloaded.",
+    "flags": {
+      "excessStdDev": "derived from 11 historical observations; not a CMS-published statistic",
+      "defaultNominal": "projection (CMS actuaries), not an enacted parameter"
+    }
+  },
+  "defaultNominal": 0.0513,
+  "excessOverCpi": 0.0268,
+  "excessStdDev": 0.031,
+  "nheProjection": {
+    "2025": 0.0654,
+    "2026": 0.0613,
+    "2027": 0.0457,
+    "2028": 0.0497,
+    "2029": 0.0488,
+    "2030": 0.0472,
+    "2031": 0.0476,
+    "2032": 0.0466,
+    "2033": 0.0504,
+    "2034": 0.0504
+  }
+}

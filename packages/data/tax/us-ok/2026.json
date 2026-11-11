@@ -1,0 +1,113 @@
+{
+  "header": {
+    "source": "https://oklahoma.gov/content/dam/ok/en/tax/documents/resources/publications/businesses/withholding-tables/WHTables-2026.pdf",
+    "publisher": "Oklahoma Tax Commission",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "68 O.S. § 2355 as amended by 2025 HB 2764 (three brackets, 4.5% top rate from tax year 2026; revenue-triggered future 0.25-point cuts)",
+      "68 O.S. § 2358 (standard deduction, $1,000 exemption, retirement and Social Security exclusions)"
+    ],
+    "sha256": "f71d9a6c4fb72123fcd9cf076948a17a9bbbfa7713a4cd2a2e893f9993ac0c5b",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Brackets derived from the OTC 2026 Income Tax Withholding Tables (Packet OW-2) annual percentage formula, which embeds the standard deduction (single: 0% to $10,100 = $6,350 + $3,750, then 2.5% to $11,250, 3.5% to $13,550, 4.5% above; married: $20,200 / $22,500 / $27,100), and they match HB 2764 and Tax Foundation 2026. Statutory taxable-income brackets: 0% on the first $3,750 ($7,500 MFJ), 2.5% to $4,900 ($9,800), 3.5% to $7,200 ($14,400), 4.5% above. Head of household and surviving spouse use the MFJ schedule; MFS uses the single schedule. Standard deduction $6,350 single/MFS, $12,700 MFJ, $9,350 HOH (fixed, not indexed). Personal exemption $1,000 per person including dependents (an extra $1,000 for 65+ only at federal AGI <= $15,000 single / $25,000 joint). Social Security benefits included in federal AGI are fully subtracted. Retirement exclusion: up to $10,000 per person of benefits from 401/403/457 plans, IRAs/SEPs and Oklahoma or federal civil-service pensions, no age requirement (early distributions on termination before retirement do not qualify for the government-plan line); CSRS in lieu of Social Security and military retirement are 100% exempt. No rate trigger has taken effect for 2026 (earliest possible is tax year 2028).",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: 10,000 combined cap across government and private plans; no statutory minimum age"
+    }
+  },
+  "year": 2026,
+  "state": "OK",
+  "name": "Oklahoma",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 3750,
+        "rate": 0
+      },
+      {
+        "upTo": 4900,
+        "rate": 0.025
+      },
+      {
+        "upTo": 7200,
+        "rate": 0.035
+      },
+      {
+        "upTo": null,
+        "rate": 0.045
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 7500,
+        "rate": 0
+      },
+      {
+        "upTo": 9800,
+        "rate": 0.025
+      },
+      {
+        "upTo": 14400,
+        "rate": 0.035
+      },
+      {
+        "upTo": null,
+        "rate": 0.045
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 3750,
+        "rate": 0
+      },
+      {
+        "upTo": 4900,
+        "rate": 0.025
+      },
+      {
+        "upTo": 7200,
+        "rate": 0.035
+      },
+      {
+        "upTo": null,
+        "rate": 0.045
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 7500,
+        "rate": 0
+      },
+      {
+        "upTo": 9800,
+        "rate": 0.025
+      },
+      {
+        "upTo": 14400,
+        "rate": 0.035
+      },
+      {
+        "upTo": null,
+        "rate": 0.045
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 6350,
+    "mfj": 12700,
+    "mfs": 6350,
+    "hoh": 9350
+  },
+  "personalExemption": 1000,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 10000,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

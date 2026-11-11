@@ -1,0 +1,167 @@
+{
+  "header": {
+    "source": "https://portal.ct.gov/-/media/drs/forms/2025/income/ct1040es-flat0126.pdf",
+    "publisher": "Connecticut Department of Revenue Services",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Conn. Gen. Stat. 12-700 (rates, 2% phase-out add-back, benefit recapture); 2023 Public Act 23-204 (3%->2% and 5%->4.5% rate cuts from 2024)",
+      "Conn. Gen. Stat. 12-702 (personal exemption)",
+      "Conn. Gen. Stat. 12-703 (personal tax credit)",
+      "Conn. Gen. Stat. 12-701(a)(20)(B) (Social Security, pension/annuity and IRA subtraction modifications)"
+    ],
+    "sha256": "d46c345fe0aecf25f05b347c071b8c93dc4ad902efccb9fabcbbd8db52a99131",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from 2026 Form CT-1040ES (Rev. 01/26): Table A (personal exemptions), Table B (initial tax calculation), pension and annuity phase-out table and Social Security worksheet for the 2026 taxable year; sha256 is of the canonical body. Married filing separately uses the single schedule. Connecticut has NO standard deduction. Its per-return personal exemption is encoded as standardDeduction at the MAXIMUM: $15,000 single, $24,000 MFJ/surviving spouse, $12,000 MFS, $19,000 HoH. The exemption falls $1,000 for each $1,000 of Connecticut AGI above $30,000 single / $48,000 MFJ / $24,000 MFS / $38,000 HoH and is ZERO at CT AGI of $44,000 single / $71,000 MFJ / $35,000 MFS / $56,000 HoH and above - so for most middle- and upper-income filers the true exemption is 0. Further adjustments not expressible here: (a) personal tax credit of 1%-75% of tax for lower AGI (Table E), phasing out with AGI; (b) 2% rate phase-out add-back (Table C): for CT AGI above $56,500 single / $100,500 MFJ the income taxed at 2% is progressively taxed at 4.5%; (c) benefit recapture (Table D): single over $105,000 pays $25 per $5,000 of AGI up to $250, and over $200,000 a further $90 per $5,000 (plus $50 per $5,000 above $500,000) up to $3,150; MFJ over $210,000 pays $50 per $10,000 up to $500, and over $400,000 a further $180 per $10,000 (plus $100 per $10,000 above $1,000,000) up to $6,300 - so high earners effectively pay the top rate on all income. Social Security: fully exempt if federal AGI is under $75,000 (single/MFS) or $100,000 (MFJ/HoH/surviving spouse); above those thresholds at most 25% of benefits is taxable (CT-taxable amount = federally taxable benefits minus 25% of the lesser worksheet amounts). Pension, annuity (401(k)/403(b)/457(b), defined benefit) and - fully phased in for 2026 - traditional IRA distributions: 100% deductible if federal AGI is under $75,000 (single/MFS/HoH) or $100,000 (MFJ); then 85%/70%/55%/40%/25%/10%/5%/2.5% in steps, reaching 0% at $100,000 (single/MFS/HoH; steps of $2,500 from $75,000, last step $95,000-$99,999 = 0) or $150,000 (MFJ; steps of $5,000 from $100,000, 0 from $140,000). No minimum age. Military retirement pay, railroad retirement and (partly) CT teachers' pensions have their own exemptions. No capital gains preference. Brackets are not inflation-indexed. No local income taxes. Property tax credit and CT EITC not modelled.",
+    "flags": {
+      "standardDeduction": "simplified: this is the CT personal exemption (per return) at its maximum; it phases out $1,000 per $1,000 of CT AGI and is zero at $44,000 single / $71,000 MFJ / $35,000 MFS / $56,000 HoH",
+      "personalExemptionCredit": "simplified: CT personal tax credit is 1%-75% of tax based on AGI (Table E), not a per-person amount; not modelled",
+      "brackets": "simplified: 2% phase-out add-back (Table C) and tax benefit recapture (Table D) add up to $3,150 single / $6,300 MFJ-scale amounts at higher AGI; not modelled",
+      "taxesSocialSecurity": "partial: exempt if federal AGI < $75,000 single/MFS or < $100,000 MFJ/HoH; otherwise no more than 25% of benefits taxable",
+      "retirementIncomeExclusion": "simplified: 100% of pension/annuity/IRA income deductible only if federal AGI < $75,000 single/MFS/HoH or < $100,000 MFJ; stepwise phase-out to 0% at $100,000 / $150,000"
+    }
+  },
+  "year": 2026,
+  "state": "CT",
+  "name": "Connecticut",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 10000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.045
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 200000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.069
+      },
+      {
+        "upTo": null,
+        "rate": 0.0699
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 20000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.045
+      },
+      {
+        "upTo": 200000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 400000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.069
+      },
+      {
+        "upTo": null,
+        "rate": 0.0699
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 10000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.045
+      },
+      {
+        "upTo": 100000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 200000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.069
+      },
+      {
+        "upTo": null,
+        "rate": 0.0699
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 16000,
+        "rate": 0.02
+      },
+      {
+        "upTo": 80000,
+        "rate": 0.045
+      },
+      {
+        "upTo": 160000,
+        "rate": 0.055
+      },
+      {
+        "upTo": 320000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 400000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 800000,
+        "rate": 0.069
+      },
+      {
+        "upTo": null,
+        "rate": 0.0699
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 15000,
+    "mfj": 24000,
+    "mfs": 12000,
+    "hoh": 19000
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": "all",
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

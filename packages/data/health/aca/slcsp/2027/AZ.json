@@ -1,0 +1,132 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2027/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "74bc775e60d2427b55bda0e9bbd9f5769924042d52f53cff5b3a615269df024f",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2027. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2027,
+ "state": "AZ",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "04001": {
+   "name": "Apache",
+   "slcspAge21": 894.38,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 701.08,
+   "lowestGoldAge21": 1035.51
+  },
+  "04003": {
+   "name": "Cochise",
+   "slcspAge21": 646.42,
+   "ratingArea": "Rating Area 7",
+   "lowestBronzeAge21": 559.55,
+   "lowestGoldAge21": 708.82
+  },
+  "04005": {
+   "name": "Coconino",
+   "slcspAge21": 720.01,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 623.24,
+   "lowestGoldAge21": 789.51
+  },
+  "04007": {
+   "name": "Gila",
+   "slcspAge21": 498.2,
+   "ratingArea": "Rating Area 5",
+   "lowestBronzeAge21": 390.11,
+   "lowestGoldAge21": 574.72
+  },
+  "04009": {
+   "name": "Graham",
+   "slcspAge21": 641.95,
+   "ratingArea": "Rating Area 7",
+   "lowestBronzeAge21": 517.29,
+   "lowestGoldAge21": 708.82
+  },
+  "04011": {
+   "name": "Greenlee",
+   "slcspAge21": 646.42,
+   "ratingArea": "Rating Area 7",
+   "lowestBronzeAge21": 559.55,
+   "lowestGoldAge21": 708.82
+  },
+  "04012": {
+   "name": "La Paz",
+   "slcspAge21": 894.76,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 700.64,
+   "lowestGoldAge21": 1032.19
+  },
+  "04013": {
+   "name": "Maricopa",
+   "slcspAge21": 417.62,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 312.62,
+   "lowestGoldAge21": 522.42
+  },
+  "04015": {
+   "name": "Mohave",
+   "slcspAge21": 894.38,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 701.08,
+   "lowestGoldAge21": 1035.51
+  },
+  "04017": {
+   "name": "Navajo",
+   "slcspAge21": 746.3,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 584.39,
+   "lowestGoldAge21": 860.92
+  },
+  "04019": {
+   "name": "Pima",
+   "slcspAge21": 405.28,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 303.39,
+   "lowestGoldAge21": 518.34
+  },
+  "04021": {
+   "name": "Pinal",
+   "slcspAge21": 462.69,
+   "ratingArea": "Rating Area 5",
+   "lowestBronzeAge21": 346.36,
+   "lowestGoldAge21": 574.72
+  },
+  "04023": {
+   "name": "Santa Cruz",
+   "slcspAge21": 467.81,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 366.32,
+   "lowestGoldAge21": 539.66
+  },
+  "04025": {
+   "name": "Yavapai",
+   "slcspAge21": 855.94,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 689.72,
+   "lowestGoldAge21": 1016.1
+  },
+  "04027": {
+   "name": "Yuma",
+   "slcspAge21": 894.76,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 700.64,
+   "lowestGoldAge21": 1032.19
+  }
+ },
+ "stateAverageAge21": 672.46
+}

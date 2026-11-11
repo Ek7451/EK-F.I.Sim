@@ -1,0 +1,65 @@
+{
+  "header": {
+    "source": "https://www.ncdor.gov/taxes-forms/tax-rate-schedules",
+    "publisher": "North Carolina Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "N.C.G.S. § 105-153.7 (rate 3.99% for taxable years beginning in 2026 and after; S.L. 2023-134)",
+      "N.C.G.S. § 105-153.5(a)(1) (standard deduction); (a1) (child deduction); (b) (Social Security and Bailey deductions)"
+    ],
+    "sha256": "c188cab626cc79aa63f3dbecb883476739b4cc755605997e0abae85b4edc47e3",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: NCDOR tax rate schedule: 3.99% for tax years 2026 and after (4.25% for 2025); possible further cuts from 2027 depend on revenue triggers. Standard deduction (statutory, not indexed): $12,750 single and married filing separately, $25,500 married filing jointly / surviving spouse, $19,125 head of household (NCDOR standard deduction page, https://www.ncdor.gov/taxes-forms/individual-income-tax/north-carolina-standard-deduction-or-north-carolina-itemized-deductions, lists these for 2025; Tax Foundation 2026 shows the same $12,750 / $25,500 for 2026). No personal exemption and no additional deduction for age 65+; an AGI-tested child deduction is not modeled. Starts from federal AGI. Social Security and railroad retirement benefits are deducted in full. Retirement income: no general exclusion; government retirement benefits covered by the Bailey settlement and military retired pay are deductible (not modeled). No capital-gains exclusion. No local income taxes. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: none in general; Bailey-settlement government pensions and military retired pay are deductible"
+    }
+  },
+  "year": 2026,
+  "state": "NC",
+  "name": "North Carolina",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.0399
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.0399
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.0399
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.0399
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 12750,
+    "mfj": 25500,
+    "mfs": 12750,
+    "hoh": 19125
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

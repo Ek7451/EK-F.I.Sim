@@ -1,0 +1,90 @@
+{
+  "header": {
+    "source": "https://dor.sc.gov/sites/dor/files/policies/IL26-20.pdf",
+    "publisher": "South Carolina Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "2026 Act No. 110 (H. 4216), signed March 30, 2026, effective for tax years beginning after December 31, 2025",
+      "S.C. Code 12-6-510 (rates: 1.99% under $30,000; 5.21% minus $966 at $30,000 and above)",
+      "S.C. Code 12-6-50 (decoupling from IRC 63(b)-(g))",
+      "S.C. Code 12-6-1140(15) (South Carolina Income Adjusted Deduction, SCIAD)",
+      "S.C. Code 12-6-1150 (44% net capital gain deduction)",
+      "S.C. Code 12-6-1170 (retirement income deduction; age 65+ deduction)",
+      "S.C. Code 12-6-1120(4) (Social Security not included in SC gross income)",
+      "S.C. Code 12-6-520 (annual Chained CPI adjustment of brackets)",
+      "SC Information Letter #26-20 (August 31, 2026)"
+    ],
+    "sha256": "b7d41c0e96e204217979a89443bf7db0b6aa3515d9057c976befb947f8f69676",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from SC Information Letter #26-20 and the S.C. Code; sha256 is of the canonical body. MAJOR 2026 RESTRUCTURING under Act 110: (1) two brackets replace three: 1.99% of taxable income under $30,000, and (5.21% x taxable income) - $966 at $30,000 or more (equivalent to marginal 1.99%/5.21%); same schedule for all filing statuses; (2) South Carolina NO LONGER starts from federal taxable income: for tax years after 2025 it starts from federal AGI and does not allow the federal standard deduction, itemized deductions, OBBBA senior/tips/overtime/car-loan deductions or QBI deduction; (3) new SC Income Adjusted Deduction (SCIAD), encoded here as standardDeduction at its MAXIMUM: $15,000 single or MFS, $22,500 HoH, $30,000 MFJ/surviving spouse. SCIAD phase-out by federal AGI: single/MFS full to $40,000, reduced by the fraction (AGI - 40,000)/55,000, zero at $95,000 or more; HoH full to $60,000, reduced by (AGI - 60,000)/82,500, zero at $142,500 or more; MFJ full to $80,000, reduced by (AGI - 80,000)/110,000, zero at $190,000 or more (reduction rounded down to a multiple of $10). Retirement/age deductions (12-6-1170, unchanged by Act 110): retirement income deduction up to $3,000 per person under 65 and up to $10,000 from the year the taxpayer turns 65; plus an age-65+ deduction of $15,000 per person against any income, REDUCED by the retirement deduction claimed (so the total for a 65+ taxpayer is $15,000, not $25,000). Encoding: seniorExtraDeduction 15,000 (65+) and retirementIncomeExclusion 3,000 at any age; an engine that stacks both overstates the 65+ deduction by up to $3,000 per person. Military retirement is fully deductible. Social Security is fully exempt. 44% of net capital gain (held more than one year) is deductible. Dependent exemption (inflation-indexed, about $4,930; doubled for children under 6) is not modelled. Brackets are indexed annually by Chained CPI. From 2027 the 5.21% top rate falls automatically when the Board of Economic Advisors projects income tax revenue growth of at least 5%, until it reaches 1.99%, then continues toward 0%. SC earned income credit capped at $200. No local income taxes.",
+    "flags": {
+      "standardDeduction": "simplified: SCIAD maximum; phases out linearly with federal AGI to zero at $95,000 (single/MFS), $142,500 (HoH), $190,000 (MFJ) - see notes",
+      "seniorExtraDeduction": "simplified: $15,000 age-65+ deduction is reduced by any retirement income deduction claimed",
+      "retirementIncomeExclusion": "simplified: $3,000 under 65; $10,000 from age 65 but that amount counts against the $15,000 age-65+ deduction (seniorExtraDeduction), so only the under-65 amount is encoded"
+    }
+  },
+  "year": 2026,
+  "state": "SC",
+  "name": "South Carolina",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 30000,
+        "rate": 0.0199
+      },
+      {
+        "upTo": null,
+        "rate": 0.0521
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 30000,
+        "rate": 0.0199
+      },
+      {
+        "upTo": null,
+        "rate": 0.0521
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 30000,
+        "rate": 0.0199
+      },
+      {
+        "upTo": null,
+        "rate": 0.0521
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 30000,
+        "rate": 0.0199
+      },
+      {
+        "upTo": null,
+        "rate": 0.0521
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 15000,
+    "mfj": 30000,
+    "mfs": 15000,
+    "hoh": 22500
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 15000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 3000,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0.44,
+  "indexed": true
+}

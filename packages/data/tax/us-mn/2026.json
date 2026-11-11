@@ -1,0 +1,119 @@
+{
+  "header": {
+    "source": "https://www.revenue.state.mn.us/press-release/2025-12-16/minnesota-income-tax-brackets-standard-deduction-and-dependent-exemption",
+    "publisher": "Minnesota Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Minn. Stat. 290.06 subd. 2c and 2d (rates, indexed brackets)",
+      "Minn. Stat. 290.0123 (standard deduction, additional amount for aged/blind, high-income limitation)",
+      "Minn. Stat. 290.0121 (dependent exemption)",
+      "Minn. Stat. 290.0132 subd. 26 (Social Security subtraction) and subd. 34 (public pension subtraction)",
+      "Minn. Stat. 270C.22 (annual inflation adjustment)"
+    ],
+    "sha256": "a16dd579c4f0708cc6df543c130bd8771123cd1eac5fd4cfa108d15c75c9e8a1",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Brackets, standard deductions and dependent exemption are from the Department of Revenue release of 2025-12-16 (2026 brackets, +2.369% chained-CPI adjustment); other indexed amounts are from 'Tax Year 2026 Inflation-Adjusted Amounts in Minnesota Statutes' (https://www.revenue.state.mn.us/sites/default/files/2025-12/inflation-adjusted-amounts-2026.pdf); cross-checked against Tax Foundation 2026. Starting point is federal AGI. No personal exemption for filer/spouse; the dependent exemption is $5,300 per dependent (disallowed above indexed AGI thresholds). Additional standard deduction for age 65+ or blind: $1,600 per married filer/surviving spouse, $2,000 if single or HOH (seniorExtraDeduction uses the married amount). The standard (and itemized) deduction is reduced for AGI above $244,400 ($122,200 MFS), with a second phase-out threshold at $337,800 ($168,900 MFS) and the maximum 80% reduction above $1,107,750. Social Security is PARTIALLY taxed: under the simplified method all federally taxable benefits are subtracted when AGI is at or below $110,780 (MFJ/surviving spouse), $86,410 (single/HOH) or $55,390 (MFS); above that the subtraction is reduced 10% for each $4,000 of AGI over the threshold ($2,000 for MFS), so it is gone $40,000 ($20,000 MFS) above the threshold; an alternative provisional-income method (maximum subtraction $5,840 MFJ / $4,560 single-HOH / $2,920 MFS) may be used if larger. No general pension/IRA exclusion; a public-pension subtraction of up to $13,850 (single/HOH/MFS) or $27,690 (MFJ) for qualifying government pensions phases out above the same AGI thresholds. Special regimes not modeled: Minnesota's 1% net investment income tax on net investment income over $1,000,000; Minnesota AMT; child and working family credits. Brackets, standard deduction and exemption are indexed annually (chained CPI-U).",
+    "flags": {
+      "taxesSocialSecurity": "partial: fully exempt if AGI <= $110,780 MFJ / $86,410 single-HOH / $55,390 MFS; subtraction cut 10% per $4,000 of AGI above that",
+      "seniorExtraDeduction": "$1,600 per married filer; $2,000 if single or HOH",
+      "retirementIncomeExclusion": "simplified: 0; qualifying public pensions get a subtraction up to $13,850 single / $27,690 MFJ, phased out by AGI",
+      "standardDeduction": "reduced for AGI above $244,400 ($122,200 MFS); not modeled"
+    }
+  },
+  "year": 2026,
+  "state": "MN",
+  "name": "Minnesota",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 33310,
+        "rate": 0.0535
+      },
+      {
+        "upTo": 109430,
+        "rate": 0.068
+      },
+      {
+        "upTo": 203150,
+        "rate": 0.0785
+      },
+      {
+        "upTo": null,
+        "rate": 0.0985
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 48700,
+        "rate": 0.0535
+      },
+      {
+        "upTo": 193480,
+        "rate": 0.068
+      },
+      {
+        "upTo": 337930,
+        "rate": 0.0785
+      },
+      {
+        "upTo": null,
+        "rate": 0.0985
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 24350,
+        "rate": 0.0535
+      },
+      {
+        "upTo": 96740,
+        "rate": 0.068
+      },
+      {
+        "upTo": 168965,
+        "rate": 0.0785
+      },
+      {
+        "upTo": null,
+        "rate": 0.0985
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 41010,
+        "rate": 0.0535
+      },
+      {
+        "upTo": 164800,
+        "rate": 0.068
+      },
+      {
+        "upTo": 270060,
+        "rate": 0.0785
+      },
+      {
+        "upTo": null,
+        "rate": 0.0985
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 15300,
+    "mfj": 30600,
+    "mfs": 15300,
+    "hoh": 23000
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1600,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

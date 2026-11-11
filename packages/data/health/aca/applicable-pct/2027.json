@@ -1,0 +1,66 @@
+{
+  "header": {
+    "source": "https://www.irs.gov/pub/irs-drop/rp-26-26.pdf",
+    "publisher": "Internal Revenue Service",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Rev. Proc. 2026-26 (applicable percentage table and 10.22% required contribution percentage for 2027)",
+      "26 U.S.C. 36B(b)(3)(A) (original, indexed table; the ARPA sec. 9661 / IRA sec. 12001 enhanced table applied only to tax years 2021-2025)",
+      "26 U.S.C. 36B(c)(1)(A) (household income 100%-400% of the poverty line; the 2021-2025 suspension of the 400% limit has expired)",
+      "Pub. L. 119-21 (One Big Beautiful Bill Act) sec. 71305: 26 U.S.C. 36B(f)(2)(B) repayment limitation repealed for tax years beginning after 2025"
+    ],
+    "sha256": "b3ce6c8c10450371df5c07921de4c32c8e8ceff79fa57a42e6362c09e727ed60",
+    "schema": "applicable-pct.v1",
+    "notes": "Law in force for coverage year 2027: the enhanced ARPA/IRA credits expired on 2025-12-31 and were not extended (no extension had been enacted as of 2026-11-10; Rev. Proc. 2026-26, July 2026, publishes the 100%-400% table), so the original indexed table applies and there is no credit above 400% FPL. Within each band the percentage rises linearly from `initial` to `final`. The first band (\"less than 133%\") starts at 0 for contiguity; eligibility starts at `minFpl`. Contract caveat: by statute a household at EXACTLY 400% FPL is still eligible (\"not more than 400%\"); the cliff is strictly above `cliffFpl`. Excess advance credit is repaid in full (no caps) from tax year 2026, per the IRS premium tax credit Q&A. Not modelled: OBBBA changes to eligibility of certain lawfully present immigrants. sha256 is of the raw source document as downloaded."
+  },
+  "year": 2027,
+  "bands": [
+    {
+      "fplFrom": 0,
+      "fplTo": 1.33,
+      "initial": 0.0215,
+      "final": 0.0215
+    },
+    {
+      "fplFrom": 1.33,
+      "fplTo": 1.5,
+      "initial": 0.0323,
+      "final": 0.043
+    },
+    {
+      "fplFrom": 1.5,
+      "fplTo": 2,
+      "initial": 0.043,
+      "final": 0.0678
+    },
+    {
+      "fplFrom": 2,
+      "fplTo": 2.5,
+      "initial": 0.0678,
+      "final": 0.0866
+    },
+    {
+      "fplFrom": 2.5,
+      "fplTo": 3,
+      "initial": 0.0866,
+      "final": 0.1022
+    },
+    {
+      "fplFrom": 3,
+      "fplTo": 4,
+      "initial": 0.1022,
+      "final": 0.1022
+    }
+  ],
+  "hasCliff": true,
+  "cliffFpl": 4,
+  "minFpl": 1,
+  "repaymentCaps": [
+    {
+      "fplTo": null,
+      "single": null,
+      "other": null
+    }
+  ]
+}

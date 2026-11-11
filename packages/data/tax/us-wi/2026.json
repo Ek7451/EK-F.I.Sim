@@ -1,0 +1,118 @@
+{
+  "header": {
+    "source": "https://www.revenue.wi.gov/TaxForms2026/2026-Form1-ES-Inst.pdf",
+    "publisher": "Wisconsin Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Wis. Stat. 71.06 (rates and brackets)",
+      "Wis. Stat. 71.05(22) (sliding-scale standard deduction)",
+      "Wis. Stat. 71.05(23) (personal exemptions)",
+      "Wis. Stat. 71.05(6)(b)9. (30% long-term capital gain exclusion)",
+      "Wis. Stat. 71.05(6)(b)54m. (retirement income subtraction, age 67+)",
+      "2025 Wisconsin Act 15 (2025-27 budget)"
+    ],
+    "sha256": "13194e56a5489ac4d06248b73f3660ede9333543ff794cdd467c6ec33435e75f",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the 2026 Form 1-ES instructions (D-101A, R. 1-26): 2026 tax rate schedules A/B/C and 2026 standard deduction schedules; sha256 is of the canonical body. Head of household uses the single rate schedule. Standard deduction is a sliding scale; values here are the MAXIMUMS. 2026 phase-out: single 13,960 less 12% of Wisconsin income over 20,120 (zero at 136,453); MFJ 25,840 less 19.778% of income over 29,040 (zero at 159,690); MFS 12,280 less 19.778% of income over 13,780 (zero at 75,869); HoH 18,030 less 22.515% of income over 20,120 until income reaches 58,827, then the single schedule applies (zero at 136,453). Personal exemption $700 per taxpayer, spouse and dependent; additional $250 per taxpayer/spouse age 65+. Social Security benefits are fully exempt. Long-term capital gains: 30% of net long-term gain excluded (60% for farm assets). Retirement income subtraction (2025 Act 15, tax years beginning after 12/31/2024): individuals at least 67 at year end may subtract up to $24,000 each ($48,000 joint when both spouses are 67+) of distributions from qualified retirement plans and IRAs; a filer claiming it gives up Wisconsin income tax credits for that year; nonresidents ineligible, part-year residents prorate. A separate income-limited $5,000 subtraction exists for age 65+ low-income filers. Brackets and standard deduction amounts are indexed annually (2025 Act 15 reset the base year to August 2024). Itemized deduction credit, school property tax credit, married couple credit and other credits are not modelled.",
+    "flags": {
+      "standardDeduction": "simplified: maximum amounts; phases out with Wisconsin income (single/HoH zero at 136,453, MFJ zero at 159,690, MFS zero at 75,869) - see notes",
+      "retirementIncomeExclusion": "simplified: age 67+ only, $24,000 per person; claimant forgoes Wisconsin credits for the year"
+    }
+  },
+  "year": 2026,
+  "state": "WI",
+  "name": "Wisconsin",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 15110,
+        "rate": 0.035
+      },
+      {
+        "upTo": 51950,
+        "rate": 0.044
+      },
+      {
+        "upTo": 332720,
+        "rate": 0.053
+      },
+      {
+        "upTo": null,
+        "rate": 0.0765
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 20150,
+        "rate": 0.035
+      },
+      {
+        "upTo": 69260,
+        "rate": 0.044
+      },
+      {
+        "upTo": 443630,
+        "rate": 0.053
+      },
+      {
+        "upTo": null,
+        "rate": 0.0765
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 10080,
+        "rate": 0.035
+      },
+      {
+        "upTo": 34630,
+        "rate": 0.044
+      },
+      {
+        "upTo": 221820,
+        "rate": 0.053
+      },
+      {
+        "upTo": null,
+        "rate": 0.0765
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 15110,
+        "rate": 0.035
+      },
+      {
+        "upTo": 51950,
+        "rate": 0.044
+      },
+      {
+        "upTo": 332720,
+        "rate": 0.053
+      },
+      {
+        "upTo": null,
+        "rate": 0.0765
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 13960,
+    "mfj": 25840,
+    "mfs": 12280,
+    "hoh": 18030
+  },
+  "personalExemption": 700,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 250,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 24000,
+    "minAge": 67
+  },
+  "longTermGainExclusionPct": 0.3,
+  "indexed": true
+}

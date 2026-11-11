@@ -1,0 +1,97 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2027/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "74bc775e60d2427b55bda0e9bbd9f5769924042d52f53cff5b3a615269df024f",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2027. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2027,
+ "state": "NH",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "33001": {
+   "name": "Belknap",
+   "slcspAge21": 369.45,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 464.45
+  },
+  "33003": {
+   "name": "Carroll",
+   "slcspAge21": 415.67,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 482.02
+  },
+  "33005": {
+   "name": "Cheshire",
+   "slcspAge21": 415.67,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 482.02
+  },
+  "33007": {
+   "name": "Coos",
+   "slcspAge21": 415.67,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 482.02
+  },
+  "33009": {
+   "name": "Grafton",
+   "slcspAge21": 415.67,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 482.02
+  },
+  "33011": {
+   "name": "Hillsborough",
+   "slcspAge21": 369.45,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 464.45
+  },
+  "33013": {
+   "name": "Merrimack",
+   "slcspAge21": 369.45,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 464.45
+  },
+  "33015": {
+   "name": "Rockingham",
+   "slcspAge21": 369.45,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 464.45
+  },
+  "33017": {
+   "name": "Strafford",
+   "slcspAge21": 369.45,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 464.45
+  },
+  "33019": {
+   "name": "Sullivan",
+   "slcspAge21": 415.67,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 300.58,
+   "lowestGoldAge21": 482.02
+  }
+ },
+ "stateAverageAge21": 392.56
+}

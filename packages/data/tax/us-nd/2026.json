@@ -1,0 +1,97 @@
+{
+  "header": {
+    "source": "https://www.tax.nd.gov/sites/www/files/documents/forms/individual/2025-iit/28709-form-nd-1es-2026.pdf",
+    "publisher": "North Dakota Office of State Tax Commissioner",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "N.D.C.C. § 57-38-30.3 (rates, indexing, adjustments incl. 40% net long-term capital gain exclusion and Social Security subtraction)",
+      "2023 HB 1158 (zero bracket and 1.95%/2.5% rates)"
+    ],
+    "sha256": "09bd5ae995bedcf9b934a7f4b2abe17aa669f2497cb9784be8770ba844257030",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Brackets are the '2026 Forms ND-1 and ND-EZ Tax Rate Schedules' printed in the 2026 Form ND-1ES (SFN 28709, 12-2025); Tax Foundation's January 2026 table shows 2025 widths. North Dakota starts from FEDERAL TAXABLE INCOME, so the federal standard deduction (2026: $16,100 single / $32,200 MFJ, plus federal age 65+ amounts) or itemized deductions are already embedded: standardDeduction, personalExemption and seniorExtraDeduction are 0 here. Zero-rate band up to $49,575 single, $82,800 MFJ, $41,400 MFS, $66,400 HOH; 1.95% to $250,400 / $304,850 / $152,425 / $277,600; 2.5% above. 40% of net long-term capital gain is excluded (2025 Form ND-1 instructions). Taxable Social Security benefits are fully subtracted. No general pension/IRA exclusion. A marriage penalty credit is available to some two-earner joint filers.",
+    "flags": {
+      "standardDeduction": "0 because the state starts from federal taxable income (federal standard/itemized deduction embedded)"
+    }
+  },
+  "year": 2026,
+  "state": "ND",
+  "name": "North Dakota",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 49575,
+        "rate": 0
+      },
+      {
+        "upTo": 250400,
+        "rate": 0.0195
+      },
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 82800,
+        "rate": 0
+      },
+      {
+        "upTo": 304850,
+        "rate": 0.0195
+      },
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 41400,
+        "rate": 0
+      },
+      {
+        "upTo": 152425,
+        "rate": 0.0195
+      },
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 66400,
+        "rate": 0
+      },
+      {
+        "upTo": 277600,
+        "rate": 0.0195
+      },
+      {
+        "upTo": null,
+        "rate": 0.025
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalTaxableIncome",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0.4,
+  "indexed": true
+}

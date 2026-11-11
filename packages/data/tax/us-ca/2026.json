@@ -1,0 +1,203 @@
+{
+  "header": {
+    "source": "https://www.ftb.ca.gov/forms/2026/2026-540-tax-rate-schedules.pdf",
+    "publisher": "California Franchise Tax Board",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Cal. Rev. & Tax. Code 17041 (rates, annual CCPI indexing)",
+      "Cal. Rev. & Tax. Code 17043 (1% Behavioral Health Services Tax, formerly Mental Health Services Tax, on taxable income over $1,000,000)",
+      "Cal. Rev. & Tax. Code 17054 (exemption credits)",
+      "Cal. Rev. & Tax. Code 17073.5 (standard deduction)"
+    ],
+    "sha256": "329c89d0b2fae2550e49aa8d058b118698581f245923c04627b4f09010fe56f2",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Brackets are the FTB '2026 California Tax Rate Schedules' (Schedules X, Y, Z); standard deduction and exemption credits are from FTB Tax News October 2026, '2026 Indexing' (https://www.ftb.ca.gov/about-ftb/newsroom/tax-news/2026/10.html; CCPI June 2025 to June 2026 = 3.4%). The 2026 Form 540-ES instructions still print 2025 amounts ($5,706 / $11,412) because they predate indexing; do not use them. MFS uses Schedule X (single); qualifying surviving spouse uses Schedule Y. The 1% Behavioral Health Services Tax on taxable income over $1,000,000 is in `surtax`; that threshold is not indexed and is the same $1,000,000 for every filing status (not doubled for MFJ). personalExemptionCredit is $158 per filer ($316 joint); filers 65+ and blind filers each get an additional $158 credit (a credit, so seniorExtraDeduction is 0); the dependent credit is $491. Exemption credits phase out at high federal AGI (indexed thresholds, not captured here). California starts from federal AGI with Schedule CA adjustments, fully exempts Social Security, has no general pension/IRA exclusion, and taxes capital gains as ordinary income. Not modeled: California AMT, SDI payroll tax, renter's credit, 2.5% additional tax on early retirement distributions.",
+    "flags": {
+      "seniorExtraDeduction": "0 because the 65+ benefit is an extra $158 exemption credit, not a deduction",
+      "personalExemptionCredit": "phases out at high federal AGI; 2026 phase-out thresholds not captured",
+      "surtax": "threshold fixed at $1,000,000 for all filing statuses, not indexed"
+    }
+  },
+  "year": 2026,
+  "state": "CA",
+  "name": "California",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 11456,
+        "rate": 0.01
+      },
+      {
+        "upTo": 27157,
+        "rate": 0.02
+      },
+      {
+        "upTo": 42861,
+        "rate": 0.04
+      },
+      {
+        "upTo": 59498,
+        "rate": 0.06
+      },
+      {
+        "upTo": 75197,
+        "rate": 0.08
+      },
+      {
+        "upTo": 384109,
+        "rate": 0.093
+      },
+      {
+        "upTo": 460927,
+        "rate": 0.103
+      },
+      {
+        "upTo": 768213,
+        "rate": 0.113
+      },
+      {
+        "upTo": null,
+        "rate": 0.123
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 22912,
+        "rate": 0.01
+      },
+      {
+        "upTo": 54314,
+        "rate": 0.02
+      },
+      {
+        "upTo": 85722,
+        "rate": 0.04
+      },
+      {
+        "upTo": 118996,
+        "rate": 0.06
+      },
+      {
+        "upTo": 150394,
+        "rate": 0.08
+      },
+      {
+        "upTo": 768218,
+        "rate": 0.093
+      },
+      {
+        "upTo": 921854,
+        "rate": 0.103
+      },
+      {
+        "upTo": 1536426,
+        "rate": 0.113
+      },
+      {
+        "upTo": null,
+        "rate": 0.123
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 11456,
+        "rate": 0.01
+      },
+      {
+        "upTo": 27157,
+        "rate": 0.02
+      },
+      {
+        "upTo": 42861,
+        "rate": 0.04
+      },
+      {
+        "upTo": 59498,
+        "rate": 0.06
+      },
+      {
+        "upTo": 75197,
+        "rate": 0.08
+      },
+      {
+        "upTo": 384109,
+        "rate": 0.093
+      },
+      {
+        "upTo": 460927,
+        "rate": 0.103
+      },
+      {
+        "upTo": 768213,
+        "rate": 0.113
+      },
+      {
+        "upTo": null,
+        "rate": 0.123
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 22927,
+        "rate": 0.01
+      },
+      {
+        "upTo": 54316,
+        "rate": 0.02
+      },
+      {
+        "upTo": 70018,
+        "rate": 0.04
+      },
+      {
+        "upTo": 86654,
+        "rate": 0.06
+      },
+      {
+        "upTo": 102356,
+        "rate": 0.08
+      },
+      {
+        "upTo": 522385,
+        "rate": 0.093
+      },
+      {
+        "upTo": 626864,
+        "rate": 0.103
+      },
+      {
+        "upTo": 1044771,
+        "rate": 0.113
+      },
+      {
+        "upTo": null,
+        "rate": 0.123
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 5900,
+    "mfj": 11800,
+    "mfs": 5900,
+    "hoh": 11800
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 158,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true,
+  "surtax": [
+    {
+      "threshold": 1000000,
+      "rate": 0.01
+    }
+  ]
+}

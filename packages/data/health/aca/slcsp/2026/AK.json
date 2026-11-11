@@ -1,0 +1,237 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2026/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "4ae312a4e2fc9b414b0e4dac52a146d864a2b0d7fa36b25c969a0b55e320668b",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2026. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2026,
+ "state": "AK",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "02013": {
+   "name": "Aleutians East",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02016": {
+   "name": "Aleutians West",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02020": {
+   "name": "Anchorage",
+   "slcspAge21": 801.51,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 507,
+   "lowestGoldAge21": 706
+  },
+  "02050": {
+   "name": "Bethel",
+   "slcspAge21": 817.26,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 565.01,
+   "lowestGoldAge21": 718.58
+  },
+  "02060": {
+   "name": "Bristol Bay",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02063": {
+   "name": "Chugach",
+   "slcspAge21": 817.26,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 565.01,
+   "lowestGoldAge21": 718.58
+  },
+  "02066": {
+   "name": "Copper River",
+   "slcspAge21": 817.26,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 565.01,
+   "lowestGoldAge21": 718.58
+  },
+  "02068": {
+   "name": "Denali",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02070": {
+   "name": "Dillingham",
+   "slcspAge21": 817.26,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 565.01,
+   "lowestGoldAge21": 718.58
+  },
+  "02090": {
+   "name": "Fairbanks North Star",
+   "slcspAge21": 817.7,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 533,
+   "lowestGoldAge21": 725.76
+  },
+  "02100": {
+   "name": "Haines",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02105": {
+   "name": "Hoonah Angoon",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02110": {
+   "name": "Juneau",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02122": {
+   "name": "Kenai Peninsula",
+   "slcspAge21": 817.7,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 533,
+   "lowestGoldAge21": 725.76
+  },
+  "02130": {
+   "name": "Ketchikan Gateway",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02150": {
+   "name": "Kodiak Island",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02158": {
+   "name": "Kusilvak",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02164": {
+   "name": "Lake And Peninsula",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02170": {
+   "name": "Matanuska Susitna",
+   "slcspAge21": 817.7,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 533,
+   "lowestGoldAge21": 725.76
+  },
+  "02180": {
+   "name": "Nome",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02185": {
+   "name": "North Slope",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02188": {
+   "name": "Northwest Arctic",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02195": {
+   "name": "Petersburg",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02198": {
+   "name": "Prince Of Wales Hyder",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02220": {
+   "name": "Sitka",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02230": {
+   "name": "Skagway",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02240": {
+   "name": "Southeast Fairbanks",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02275": {
+   "name": "Wrangell",
+   "slcspAge21": 784.57,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 519,
+   "lowestGoldAge21": 689.83
+  },
+  "02282": {
+   "name": "Yakutat",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  },
+  "02290": {
+   "name": "Yukon Koyukuk",
+   "slcspAge21": 825.43,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 570.66,
+   "lowestGoldAge21": 725.76
+  }
+ },
+ "stateAverageAge21": 810.51
+}

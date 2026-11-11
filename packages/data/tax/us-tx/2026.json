@@ -1,0 +1,41 @@
+{
+  "header": {
+    "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+    "publisher": "Tax Foundation (Texas Comptroller of Public Accounts administers no personal income tax)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Tex. Const. art. VIII, § 24-a (bars an individual income tax)"
+    ],
+    "sha256": "d3e712b1619712d5bb938387fe17bb51a4e8014a056300927917db86dd6fabb6",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Texas levies no individual income tax. Source is the Tax Foundation 2026 table, which lists Texas as \"none\"."
+  },
+  "year": 2026,
+  "state": "TX",
+  "name": "Texas",
+  "kind": "none",
+  "brackets": {
+    "single": [],
+    "mfj": [],
+    "mfs": [],
+    "hoh": []
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

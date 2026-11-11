@@ -1,0 +1,168 @@
+{
+  "header": {
+    "source": "https://otr.cfo.dc.gov/sites/default/files/dc/sites/otr/publication/attachments/2026_D40ES_Book_wLinks04012026.pdf",
+    "publisher": "District of Columbia Office of Tax and Revenue",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "D.C. Code 47-1806.03(a)(10) (rates for taxable years beginning after December 31, 2021)",
+      "D.C. Code 47-1801.04(44) (standard deduction)",
+      "D.C. Income and Franchise Tax Conformity and Revision Emergency/Temporary Amendment Acts of 2025 (D.C. Act 26-214; D.C. Law 26-98); Pub. L. 119-78 (congressional disapproval, February 18, 2026)",
+      "Fiscal Year 2027 Budget Support Act of 2026 (B26-0661 permanent; B26-0724 emergency) - decouples from OBBBA standard deduction through tax year 2029",
+      "D.C. Code 47-1803.02(a)(2) (exclusions from gross income, incl. Social Security benefits)"
+    ],
+    "sha256": "0f0d8f0454eb3a2c0fec6b9335b5b0e6fd80713599ead6acb108bcb3549309d2",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Rate schedule hand-transcribed from the 2026 D-40ES booklet (Rev. 03/2026) and matches OTR's rate page (unchanged since tax year 2022; one schedule for all filing statuses); sha256 is of the canonical body. Brackets are ENACTED and verified. File is marked projected because the 2026 STANDARD DEDUCTION dollar amounts could not be verified. The 2026 D-40ES worksheet (issued March 2026) used the federal OBBBA amounts ($16,100 single/MFS, $24,150 HoH, $32,200 joint; additional $1,650 married / $2,050 unmarried for age 65+ or blind). However, DC decoupled from the OBBBA standard deduction for 2025 ($15,000 single/MFS, $22,500 HoH, $30,000 joint per the 2025 D-40 booklet), and the Fiscal Year 2027 Budget Support Act of 2026 (emergency act B26-0724 in effect but expiring November 11, 2026; permanent act B26-0661 in congressional review) keeps DC decoupled through tax year 2029: the DC standard deduction for 2026-2029 is the tax-year-2025 amount with an annual cost-of-living adjustment, returning to the federal amount for tax years after 2029 (CFO fiscal impact statement; EY Tax News 2026-1962). OTR had not published the COLA-adjusted 2026 figures at retrieval. Values encoded are the statutory 2025 base amounts ($15,000 / $30,000 / $15,000 / $22,500), i.e. a floor - the actual 2026 amounts should be a few hundred dollars higher (and would be $16,100/$32,200/$24,150 if the permanent act were disapproved by Congress). seniorExtraDeduction is the additional standard deduction for age 65+ at the tax-year-2025 DC amount for married filers ($1,600; $2,000 if single/HoH); the 2026 figure is likewise unverified. The Budget Support Act allows DC deductions for tips, overtime and car-loan interest from 2026; treatment of the OBBBA senior deduction for 2026 was not verified. Social Security and tier 1 railroad retirement benefits are fully subtracted. No general pension/IRA exclusion (a $3,000 exclusion remains only for certain survivor annuitants 62+; up to $10,000 exclusion for permanently disabled residents with low income). No capital gains preference. Rate brackets are not inflation-indexed; the standard deduction is. No separate local income tax.",
+    "flags": {
+      "standardDeduction.single": "unverified: 2025 statutory base ($15,000) before the 2026 cost-of-living adjustment; 2026 D-40ES (Rev. 03/2026) showed $16,100",
+      "standardDeduction.mfj": "unverified: 2025 statutory base ($30,000) before the 2026 cost-of-living adjustment; 2026 D-40ES showed $32,200",
+      "standardDeduction.mfs": "unverified: 2025 statutory base ($15,000) before the 2026 cost-of-living adjustment; 2026 D-40ES showed $16,100",
+      "standardDeduction.hoh": "unverified: 2025 statutory base ($22,500) before the 2026 cost-of-living adjustment; 2026 D-40ES showed $24,150",
+      "seniorExtraDeduction": "unverified: tax-year-2025 additional standard deduction for married filers ($1,600; $2,000 unmarried); 2026 D-40ES showed $1,650 / $2,050"
+    }
+  },
+  "year": 2026,
+  "state": "DC",
+  "name": "District of Columbia",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 10000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.085
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0925
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0975
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 10000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.085
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0925
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0975
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 10000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.085
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0925
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0975
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 10000,
+        "rate": 0.04
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.06
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.065
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.085
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0925
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0975
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 15000,
+    "mfj": 30000,
+    "mfs": 15000,
+    "hoh": 22500
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1600,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

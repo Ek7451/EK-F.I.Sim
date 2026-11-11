@@ -1,0 +1,66 @@
+# EK-F.I.Sim sync Worker. See README.md for setup.
+#
+# Top level  = local development (`wrangler dev`). It is NOT a deployable environment: always deploy with
+#              `--env preview` or `--env production`.
+# Vars and bindings are not inherited by [env.*] sections, so each environment lists its own.
+
+name = "fisim-sync-local"
+main = "src/index.ts"
+compatibility_date = "2024-11-12"
+workers_dev = false
+
+[vars]
+ENVIRONMENT = "local"
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:4173"
+# DEV_USER (the local auth bypass) is deliberately NOT set here. Put it in .dev.vars (see .dev.vars.example),
+# which wrangler only reads for `wrangler dev` and never uploads.
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fisim-sync-local"
+database_id = "00000000-0000-0000-0000-000000000000" # local simulator only
+migrations_dir = "migrations"
+
+[[r2_buckets]]
+binding = "BLOBS"
+bucket_name = "fisim-sync-local"
+
+# ---------------------------------------------------------------------------------------------------------
+[env.preview]
+name = "fisim-sync-preview"
+
+[env.preview.vars]
+ENVIRONMENT = "preview"
+TEAM_DOMAIN = "REPLACE_ME.cloudflareaccess.com"      # REPLACE_ME: your Zero Trust team domain
+ACCESS_AUD = "REPLACE_ME_PREVIEW_ACCESS_AUD_TAG"     # REPLACE_ME: AUD tag of the preview Access application
+ALLOWED_ORIGINS = "https://REPLACE_ME-preview.example.com" # REPLACE_ME: exact origin(s) of the preview web app
+
+[[env.preview.d1_databases]]
+binding = "DB"
+database_name = "fisim-sync-preview"
+database_id = "REPLACE_ME_PREVIEW_D1_DATABASE_ID"    # REPLACE_ME: from `wrangler d1 create fisim-sync-preview`
+migrations_dir = "migrations"
+
+[[env.preview.r2_buckets]]
+binding = "BLOBS"
+bucket_name = "fisim-sync-preview"
+
+# ---------------------------------------------------------------------------------------------------------
+[env.production]
+name = "fisim-sync"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+TEAM_DOMAIN = "REPLACE_ME.cloudflareaccess.com"      # REPLACE_ME: your Zero Trust team domain
+ACCESS_AUD = "REPLACE_ME_PRODUCTION_ACCESS_AUD_TAG"  # REPLACE_ME: AUD tag of the production Access application
+ALLOWED_ORIGINS = "https://REPLACE_ME.example.com"   # REPLACE_ME: exact origin(s) of the production web app
+
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "fisim-sync-production"
+database_id = "REPLACE_ME_PRODUCTION_D1_DATABASE_ID" # REPLACE_ME: from `wrangler d1 create fisim-sync-production`
+migrations_dir = "migrations"
+
+[[env.production.r2_buckets]]
+binding = "BLOBS"
+bucket_name = "fisim-sync-production"

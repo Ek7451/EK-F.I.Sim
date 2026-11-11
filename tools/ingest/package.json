@@ -1,0 +1,12 @@
+{
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "name": "@fisim/ingest",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json"
+  },
+  "devDependencies": {
+    "xlsx": "^0.18.5"
+  }
+}

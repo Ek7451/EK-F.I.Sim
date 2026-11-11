@@ -1,0 +1,14 @@
+node_modules
+dist
+pnpm-lock.yaml
+research
+packages/data/**/*.json
+packages/engine/schema
+tests/validation/fixtures
+plan
+**/.venv
+.lighthouseci
+**/test-results
+**/playwright-report
+.claude
+**/.wrangler

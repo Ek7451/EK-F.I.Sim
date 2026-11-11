@@ -1,0 +1,32 @@
+{
+  "header": {
+    "source": "https://www.ssa.gov/news/en/cola/factsheets/2027.html",
+    "publisher": "Social Security Administration",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "42 U.S.C. 415(a), 415(i), 430 (Social Security Act secs. 215, 230)",
+      "SSA 2026 COLA and automatic determinations (announced Oct. 2025)"
+    ],
+    "schema": "social-security.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values were hand-transcribed from ssa.gov pages read in a browser (SSA blocks scripted downloads, so no raw file was hashed): the 2027 COLA fact sheet (2026 and 2027 columns: taxable maximum, quarter of coverage, earnings-test exempt amounts), oact/cola/bendpoints.html (bend points for first eligibility in the year), and oact/cola/colaseries.html. cola is the 2.8% COLA effective December 2025 (payable January 2026). earningsTest.yearOfFra applies only to months before FRA is attained ($1 withheld per $3 over; $1 per $2 under FRA). piaFactors are statutory (90% / 32% / 15%).",
+    "sha256": "70c4e454d874b2926024938b657ae810b288c3b82bca1261a73621ab6f951b0a"
+  },
+  "year": 2026,
+  "cola": 0.028,
+  "wageBase": 184500,
+  "bendPoints": [
+    1286,
+    7749
+  ],
+  "piaFactors": [
+    0.9,
+    0.32,
+    0.15
+  ],
+  "earningsTest": {
+    "underFra": 24480,
+    "yearOfFra": 65160
+  },
+  "quarterOfCoverage": 1890
+}

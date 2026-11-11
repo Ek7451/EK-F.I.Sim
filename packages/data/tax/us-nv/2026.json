@@ -1,0 +1,41 @@
+{
+  "header": {
+    "source": "https://taxfoundation.org/data/all/state/state-income-tax-rates-2026/",
+    "publisher": "Tax Foundation (Nevada Department of Taxation administers no personal income tax)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Nev. Const. art. 10, § 1(9) (bars a tax on personal income)"
+    ],
+    "sha256": "90b094e8ca520afd448ad153707965172e72835e410aa796a4bb0a34ae6b4e4a",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Nevada levies no individual income tax. Source is the Tax Foundation 2026 table, which lists Nevada as \"none\"."
+  },
+  "year": 2026,
+  "state": "NV",
+  "name": "Nevada",
+  "kind": "none",
+  "brackets": {
+    "single": [],
+    "mfj": [],
+    "mfs": [],
+    "hoh": []
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

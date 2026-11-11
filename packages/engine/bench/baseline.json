@@ -1,0 +1,11 @@
+{
+  "node": "v24.18.0",
+  "date": "2026-11-11",
+  "results": {
+    "deterministic_60y_ms": 1.6296000000000106,
+    "deterministic_couple_ms": 1.535699999999963,
+    "montecarlo_1000_single_thread_ms": 538.3677000000002,
+    "montecarlo_1000_couple_single_thread_ms": 516.8070000000007,
+    "montecarlo_10000_estimate_4_workers_ms": 1345.9192500000006
+  }
+}

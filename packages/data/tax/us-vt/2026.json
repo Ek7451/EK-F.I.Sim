@@ -1,0 +1,118 @@
+{
+  "header": {
+    "source": "https://tax.vermont.gov/sites/tax/files/documents/GB-1210-2026.pdf",
+    "publisher": "Vermont Department of Taxes",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "32 V.S.A. § 5822 (rates, annual indexing, 3%-of-AGI minimum)",
+      "32 V.S.A. § 5811(21) (Vermont taxable income: standard deduction, personal exemption, capital gains exclusion)",
+      "32 V.S.A. § 5830e (Social Security and retirement income exemption)",
+      "2026 Act 164 (conformity; no rate or bracket change)"
+    ],
+    "sha256": "e7ef0070d1bf34ea89e60276641c9b29751ebe13ef26aee27aeb188e9b6cff8d",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. The Department had not posted the final '2026 Vermont Tax Rate Schedules' PDF at retrieval. Single and MFJ brackets are derived from the official 2026 Income Tax Withholding booklet GB-1210 annual table (single $3,925 offset, married $11,775 offset) and all four schedules match the 2026-indexed § 5822 tables printed by Legislative Counsel in 2026 bill H.621 (which itself was not enacted): 3.35% to $50,750 single / $84,700 MFJ / $42,350 MFS / $68,000 HOH; 6.6% to $122,850 / $204,750 / $102,375 / $175,500; 7.6% to $256,300 / $312,050 / $156,025 / $284,150; 8.75% above (Tax Foundation's January 2026 table shows 2025 widths). Standard deduction ($7,850 single/MFS, $11,800 HOH, $15,700 MFJ), additional standard deduction ($1,300 per 65+/blind box) and personal exemption ($5,400 per taxpayer, spouse and dependent) are the 2026 Form IN-111 amounts from the Department's October 2026 Fall Tax Symposium slides. Minimum tax: if federal AGI exceeds $150,000, tax is the greater of the schedule tax or 3% of AGI (less U.S. obligation interest). Social Security: taxable benefits fully exempt if AGI is under $55,000 (single/HOH/MFS) or $70,000 (MFJ), phasing out linearly to zero exemption at $65,000 / $80,000; above that taxed as federally. Up to $10,000 of CSRS/military/other non-covered retirement income may be exempted instead under the same thresholds; no exclusion for private pensions or IRA/401(k). Capital gains exclusion: the greater of a flat $5,000 or 40% of gain on qualifying assets held more than 3 years (capped at $350,000, and not available for publicly traded stocks and bonds or depreciable real estate); limited to 40% of federal taxable income.",
+    "flags": {
+      "taxesSocialSecurity": "partial: fully exempt below AGI 55,000 single/HOH/MFS or 70,000 MFJ; exemption phases out to zero at 65,000 / 80,000",
+      "longTermGainExclusionPct": "simplified: 0 used; actual exclusion is a flat 5,000 of net capital gain (40% exclusion, capped at 350,000, applies only to non-publicly-traded assets held over 3 years)",
+      "retirementIncomeExclusion": "simplified: none for private pensions/IRA/401(k); up to 10,000 of CSRS/military retirement in lieu of the Social Security exemption under the same AGI thresholds",
+      "brackets": "3%-of-AGI minimum tax for federal AGI over 150,000 not modeled"
+    }
+  },
+  "year": 2026,
+  "state": "VT",
+  "name": "Vermont",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 50750,
+        "rate": 0.0335
+      },
+      {
+        "upTo": 122850,
+        "rate": 0.066
+      },
+      {
+        "upTo": 256300,
+        "rate": 0.076
+      },
+      {
+        "upTo": null,
+        "rate": 0.0875
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 84700,
+        "rate": 0.0335
+      },
+      {
+        "upTo": 204750,
+        "rate": 0.066
+      },
+      {
+        "upTo": 312050,
+        "rate": 0.076
+      },
+      {
+        "upTo": null,
+        "rate": 0.0875
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 42350,
+        "rate": 0.0335
+      },
+      {
+        "upTo": 102375,
+        "rate": 0.066
+      },
+      {
+        "upTo": 156025,
+        "rate": 0.076
+      },
+      {
+        "upTo": null,
+        "rate": 0.0875
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 68000,
+        "rate": 0.0335
+      },
+      {
+        "upTo": 175500,
+        "rate": 0.066
+      },
+      {
+        "upTo": 284150,
+        "rate": 0.076
+      },
+      {
+        "upTo": null,
+        "rate": 0.0875
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 7850,
+    "mfj": 15700,
+    "mfs": 7850,
+    "hoh": 11800
+  },
+  "personalExemption": 5400,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1300,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": true,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

@@ -1,0 +1,188 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2027/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "74bc775e60d2427b55bda0e9bbd9f5769924042d52f53cff5b3a615269df024f",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2027. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2027,
+ "state": "WY",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "56001": {
+   "name": "Albany",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56003": {
+   "name": "Big Horn",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56005": {
+   "name": "Campbell",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56007": {
+   "name": "Carbon",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56009": {
+   "name": "Converse",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56011": {
+   "name": "Crook",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56013": {
+   "name": "Fremont",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56015": {
+   "name": "Goshen",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56017": {
+   "name": "Hot Springs",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56019": {
+   "name": "Johnson",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56021": {
+   "name": "Laramie",
+   "slcspAge21": 877.32,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 644.88,
+   "lowestGoldAge21": 792.88
+  },
+  "56023": {
+   "name": "Lincoln",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56025": {
+   "name": "Natrona",
+   "slcspAge21": 916.57,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 673.73,
+   "lowestGoldAge21": 828.35
+  },
+  "56027": {
+   "name": "Niobrara",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56029": {
+   "name": "Park",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56031": {
+   "name": "Platte",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56033": {
+   "name": "Sheridan",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56035": {
+   "name": "Sublette",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56037": {
+   "name": "Sweetwater",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56039": {
+   "name": "Teton",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56041": {
+   "name": "Uinta",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56043": {
+   "name": "Washakie",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  },
+  "56045": {
+   "name": "Weston",
+   "slcspAge21": 942.85,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 693.04,
+   "lowestGoldAge21": 852.1
+  }
+ },
+ "stateAverageAge21": 938.86
+}

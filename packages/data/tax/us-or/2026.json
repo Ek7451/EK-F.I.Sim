@@ -1,0 +1,120 @@
+{
+  "header": {
+    "source": "https://www.oregon.gov/dor/forms/FormsPubs/withholding-tax-formulas_206-436_2026.pdf",
+    "publisher": "Oregon Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "projected",
+    "lawRefs": [
+      "ORS 316.037 (rates and indexed brackets; the $125,000 / $250,000 top threshold is not indexed)",
+      "ORS 316.695 (standard deduction, additional deduction for age 65+/blind, federal tax subtraction limit)",
+      "ORS 316.085 (personal exemption credit and AGI limits)",
+      "ORS 316.054 (Social Security subtraction)"
+    ],
+    "sha256": "d6e3d6a92bfbcf4cf5f73b42f877ba87ec64eac49d9fa1ec51859e0803ba6818",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Status is 'projected' only because the 2026 head-of-household standard deduction was not found on a published DOR document (see flags). Final 2026 indexed figures are taken from DOR's 'Oregon Withholding Tax Formulas, effective January 1, 2026' (150-206-436, rev. 12-31-25): bracket thresholds $4,550 / $11,400 (single) and $9,100 / $22,800 (married), standard deduction $2,910 single and $5,820 married, exemption credit $263, federal tax subtraction limit $8,750. The 9.9% thresholds ($125,000 single/MFS; $250,000 MFJ/HOH/surviving spouse) and the chart structure are from the 2026 Publication OR-ESTIMATE (https://www.oregon.gov/dor/forms/FormsPubs/publication-or-estimate_101-026_2026.pdf, rev. 10-07-25), whose other figures were preliminary estimates ($2,900 / $5,800 / $4,650 HOH; $260 credit) and are superseded. Tax Foundation 2026 agrees on brackets and $2,910 / $5,820 (it still lists the 2025 credit of $256). The HOH standard deduction of $4,680 is derived: 2025 amount $4,560 x the 2026/2025 ratio of the single deduction (2,910 / 2,835), rounded to $5. Chart S applies to single and MFS; Chart J to MFJ, HOH and surviving spouse. Oregon taxable income is described as federal taxable income with Oregon modifications, but Form OR-40 computes it from federal AGI using Oregon's own standard/itemized deductions, so startingPoint is federalAGI. Major item the contract cannot express: the FEDERAL TAX SUBTRACTION - federal income tax liability is deductible up to $8,750, phased down in steps for higher incomes (in the single withholding formula: $7,000 / $5,250 / $3,500 / $1,750 / $0 at $125,000 / $130,000 / $135,000 / $140,000 / $145,000). personalExemptionCredit of $263 per filer, spouse and dependent is $0 when federal AGI exceeds $100,000 (single/MFS) or $200,000 (MFJ/HOH/surviving spouse). Additional standard deduction for age 65+ or blind: $1,200 if single/HOH, $1,000 per qualifying spouse if married (seniorExtraDeduction uses the married amount). Social Security is fully subtracted. No general pension/IRA exclusion. Not included: local income taxes in the Portland area (Metro Supportive Housing Services tax and Multnomah County Preschool for All tax on higher incomes), the statewide transit payroll tax, and Oregon's 'kicker' surplus credit. Lower brackets, standard deduction, exemption credit and federal subtraction limit are indexed annually.",
+    "flags": {
+      "standardDeduction.hoh": "unverified: derived from 2025 $4,560 x (2,910/2,835); DOR's preliminary estimate was $4,650",
+      "federalTaxSubtraction": "not expressible in contract: up to $8,750 of federal income tax is deductible from Oregon income, phased out for federal AGI above $125,000 single / $250,000 joint",
+      "personalExemptionCredit": "$0 if federal AGI > $100,000 single/MFS or > $200,000 MFJ/HOH",
+      "seniorExtraDeduction": "$1,000 per married filer; $1,200 if single or HOH",
+      "indexed": "top (9.9%) bracket thresholds $125,000 / $250,000 are not indexed",
+      "localTax": "Portland Metro SHS and Multnomah County PFA income taxes not included"
+    }
+  },
+  "year": 2026,
+  "state": "OR",
+  "name": "Oregon",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 4550,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 11400,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 125000,
+        "rate": 0.0875
+      },
+      {
+        "upTo": null,
+        "rate": 0.099
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 9100,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 22800,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.0875
+      },
+      {
+        "upTo": null,
+        "rate": 0.099
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 4550,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 11400,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 125000,
+        "rate": 0.0875
+      },
+      {
+        "upTo": null,
+        "rate": 0.099
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 9100,
+        "rate": 0.0475
+      },
+      {
+        "upTo": 22800,
+        "rate": 0.0675
+      },
+      {
+        "upTo": 250000,
+        "rate": 0.0875
+      },
+      {
+        "upTo": null,
+        "rate": 0.099
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 2910,
+    "mfj": 5820,
+    "mfs": 2910,
+    "hoh": 4680
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 263,
+  "seniorExtraDeduction": 1000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

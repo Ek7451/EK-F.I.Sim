@@ -1,0 +1,67 @@
+{
+  "header": {
+    "source": "https://www.in.gov/dor/files/dn01.pdf",
+    "publisher": "Indiana Department of Revenue (Departmental Notice #1, effective Oct. 1, 2026)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "IC 6-3-2-1 (rate: 2.95% for 2026, 2.9% for 2027 and after; HEA 1001-2023)",
+      "SEA 451-2025 (trigger-based reductions from 2030)",
+      "IC 6-3-1-3.5 (exemptions and deductions)",
+      "IC 6-3.6 (county local income taxes)"
+    ],
+    "sha256": "e9d099c5f2e0643562eb70983c2933c4028d96548064f2022c567973a8bbecb5",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: Indiana DOR Departmental Notice #1: \"For 2026, the state adjusted gross income tax rate for individuals is 2.95%\" (2.9% scheduled for 2027). No standard deduction. Exemptions: $1,000 per federal exemption (taxpayer, spouse, dependents); additional $1,500 per qualifying dependent child (larger first-year and adopted-child amounts); additional $1,000 for each taxpayer/spouse age 65 or over (seniorExtraDeduction) and $1,000 if blind; plus a further $500 per person 65+ if federal AGI is under $40,000 ($20,000 MFS). Starts from federal AGI. Social Security and railroad retirement benefits are deducted in full. Retirement income: no general exclusion (a civil service annuity deduction and a military retirement pay deduction exist; not modeled). NOT MODELED: county local income taxes apply on top of the state rate to Indiana adjusted gross income, at the rate of the county of residence on January 1 (roughly 0.5% to 3%; see the county table in Departmental Notice #1). No capital-gains exclusion. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "seniorExtraDeduction": "simplified: $1,000 per person 65+; an extra $500 applies if federal AGI < $40,000 ($20,000 MFS)"
+    }
+  },
+  "year": 2026,
+  "state": "IN",
+  "name": "Indiana",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.0295
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.0295
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.0295
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.0295
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 1000,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

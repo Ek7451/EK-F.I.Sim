@@ -1,0 +1,230 @@
+{
+ "header": {
+  "source": "https://data.healthcare.gov/datafile/py2026/individual_market_medical.zip",
+  "publisher": "CMS / HealthCare.gov (data.healthcare.gov)",
+  "retrieved": "2026-11-10",
+  "status": "enacted",
+  "lawRefs": [
+   "26 U.S.C. 36B(b)(3)(B)",
+   "26 CFR 1.36B-3(f)",
+   "45 CFR 147.102",
+   "45 CFR 156.80"
+  ],
+  "sha256": "4ae312a4e2fc9b414b0e4dac52a146d864a2b0d7fa36b25c969a0b55e320668b",
+  "schema": "slcsp-state.v1",
+  "notes": "Computed by tools/ingest/slcsp.ts from the CMS QHP Landscape Individual Market Medical file for plan year 2026. sha256 is of the raw downloaded zip. slcspAge21 = second-lowest age-21 silver premium in the county (the only silver plan where a county has one), ranked and reported on the essential-health-benefit portion of the premium (premium x \"EHB Percent of Total Premium\", 26 CFR 1.36B-3(j)). lowestBronzeAge21 (incl. expanded bronze) and lowestGoldAge21 are full listed premiums. Child-only plans excluded; non-tobacco rates. Multiply by the age-curve factor for other ages.",
+  "flags": {
+   "stateAverageAge21": "unweighted mean of the county benchmarks (not enrollment- or population-weighted)"
+  }
+ },
+ "year": 2026,
+ "state": "UT",
+ "exchange": "ffe",
+ "quality": "county",
+ "counties": {
+  "49001": {
+   "name": "Beaver",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49003": {
+   "name": "Box Elder",
+   "slcspAge21": 423.96,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 335.4,
+   "lowestGoldAge21": 469.35
+  },
+  "49005": {
+   "name": "Cache",
+   "slcspAge21": 588.33,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 431.05,
+   "lowestGoldAge21": 614.07
+  },
+  "49007": {
+   "name": "Carbon",
+   "slcspAge21": 592.19,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 433.88,
+   "lowestGoldAge21": 637.87
+  },
+  "49009": {
+   "name": "Daggett",
+   "slcspAge21": 592.19,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 433.88,
+   "lowestGoldAge21": 637.87
+  },
+  "49011": {
+   "name": "Davis",
+   "slcspAge21": 387.81,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 319.43,
+   "lowestGoldAge21": 436.88
+  },
+  "49013": {
+   "name": "Duchesne",
+   "slcspAge21": 592.19,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 433.88,
+   "lowestGoldAge21": 637.87
+  },
+  "49015": {
+   "name": "Emery",
+   "slcspAge21": 592.19,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 433.88,
+   "lowestGoldAge21": 637.87
+  },
+  "49017": {
+   "name": "Garfield",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49019": {
+   "name": "Grand",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49021": {
+   "name": "Iron",
+   "slcspAge21": 611.95,
+   "ratingArea": "Rating Area 5",
+   "lowestBronzeAge21": 477.28,
+   "lowestGoldAge21": 601.23
+  },
+  "49023": {
+   "name": "Juab",
+   "slcspAge21": 592.19,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 433.88,
+   "lowestGoldAge21": 637.87
+  },
+  "49025": {
+   "name": "Kane",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49027": {
+   "name": "Millard",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49029": {
+   "name": "Morgan",
+   "slcspAge21": 423.96,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 335.4,
+   "lowestGoldAge21": 469.35
+  },
+  "49031": {
+   "name": "Piute",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49033": {
+   "name": "Rich",
+   "slcspAge21": 588.33,
+   "ratingArea": "Rating Area 1",
+   "lowestBronzeAge21": 431.05,
+   "lowestGoldAge21": 614.07
+  },
+  "49035": {
+   "name": "Salt Lake",
+   "slcspAge21": 387.81,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 319.43,
+   "lowestGoldAge21": 436.88
+  },
+  "49037": {
+   "name": "San Juan",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49039": {
+   "name": "Sanpete",
+   "slcspAge21": 685.92,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 476.22,
+   "lowestGoldAge21": 637.87
+  },
+  "49041": {
+   "name": "Sevier",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49043": {
+   "name": "Summit",
+   "slcspAge21": 403.78,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 319.43,
+   "lowestGoldAge21": 447
+  },
+  "49045": {
+   "name": "Tooele",
+   "slcspAge21": 403.78,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 319.43,
+   "lowestGoldAge21": 447
+  },
+  "49047": {
+   "name": "Uintah",
+   "slcspAge21": 592.19,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 433.88,
+   "lowestGoldAge21": 637.87
+  },
+  "49049": {
+   "name": "Utah",
+   "slcspAge21": 399.44,
+   "ratingArea": "Rating Area 4",
+   "lowestBronzeAge21": 320.63,
+   "lowestGoldAge21": 449.99
+  },
+  "49051": {
+   "name": "Wasatch",
+   "slcspAge21": 403.78,
+   "ratingArea": "Rating Area 3",
+   "lowestBronzeAge21": 319.43,
+   "lowestGoldAge21": 447
+  },
+  "49053": {
+   "name": "Washington",
+   "slcspAge21": 611.95,
+   "ratingArea": "Rating Area 5",
+   "lowestBronzeAge21": 477.28,
+   "lowestGoldAge21": 601.23
+  },
+  "49055": {
+   "name": "Wayne",
+   "slcspAge21": 650.43,
+   "ratingArea": "Rating Area 6",
+   "lowestBronzeAge21": 438.12,
+   "lowestGoldAge21": 637.87
+  },
+  "49057": {
+   "name": "Weber",
+   "slcspAge21": 407.2,
+   "ratingArea": "Rating Area 2",
+   "lowestBronzeAge21": 335.4,
+   "lowestGoldAge21": 458.73
+  }
+ },
+ "stateAverageAge21": 556.38
+}

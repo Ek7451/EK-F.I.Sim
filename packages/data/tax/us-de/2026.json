@@ -1,0 +1,165 @@
+{
+  "header": {
+    "source": "https://revenuefiles.delaware.gov/2025/PITForms_Instructions/Instructions/PIT-EST_Instructions_2026-01.pdf",
+    "publisher": "Delaware Division of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "30 Del. C. § 1102 (rates)",
+      "30 Del. C. § 1108 (standard deduction; additional $2,500 for 65+/blind)",
+      "30 Del. C. § 1110 (personal credits)",
+      "30 Del. C. § 1106(b)(3) (pension exclusion)",
+      "30 Del. C. § 1106(b)(1) (Social Security exempt)"
+    ],
+    "sha256": "5fb48ae17e8971b7da62fca3161add08bd0301225f45a2e5b8914da4dae7dc40",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. All figures from the 2026 Form PIT-EST instructions (rev. 11/10/25) Tax Computation Schedule; statutory, not indexed. HB 13 / HS 2 for HB 13 (new brackets above $125,000-$150,000 for 2026) was NOT enacted (stalled in House Revenue & Finance, June 2025). Same rate table for all filing statuses; married couples may file 'combined separate' on one return (each spouse taxed separately), which usually lowers tax. Standard deduction $3,250 ($6,500 MFJ); additional $2,500 per taxpayer 65+ or blind when using the standard deduction. Personal credit $110 per exemption, plus an extra $110 credit for each taxpayer 60+. Pension exclusion: up to $12,500 per person 60+ of pension plus 'eligible retirement income' (IRA/401(k)/457 distributions, and also interest, dividends, capital gains and net rental income); under 60 the exclusion is $2,000 of pension income only. Social Security and Railroad Retirement are fully exempt. Wilmington city wage tax excluded.",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: 12,500 at 60+ also covers interest/dividends/capital gains/rents; under 60 the exclusion is 2,000 of pension income",
+      "personalExemptionCredit": "additional 110 credit per taxpayer age 60+ not modeled"
+    }
+  },
+  "year": 2026,
+  "state": "DE",
+  "name": "Delaware",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 2000,
+        "rate": 0
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.022
+      },
+      {
+        "upTo": 10000,
+        "rate": 0.039
+      },
+      {
+        "upTo": 20000,
+        "rate": 0.048
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.052
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0555
+      },
+      {
+        "upTo": null,
+        "rate": 0.066
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 2000,
+        "rate": 0
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.022
+      },
+      {
+        "upTo": 10000,
+        "rate": 0.039
+      },
+      {
+        "upTo": 20000,
+        "rate": 0.048
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.052
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0555
+      },
+      {
+        "upTo": null,
+        "rate": 0.066
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 2000,
+        "rate": 0
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.022
+      },
+      {
+        "upTo": 10000,
+        "rate": 0.039
+      },
+      {
+        "upTo": 20000,
+        "rate": 0.048
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.052
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0555
+      },
+      {
+        "upTo": null,
+        "rate": 0.066
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 2000,
+        "rate": 0
+      },
+      {
+        "upTo": 5000,
+        "rate": 0.022
+      },
+      {
+        "upTo": 10000,
+        "rate": 0.039
+      },
+      {
+        "upTo": 20000,
+        "rate": 0.048
+      },
+      {
+        "upTo": 25000,
+        "rate": 0.052
+      },
+      {
+        "upTo": 60000,
+        "rate": 0.0555
+      },
+      {
+        "upTo": null,
+        "rate": 0.066
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 3250,
+    "mfj": 6500,
+    "mfs": 3250,
+    "hoh": 3250
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 110,
+  "seniorExtraDeduction": 2500,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 12500,
+    "minAge": 60
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

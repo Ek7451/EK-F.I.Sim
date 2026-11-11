@@ -1,0 +1,172 @@
+{
+  "header": {
+    "source": "https://www.nj.gov/treasury/taxation/pdf/current/1040esi.pdf",
+    "publisher": "New Jersey Division of Taxation",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "N.J.S.A. 54A:2-1 (rates)",
+      "N.J.S.A. 54A:3-1 (personal exemptions)",
+      "N.J.S.A. 54A:6-10 and 54A:6-15 (pension and other retirement income exclusions)",
+      "N.J.S.A. 54A:6-2 (Social Security excluded)"
+    ],
+    "sha256": "5813090b4c59cab0b0da06cfcbb4bf308a496d3a7d80d9f54641bc9447899424",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. Brackets (Table A: single, MFS; Table B: MFJ, HOH, surviving spouse) and exemptions are from the 2026 Form NJ-1040-ES instructions; the pension exclusion chart is from the NJ-1040 resident return instructions (line 28a); cross-checked against Tax Foundation 2026. New Jersey does not start from federal AGI or federal taxable income: it taxes its own categories of gross income (losses in one category do not offset another, there are no federal-style deductions, and most federal above-the-line adjustments are not allowed). startingPoint is set to federalAGI as the closest approximation. There is no standard deduction. personalExemption is $1,000 per filer/spouse; age 65+ adds $1,000 each (seniorExtraDeduction); blind/disabled adds $1,000; veterans add $6,000; dependents $1,500 each (+$1,000 for a full-time college student under 22). Social Security is not taxed. Retirement income exclusion (age 62+ or disabled): maximum $100,000 MFJ, $75,000 single/HOH/surviving spouse, $50,000 MFS when total income is $100,000 or less; for total income $100,001-$125,000 it is 50% (MFJ) / 37.5% (single, HOH) / 25% (MFS) of pension income; for $125,001-$150,000 it is 25% / 18.75% / 12.5%; there is NO exclusion above $150,000 total income. On a joint return only the income of a spouse who is 62+ can be excluded. amountPerPerson holds the single-filer maximum; the MFJ maximum is $100,000 for the couple, not 2 x $75,000. Not modeled: property tax deduction/credit, medical expenses over 2% of income, credit for taxes paid to other jurisdictions. Brackets are not indexed.",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: $75,000 is the single maximum; MFJ cap is $100,000 per couple ($50,000 MFS); exclusion is reduced above $100,000 total income and is ZERO above $150,000 total income (cliff not expressible)",
+      "startingPoint": "NJ uses its own gross-income base, not federal AGI"
+    }
+  },
+  "year": 2026,
+  "state": "NJ",
+  "name": "New Jersey",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 20000,
+        "rate": 0.014
+      },
+      {
+        "upTo": 35000,
+        "rate": 0.0175
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.035
+      },
+      {
+        "upTo": 75000,
+        "rate": 0.05525
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0637
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0897
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 20000,
+        "rate": 0.014
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.0175
+      },
+      {
+        "upTo": 70000,
+        "rate": 0.0245
+      },
+      {
+        "upTo": 80000,
+        "rate": 0.035
+      },
+      {
+        "upTo": 150000,
+        "rate": 0.05525
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0637
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0897
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 20000,
+        "rate": 0.014
+      },
+      {
+        "upTo": 35000,
+        "rate": 0.0175
+      },
+      {
+        "upTo": 40000,
+        "rate": 0.035
+      },
+      {
+        "upTo": 75000,
+        "rate": 0.05525
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0637
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0897
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 20000,
+        "rate": 0.014
+      },
+      {
+        "upTo": 50000,
+        "rate": 0.0175
+      },
+      {
+        "upTo": 70000,
+        "rate": 0.0245
+      },
+      {
+        "upTo": 80000,
+        "rate": 0.035
+      },
+      {
+        "upTo": 150000,
+        "rate": 0.05525
+      },
+      {
+        "upTo": 500000,
+        "rate": 0.0637
+      },
+      {
+        "upTo": 1000000,
+        "rate": 0.0897
+      },
+      {
+        "upTo": null,
+        "rate": 0.1075
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 1000,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 75000,
+    "minAge": 62
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

@@ -1,0 +1,76 @@
+{
+  "header": {
+    "source": "https://www.mass.gov/info-details/tax-rates",
+    "publisher": "Massachusetts Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "M.G.L. c. 62 s. 4 (5% Part B rate; 8.5% short-term capital gains; 4% surtax, threshold adjusted by the IRC 1(f) cost-of-living adjustment)",
+      "Mass. Const. amend. art. XLIV as amended in 2022 (Fair Share Amendment)",
+      "M.G.L. c. 62 s. 3(B)(b) (personal exemptions $4,400 / $6,800 / $8,800; $700 age 65+; $2,200 blind; $1,000 dependent)",
+      "M.G.L. c. 62 s. 2 (Massachusetts gross income)"
+    ],
+    "sha256": "502adacb645020e0ce67fbf9f208ecdef5b7aa99520d60dcd74471ed01fe595a",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed from the fetched source documents; sha256 (when filled) is of the canonical body. mass.gov blocks automated fetching (HTTP 403), so the 2026 surtax threshold of $1,107,750 (2025: $1,083,150) was confirmed through search-engine extracts of the mass.gov tax-rates page and a Bloomberg Tax report on DOR's draft 2026 withholding methods (https://news.bloombergtax.com/payroll/massachusetts-releases-draft-2026-withholding-methods); rates and exemption amounts were read from the statute at malegislature.gov (c. 62 ss. 3 and 4) and cross-checked against Tax Foundation 2026. Flat 5% on interest/dividends, Part B income (wages, pensions, etc.) and long-term capital gains; `surtax` is the additional 4% on taxable income above $1,107,750 (same threshold for every filing status; not doubled for joint filers). Special capital-gains regimes not modeled: short-term capital gains are taxed at 8.5%; long-term gains on collectibles at 12%. Massachusetts has no standard deduction and uses its own gross-income base rather than federal AGI/taxable income; startingPoint federalAGI is the closest approximation. personalExemption is the single/MFS amount of $4,400 (MFJ $8,800 = $4,400 per spouse); head of household is $6,800 (not expressible); age 65+ adds $700 per person (seniorExtraDeduction); blind adds $2,200; dependents $1,000 each. Other Massachusetts deductions and credits (e.g. the deduction for Social Security/retirement-system contributions, rent deduction, senior circuit-breaker credit) are not modeled. Social Security is not taxed. No general pension/IRA exclusion (retirementIncomeExclusion 0); certain government contributory pensions are exempt. Exemptions and the rate are fixed by statute (not indexed); only the surtax threshold is indexed annually.",
+    "flags": {
+      "indexed": "false for exemptions/rate; the surtax threshold IS indexed annually (IRC 1(f) COLA)",
+      "personalExemption": "HOH exemption is $6,800 (contract holds one per-person amount: $4,400)",
+      "longTermGainExclusionPct": "0; short-term gains are taxed at 8.5% and collectibles at 12% (not modeled)",
+      "retirementIncomeExclusion": "simplified: 0; certain government contributory pensions are exempt"
+    }
+  },
+  "year": 2026,
+  "state": "MA",
+  "name": "Massachusetts",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.05
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 4400,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 700,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false,
+  "surtax": [
+    {
+      "threshold": 1107750,
+      "rate": 0.04
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "header": {
+    "source": "https://www.pa.gov/agencies/revenue/resources/tax-types-and-information/personal-income-tax",
+    "publisher": "Pennsylvania Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "72 P.S. § 7302 (3.07% rate)",
+      "72 P.S. § 7303 (eight classes of income)",
+      "72 P.S. § 7301(d) (compensation; exclusion of retirement benefits)",
+      "Local Tax Enabling Act, 53 P.S. § 6924.101 et seq. (local earned income tax)"
+    ],
+    "sha256": "b19b7a4c2e605e2b158666d4ec1b4a3d82c9dbafe4e9870b67d25a95a9714569",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: Pennsylvania personal income tax is \"levied at the rate of 3.07 percent\" on eight separate classes of income (compensation; interest; dividends; net profits; net gains from dispositions of property; rents and royalties; estates and trusts; gambling and lottery winnings). There is no standard deduction and no personal exemption. Pennsylvania does NOT start from federal AGI; startingPoint is set to federalAGI as the closest approximation (notable differences: employee elective deferrals to 401(k)-type plans and traditional IRA contributions are not deductible; no itemized deductions; losses in one class cannot offset income in another). Social Security and railroad retirement benefits are not taxable (PA Personal Income Tax Guide, Gross Compensation: https://www.pa.gov/agencies/revenue/forms-and-publications/pa-personal-income-tax-guide/gross-compensation.html). Retirement income: distributions from eligible retirement plans after retirement age are not taxable; early distributions are taxable to the extent they exceed previously taxed contributions (minAge 59 approximates this; the actual test is the plan's retirement age or 59 1/2 for IRAs). Capital gains are fully taxable at 3.07% with no long-term preference. The tax forgiveness credit for low incomes is not modeled. NOT MODELED: local earned income taxes on wages and net profits (and the Philadelphia wage tax), which do not apply to investment or retirement income. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: all eligible retirement-plan income exempt after plan retirement age / 59 1/2; early distributions taxable above basis",
+      "startingPoint": "approximation: Pennsylvania uses its own eight-class gross income base, not federal AGI (401(k) deferrals and IRA contributions are taxed when contributed)"
+    }
+  },
+  "year": 2026,
+  "state": "PA",
+  "name": "Pennsylvania",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.0307
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.0307
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.0307
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.0307
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": "all",
+    "minAge": 59
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

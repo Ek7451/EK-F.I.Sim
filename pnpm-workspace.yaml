@@ -1,0 +1,10 @@
+packages:
+  - apps/*
+  - packages/*
+  - workers/*
+  - tests/*
+  - tools/*
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+  - sharp

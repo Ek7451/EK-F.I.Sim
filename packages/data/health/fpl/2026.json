@@ -1,0 +1,29 @@
+{
+  "header": {
+    "source": "https://www.govinfo.gov/content/pkg/FR-2026-01-15/pdf/2026-00755.pdf",
+    "publisher": "U.S. Department of Health and Human Services (ASPE)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Annual Update of the HHS Poverty Guidelines, Federal Register 2026 Vol. 91, No. 10, January 15, 2026, pp.1797-1798.",
+      "42 U.S.C. 9902(2)",
+      "26 U.S.C. 36B(d)(3)"
+    ],
+    "sha256": "0c6b874339533197d73d202cecd7d4716908f260f851dde2107bb4ddf27efa74",
+    "schema": "fpl.v1",
+    "notes": "2026 HHS poverty guidelines, read from the ASPE workbook \"Historical Poverty Guidelines Through 2026\" (https://aspe.hhs.gov/topics/poverty-economic-mobility/poverty-guidelines); `source` is the Federal Register notice. Premium tax credits for coverage year 2027 use these guidelines. sha256 is of the raw source document as downloaded."
+  },
+  "year": 2026,
+  "contiguous": {
+    "base": 15960,
+    "perAdditional": 5680
+  },
+  "alaska": {
+    "base": 19950,
+    "perAdditional": 7100
+  },
+  "hawaii": {
+    "base": 18360,
+    "perAdditional": 6530
+  }
+}

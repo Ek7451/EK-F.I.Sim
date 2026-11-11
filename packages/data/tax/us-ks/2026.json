@@ -1,0 +1,86 @@
+{
+  "header": {
+    "source": "https://www.ksrevenue.gov/pdf/k-40es26.pdf",
+    "publisher": "Kansas Department of Revenue",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "K.S.A. 79-32,110 (rates) as amended by 2024 Special Session SB 1",
+      "K.S.A. 79-32,119 (standard deduction)",
+      "K.S.A. 79-32,121 (personal exemptions)",
+      "K.S.A. 79-32,117 (Social Security subtraction)",
+      "2025 SB 269 (contingent future rate cuts; none triggered for 2026 per KDOR Notice 25-06)"
+    ],
+    "sha256": "b1623b499d42ff98fdadc3b2bb74ba64698326f64562a624a291f760f4fdd5c1",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Hand-transcribed; sha256 is of the canonical body. Rates and standard deduction from the 2026 Form K-40ES; exemption and 65+ amounts from the 2025 K-40 instructions (statutory, unchanged for 2026; KDOR's 2026 legislative summary shows no rate, deduction or exemption changes and HB 2629 to raise the standard deduction failed). Two brackets: 5.2% up to $23,000 ($46,000 MFJ), 5.58% above; head of household and MFS use the single schedule. Standard deduction: single $3,605, MFJ $8,240, MFS $4,120, HOH $6,180; additional $850 per condition (65+/blind) if single or HOH, $700 if married. Personal exemption: $9,160 per taxpayer ($18,320 MFJ), plus $2,320 per dependent. Social Security benefits are fully exempt (since tax year 2024). No general pension/IRA exclusion, but KPERS and other Kansas public pensions, federal civil service and military retirement, and Railroad Retirement are fully exempt.",
+    "flags": {
+      "seniorExtraDeduction": "simplified: 850 if single/HOH; 700 per spouse if married",
+      "personalExemption": "dependents get 2,320 each, not 9,160",
+      "retirementIncomeExclusion": "simplified: no exclusion for private pensions/IRA/401(k); Kansas public, federal and military pensions are fully exempt"
+    }
+  },
+  "year": 2026,
+  "state": "KS",
+  "name": "Kansas",
+  "kind": "graduated",
+  "brackets": {
+    "single": [
+      {
+        "upTo": 23000,
+        "rate": 0.052
+      },
+      {
+        "upTo": null,
+        "rate": 0.0558
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": 46000,
+        "rate": 0.052
+      },
+      {
+        "upTo": null,
+        "rate": 0.0558
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": 23000,
+        "rate": 0.052
+      },
+      {
+        "upTo": null,
+        "rate": 0.0558
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": 23000,
+        "rate": 0.052
+      },
+      {
+        "upTo": null,
+        "rate": 0.0558
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 3605,
+    "mfj": 8240,
+    "mfs": 4120,
+    "hoh": 6180
+  },
+  "personalExemption": 9160,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 850,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 0,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}

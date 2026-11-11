@@ -1,0 +1,87 @@
+{
+  "header": {
+    "source": "https://www.irs.gov/pub/irs-drop/n-25-67.pdf",
+    "publisher": "Internal Revenue Service",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "IRS Notice 2025-67",
+      "Rev. Proc. 2025-19 (HSA)",
+      "IRC 219, 223, 401(a)(17), 402(g), 408(p), 408A, 414(v), 415(c), 529(c)(3)(E)",
+      "31 CFR 359.29 (I bond purchase limit)"
+    ],
+    "sha256": "1eea8f141b0cddd182f9f09b3bc8ffad683d27ceb806dfc6da126811dc0a1f8d",
+    "schema": "limits.v1",
+    "notes": "sha256 is of the raw source PDF (n-25-67.pdf). HSA amounts are from Rev. Proc. 2025-19 (https://www.irs.gov/pub/irs-drop/rp-25-19.pdf, sha256 ff2ba4bac62ef6940c57578d70f8be88ff3898ac806e921ad52787c11da35bf4); hsa.catchUp55 is statutory (IRC 223(b)(3)). rothCatchUpWageThreshold is the 2025-wages threshold ($150,000) that governs 2026 catch-up contributions. sep.limit equals the 415(c) limit; sep.pctOfCompensation is statutory (25% of compensation; effectively 20% of net self-employment earnings). simple.limit is the standard limit ($18,100 applies to certain small-employer plans; their age-50 catch-up is $3,850). Roth and traditional IRA MFS ranges are statutory ($0-$10,000, not indexed). 529-to-Roth: $35,000 lifetime, account open 15 years (IRC 529(c)(3)(E)); annual rollovers are also capped at the IRA limit. I-bond cap: $10,000 electronic per SSN per calendar year (TreasuryDirect; paper bonds via tax refund ended 2025)."
+  },
+  "year": 2026,
+  "electiveDeferral": 24500,
+  "catchUp50": 8000,
+  "catchUp60to63": 11250,
+  "rothCatchUpWageThreshold": 150000,
+  "annualAdditions": 72000,
+  "compensationCap": 360000,
+  "ira": {
+    "limit": 7500,
+    "catchUp50": 1100
+  },
+  "rothIraPhaseout": {
+    "single": [
+      153000,
+      168000
+    ],
+    "mfj": [
+      242000,
+      252000
+    ],
+    "mfs": [
+      0,
+      10000
+    ]
+  },
+  "tradIraDeductionPhaseout": {
+    "single": [
+      81000,
+      91000
+    ],
+    "mfj": [
+      129000,
+      149000
+    ],
+    "mfjSpouseNotCovered": [
+      242000,
+      252000
+    ],
+    "mfs": [
+      0,
+      10000
+    ]
+  },
+  "simple": {
+    "limit": 17000,
+    "catchUp50": 4000,
+    "catchUp60to63": 5250
+  },
+  "sep": {
+    "pctOfCompensation": 0.25,
+    "limit": 72000
+  },
+  "hsa": {
+    "self": 4400,
+    "family": 8750,
+    "catchUp55": 1000,
+    "hdhpMinDeductible": {
+      "self": 1700,
+      "family": 3400
+    },
+    "hdhpMaxOop": {
+      "self": 8500,
+      "family": 17000
+    }
+  },
+  "rollover529ToRoth": {
+    "lifetimeCap": 35000,
+    "minAccountAgeYears": 15
+  },
+  "iBondPurchaseCap": 10000
+}

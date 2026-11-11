@@ -1,0 +1,66 @@
+{
+  "header": {
+    "source": "https://tax.illinois.gov/forms/withholding/currentyear/il-700-t-withholding-guide-tables.html",
+    "publisher": "Illinois Department of Revenue (2026 Booklet IL-700-T)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "35 ILCS 5/201(b)(5.4) (4.95% rate)",
+      "35 ILCS 5/204 (basic exemption, indexed; $1,000 additional for age 65+ / blind; AGI limits)",
+      "35 ILCS 5/203(a)(2)(F) (subtraction for retirement income and Social Security)"
+    ],
+    "sha256": "71ed2f7d7417812f175af2747c743dd57d7a47dd7873cb465ddd091760d0dc7f",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: flat 4.95% of net income. No standard deduction. Personal exemption allowance for 2026 is $2,925 per person (taxpayer, spouse, each dependent), indexed annually; IDOR 2026 IL-700-T: \"The Illinois income tax rate is 4.95%, and the exemption allowance is $2,925\". The exemption is not allowed if federal AGI exceeds $250,000 ($500,000 joint). Additional $1,000 exemption for each taxpayer/spouse who is 65 or older (and another $1,000 if legally blind). Starts from federal AGI. Federally taxed Social Security and retirement income from qualified employee benefit plans (including 401(k)), IRAs and government retirement plans are fully subtracted (IDOR, \"Social Security benefits and certain retirement plans\", https://tax.illinois.gov/individuals/pension.html); nonqualified plan payments are not. No capital-gains exclusion. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "retirementIncomeExclusion": "simplified: all qualified-plan / IRA / government retirement income is subtracted regardless of age; nonqualified deferred compensation is taxable"
+    }
+  },
+  "year": 2026,
+  "state": "IL",
+  "name": "Illinois",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.0495
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.0495
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.0495
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.0495
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 2925,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 1000,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": "all",
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

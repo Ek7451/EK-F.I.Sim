@@ -1,0 +1,68 @@
+{
+  "header": {
+    "source": "https://revenue.ky.gov/Forms/2026%20Withholding%20Formula.pdf",
+    "publisher": "Kentucky Department of Revenue (Form 42A003(TCF), 10-2025)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "KRS 141.020 (rate; 3.5% from Jan 1 2026 per 2025 H.B. 1)",
+      "KRS 141.081(2)(a) (standard deduction, adjusted annually)",
+      "KRS 141.019 (pension income exclusion of $31,110; Social Security exclusion)",
+      "KRS 141.066 (family size tax credit)"
+    ],
+    "sha256": "e4b572f201d0324826c89eeb3fa02999c94559f811acef9932e17f478aeddda5",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate and deduction: Kentucky DOR 2026 withholding formula: \"2026 Kentucky Standard Deduction: $3,360 / 2026 Kentucky Tax Rate: 3.5% of taxable income\" (rate cut from 4% by 2025 H.B. 1; deduction up from $3,270 and adjusted annually under KRS 141.081(2)(a)). The $3,360 standard deduction is per return and is NOT doubled on a joint return (so mfj = 3360; Tax Foundation 2026 note: \"Kentucky's standard deduction is not doubled for MFJ filers, but only for married filing separately\"). Spouses may instead file separately on a combined return and each claim $3,360 against their own income, which is how most two-income couples file - an engine wanting that outcome should use 6,720 for couples where both spouses have income. No personal exemptions (small personal tax credits for age 65+ / blind and the low-income family size tax credit are not modeled). Starts from federal AGI. Social Security benefits are not taxed. Pension income exclusion: up to $31,110 per person of pension, annuity, IRA and other retirement-plan distributions at any age (more for certain pre-1998 government service). NOT MODELED: local occupational license (payroll / net profits) taxes levied by many Kentucky cities and counties on earned income. No capital-gains exclusion. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "standardDeduction.mfj": "simplified: $3,360 on a true joint return; spouses filing separately on a combined return each get $3,360 (effective $6,720 when both have income)",
+      "retirementIncomeExclusion": "simplified: $31,110 per person at any age; larger exclusion for certain pre-1998 federal / state / local government service"
+    }
+  },
+  "year": 2026,
+  "state": "KY",
+  "name": "Kentucky",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.035
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.035
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.035
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.035
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 3360,
+    "mfj": 3360,
+    "mfs": 3360,
+    "hoh": 3360
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 0,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalAGI",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": 31110,
+    "minAge": 0
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": true
+}

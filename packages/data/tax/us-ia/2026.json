@@ -1,0 +1,69 @@
+{
+  "header": {
+    "source": "https://content.govdelivery.com/accounts/IACIO/bulletins/3f80b80",
+    "publisher": "Iowa Department of Revenue (\"IDR Announces 2026 Individual Income Tax and Interest Rates\", Oct 21 2025)",
+    "retrieved": "2026-11-10",
+    "status": "enacted",
+    "lawRefs": [
+      "Iowa Code § 422.5 (3.8% flat rate; Senate File 2442 of 2024)",
+      "House File 2317 (2022) (retirement income exclusion; federal taxable income starting point)",
+      "Iowa Code § 422.7 (retirement income and Social Security exclusions)",
+      "Iowa Code § 422.12 (personal exemption credits)",
+      "Iowa Admin. Code r. 701-302.47"
+    ],
+    "sha256": "466d968e958e17b54f4ab3ed2792e679600bb6cbb4f30521638202b73ecb8e29",
+    "schema": "state-tax.v1",
+    "notes": "sha256 is of the canonical JSON body (JSON.stringify of the file without `header`). Values hand-transcribed; sha256 is of the canonical body. Rate: Iowa DOR (Oct 21, 2025): \"Iowa law provides for a flat tax rate of 3.8 percent. In 2026, all levels of taxable individual income will be subject to this rate.\" Starting point is federal taxable income (IA 1040 since 2023), so the federal standard/itemized deduction is already embedded and standardDeduction is 0 here. The personal exemption is a CREDIT of $40 per taxpayer, spouse and dependent (Tax Foundation 2026: \"$40 credit / $80 credit / $40 credit\"); prior-year IA 1040 instructions also give an additional $20 credit per taxpayer/spouse who is 65+ or blind (not re-fetched; it is a credit, so seniorExtraDeduction is 0). Social Security benefits are not taxed. Retirement income exclusion (tax years 2023 and later): distributions from pensions, annuities, IRAs, employer defined-benefit and defined-contribution plans and deferred compensation plans are fully excluded for a taxpayer who is 55 or older on December 31 (or disabled, or a qualifying surviving spouse/survivor); each spouse must qualify separately (https://revenue.iowa.gov/taxes/tax-guidance/individual-income-tax/retirement-income-tax-guidance). No general capital-gains exclusion (narrow exclusions for retired farmers and employee-owned stock). School district income surtaxes are not modeled. Cross-checked against Tax Foundation, \"State Individual Income Tax Rates and Brackets, 2026\" (data as of Jan 1 2026, updated Feb 11 2026).",
+    "flags": {
+      "standardDeduction": "0 because the base starts from federal taxable income",
+      "retirementIncomeExclusion": "simplified: full exclusion at 55+ (also disabled persons and qualifying survivors at any age)"
+    }
+  },
+  "year": 2026,
+  "state": "IA",
+  "name": "Iowa",
+  "kind": "flat",
+  "brackets": {
+    "single": [
+      {
+        "upTo": null,
+        "rate": 0.038
+      }
+    ],
+    "mfj": [
+      {
+        "upTo": null,
+        "rate": 0.038
+      }
+    ],
+    "mfs": [
+      {
+        "upTo": null,
+        "rate": 0.038
+      }
+    ],
+    "hoh": [
+      {
+        "upTo": null,
+        "rate": 0.038
+      }
+    ]
+  },
+  "standardDeduction": {
+    "single": 0,
+    "mfj": 0,
+    "mfs": 0,
+    "hoh": 0
+  },
+  "personalExemption": 0,
+  "personalExemptionCredit": 40,
+  "seniorExtraDeduction": 0,
+  "startingPoint": "federalTaxableIncome",
+  "taxesSocialSecurity": false,
+  "retirementIncomeExclusion": {
+    "amountPerPerson": "all",
+    "minAge": 55
+  },
+  "longTermGainExclusionPct": 0,
+  "indexed": false
+}
