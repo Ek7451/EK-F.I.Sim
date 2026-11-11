@@ -1,5 +1,5 @@
 # Pinned oracle environment for tests/validation/taxcalc/generate_fixtures.py
-# Python 3.12. Regenerate with: pip freeze (after pip install taxcalc==6.8.5)
+# Python 3.12. Regenerate with: pip freeze (after pip install taxcalc==6.9.0)
 bokeh==3.10.2
 fsspec==2026.9.0
 Jinja2==3.1.6
