@@ -324,6 +324,11 @@ a {
 .lv-input[inputmode='numeric'] {
   font-variant-numeric: tabular-nums;
 }
+/* A value outside the allowed range while typing; it is pulled into range when the field loses focus. */
+.lv-input[aria-invalid='true'] {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 1px var(--danger);
+}
 @media (pointer: coarse) {
   .lv-input,
   .lv-select {

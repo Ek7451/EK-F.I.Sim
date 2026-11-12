@@ -257,23 +257,37 @@ function useNumberText(
   format: (v: number) => string,
   parse: (s: string) => number,
   onChange: (v: number) => void,
-): { text: string; set: (s: string) => void; blur: () => void } {
+  /**
+   * Optional range rule. While typing, a value outside the range is held back (so typing "2030" into a
+   * year field does not save 1990 along the way); on blur it is pulled into range and saved.
+   */
+  range?: { accept: (v: number) => boolean; settle: (v: number) => number },
+): { text: string; set: (s: string) => void; blur: () => void; invalid: boolean } {
   const [text, setText] = useState(() => format(value));
   const focused = useRef(false);
   useEffect(() => {
     if (!focused.current) setText(format(value));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
+  const typed = parse(text);
   return {
     text,
+    invalid: focused.current && Number.isFinite(typed) && !!range && !range.accept(typed),
     set: (s) => {
       focused.current = true;
       setText(s);
       const n = parse(s);
-      if (Number.isFinite(n)) onChange(n);
+      if (Number.isFinite(n) && (!range || range.accept(n)) && n !== value) onChange(n);
     },
     blur: () => {
       focused.current = false;
+      const n = parse(text);
+      if (Number.isFinite(n) && range) {
+        const settled = range.settle(n);
+        if (settled !== value) onChange(settled);
+        setText(format(settled));
+        return;
+      }
       setText(format(value));
     },
   };
@@ -392,9 +406,10 @@ export function NumberField({
     (v) => String(v),
     (s) => {
       const v = parseLoose(s);
-      return Number.isFinite(v) ? clamp(Math.round(v)) : NaN;
+      return Number.isFinite(v) ? Math.round(v) : NaN;
     },
     onChange,
+    { accept: (v) => v === clamp(v), settle: clamp },
   );
   return (
     <Field label={label} hint={hint}>
@@ -406,8 +421,12 @@ export function NumberField({
           inputMode="numeric"
           autoComplete="off"
           value={n.text}
+          aria-invalid={n.invalid || undefined}
           onChange={(e) => n.set(e.target.value)}
           onBlur={n.blur}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') n.blur();
+          }}
           {...rest}
         />
       )}

@@ -326,6 +326,7 @@ export function StartPage(): ReactNode {
   const year = new Date().getFullYear();
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
+  const [finishError, setFinishError] = useState<string | null>(null);
   const [d, setD] = useState<Draft>({
     name: '',
     birthYear: year - 35,
@@ -352,11 +353,18 @@ export function StartPage(): ReactNode {
 
   const finish = async (takeTour: boolean): Promise<void> => {
     setBusy(true);
-    const plan = PlanZ.parse(buildPlan(d, year));
-    await createPlan(plan.name, plan);
-    setSettings({ onboarded: true });
-    nav('/');
-    if (takeTour) tour.start('T-B01');
+    setFinishError(null);
+    try {
+      const plan = PlanZ.parse(buildPlan(d, year));
+      await createPlan(plan.name, plan);
+      setSettings({ onboarded: true });
+      nav('/');
+      if (takeTour) tour.start('T-B01');
+    } catch (e: unknown) {
+      setFinishError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setBusy(false);
+    }
   };
   const sample = async (id: SamplePlanId): Promise<void> => {
     await createFromSample(id);
@@ -496,6 +504,9 @@ export function StartPage(): ReactNode {
         ) : null}
         {step === 5 ? (
           <div className="lv-stack">
+            {finishError ? (
+              <Notice tone="danger">Your plan could not be created: {finishError}</Notice>
+            ) : null}
             <p>
               Next comes a two-minute tour of how to get around. It runs on a sample plan, so nothing you do
               in it changes yours.

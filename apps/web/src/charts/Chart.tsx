@@ -85,13 +85,18 @@ export function Chart({
   height?: number;
   label: string;
   table?: () => ChartTable;
-  onClick?: (params: { dataIndex: number; name: string; seriesName?: string }) => void;
+  onClick?: (params: { dataIndex: number }) => void;
 } & Record<`data-${string}`, string | undefined>): ReactNode {
   const el = useRef<HTMLDivElement>(null);
   const inst = useRef<ReturnType<ECharts['init']> | null>(null);
+  // Keep the latest click handler without re-initialising the chart (it would otherwise go stale).
+  const clickRef = useRef(onClick);
+  clickRef.current = onClick;
   const theme = useStore((s) => s.settings.theme);
   const [showTable, setShowTable] = useState(false);
   const [dark, setDark] = useState(false);
+  /** Bumped when a chart instance is created so the option effect runs against it. */
+  const [ready, setReady] = useState(0);
   useEffect(() => {
     const mq = window.matchMedia('(prefers-color-scheme: dark)');
     const on = (): void => setDark(mq.matches);
@@ -100,44 +105,66 @@ export function Chart({
     return () => mq.removeEventListener('change', on);
   }, []);
 
+  // The chart instance lives exactly as long as its container: created on mount (or when the
+  // table view is closed again) and disposed on unmount (or when the table view opens).
   useEffect(() => {
+    if (showTable && table) return;
     let live = true;
     let ro: ResizeObserver | null = null;
     void loadECharts().then((echarts) => {
-      if (!live || !el.current) return;
-      if (!inst.current) {
-        inst.current = echarts.init(el.current, undefined, { renderer: 'canvas' });
-        inst.current.on('click', (p) =>
-          onClick?.({ dataIndex: p.dataIndex ?? 0, name: String(p.name), seriesName: p.seriesName }),
-        );
-      }
-      const c = readColors();
-      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-      const base: EChartsCoreOption = {
-        color: c.series,
-        animation: !reduce,
-        animationDuration: 350,
-        animationDurationUpdate: 300,
-        textStyle: { color: c.ink2, fontFamily: getComputedStyle(document.body).fontFamily },
-        aria: { enabled: true, label: { description: label } },
-      };
-      inst.current.setOption({ ...base, ...build(c) }, { notMerge: true });
-      ro = new ResizeObserver(() => inst.current?.resize());
-      ro.observe(el.current);
+      const node = el.current;
+      if (!live || !node) return;
+      const chart = echarts.init(node, undefined, { renderer: 'canvas' });
+      inst.current = chart;
+      // Clicks anywhere in the plot area pick the nearest category, not only clicks on a mark.
+      chart.getZr().on('click', (e: { offsetX: number; offsetY: number }) => {
+        const pt = [e.offsetX, e.offsetY];
+        if (!clickRef.current || !chart.containPixel({ gridIndex: 0 }, pt)) return;
+        // For a category x axis the first coordinate is the category index.
+        const x = chart.convertFromPixel({ gridIndex: 0 }, pt) as number[] | null;
+        const idx = Math.round(x?.[0] ?? NaN);
+        if (Number.isFinite(idx)) clickRef.current({ dataIndex: idx });
+      });
+      ro = new ResizeObserver(() => chart.resize());
+      ro.observe(node);
+      setReady((n) => n + 1);
     });
     return () => {
       live = false;
       ro?.disconnect();
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [...deps, theme, dark, showTable]);
-  useEffect(
-    () => () => {
       inst.current?.dispose();
       inst.current = null;
-    },
-    [],
-  );
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showTable]);
+
+  // Rebuild the option whenever the data, theme or instance changes.
+  useEffect(() => {
+    const chart = inst.current;
+    if (!chart) return;
+    const c = readColors();
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const base: EChartsCoreOption = {
+      color: c.series,
+      animation: !reduce,
+      animationDuration: 350,
+      animationDurationUpdate: 300,
+      textStyle: { color: c.ink2, fontFamily: getComputedStyle(document.body).fontFamily },
+      aria: { enabled: true, label: { description: label } },
+    };
+    // Keep the user's zoom window across rebuilds.
+    const prev = chart.getOption() as { dataZoom?: { start?: number; end?: number }[] } | undefined;
+    const opt = { ...base, ...build(c) } as EChartsCoreOption & { dataZoom?: object[] };
+    if (prev?.dataZoom?.length && Array.isArray(opt.dataZoom)) {
+      opt.dataZoom = opt.dataZoom.map((z, i) => ({
+        ...z,
+        start: prev.dataZoom?.[i]?.start ?? 0,
+        end: prev.dataZoom?.[i]?.end ?? 100,
+      }));
+    }
+    chart.setOption(opt, { notMerge: true });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [...deps, theme, dark, ready]);
 
   const t = showTable && table ? table() : null;
   return (
@@ -179,13 +206,7 @@ export function Chart({
         </div>
       ) : (
         <div
-          ref={(node) => {
-            if (node !== el.current) {
-              inst.current?.dispose();
-              inst.current = null;
-            }
-            (el as { current: HTMLDivElement | null }).current = node;
-          }}
+          ref={el}
           style={{ width: '100%', height, touchAction: 'pan-y pinch-zoom' }}
           role="img"
           aria-label={label}

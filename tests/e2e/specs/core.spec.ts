@@ -62,6 +62,33 @@ test('a change to the plan changes the projection', async ({ page }) => {
   await expect(stats).not.toHaveText(before ?? '');
 });
 
+test('the projection chart keeps drawing when the selected year changes', async ({ page }) => {
+  await seed(page);
+  await go(page, '/explore/projection');
+  const chart = page.locator('[data-tour="net-worth-chart"]');
+  // Count painted pixels on the chart canvas (0 when the canvas is gone or blank).
+  const painted = (): Promise<number> =>
+    chart.evaluate((root) => {
+      const c = root.querySelector('canvas');
+      if (!c || !c.width) return 0;
+      const d = c.getContext('2d')!.getImageData(0, 0, c.width, c.height).data;
+      let n = 0;
+      for (let i = 3; i < d.length; i += 16) if (d[i] > 0) n++;
+      return n;
+    });
+  await expect.poll(painted, { timeout: 15_000 }).toBeGreaterThan(1000);
+  const detail = page.locator('[data-tour="year-detail"]');
+  const before = await detail.locator('h2, h3').first().textContent();
+  const slider = page.getByRole('slider', { name: /Year/ });
+  await slider.focus();
+  await slider.press('ArrowRight');
+  await slider.press('ArrowRight');
+  await expect(detail.locator('h2, h3').first()).not.toHaveText(before ?? '');
+  // A re-render used to dispose the chart and leave an empty box.
+  await page.waitForTimeout(600);
+  expect(await painted()).toBeGreaterThan(1000);
+});
+
 test('chance of success runs, reports a percentage and is reproducible', async ({ page }) => {
   await seed(page);
   await go(page, '/explore/success');

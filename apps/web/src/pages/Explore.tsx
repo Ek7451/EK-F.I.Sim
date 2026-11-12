@@ -43,6 +43,15 @@ function Loading({ error }: { error: string | null }): ReactNode {
   );
 }
 
+/** A failed recompute while an earlier result is still on screen: say so instead of showing stale numbers silently. */
+function RecomputeError({ error }: { error: string | null }): ReactNode {
+  return error ? (
+    <Notice tone="danger">
+      Your latest change could not be worked out ({error}). The figures below are from before that change.
+    </Notice>
+  ) : null;
+}
+
 function ProjectedBadge({ result }: { result: ProjectionResult }): ReactNode {
   const first = result.records.find((r) => r.dataStatus === 'projected');
   return (
@@ -118,6 +127,7 @@ export function ProjectionPage(): ReactNode {
         intro={`One path using your expected returns, shown in ${m.unit}. It is a single estimate, not a forecast: see Chance of success for the range.`}
         actions={<ProjectedBadge result={result} />}
       />
+      <RecomputeError error={error} />
       {result.warnings.length ? (
         <Notice tone="warn">
           <ul style={{ margin: 0, paddingLeft: 18 }}>
@@ -171,7 +181,7 @@ export function ProjectionPage(): ReactNode {
             ]),
           })}
           build={(c) => ({
-            grid: { left: 56, right: 16, top: 36, bottom: 56 },
+            grid: { left: 56, right: 16, top: 36, bottom: 64 },
             legend: { type: 'scroll', top: 0, textStyle: { color: c.ink2 }, icon: 'roundRect' },
             tooltip: { ...tooltip(c), trigger: 'axis', valueFormatter: (v: number) => formatMoney(v) },
             xAxis: {
@@ -182,7 +192,19 @@ export function ProjectionPage(): ReactNode {
               splitLine: { show: false },
             },
             yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
-            dataZoom: [{ type: 'inside' }],
+            dataZoom: [
+              { type: 'inside', zoomOnMouseWheel: 'ctrl', moveOnMouseWheel: false },
+              {
+                type: 'slider',
+                height: 18,
+                bottom: 6,
+                borderColor: c.line,
+                fillerColor: 'rgba(127,127,127,.12)',
+                handleStyle: { color: c.surface, borderColor: c.ink3 },
+                textStyle: { color: c.ink3 },
+                dataBackground: { lineStyle: { color: c.ink3 }, areaStyle: { color: c.line } },
+              },
+            ],
             series: series.map(([name, f], i) => ({
               name,
               type: 'line',
@@ -371,6 +393,7 @@ export function CashFlowPage(): ReactNode {
         intro={`Where each year's money comes from and where it goes, in ${m.unit}.`}
         actions={<ProjectedBadge result={result} />}
       />
+      <RecomputeError error={error} />
       <Card>
         <YearPicker records={recs} year={r.year} onChange={setYear} />
       </Card>
@@ -513,6 +536,7 @@ export function TaxesPage(): ReactNode {
         intro={`Estimated federal, payroll and state tax each year, in ${m.unit}. For planning only; this is not a tax return.`}
         actions={<ProjectedBadge result={result} />}
       />
+      <RecomputeError error={error} />
       <Card data-tour="tax-stats">
         <div className="lv-grid">
           <Stat
@@ -1121,6 +1145,7 @@ export function EstatePage(): ReactNode {
         intro="What is left for heirs at the end of the plan on the expected path, and what tax takes from it. In today's dollars."
         actions={<ProjectedBadge result={result} />}
       />
+      <RecomputeError error={error} />
       <Card data-tour="estate-stats">
         <div className="lv-grid">
           <Stat

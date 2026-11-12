@@ -1,4 +1,4 @@
-/** Worker pool (plan 11): hardwareConcurrency - 1 workers, at most 4. Monte Carlo is split into batches across the pool. */
+/** Worker pool (plan 11): hardwareConcurrency - 1 workers, at most 4. Worker 0 is kept for the projection; Monte Carlo is split into batches across the rest. */
 import { bundledEngineData } from '@fisim/data/src/bundle';
 import {
   applyScenario,
@@ -30,6 +30,12 @@ function pool(): Comlink.Remote<EngineApi>[] {
 
 export const poolSize = size;
 
+/** Workers used for Monte Carlo: all but the first when there is more than one, so edits recompute promptly. */
+function mcWorkers(): Comlink.Remote<EngineApi>[] {
+  const all = pool();
+  return all.length > 1 ? all.slice(1) : all;
+}
+
 export function project(
   plan: Plan,
   scenarioId: string | null,
@@ -54,7 +60,8 @@ export function monteCarlo(
 ): McHandle {
   const total = plan.assumptions.monteCarlo.runs;
   const key = `${plan.id}|${plan.updatedAt}|${scenarioId}|${Math.random()}`;
-  const batch = Math.max(20, Math.ceil(total / (size * 8)));
+  const lanes = mcWorkers();
+  const batch = Math.max(20, Math.ceil(total / (lanes.length * 8)));
   let cancelled = false;
   let next = 0;
   const chunks: McChunk[] = [];
@@ -82,7 +89,7 @@ export function monteCarlo(
       onProgress(done, total, summarize());
     }
   };
-  const done = Promise.all(pool().map(lane)).then(() => (cancelled ? null : summarize()));
+  const done = Promise.all(lanes.map(lane)).then(() => (cancelled ? null : summarize()));
   return {
     cancel: () => {
       cancelled = true;
