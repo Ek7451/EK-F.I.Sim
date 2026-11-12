@@ -16,21 +16,18 @@ is in the [parity matrix](docs/parity-matrix.md).
 - **For personal educational planning only. Not financial, tax, legal or medical advice.**
 - Every result is an **estimate**. Parameters for future years are projected by indexing current law and
   are visibly marked as _projected_, as distinct from _enacted_ values.
-- **Original visual identity and information architecture.** Nothing is copied from any other product: no
-  screens, copy, icons, names or assets. Where the plan speaks of feature parity with another planning
-  tool, it means equal capability, not a matching look.
+- **Original name, copy and assets.** The chart-centered workspace follows the quality and interaction
+  direction in the [premium UX specification](plan/PREMIUM_UX_UPGRADE.md).
 
 The app is non-commercial and single-user. It never asks for Social Security numbers, account numbers or
 credentials, links to no bank, and loads no ads, analytics or third-party scripts.
 
 ## What it does
 
-- **Plan:** household, accounts and debts, income, spending, a milestone timeline, cash-flow priorities,
-  withdrawal and Roth-conversion strategy, a healthcare coverage timeline, and return and inflation
-  assumptions.
-- **Explore:** a deterministic projection, a cash-flow diagram for any year, a tax breakdown, Monte Carlo
-  chance of success, historical backtesting from 1871, and an estate view.
-- **Compare** scenarios side by side, **Track** actual balances against the plan, and produce PDF and CSV
+- **Overview:** current position, retirement timing and the next planning decision.
+- **Plan:** a selectable projection, integrated timeline and contextual draft editor, plus cash flow,
+  taxes, simulation outcomes, historical cohorts and estate views. Full input forms remain available.
+- **Compare** scenarios side by side, record actual balances in **Progress**, and produce PDF and CSV
   **Reports**.
 - **Help:** guided tours on built-in sample plans, and a "How this is calculated" reference that cites the
   source, date and status of every dataset.
@@ -112,7 +109,7 @@ research/            Local-only design reference material. Git-ignored; never co
 | [plan/BUILD_PLAN.md](plan/BUILD_PLAN.md)                                       | The specification: goals, feature IDs, engine, data, security, delivery, roadmap, release gate |
 | [docs/parity-matrix.md](docs/parity-matrix.md)                                 | Every feature ID with phase, status, implementation and tests                                  |
 | [docs/design/brand.md](docs/design/brand.md)                                   | Name, palette intent, type, information architecture, chart principles, tone of voice          |
-| [docs/design/reference-map.md](docs/design/reference-map.md)                   | Design reference map and the differentiation checklist used at design reviews                  |
+| [docs/design/reference-map.md](docs/design/reference-map.md)                   | Design reference map and quality/fidelity review checklist                                     |
 | [docs/runbooks/cloudflare-setup.md](docs/runbooks/cloudflare-setup.md)         | One-time set-up: Pages, D1, R2, Access, GitHub secrets, branch protection                      |
 | [docs/runbooks/annual-data-update.md](docs/runbooks/annual-data-update.md)     | Yearly data calendar, ingest steps, legislation watch, data release tags                       |
 | [docs/runbooks/release-and-rollback.md](docs/runbooks/release-and-rollback.md) | App releases, rollback of Pages, Worker and D1, PWA update-flow test                           |
@@ -132,3 +129,5 @@ Details: plan §12.
 ## License
 
 Not yet decided (plan open item O2). Until a license is added, all rights are reserved.
+
+The active UI implementation specification is [the premium UX upgrade](plan/PREMIUM_UX_UPGRADE.md). It defines the chart-centered workspace, transactional drafts, shared year selection, analysis suite and release verification gates. Progress and evidence are tracked in [UI implementation status](plan/UI_IMPLEMENTATION_STATUS.md).

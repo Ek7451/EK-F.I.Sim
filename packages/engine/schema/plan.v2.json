@@ -1,0 +1,3141 @@
+{
+ "$ref": "#/definitions/PlanV2",
+ "definitions": {
+  "PlanV2": {
+   "type": "object",
+   "properties": {
+    "id": {
+     "type": "string",
+     "minLength": 1
+    },
+    "schemaVersion": {
+     "type": "number",
+     "const": 2
+    },
+    "name": {
+     "type": "string"
+    },
+    "createdAt": {
+     "type": "string"
+    },
+    "updatedAt": {
+     "type": "string"
+    },
+    "settings": {
+     "type": "object",
+     "properties": {
+      "startYear": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      },
+      "timing": {
+       "default": "mid",
+       "type": "string",
+       "enum": [
+        "start",
+        "mid",
+        "end"
+       ]
+      },
+      "display": {
+       "default": "real",
+       "type": "string",
+       "enum": [
+        "real",
+        "nominal"
+       ]
+      },
+      "dataYearPolicy": {
+       "default": "latest",
+       "type": "string",
+       "enum": [
+        "latest"
+       ]
+      }
+     },
+     "required": [
+      "startYear"
+     ]
+    },
+    "people": {
+     "minItems": 1,
+     "maxItems": 2,
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "birthDate": {
+        "type": "string",
+        "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+       },
+       "sex": {
+        "type": "string",
+        "enum": [
+         "male",
+         "female"
+        ]
+       },
+       "longevity": {
+        "default": {},
+        "type": "object",
+        "properties": {
+         "mode": {
+          "default": "fixed",
+          "type": "string",
+          "enum": [
+           "fixed",
+           "stochastic"
+          ]
+         },
+         "age": {
+          "default": 95,
+          "type": "integer",
+          "minimum": 50,
+          "maximum": 120
+         }
+        }
+       },
+       "residence": {
+        "default": [],
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "state": {
+           "type": "string",
+           "minLength": 2,
+           "maxLength": 2
+          },
+          "countyFips": {
+           "type": "string"
+          },
+          "fromYear": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          }
+         },
+         "required": [
+          "state",
+          "fromYear"
+         ]
+        }
+       },
+       "socialSecurity": {
+        "default": {},
+        "type": "object",
+        "properties": {
+         "mode": {
+          "default": "earnings",
+          "type": "string",
+          "enum": [
+           "earnings",
+           "pia",
+           "none"
+          ]
+         },
+         "earnings": {
+          "default": [],
+          "type": "array",
+          "items": {
+           "type": "object",
+           "properties": {
+            "year": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "year",
+            "amount"
+           ]
+          }
+         },
+         "piaMonthly": {
+          "default": 0,
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "claimAge": {
+          "default": {
+           "years": 67,
+           "months": 0
+          },
+          "type": "object",
+          "properties": {
+           "years": {
+            "type": "integer",
+            "minimum": 62,
+            "maximum": 70
+           },
+           "months": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 11
+           }
+          },
+          "required": [
+           "years",
+           "months"
+          ]
+         }
+        }
+       }
+      },
+      "required": [
+       "id",
+       "name",
+       "birthDate"
+      ]
+     }
+    },
+    "household": {
+     "default": {},
+     "type": "object",
+     "properties": {
+      "filingStatus": {
+       "default": [],
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "fromYear": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "status": {
+          "type": "string",
+          "enum": [
+           "single",
+           "mfj",
+           "mfs",
+           "hoh",
+           "qss"
+          ]
+         }
+        },
+        "required": [
+         "fromYear",
+         "status"
+        ]
+       }
+      },
+      "dependents": {
+       "default": [],
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "birthYear": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         }
+        },
+        "required": [
+         "name",
+         "birthYear"
+        ]
+       }
+      }
+     }
+    },
+    "accounts": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "ownerId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "type": {
+        "type": "string",
+        "enum": [
+         "taxable",
+         "cash",
+         "trad401k",
+         "trad403b",
+         "gov457b",
+         "tradIra",
+         "sepIra",
+         "simpleIra",
+         "solo401k",
+         "roth401k",
+         "rothIra",
+         "hsa",
+         "plan529",
+         "inheritedIra",
+         "iBond",
+         "tBill",
+         "annuity"
+        ]
+       },
+       "balance": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "costBasis": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "rothBasis": {
+        "type": "object",
+        "properties": {
+         "contributions": {
+          "default": 0,
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "conversions": {
+          "default": [],
+          "type": "array",
+          "items": {
+           "type": "object",
+           "properties": {
+            "year": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "year",
+            "amount"
+           ]
+          }
+         },
+         "firstContributionYear": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         }
+        }
+       },
+       "allocation": {
+        "default": {
+         "usStocks": 0.6,
+         "usBonds": 0.4
+        },
+        "type": "object",
+        "properties": {
+         "usStocks": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "usBonds": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "cash": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "intlStocks": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "reits": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         }
+        }
+       },
+       "glidePathId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "fees": {
+        "default": {},
+        "type": "object",
+        "properties": {
+         "expenseRatio": {
+          "default": 0,
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "advisory": {
+          "default": 0,
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         }
+        }
+       },
+       "contribution": {
+        "type": "object",
+        "properties": {
+         "incomeId": {
+          "type": "string",
+          "minLength": 1
+         },
+         "employeePct": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "employeeAmount": {
+          "default": 0,
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "maxOut": {
+          "default": false,
+          "type": "boolean"
+         },
+         "employerMatch": {
+          "default": [],
+          "type": "array",
+          "items": {
+           "type": "object",
+           "properties": {
+            "matchPct": {
+             "type": "number",
+             "minimum": 0
+            },
+            "upToPctOfSalary": {
+             "type": "number",
+             "minimum": 0,
+             "maximum": 1
+            }
+           },
+           "required": [
+            "matchPct",
+            "upToPctOfSalary"
+           ]
+          }
+         },
+         "employerFixedPct": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "megaBackdoor": {
+          "default": false,
+          "type": "boolean"
+         },
+         "megaBackdoorRothAccountId": {
+          "type": "string",
+          "minLength": 1
+         }
+        }
+       },
+       "ruleOf55": {
+        "default": false,
+        "type": "boolean"
+       },
+       "inherited": {
+        "type": "object",
+        "properties": {
+         "yearOfDeath": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "decedentHadStartedRmds": {
+          "default": false,
+          "type": "boolean"
+         }
+        },
+        "required": [
+         "yearOfDeath"
+        ]
+       },
+       "fixedYield": {
+        "type": "object",
+        "properties": {
+         "rate": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "basis": {
+          "default": "real",
+          "type": "string",
+          "enum": [
+           "real",
+           "nominal"
+          ]
+         }
+        },
+        "required": [
+         "rate"
+        ]
+       },
+       "plan529": {
+        "type": "object",
+        "properties": {
+         "openedYear": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "rothRolloverAccountId": {
+          "type": "string",
+          "minLength": 1
+         },
+         "rollToRoth": {
+          "default": false,
+          "type": "boolean"
+         }
+        },
+        "required": [
+         "openedYear"
+        ]
+       }
+      },
+      "required": [
+       "id",
+       "ownerId",
+       "name",
+       "type",
+       "balance"
+      ]
+     }
+    },
+    "assets": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "ownerId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "kind": {
+        "type": "string",
+        "enum": [
+         "primaryHome",
+         "rental",
+         "vehicle",
+         "other"
+        ]
+       },
+       "value": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "costBasis": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "appreciation": {
+        "default": {
+         "rate": 0
+        },
+        "type": "object",
+        "properties": {
+         "rate": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "basis": {
+          "default": "real",
+          "type": "string",
+          "enum": [
+           "real",
+           "nominal"
+          ]
+         }
+        },
+        "required": [
+         "rate"
+        ]
+       },
+       "property": {
+        "type": "object",
+        "properties": {
+         "propertyTaxRate": {
+          "default": 0.011,
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "insuranceAnnual": {
+          "default": 0,
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "maintenanceRate": {
+          "default": 0.01,
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "hoaAnnual": {
+          "default": 0,
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         }
+        }
+       },
+       "purchase": {
+        "type": "object",
+        "properties": {
+         "when": {
+          "oneOf": [
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "year"
+             },
+             "year": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             }
+            },
+            "required": [
+             "type",
+             "year"
+            ]
+           },
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "age"
+             },
+             "personId": {
+              "type": "string",
+              "minLength": 1
+             },
+             "age": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 130
+             }
+            },
+            "required": [
+             "type",
+             "personId",
+             "age"
+            ]
+           },
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "milestone"
+             },
+             "milestoneId": {
+              "type": "string",
+              "minLength": 1
+             },
+             "offset": {
+              "default": 0,
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             }
+            },
+            "required": [
+             "type",
+             "milestoneId"
+            ]
+           }
+          ]
+         },
+         "downPaymentPct": {
+          "default": 0.2,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "closingCostPct": {
+          "default": 0.03,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.2
+         },
+         "mortgageRate": {
+          "default": 0.065,
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "mortgageTermYears": {
+          "default": 30,
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 40
+         }
+        },
+        "required": [
+         "when"
+        ]
+       },
+       "sale": {
+        "type": "object",
+        "properties": {
+         "when": {
+          "oneOf": [
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "year"
+             },
+             "year": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             }
+            },
+            "required": [
+             "type",
+             "year"
+            ]
+           },
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "age"
+             },
+             "personId": {
+              "type": "string",
+              "minLength": 1
+             },
+             "age": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 130
+             }
+            },
+            "required": [
+             "type",
+             "personId",
+             "age"
+            ]
+           },
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "milestone"
+             },
+             "milestoneId": {
+              "type": "string",
+              "minLength": 1
+             },
+             "offset": {
+              "default": 0,
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             }
+            },
+            "required": [
+             "type",
+             "milestoneId"
+            ]
+           }
+          ]
+         },
+         "sellingCostPct": {
+          "default": 0.06,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 0.2
+         },
+         "proceedsToAccountId": {
+          "type": "string",
+          "minLength": 1
+         }
+        },
+        "required": [
+         "when"
+        ]
+       }
+      },
+      "required": [
+       "id",
+       "ownerId",
+       "name",
+       "kind",
+       "value"
+      ]
+     }
+    },
+    "debts": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "ownerId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "kind": {
+        "type": "string",
+        "enum": [
+         "mortgage",
+         "auto",
+         "student",
+         "personal",
+         "revolving",
+         "other"
+        ]
+       },
+       "principal": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "rate": {
+        "type": "number",
+        "minimum": -1,
+        "maximum": 10
+       },
+       "payment": {
+        "default": 0,
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "termMonths": {
+        "default": 0,
+        "type": "integer",
+        "minimum": 0,
+        "maximum": 9007199254740991
+       },
+       "revolvingPayPct": {
+        "default": 0.02,
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "linkedAssetId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "interestDeductible": {
+        "type": "boolean"
+       },
+       "start": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "year"
+           },
+           "year": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "year"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "age"
+           },
+           "personId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "age": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 130
+           }
+          },
+          "required": [
+           "type",
+           "personId",
+           "age"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "milestone"
+           },
+           "milestoneId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "milestoneId"
+          ]
+         }
+        ]
+       },
+       "refinance": {
+        "default": [],
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "when": {
+           "oneOf": [
+            {
+             "type": "object",
+             "properties": {
+              "type": {
+               "type": "string",
+               "const": "year"
+              },
+              "year": {
+               "type": "integer",
+               "minimum": -9007199254740991,
+               "maximum": 9007199254740991
+              }
+             },
+             "required": [
+              "type",
+              "year"
+             ]
+            },
+            {
+             "type": "object",
+             "properties": {
+              "type": {
+               "type": "string",
+               "const": "age"
+              },
+              "personId": {
+               "type": "string",
+               "minLength": 1
+              },
+              "age": {
+               "type": "integer",
+               "minimum": 0,
+               "maximum": 130
+              }
+             },
+             "required": [
+              "type",
+              "personId",
+              "age"
+             ]
+            },
+            {
+             "type": "object",
+             "properties": {
+              "type": {
+               "type": "string",
+               "const": "milestone"
+              },
+              "milestoneId": {
+               "type": "string",
+               "minLength": 1
+              },
+              "offset": {
+               "default": 0,
+               "type": "integer",
+               "minimum": -9007199254740991,
+               "maximum": 9007199254740991
+              }
+             },
+             "required": [
+              "type",
+              "milestoneId"
+             ]
+            }
+           ]
+          },
+          "rate": {
+           "type": "number",
+           "minimum": -1,
+           "maximum": 10
+          },
+          "termYears": {
+           "type": "integer",
+           "minimum": 1,
+           "maximum": 40
+          },
+          "costPct": {
+           "default": 0.02,
+           "type": "number",
+           "minimum": 0,
+           "maximum": 0.1
+          }
+         },
+         "required": [
+          "when",
+          "rate",
+          "termYears"
+         ]
+        }
+       }
+      },
+      "required": [
+       "id",
+       "ownerId",
+       "name",
+       "kind",
+       "principal",
+       "rate"
+      ]
+     }
+    },
+    "incomes": {
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "ownerId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "kind": {
+        "type": "string",
+        "enum": [
+         "wages",
+         "bonus",
+         "selfEmployment",
+         "rental",
+         "pension",
+         "annuity",
+         "other"
+        ]
+       },
+       "amount": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "growth": {
+        "default": {
+         "rate": 0
+        },
+        "type": "object",
+        "properties": {
+         "rate": {
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         },
+         "basis": {
+          "default": "real",
+          "type": "string",
+          "enum": [
+           "real",
+           "nominal"
+          ]
+         }
+        },
+        "required": [
+         "rate"
+        ]
+       },
+       "start": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "year"
+           },
+           "year": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "year"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "age"
+           },
+           "personId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "age": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 130
+           }
+          },
+          "required": [
+           "type",
+           "personId",
+           "age"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "milestone"
+           },
+           "milestoneId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "milestoneId"
+          ]
+         }
+        ]
+       },
+       "end": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "year"
+           },
+           "year": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "year"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "age"
+           },
+           "personId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "age": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 130
+           }
+          },
+          "required": [
+           "type",
+           "personId",
+           "age"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "milestone"
+           },
+           "milestoneId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "milestoneId"
+          ]
+         }
+        ]
+       },
+       "taxCharacter": {
+        "default": "earned",
+        "type": "string",
+        "enum": [
+         "earned",
+         "selfEmployment",
+         "ordinary",
+         "qualifiedDividend",
+         "capitalGain",
+         "taxFree"
+        ]
+       },
+       "pension": {
+        "type": "object",
+        "properties": {
+         "cola": {
+          "default": {
+           "rate": 0,
+           "basis": "nominal"
+          },
+          "type": "object",
+          "properties": {
+           "rate": {
+            "type": "number",
+            "minimum": -1,
+            "maximum": 10
+           },
+           "basis": {
+            "default": "real",
+            "type": "string",
+            "enum": [
+             "real",
+             "nominal"
+            ]
+           }
+          },
+          "required": [
+           "rate"
+          ]
+         },
+         "survivorPct": {
+          "default": 0.5,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         }
+        }
+       },
+       "annuityExclusionRatio": {
+        "default": 0,
+        "type": "number",
+        "minimum": 0,
+        "maximum": 1
+       },
+       "linkedAssetId": {
+        "type": "string",
+        "minLength": 1
+       }
+      },
+      "required": [
+       "id",
+       "ownerId",
+       "name",
+       "kind",
+       "amount"
+      ]
+     }
+    },
+    "expenses": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "category": {
+        "type": "string",
+        "enum": [
+         "housing",
+         "food",
+         "transport",
+         "travel",
+         "healthcare",
+         "education",
+         "childcare",
+         "insurance",
+         "giving",
+         "discretionary",
+         "other"
+        ]
+       },
+       "amount": {
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
+       },
+       "inflationIndex": {
+        "default": "cpi",
+        "type": "string",
+        "enum": [
+         "cpi",
+         "healthcare",
+         "education",
+         "custom",
+         "none"
+        ]
+       },
+       "customRate": {
+        "default": 0,
+        "type": "number",
+        "minimum": -1,
+        "maximum": 10
+       },
+       "essential": {
+        "default": true,
+        "type": "boolean"
+       },
+       "followsPhases": {
+        "default": false,
+        "type": "boolean"
+       },
+       "recurrence": {
+        "default": {
+         "type": "annual"
+        },
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "annual"
+           }
+          },
+          "required": [
+           "type"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "once"
+           }
+          },
+          "required": [
+           "type"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "interval"
+           },
+           "everyYears": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "everyYears"
+          ]
+         }
+        ]
+       },
+       "start": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "year"
+           },
+           "year": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "year"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "age"
+           },
+           "personId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "age": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 130
+           }
+          },
+          "required": [
+           "type",
+           "personId",
+           "age"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "milestone"
+           },
+           "milestoneId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "milestoneId"
+          ]
+         }
+        ]
+       },
+       "end": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "year"
+           },
+           "year": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "year"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "age"
+           },
+           "personId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "age": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 130
+           }
+          },
+          "required": [
+           "type",
+           "personId",
+           "age"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "milestone"
+           },
+           "milestoneId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "offset": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "milestoneId"
+          ]
+         }
+        ]
+       }
+      },
+      "required": [
+       "id",
+       "name",
+       "category",
+       "amount"
+      ]
+     }
+    },
+    "milestones": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "kind": {
+        "type": "string",
+        "enum": [
+         "retirement",
+         "homePurchase",
+         "child",
+         "college",
+         "relocation",
+         "careerChange",
+         "sabbatical",
+         "windfall",
+         "fi",
+         "custom"
+        ]
+       },
+       "personId": {
+        "type": "string",
+        "minLength": 1
+       },
+       "when": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "year"
+           },
+           "year": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "year"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "age"
+           },
+           "personId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "age": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "personId",
+           "age"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "condition"
+           },
+           "metric": {
+            "type": "string",
+            "enum": [
+             "netWorth",
+             "investable",
+             "fi"
+            ]
+           },
+           "value": {
+            "default": 0,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           },
+           "fiMultiple": {
+            "default": 25,
+            "type": "number"
+           }
+          },
+          "required": [
+           "type",
+           "metric"
+          ]
+         }
+        ]
+       },
+       "effects": {
+        "default": [],
+        "type": "array",
+        "items": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "start"
+            },
+            "target": {
+             "type": "string",
+             "enum": [
+              "income",
+              "expense"
+             ]
+            },
+            "targetId": {
+             "type": "string",
+             "minLength": 1
+            }
+           },
+           "required": [
+            "type",
+            "target",
+            "targetId"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "stop"
+            },
+            "target": {
+             "type": "string",
+             "enum": [
+              "income",
+              "expense",
+              "contribution"
+             ]
+            },
+            "targetId": {
+             "type": "string",
+             "minLength": 1
+            }
+           },
+           "required": [
+            "type",
+            "target",
+            "targetId"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "setAmount"
+            },
+            "target": {
+             "type": "string",
+             "enum": [
+              "income",
+              "expense"
+             ]
+            },
+            "targetId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "target",
+            "targetId",
+            "amount"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "scaleAmount"
+            },
+            "target": {
+             "type": "string",
+             "enum": [
+              "income",
+              "expense"
+             ]
+            },
+            "targetId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "factor": {
+             "type": "number",
+             "minimum": 0
+            }
+           },
+           "required": [
+            "type",
+            "target",
+            "targetId",
+            "factor"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "windfall"
+            },
+            "accountId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "taxable": {
+             "default": false,
+             "type": "boolean"
+            }
+           },
+           "required": [
+            "type",
+            "accountId",
+            "amount"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "relocate"
+            },
+            "state": {
+             "type": "string",
+             "minLength": 2,
+             "maxLength": 2
+            },
+            "countyFips": {
+             "type": "string"
+            }
+           },
+           "required": [
+            "type",
+            "state"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "filingStatus"
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "single",
+              "mfj",
+              "mfs",
+              "hoh",
+              "qss"
+             ]
+            }
+           },
+           "required": [
+            "type",
+            "status"
+           ]
+          }
+         ]
+        }
+       }
+      },
+      "required": [
+       "id",
+       "name",
+       "kind",
+       "when"
+      ]
+     }
+    },
+    "glidePaths": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "points": {
+        "minItems": 1,
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "age": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          "allocation": {
+           "type": "object",
+           "properties": {
+            "usStocks": {
+             "default": 0,
+             "type": "number",
+             "minimum": 0,
+             "maximum": 1
+            },
+            "usBonds": {
+             "default": 0,
+             "type": "number",
+             "minimum": 0,
+             "maximum": 1
+            },
+            "cash": {
+             "default": 0,
+             "type": "number",
+             "minimum": 0,
+             "maximum": 1
+            },
+            "intlStocks": {
+             "default": 0,
+             "type": "number",
+             "minimum": 0,
+             "maximum": 1
+            },
+            "reits": {
+             "default": 0,
+             "type": "number",
+             "minimum": 0,
+             "maximum": 1
+            }
+           }
+          }
+         },
+         "required": [
+          "age",
+          "allocation"
+         ]
+        }
+       }
+      },
+      "required": [
+       "id",
+       "name",
+       "points"
+      ]
+     }
+    },
+    "strategies": {
+     "default": {},
+     "type": "object",
+     "properties": {
+      "surplusWaterfall": {
+       "default": [],
+       "type": "array",
+       "items": {
+        "oneOf": [
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "emergencyFund"
+           },
+           "accountId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "months": {
+            "default": 6,
+            "type": "number",
+            "minimum": 0
+           }
+          },
+          "required": [
+           "type",
+           "accountId"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "account"
+           },
+           "accountId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "maxAnnual": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "accountId"
+          ]
+         },
+         {
+          "type": "object",
+          "properties": {
+           "type": {
+            "type": "string",
+            "const": "debt"
+           },
+           "debtId": {
+            "type": "string",
+            "minLength": 1
+           },
+           "maxAnnual": {
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           }
+          },
+          "required": [
+           "type",
+           "debtId"
+          ]
+         }
+        ]
+       }
+      },
+      "surplusDefaultAccountId": {
+       "type": "string",
+       "minLength": 1
+      },
+      "withdrawalOrder": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "strategy": {
+         "default": "taxableFirst",
+         "type": "string",
+         "enum": [
+          "taxableFirst",
+          "proportional",
+          "bracketTargeted",
+          "custom"
+         ]
+        },
+        "customOrder": {
+         "default": [],
+         "type": "array",
+         "items": {
+          "type": "string",
+          "minLength": 1
+         }
+        },
+        "bracketRate": {
+         "default": 0.12,
+         "type": "number"
+        }
+       }
+      },
+      "rothConversion": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "mode": {
+         "default": "none",
+         "type": "string",
+         "enum": [
+          "none",
+          "fixed",
+          "fillBracket",
+          "magiTarget",
+          "ladder"
+         ]
+        },
+        "amount": {
+         "default": 0,
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        },
+        "bracketRate": {
+         "default": 0.12,
+         "type": "number"
+        },
+        "start": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "year"
+            },
+            "year": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "year"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "age"
+            },
+            "personId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "age": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 130
+            }
+           },
+           "required": [
+            "type",
+            "personId",
+            "age"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "milestone"
+            },
+            "milestoneId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "offset": {
+             "default": 0,
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "milestoneId"
+           ]
+          }
+         ]
+        },
+        "end": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "year"
+            },
+            "year": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "year"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "age"
+            },
+            "personId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "age": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 130
+            }
+           },
+           "required": [
+            "type",
+            "personId",
+            "age"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "milestone"
+            },
+            "milestoneId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "offset": {
+             "default": 0,
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "milestoneId"
+           ]
+          }
+         ]
+        },
+        "targetAccountId": {
+         "type": "string",
+         "minLength": 1
+        }
+       }
+      },
+      "gainHarvest": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "enabled": {
+         "default": false,
+         "type": "boolean"
+        }
+       }
+      },
+      "lossHarvest": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "enabled": {
+         "default": false,
+         "type": "boolean"
+        }
+       }
+      },
+      "spendingRule": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "type": {
+         "default": "fixed",
+         "type": "string",
+         "enum": [
+          "fixed",
+          "guardrails",
+          "percentOfPortfolio",
+          "floorCeiling"
+         ]
+        },
+        "pct": {
+         "default": 0.04,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        },
+        "guardrailBand": {
+         "default": 0.2,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        },
+        "guardrailAdjust": {
+         "default": 0.1,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        },
+        "floor": {
+         "default": 0.85,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        },
+        "ceiling": {
+         "default": 1.25,
+         "type": "number",
+         "minimum": 1,
+         "maximum": 5
+        },
+        "start": {
+         "oneOf": [
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "year"
+            },
+            "year": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "year"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "age"
+            },
+            "personId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "age": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 130
+            }
+           },
+           "required": [
+            "type",
+            "personId",
+            "age"
+           ]
+          },
+          {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "const": "milestone"
+            },
+            "milestoneId": {
+             "type": "string",
+             "minLength": 1
+            },
+            "offset": {
+             "default": 0,
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "type",
+            "milestoneId"
+           ]
+          }
+         ]
+        }
+       }
+      },
+      "magiTarget": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "enabled": {
+         "default": false,
+         "type": "boolean"
+        },
+        "maxFplPct": {
+         "default": 3.99,
+         "type": "number"
+        },
+        "minFplPct": {
+         "default": 0,
+         "type": "number"
+        }
+       }
+      },
+      "rebalance": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "mode": {
+         "default": "annual",
+         "type": "string",
+         "enum": [
+          "none",
+          "annual",
+          "threshold"
+         ]
+        },
+        "band": {
+         "default": 0.05,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      },
+      "sepp": {
+       "default": [],
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "accountId": {
+          "type": "string",
+          "minLength": 1
+         },
+         "start": {
+          "oneOf": [
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "year"
+             },
+             "year": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             }
+            },
+            "required": [
+             "type",
+             "year"
+            ]
+           },
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "age"
+             },
+             "personId": {
+              "type": "string",
+              "minLength": 1
+             },
+             "age": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 130
+             }
+            },
+            "required": [
+             "type",
+             "personId",
+             "age"
+            ]
+           },
+           {
+            "type": "object",
+            "properties": {
+             "type": {
+              "type": "string",
+              "const": "milestone"
+             },
+             "milestoneId": {
+              "type": "string",
+              "minLength": 1
+             },
+             "offset": {
+              "default": 0,
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             }
+            },
+            "required": [
+             "type",
+             "milestoneId"
+            ]
+           }
+          ]
+         },
+         "interestRate": {
+          "default": 0.05,
+          "type": "number",
+          "minimum": -1,
+          "maximum": 10
+         }
+        },
+        "required": [
+         "accountId",
+         "start"
+        ]
+       }
+      },
+      "spendingPhases": {
+       "default": [],
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "name": {
+          "type": "string"
+         },
+         "fromAge": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "multiplier": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 3
+         }
+        },
+        "required": [
+         "name",
+         "fromAge",
+         "multiplier"
+        ]
+       }
+      },
+      "survivorSpendingPct": {
+       "default": 1,
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1.5
+      },
+      "backdoorRoth": {
+       "default": false,
+       "type": "boolean"
+      },
+      "hsaUse": {
+       "default": "spend",
+       "type": "string",
+       "enum": [
+        "spend",
+        "save"
+       ]
+      },
+      "estate": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "heirMarginalRate": {
+         "default": 0.24,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        },
+        "legacyGoal": {
+         "default": 0,
+         "type": "integer",
+         "minimum": 0,
+         "maximum": 9007199254740991
+        },
+        "legacyGoalForSuccess": {
+         "default": false,
+         "type": "boolean"
+        }
+       }
+      }
+     }
+    },
+    "healthcare": {
+     "default": {},
+     "type": "object",
+     "properties": {
+      "enabled": {
+       "default": true,
+       "type": "boolean"
+      },
+      "people": {
+       "default": [],
+       "type": "array",
+       "items": {
+        "type": "object",
+        "properties": {
+         "personId": {
+          "type": "string",
+          "minLength": 1
+         },
+         "coverage": {
+          "default": [],
+          "type": "array",
+          "items": {
+           "type": "object",
+           "properties": {
+            "type": {
+             "type": "string",
+             "enum": [
+              "employer",
+              "spouseEmployer",
+              "cobra",
+              "aca",
+              "medicaid",
+              "medicare",
+              "none"
+             ]
+            },
+            "from": {
+             "oneOf": [
+              {
+               "type": "object",
+               "properties": {
+                "type": {
+                 "type": "string",
+                 "const": "year"
+                },
+                "year": {
+                 "type": "integer",
+                 "minimum": -9007199254740991,
+                 "maximum": 9007199254740991
+                }
+               },
+               "required": [
+                "type",
+                "year"
+               ]
+              },
+              {
+               "type": "object",
+               "properties": {
+                "type": {
+                 "type": "string",
+                 "const": "age"
+                },
+                "personId": {
+                 "type": "string",
+                 "minLength": 1
+                },
+                "age": {
+                 "type": "integer",
+                 "minimum": 0,
+                 "maximum": 130
+                }
+               },
+               "required": [
+                "type",
+                "personId",
+                "age"
+               ]
+              },
+              {
+               "type": "object",
+               "properties": {
+                "type": {
+                 "type": "string",
+                 "const": "milestone"
+                },
+                "milestoneId": {
+                 "type": "string",
+                 "minLength": 1
+                },
+                "offset": {
+                 "default": 0,
+                 "type": "integer",
+                 "minimum": -9007199254740991,
+                 "maximum": 9007199254740991
+                }
+               },
+               "required": [
+                "type",
+                "milestoneId"
+               ]
+              }
+             ]
+            },
+            "premiumAnnual": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "hdhp": {
+             "default": false,
+             "type": "boolean"
+            },
+            "metal": {
+             "default": "silver",
+             "type": "string",
+             "enum": [
+              "catastrophic",
+              "bronze",
+              "silver",
+              "gold",
+              "platinum"
+             ]
+            },
+            "cobraMonths": {
+             "default": 18,
+             "type": "integer",
+             "minimum": 1,
+             "maximum": 36
+            }
+           },
+           "required": [
+            "type",
+            "from"
+           ]
+          }
+         },
+         "utilization": {
+          "default": "typical",
+          "type": "string",
+          "enum": [
+           "low",
+           "typical",
+           "high"
+          ]
+         },
+         "tobacco": {
+          "default": false,
+          "type": "boolean"
+         },
+         "medicare": {
+          "default": {},
+          "type": "object",
+          "properties": {
+           "partAPremiumFree": {
+            "default": true,
+            "type": "boolean"
+           },
+           "supplement": {
+            "default": "medigapG",
+            "type": "string",
+            "enum": [
+             "medigapG",
+             "medigapN",
+             "advantage",
+             "none"
+            ]
+           },
+           "dentalVisionHearing": {
+            "default": true,
+            "type": "boolean"
+           },
+           "irmaaAppeal": {
+            "default": false,
+            "type": "boolean"
+           }
+          }
+         },
+         "ltc": {
+          "default": {},
+          "type": "object",
+          "properties": {
+           "mode": {
+            "default": "none",
+            "type": "string",
+            "enum": [
+             "none",
+             "expected",
+             "stochastic"
+            ]
+           },
+           "careType": {
+            "default": "assistedLiving",
+            "type": "string",
+            "enum": [
+             "homeCare",
+             "assistedLiving",
+             "nursingHomeSemiPrivate",
+             "nursingHomePrivate"
+            ]
+           },
+           "onsetAge": {
+            "default": 85,
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
+           },
+           "years": {
+            "default": 3,
+            "type": "number",
+            "minimum": 0,
+            "maximum": 20
+           },
+           "insurance": {
+            "type": "object",
+            "properties": {
+             "premiumAnnual": {
+              "default": 0,
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             },
+             "annualBenefit": {
+              "default": 0,
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             },
+             "benefitYears": {
+              "default": 3,
+              "type": "number"
+             }
+            }
+           }
+          }
+         }
+        },
+        "required": [
+         "personId"
+        ]
+       }
+      },
+      "slcspOverrideAge21Monthly": {
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
+      },
+      "irmaaPriorMagi": {
+       "type": "object",
+       "properties": {
+        "twoYearsBefore": {
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        },
+        "oneYearBefore": {
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        }
+       }
+      }
+     }
+    },
+    "assumptions": {
+     "default": {},
+     "type": "object",
+     "properties": {
+      "returns": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "mode": {
+         "default": "fixed",
+         "type": "string",
+         "enum": [
+          "fixed",
+          "historicalAverage"
+         ]
+        },
+        "fixed": {
+         "default": {},
+         "type": "object",
+         "properties": {
+          "usStocks": {
+           "default": 0.07,
+           "type": "number",
+           "minimum": -1,
+           "maximum": 10
+          },
+          "usBonds": {
+           "default": 0.04,
+           "type": "number",
+           "minimum": -1,
+           "maximum": 10
+          },
+          "cash": {
+           "default": 0.03,
+           "type": "number",
+           "minimum": -1,
+           "maximum": 10
+          },
+          "intlStocks": {
+           "default": 0.07,
+           "type": "number",
+           "minimum": -1,
+           "maximum": 10
+          },
+          "reits": {
+           "default": 0.065,
+           "type": "number",
+           "minimum": -1,
+           "maximum": 10
+          }
+         }
+        },
+        "stdDev": {
+         "type": "object",
+         "propertyNames": {
+          "type": "string"
+         },
+         "additionalProperties": {
+          "type": "number"
+         }
+        },
+        "correlation": {
+         "type": "array",
+         "items": {
+          "type": "array",
+          "items": {
+           "type": "number"
+          }
+         }
+        }
+       }
+      },
+      "inflation": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "rate": {
+         "default": 0.025,
+         "type": "number",
+         "minimum": -1,
+         "maximum": 10
+        },
+        "educationExcess": {
+         "default": 0.02,
+         "type": "number",
+         "minimum": -1,
+         "maximum": 10
+        }
+       }
+      },
+      "healthcareInflation": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "excessOverCpi": {
+         "default": 0.02,
+         "type": "number",
+         "minimum": -1,
+         "maximum": 10
+        },
+        "stochastic": {
+         "default": true,
+         "type": "boolean"
+        },
+        "stdDev": {
+         "default": 0.015,
+         "type": "number",
+         "minimum": -1,
+         "maximum": 10
+        }
+       }
+      },
+      "realWageGrowth": {
+       "default": 0.01,
+       "type": "number",
+       "minimum": -1,
+       "maximum": 10
+      },
+      "dividendYield": {
+       "default": 0.018,
+       "type": "number",
+       "minimum": -1,
+       "maximum": 10
+      },
+      "qualifiedDividendPct": {
+       "default": 0.9,
+       "type": "number",
+       "minimum": 0,
+       "maximum": 1
+      },
+      "bondYield": {
+       "default": 0.04,
+       "type": "number",
+       "minimum": -1,
+       "maximum": 10
+      },
+      "monteCarlo": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "method": {
+         "default": "bootstrap",
+         "type": "string",
+         "enum": [
+          "bootstrap",
+          "parametric"
+         ]
+        },
+        "runs": {
+         "default": 1000,
+         "type": "integer",
+         "minimum": 10,
+         "maximum": 10000
+        },
+        "seed": {
+         "default": 20261110,
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        },
+        "blockLength": {
+         "default": 5,
+         "type": "integer",
+         "minimum": 1,
+         "maximum": 30
+        },
+        "inflation": {
+         "default": "sampled",
+         "type": "string",
+         "enum": [
+          "fixed",
+          "sampled"
+         ]
+        },
+        "stochasticLongevity": {
+         "default": false,
+         "type": "boolean"
+        },
+        "bootstrapMeans": {
+         "default": "assumptions",
+         "type": "string",
+         "enum": [
+          "assumptions",
+          "historical"
+         ]
+        }
+       }
+      },
+      "mortalityImprovement": {
+       "default": 0,
+       "type": "number",
+       "minimum": 0,
+       "maximum": 0.03
+      },
+      "socialSecurityCut": {
+       "default": {},
+       "type": "object",
+       "properties": {
+        "enabled": {
+         "default": false,
+         "type": "boolean"
+        },
+        "fromYear": {
+         "default": 2034,
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        },
+        "payablePct": {
+         "default": 0.83,
+         "type": "number",
+         "minimum": 0,
+         "maximum": 1
+        }
+       }
+      }
+     }
+    },
+    "scenarios": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "id": {
+        "type": "string",
+        "minLength": 1
+       },
+       "name": {
+        "type": "string"
+       },
+       "patches": {
+        "default": [],
+        "type": "array",
+        "items": {
+         "type": "object",
+         "properties": {
+          "path": {
+           "type": "array",
+           "items": {
+            "type": [
+             "string",
+             "number"
+            ]
+           }
+          },
+          "value": {}
+         },
+         "required": [
+          "path",
+          "value"
+         ]
+        }
+       }
+      },
+      "required": [
+       "id",
+       "name"
+      ]
+     }
+    },
+    "actuals": {
+     "default": [],
+     "type": "array",
+     "items": {
+      "type": "object",
+      "properties": {
+       "date": {
+        "type": "string"
+       },
+       "balances": {
+        "type": "object",
+        "propertyNames": {
+         "type": "string"
+        },
+        "additionalProperties": {
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
+        }
+       }
+      },
+      "required": [
+       "date",
+       "balances"
+      ]
+     }
+    }
+   },
+   "required": [
+    "id",
+    "schemaVersion",
+    "name",
+    "createdAt",
+    "updatedAt",
+    "settings",
+    "people"
+   ]
+  }
+ },
+ "$schema": "http://json-schema.org/draft-07/schema#"
+}

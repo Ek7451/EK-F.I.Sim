@@ -193,6 +193,7 @@ export function Card({
   children: ReactNode;
   /** hero: the screen's headline panel; inset: a quieter panel inside or beside a card. */
   variant?: 'hero' | 'inset';
+  id?: string;
 } & Record<`data-${string}`, string | undefined>): ReactNode {
   return (
     <section className="lv-card" data-variant={variant} {...rest}>

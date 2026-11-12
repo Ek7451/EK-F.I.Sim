@@ -12,8 +12,6 @@ import { TourProvider } from './tours/TourEngine';
 const page = <M,>(load: () => Promise<M>, name: keyof M): ComponentType =>
   lazy(() => load().then((m) => ({ default: m[name] as ComponentType })));
 
-const explore = (): Promise<typeof import('./pages/Explore')> => import('./pages/Explore');
-const analysis = (): Promise<typeof import('./pages/Analysis')> => import('./pages/Analysis');
 const help = (): Promise<typeof import('./pages/HelpSettings')> => import('./pages/HelpSettings');
 const incomeSpending = (): Promise<typeof import('./pages/plan/IncomeSpending')> =>
   import('./pages/plan/IncomeSpending');
@@ -28,15 +26,15 @@ const TimelinePage = page(() => import('./pages/plan/Timeline'), 'TimelinePage')
 const StrategyPage = page(() => import('./pages/plan/Strategy'), 'StrategyPage');
 const HealthcarePage = page(health, 'HealthcarePage');
 const AssumptionsPage = page(health, 'AssumptionsPage');
-const ProjectionPage = page(explore, 'ProjectionPage');
-const CashFlowPage = page(explore, 'CashFlowPage');
-const TaxesPage = page(explore, 'TaxesPage');
-const SuccessPage = page(explore, 'SuccessPage');
-const HistoryPage = page(explore, 'HistoryPage');
-const EstatePage = page(explore, 'EstatePage');
-const ComparePage = page(analysis, 'ComparePage');
-const TrackPage = page(analysis, 'TrackPage');
-const ReportsPage = page(analysis, 'ReportsPage');
+const ProjectionPage = page(() => import('./pages/explore/Projection'), 'ProjectionPage');
+const CashFlowPage = page(() => import('./pages/explore/CashFlow'), 'CashFlowPage');
+const TaxesPage = page(() => import('./pages/explore/Taxes'), 'TaxesPage');
+const SuccessPage = page(() => import('./pages/explore/Success'), 'SuccessPage');
+const HistoryPage = page(() => import('./pages/explore/History'), 'HistoryPage');
+const EstatePage = page(() => import('./pages/explore/Estate'), 'EstatePage');
+const ComparePage = page(() => import('./pages/analysis/Compare'), 'ComparePage');
+const TrackPage = page(() => import('./pages/analysis/Track'), 'TrackPage');
+const ReportsPage = page(() => import('./pages/analysis/Reports'), 'ReportsPage');
 const ToursPage = page(help, 'ToursPage');
 const MethodsPage = page(help, 'MethodsPage');
 const SettingsPage = page(help, 'SettingsPage');
@@ -44,7 +42,14 @@ const SettingsPage = page(help, 'SettingsPage');
 /** Screens that need a plan send a first-time visitor to the setup wizard. */
 function RequirePlan(): ReactNode {
   const plan = usePlan();
-  return plan ? <Outlet /> : <Navigate to="/start" replace />;
+  return plan ? (
+    <Outlet />
+  ) : (
+    <>
+      <Navigate to="/start" replace />
+      <StartPage />
+    </>
+  );
 }
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
@@ -101,7 +106,7 @@ export function App({
                 <ErrorBoundary>
                   <Suspense
                     fallback={
-                      <p className="lv-muted" role="status">
+                      <p className="lv-muted" role="status" style={{ minHeight: '70dvh' }}>
                         Loading…
                       </p>
                     }

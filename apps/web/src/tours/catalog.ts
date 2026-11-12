@@ -64,7 +64,7 @@ export const TOURS: TourDef[] = [
         HOME,
         'nav|bottom-nav',
         'Four jobs, in order',
-        'The app follows four jobs. Plan is where you enter your household and money. Explore shows what the numbers mean. Compare sets what-ifs side by side. Track checks real life against the plan.',
+        'Overview summarizes your position. Plan combines projections with input editors. Compare sets what-ifs side by side. Progress checks recorded balances against the plan. Reports exports the results.',
         { placement: 'right' },
       ),
       s(
@@ -264,16 +264,16 @@ export const TOURS: TourDef[] = [
       ),
       s(
         PROJ,
-        'year-detail',
+        'year-detail|workspace-details',
         'One year in detail',
         'For the selected year this shows income, spending, tax, savings and withdrawals. The small "i" buttons open the working behind a number.',
         { placement: 'top' },
       ),
       s(
         PROJ,
-        'what-if-sliders',
+        'what-if-sliders|edit-plan',
         'Quick what-ifs',
-        'These sliders change the plan and the chart redraws straight away. In a tour they only change the sample.',
+        'Open Edit plan to preview retirement, spending or return changes beside the chart. Apply, save a scenario, or discard explicitly. In a tour only the sample changes.',
         { placement: 'top', ...tryIt('input', 'Try it: move a slider and watch the chart.') },
       ),
       s(
@@ -393,7 +393,7 @@ export const TOURS: TourDef[] = [
         HOME,
         'data-home',
         'Saved as you type',
-        "There is no Save button. Each change is written to this browser's storage straight away and works offline.",
+        'Full input forms save on this device. Workspace edits preview as drafts until you Apply or save a scenario. The top bar shows save progress and offers Retry if a write fails.',
         { placement: 'top' },
       ),
       s(
@@ -1103,7 +1103,7 @@ export const TOURS: TourDef[] = [
       ),
       s(
         PROJ,
-        'year-detail',
+        'year-detail|workspace-details',
         'From a number to its method',
         'On any results screen, the small "i" buttons open the working behind that number.',
         { placement: 'top' },

@@ -21,7 +21,7 @@ differently.
   [Capabilities with no feature ID](#capabilities-with-no-feature-id). "None" means no ID applies and the
   row is out of scope.
 - **Our screen** is the Longview route (see brand.md §3).
-- **What ours does differently** is the differentiation record that design reviews check.
+- **What ours does differently** is historical context; the current quality checklist below governs reviews.
 
 A note on the board's own synthesis section: it suggests reusing the reference product's information
 architecture. The plan overrides that (§1.3, §10): our IA is designed from user tasks and is recorded in
@@ -372,71 +372,23 @@ out of scope. Proposed IDs below are **proposals for the lead engineer**. They a
 | U-26 | Per-item icon and colour choice; pictorial milestone icons on charts; icon show or hide toggle.                                               | 0.4, 5.3, 17.11                           | Conflicts with our visual language (brand.md §2.4, §4.6). The capability these serve (telling items apart) is met by names and labels.                                                        |
 | U-27 | Graded outcome categories with user-set thresholds for Monte Carlo results.                                                                   | 0.8, 12.5                                 | Conflicts with our tone rules (brand.md §5: no verdicts). The ending-wealth distribution and shortfall timing in SIM-10 carry the same information.                                           |
 
-## Differentiation checklist
+## Quality and fidelity checklist
 
-Used at every design review and at the final Phase 8 pass (plan §10.1, §15, §16). Put the Longview screen
-beside the matching board rows above and answer each item. Any "no" blocks sign-off for that screen.
+The historical board mappings above record capability research and earlier implementation decisions. Their layout, palette and differentiation prescriptions are superseded by [the premium UI plan](../../plan/PREMIUM_UX_UPGRADE.md) and [brand.md](brand.md). They are not current restrictions.
 
-**Identity**
+- [ ] Five primary destinations with one coordinated Plan toolbar; original URLs still work.
+- [ ] Neutral surfaces, slate navigation, indigo actions and semantic chart colors in both themes.
+- [ ] The main plot meets actual plotting minima at 1440×900 and 1366×768.
+- [ ] Contextual edits preserve visible results, selection and zoom.
+- [ ] Baseline and draft are distinct; Apply, Save as scenario and Discard have tested semantics.
+- [ ] Events are named, keyboard accessible, collision-aware and coordinated with chart zoom.
+- [ ] Charts, inspectors, tables and exports reconcile with shared financial definitions.
+- [ ] Loading, empty, stale, partial, invalid and failed results have explicit readable states.
+- [ ] Phone, tablet, desktop, dark theme, reduced motion and 200% zoom have verified layouts.
+- [ ] Keyboard access, focus return, contrast and chart/table alternatives are verified.
+- [ ] Review compares visual hierarchy and interaction quality against the reference benchmark.
+- [ ] Name, copy, icons and assets belong to Longview; research images remain unbundled.
 
-- [ ] The screen uses only Longview tokens: neutral surfaces, emerald primary, amber accent, the eight-hue chart
-      palette. No colour value was taken from the reference board.
-- [ ] Type is the Longview system stack with tabular numerals for money. No third-party font is loaded.
-- [ ] Labels are sentence case. There are no upper-case letter-spaced micro-labels.
-- [ ] Icon tiles, where used, are Longview's own line icons beside the item's name and type label.
-- [ ] Inputs are outlined with the label above. No filled grey fields with floating labels.
-- [ ] Gradients appear only as chart-area fills. No glass panels, gradient borders or ribbons.
+## Research handling
 
-**Layout and navigation**
-
-- [ ] The screen sits in our task IA (Plan, Explore, Compare, Track, Reports, Help, Settings) at the route
-      listed in this map.
-- [ ] There is no plan-level tab row, no icon strip in the header, and no permanent input rail under a
-      chart.
-- [ ] Inputs and results are not mixed on one screen, except through the single "Edit what drives this"
-      panel.
-- [ ] The phone layout at 360 px was designed, not derived: bottom navigation, bottom-sheet editors.
-- [ ] Laid side by side with the board rows, the arrangement of regions is clearly different.
-
-**Charts**
-
-- [ ] Follows brand.md §4: legend plus direct labels, solid hairline gridlines, fading area fills, no dual axes.
-- [ ] Milestones are labelled markers on a rail beneath the plot, not floating over the data.
-- [ ] Uncertainty is shown as bands with counts in words, not a gauge, ring or graded pills.
-- [ ] Time range can be brushed; range chips, if present, sit with the chart title, not under the chart.
-- [ ] The tooltip shows the arithmetic and links to "How this is calculated".
-- [ ] A table alternative exists and matches the chart's numbers.
-- [ ] Projected values carry the hatch and footnote; the dollars basis is stated.
-
-**Wording**
-
-- [ ] No text was copied or closely paraphrased from the reference product, its help centre or its
-      marketing. Feature names are ours (brand.md §5 vocabulary table).
-- [ ] No verdicts or advice. Results are "estimated" and described with counts and dates.
-- [ ] The reference product is not named anywhere in the UI, tours or reports.
-
-**Assets and process**
-
-- [ ] No image, icon, illustration or colour value was taken from `research/`.
-- [ ] Nothing under `research/` is imported, bundled, committed or linked from the app.
-- [ ] The reviewer recorded the board rows compared and the outcome in the PR description.
-
-## Guardrails
-
-From plan §10.1 and §1.3. These are rules, not guidance.
-
-1. **Reference only.** The board is used to study capability and workflow. Never trace or reuse layouts,
-   assets, icons, illustrations, palettes, product names or copy text.
-2. **Reviews compare against the board.** Every design review puts our screen beside the mapped board rows
-   and confirms it looks clearly different, using the checklist above. The final review in Phase 8 covers
-   every row in this file and is a v1.0 release-gate item (plan §16).
-3. **The research folder is third-party copyrighted material.** It is never bundled into the app and stays
-   out of any public repository. `research/` is listed in `.gitignore` and in `.prettierignore`; keep it
-   there (plan O2).
-4. **Docs describe, they do not reproduce.** Documents under `docs/` may name image files and describe
-   screens in our own words. They never embed the images or quote the reference product's help or marketing
-   text.
-5. **Parity means capability.** A capability on the board is either mapped to a feature ID, proposed as a
-   new ID, or recorded as out of scope with a reason. It is never matched by imitating the screen.
-6. **Keep the map current.** When the board is regenerated or a route changes, update this file in the same
-   PR. A screen is not design-complete until its rows here are accurate.
+Keep research/ ignored and out of the shipped app. Documents may identify reference images and describe their functionality in original words. Update capability mappings when routes or supported workflows change. There is no requirement to make the arrangement visibly different from the reference.

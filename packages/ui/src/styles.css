@@ -1,5 +1,5 @@
-/* Longview design system: tokens (UX-01, brand.md §2). Neutral surfaces, emerald primary, amber accent.
-   System font stack only (strict CSP, offline first). Chart hues are validated for colour-vision separation. */
+/* Longview design system: tokens (UX-01, brand.md §2). Neutral surfaces, indigo actions, semantic financial colors.
+   Self-hosted Inter with system fallbacks (strict CSP, offline first). */
 :root {
   --font-ui:
     Inter, 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto,
@@ -17,7 +17,7 @@
   --space-7: 48px;
   --radius-1: 6px;
   --radius-2: 8px;
-  --radius-3: 10px;
+  --radius-3: 14px;
   --radius-4: 14px;
   --radius-5: 20px;
   --text-xs: 0.75rem;
@@ -34,34 +34,34 @@
   --motion-base: 200ms;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
 
-  --bg: #f5f6f8;
+  --bg: #f4f6fa;
   --surface: #ffffff;
-  --surface-2: #f2f4f7;
+  --surface-2: #eef2f7;
   --surface-3: #e8ebf0;
   --line: #e3e6eb;
   --line-strong: #c6ccd5;
-  --ink: #12161d;
+  --ink: #172033;
   --ink-2: #3e4653;
   --ink-3: #626b79;
-  --primary: #0b7a62;
-  --primary-hover: #096752;
+  --primary: #4f5dd5;
+  --primary-hover: #414bb9;
   --on-primary: #ffffff;
-  --primary-soft: #e2f3ee;
-  --primary-line: #a9dccd;
+  --primary-soft: #eceefe;
+  --primary-line: #c5caf4;
   --accent: #9a5b05;
   --accent-soft: #fdf1dc;
   --accent-fill: #e08a1e;
   --danger: #c0392b;
   --danger-soft: #fdecea;
-  --ok: #0b7a62;
+  --ok: #087a60;
   --warn: #9a5b05;
   --focus: #2f6feb;
   --shadow-1: 0 1px 2px rgba(18, 22, 29, 0.05), 0 1px 1px rgba(18, 22, 29, 0.03);
   --shadow-2: 0 6px 18px rgba(18, 22, 29, 0.1), 0 2px 4px rgba(18, 22, 29, 0.05);
   --shadow-3: 0 18px 48px rgba(18, 22, 29, 0.18), 0 4px 10px rgba(18, 22, 29, 0.06);
   --shadow-hover: 0 4px 14px rgba(18, 22, 29, 0.08);
-  /* Chart hues, fixed order (brand.md §4): emerald, blue, amber, violet, olive, rose, cyan, rust. */
-  --chart-1: #0e8f72;
+  /* Generic categorical fallback. Named financial tokens below retain entity meaning. */
+  --chart-1: #159eaa;
   --chart-2: #3a7bd5;
   --chart-3: #e08a1e;
   --chart-4: #8a5cd6;
@@ -69,7 +69,19 @@
   --chart-6: #e0607e;
   --chart-7: #1ba7bf;
   --chart-8: #c0563a;
-  --tile-account: #e2f3ee;
+  --financial-cash: var(--chart-1);
+  --financial-taxable: var(--chart-2);
+  --financial-pretax: var(--chart-4);
+  --financial-roth: var(--chart-7);
+  --financial-hsa: var(--chart-5);
+  --financial-property: var(--chart-3);
+  --financial-debts: var(--danger);
+  --financial-income: var(--chart-2);
+  --financial-expense: var(--chart-4);
+  --financial-tax: var(--chart-3);
+  --financial-baseline: var(--ink-3);
+  --financial-draft: var(--primary);
+  --tile-account: #eceefe;
   --tile-income: #e6effb;
   --tile-expense: #fdf1dc;
   --tile-milestone: #efe9fb;
@@ -78,26 +90,26 @@
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #0f1115;
-    --surface: #171a21;
-    --surface-2: #1f232c;
+    --bg: #101827;
+    --surface: #182336;
+    --surface-2: #202c40;
     --surface-3: #282d38;
     --line: #2a2f3a;
     --line-strong: #444b59;
     --ink: #eef0f4;
     --ink-2: #c3c8d2;
     --ink-3: #9aa2b0;
-    --primary: #34c29c;
-    --primary-hover: #52d1ae;
-    --on-primary: #06140f;
-    --primary-soft: #133029;
-    --primary-line: #22584a;
+    --primary: #a5afff;
+    --primary-hover: #bbc3ff;
+    --on-primary: #11182f;
+    --primary-soft: #252e50;
+    --primary-line: #414c7c;
     --accent: #f0b35a;
     --accent-soft: #33280f;
     --accent-fill: #c97f1c;
     --danger: #f2877a;
     --danger-soft: #3a1d1a;
-    --ok: #34c29c;
+    --ok: #65d5b1;
     --warn: #f0b35a;
     --focus: #7aa7ff;
     --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -112,7 +124,7 @@
     --chart-6: #dc6a86;
     --chart-7: #2399ad;
     --chart-8: #c9603f;
-    --tile-account: #133029;
+    --tile-account: #252e50;
     --tile-income: #17263d;
     --tile-expense: #33280f;
     --tile-milestone: #261f3b;
@@ -121,26 +133,26 @@
   }
 }
 :root[data-theme='dark'] {
-  --bg: #0f1115;
-  --surface: #171a21;
-  --surface-2: #1f232c;
+  --bg: #101827;
+  --surface: #182336;
+  --surface-2: #202c40;
   --surface-3: #282d38;
   --line: #2a2f3a;
   --line-strong: #444b59;
   --ink: #eef0f4;
   --ink-2: #c3c8d2;
   --ink-3: #9aa2b0;
-  --primary: #34c29c;
-  --primary-hover: #52d1ae;
-  --on-primary: #06140f;
-  --primary-soft: #133029;
-  --primary-line: #22584a;
+  --primary: #a5afff;
+  --primary-hover: #bbc3ff;
+  --on-primary: #11182f;
+  --primary-soft: #252e50;
+  --primary-line: #414c7c;
   --accent: #f0b35a;
   --accent-soft: #33280f;
   --accent-fill: #c97f1c;
   --danger: #f2877a;
   --danger-soft: #3a1d1a;
-  --ok: #34c29c;
+  --ok: #65d5b1;
   --warn: #f0b35a;
   --focus: #7aa7ff;
   --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
@@ -155,7 +167,7 @@
   --chart-6: #dc6a86;
   --chart-7: #2399ad;
   --chart-8: #c9603f;
-  --tile-account: #133029;
+  --tile-account: #252e50;
   --tile-income: #17263d;
   --tile-expense: #33280f;
   --tile-milestone: #261f3b;

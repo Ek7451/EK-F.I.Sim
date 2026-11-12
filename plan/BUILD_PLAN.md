@@ -33,7 +33,7 @@
 ### 1.3 Disclaimers (shown in app and in reports)
 - "For personal educational planning only. Not financial, tax, legal or medical advice."
 - Every result is labelled **estimated**. Projected (indexed) parameters are visibly marked as different from enacted ones.
-- **Original visual identity and information architecture.** Nothing is copied from ProjectionLab or any other product: no screens, copy, icons, names or assets. Parity means equal *capability*, not a matching look. The ProjectionLab UI reference board (§10.1) is used only to study capability and workflow.
+- **Original visual identity and information architecture.** Retain original names, copy, icons and assets. The premium UX plan governs visual composition and interaction quality; similar workspace patterns are permitted. Keep original names, assets and explanatory copy.
 
 ## 2. Guiding Principles
 1. **Feature parity:** every capability in §4 is built, tested and checked off in the parity matrix before v1.0.
@@ -330,6 +330,9 @@ This module models the gap from leaving employer coverage to Medicare at 65, the
 | HC-12 | **Benchmarks:** checks against Fidelity's and Vanguard's retiree cost estimates. Matches the BiggerPockets Money ACA Cost Estimator's method for the unsubsidized case (V-07), then extends it with subsidies, OOP, Medicaid and Medicare. |
 
 ## 10. UI/UX and Design System
+
+**Current specification:** [PREMIUM_UX_UPGRADE.md](PREMIUM_UX_UPGRADE.md) supersedes earlier visual, layout and differentiation requirements. Implement its full six-phase scope and verify its quality matrix.
+
 - **Original brand**, with its own name, palette, type and iconography. The information architecture is designed from user tasks (Plan → Explore → Compare → Track), not copied from another product.
 - **Design tokens** for color, type, spacing, radius, elevation and motion; light and dark themes; tokens documented in Storybook (`packages/ui`).
 - **Components** are accessible by default: Radix-style primitives (headless) plus our own styling. **WCAG 2.2 AA** is checked automatically by axe in CI, plus a manual screen-reader pass before release.
@@ -346,11 +349,11 @@ A separate research task is building a UI breakdown of ProjectionLab with an ima
 - **How it's used:**
   1. **Parity check.** Every screen, panel and control on the board maps to a feature ID in §4. Anything that doesn't map becomes a new ID or is recorded as deliberately out of scope.
   2. **Workflow and IA study.** What each screen helps the user do, the order of steps in each task flow, information density, and which numbers users expect to see together.
-  3. **Differentiation pass.** For each reference screen, record what our original design does differently: layout, visual language, chart styling and wording.
+  3. **Quality and fidelity pass.** Evaluate hierarchy, chart readability, interaction continuity and precision against the benchmark.
 - **Output:** `docs/design/reference-map.md`, a table with one row per reference screen showing the matching feature IDs, our screen, and the differences.
 - **Guardrails:**
-  - Reference only. Never trace or reuse layouts, assets, icons, illustrations, palettes, product names or copy text.
-  - Design reviews compare our screens against the board to confirm they look clearly different.
+  - Do not ship reference assets, screenshots or copy. Workspace composition and interaction patterns follow PREMIUM_UX_UPGRADE.md.
+  - Design reviews compare visual and interaction quality against the board using the current quality checklist.
   - The research folder holds third-party copyrighted material. It is never bundled into the app, and it stays out of any public repo (O2).
 
 ### 10.2 Guided tours (UX-10 to UX-12)
@@ -515,7 +518,7 @@ The order is the same as v1. Each phase ends at its **exit criteria**; every mer
 ### Phase 1: Foundations
 - **Scope:** repo and monorepo setup, CI/CD and preview deploys (§14), the data-provenance framework and schema validator (§8.1), plan schema v1 and the migration framework (§5.2), design system and tokens (UX-01), a11y baseline (UX-09), PWA shell (UX-07), mobile-first layout (UX-08 baseline), a basic plan editor (PLAN-01, 02, 04, 05, 07 basic), IndexedDB persistence (SYNC-01), and encrypted export/import (SYNC-03).
 - **Also in scope:** the design-reference study and `docs/design/reference-map.md` (§10.1); the tour engine (UX-10) with the `sample-basic` plan; tours T-B01, T-B02 and T-B08.
-- **Exit:** a plan can be created on phone and desktop, edited, reloaded offline, exported and re-imported. CI is green with preview deploys working. The axe scan is clean. The reference map covers every board screen, and the brand looks clearly different from the board. O2 and O5 are closed.
+- **Exit:** a plan can be created on phone and desktop, edited, reloaded offline, exported and re-imported. CI is green with preview deploys working. The axe scan is clean. The reference map covers every board screen, and the workspace meets the premium UI quality criteria. O2 and O5 are closed.
 
 ### Phase 2: Deterministic engine
 - **Scope:** SIM-01, the §6 order of operations and solver framework (with a placeholder flat tax), PLAN-03, 08, 09, 10, 11, SIM-06, SIM-07 (fixed rate), and charts: net worth and cash-flow Sankey (UX-02 partial), workers (UX-03), timeline and undo/redo (UX-04). Tours T-B03 to T-B07.
@@ -556,7 +559,7 @@ The order is the same as v1. Each phase ends at its **exit criteria**; every mer
 - [ ] A restore drill succeeded (encrypted export and recovery key) on a clean profile.
 - [ ] Disclaimers (§1.3) appear in the app and in PDF reports.
 - [ ] All 25 guided tours (T-B01 to T-B08, T-A01 to T-A17) pass their e2e tests on phone and desktop sizes and can be completed with the keyboard alone.
-- [ ] The reference map (§10.1) is complete, and the final design review confirms no copied layouts, assets or copy text.
+- [ ] The reference map (§10.1) is complete, and the final design review confirms quality criteria and original assets and copy text.
 - [ ] The PWA update flow has been tested from the previous build with a schema migration.
 - [ ] Runbooks are done: annual data update, release and rollback, restore drill.
 - [ ] Decision on whether to keep Cloudflare Access in front of production.

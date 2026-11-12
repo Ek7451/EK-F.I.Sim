@@ -41,7 +41,35 @@ export function migrate_v0_to_v1(plan: Raw): Raw {
   return out;
 }
 
-const MIGRATIONS: Record<number, (p: Raw) => Raw> = { 0: migrate_v0_to_v1 };
+/** Freeze the identity of legacy index-addressed entities before any structural edits. */
+export function migrate_v1_to_v2(plan: Raw): Raw {
+  const out = structuredClone(plan);
+  out.schemaVersion = 2;
+  const scenarios = out.scenarios as
+    { patches?: { path: (string | number)[]; value?: unknown }[] }[] | undefined;
+  for (const scenario of scenarios ?? [])
+    for (const patch of scenario.patches ?? []) {
+      let node: unknown = plan;
+      patch.path = patch.path.map((part) => {
+        const child: unknown =
+          node && typeof node === 'object' ? (node as Record<string | number, unknown>)[part] : undefined;
+        const anchored =
+          Array.isArray(node) && typeof part === 'number'
+            ? `@${child && typeof child === 'object' && 'id' in child ? String(child.id) : `missing-index-${part}`}`
+            : part;
+        // Numeric arrays without entity IDs (e.g. age schedules) retain positional semantics.
+        const result =
+          Array.isArray(node) && node.some((x: unknown) => x && typeof x === 'object' && 'id' in x)
+            ? anchored
+            : part;
+        node = child;
+        return result;
+      });
+    }
+  return out;
+}
+
+const MIGRATIONS: Record<number, (p: Raw) => Raw> = { 0: migrate_v0_to_v1, 1: migrate_v1_to_v2 };
 
 export interface LoadedPlan {
   plan: Plan | null;

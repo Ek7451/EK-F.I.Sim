@@ -25,8 +25,8 @@ export default defineConfig({
         name: 'Longview',
         short_name: 'Longview',
         description: 'Personal finance scenario modeling. For personal educational planning only.',
-        theme_color: '#1f6b4f',
-        background_color: '#f6f3ec',
+        theme_color: '#4f5dd5',
+        background_color: '#f4f6fa',
         display: 'standalone',
         start_url: '/',
         icons: [

@@ -71,6 +71,8 @@ interface State {
   history: Record<string, History>;
   settings: Settings;
   scenarioId: string | null;
+  saveStatus: Record<string, 'saving' | 'saved' | 'error'>;
+  retrySave(): void;
   /** Tour sandbox: a sample plan (or an observe-only view of the user's plan). */
   sandbox: { plan: Plan; observeOnly: boolean } | null;
   notices: { id: number; text: string; tone?: 'ok' | 'warn' | 'danger' }[];
@@ -105,6 +107,7 @@ let noticeId = 1;
 const saveTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function persist(plan: Plan, meta: PlanMeta): void {
+  useStore.setState((s) => ({ saveStatus: { ...s.saveStatus, [plan.id]: 'saving' } }));
   const prev = saveTimers.get(plan.id);
   if (prev) clearTimeout(prev);
   saveTimers.set(
@@ -117,9 +120,16 @@ function persist(plan: Plan, meta: PlanMeta): void {
         updatedAt: plan.updatedAt,
         syncVersion: meta.syncVersion,
         dirty: meta.dirty,
-      }).then(() =>
-        meta.dirty ? enqueue({ planId: plan.id, op: 'put', queuedAt: new Date().toISOString() }) : undefined,
-      );
+      })
+        .then(async () => {
+          if (meta.dirty) await enqueue({ planId: plan.id, op: 'put', queuedAt: new Date().toISOString() });
+          if (useStore.getState().plans[plan.id] === plan)
+            useStore.setState((s) => ({ saveStatus: { ...s.saveStatus, [plan.id]: 'saved' } }));
+        })
+        .catch(() => {
+          if (useStore.getState().plans[plan.id] === plan)
+            useStore.setState((s) => ({ saveStatus: { ...s.saveStatus, [plan.id]: 'error' } }));
+        });
     }, 150),
   );
 }
@@ -131,6 +141,12 @@ export const useStore = create<State>((set, get) => ({
   history: {},
   settings: DEFAULT_SETTINGS,
   scenarioId: null,
+  saveStatus: {},
+  retrySave() {
+    const s = get();
+    const id = s.settings.activePlanId;
+    if (id && s.plans[id]) persist(s.plans[id], s.meta[id]);
+  },
   sandbox: null,
   notices: [],
 
@@ -215,6 +231,13 @@ export const useStore = create<State>((set, get) => ({
         'This backup was made by a newer version of the app. Update the app, then import it again.',
       );
     if (!loaded.plan) throw new Error(loaded.error ?? 'This file is not a plan.');
+    if (loaded.migrated)
+      await addSnapshot({
+        planId: loaded.plan.id,
+        takenAt: new Date().toISOString(),
+        reason: 'pre-migration',
+        plan: raw,
+      });
     const existing = get().plans[loaded.plan.id];
     if (existing)
       await addSnapshot({

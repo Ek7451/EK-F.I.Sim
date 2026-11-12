@@ -4,7 +4,8 @@ import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-do
 import { useStore, type Theme } from '../state/store';
 import { tourForRoute } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
-import { DISCLAIMER, NAV } from './nav';
+import { DISCLAIMER, NAV, PRIMARY_NAV } from './nav';
+import { useDraft } from '../state/draft';
 
 const THEMES: Theme[] = ['system', 'light', 'dark'];
 
@@ -21,6 +22,8 @@ export function Shell({
   const sandbox = useStore((s) => s.sandbox);
   const history = useStore((s) => (s.settings.activePlanId ? s.history[s.settings.activePlanId] : undefined));
   const notices = useStore((s) => s.notices);
+  const saveStatus = useStore((s) => s.saveStatus[s.settings.activePlanId ?? '']);
+  const draft = useDraft((s) => s.transaction);
   const { setActive, undo, redo, setSettings, dismissNotice } = useStore.getState();
   const [menu, setMenu] = useState(false);
   const loc = useLocation();
@@ -66,21 +69,29 @@ export function Shell({
           </Link>
         </div>
         <div className="rail-scroll">
-          {NAV.map((g) => (
+          {PRIMARY_NAV.map((g) => (
             <div className="nav-group" key={g.id} data-tour={`nav-${g.id}`}>
               <h2 className="rail-text">{g.label}</h2>
               <ul>
                 {g.items.map((it) => (
                   <li key={it.to}>
-                    <NavLink
+                    <Link
                       className="nav-link"
                       to={it.to}
-                      end={it.to === '/'}
+                      aria-current={
+                        (
+                          it.label === 'Plan'
+                            ? /^\/(plan|explore)\//.test(loc.pathname)
+                            : it.to === loc.pathname
+                        )
+                          ? 'page'
+                          : undefined
+                      }
                       title={collapsed ? it.label : undefined}
                     >
                       <Icon name={it.icon} size={18} />
                       <span className="rail-text">{it.label}</span>
-                    </NavLink>
+                    </Link>
                   </li>
                 ))}
               </ul>
@@ -159,6 +170,20 @@ export function Shell({
             </span>
           ) : null}
           <span className="spacer" />
+          {active && (
+            <span className="save-status" role="status">
+              {draft?.base.id === active.id ? 'Draft · ' : ''}
+              {saveStatus === 'saving' ? (
+                'Saving…'
+              ) : saveStatus === 'error' ? (
+                <button type="button" onClick={() => useStore.getState().retrySave()}>
+                  Save failed · Retry
+                </button>
+              ) : (
+                'Saved on device'
+              )}
+            </span>
+          )}
           <Button
             variant="ghost"
             icon="undo"
@@ -221,24 +246,24 @@ export function Shell({
           Home
         </NavLink>
         <NavLink
-          to="/plan/snapshot"
-          className={() => ''}
-          aria-current={loc.pathname.startsWith('/plan') ? 'page' : undefined}
-        >
-          <Icon name="plan" />
-          Plan
-        </NavLink>
-        <NavLink
           to="/explore/projection"
           className={() => ''}
-          aria-current={loc.pathname.startsWith('/explore') ? 'page' : undefined}
+          aria-current={/^\/(plan|explore)\//.test(loc.pathname) ? 'page' : undefined}
         >
-          <Icon name="explore" />
-          Explore
+          <Icon name="projection" />
+          Plan
         </NavLink>
         <NavLink to="/compare">
           <Icon name="compare" />
           Compare
+        </NavLink>
+        <NavLink to="/track">
+          <Icon name="progress" />
+          Progress
+        </NavLink>
+        <NavLink to="/reports">
+          <Icon name="reports" />
+          Reports
         </NavLink>
         <button type="button" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
           <Icon name={menu ? 'close' : 'more'} />
@@ -283,6 +308,9 @@ export function SubNav({ group }: { group: 'plan' | 'explore' }): ReactNode {
           {it.label}
         </NavLink>
       ))}
+      <NavLink to={group === 'explore' ? '/plan/household' : '/explore/projection'}>
+        {group === 'explore' ? 'Plan inputs' : '← Projection'}
+      </NavLink>
     </nav>
   );
 }

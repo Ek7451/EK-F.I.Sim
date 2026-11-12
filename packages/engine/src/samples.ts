@@ -8,7 +8,7 @@ const stamp = '2026-01-01T00:00:00.000Z';
 export function blankPlan(id: string, name: string, startYear: number, birthYear = startYear - 35): Plan {
   return PlanZ.parse({
     id,
-    schemaVersion: 1,
+    schemaVersion: 2,
     name,
     createdAt: stamp,
     updatedAt: stamp,
@@ -28,7 +28,7 @@ export function blankPlan(id: string, name: string, startYear: number, birthYear
 export function sampleBasic(startYear = 2026): Plan {
   const input: PlanInput = {
     id: 'sample-basic',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'Sample: getting started',
     createdAt: stamp,
     updatedAt: stamp,
@@ -189,7 +189,7 @@ export function sampleBasic(startYear = 2026): Plan {
 export function sampleEarlyRetiree(startYear = 2026): Plan {
   const input: PlanInput = {
     id: 'sample-early-retiree',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'Sample: retiring at 50',
     createdAt: stamp,
     updatedAt: stamp,
@@ -413,7 +413,7 @@ export function sampleCoupleSs(startYear = 2026): Plan {
   };
   const input: PlanInput = {
     id: 'sample-couple-ss',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'Sample: nearing retirement',
     createdAt: stamp,
     updatedAt: stamp,

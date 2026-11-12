@@ -843,6 +843,41 @@ export function SettingsPage(): ReactNode {
         </div>
       </Card>
       <PlansCard />
+      <Card title="Appearance preview">
+        <details>
+          <summary>Financial colors and interface states</summary>
+          <p className="lv-muted lv-small">
+            Names, line styles and structured data accompany these colors in charts.
+          </p>
+          <div className="token-gallery">
+            {[
+              'cash',
+              'taxable',
+              'pretax',
+              'roth',
+              'hsa',
+              'property',
+              'debts',
+              'income',
+              'expense',
+              'tax',
+              'baseline',
+              'draft',
+            ].map((name) => (
+              <div key={name}>
+                <span style={{ background: `var(--financial-${name})` }} />
+                <strong>{name}</strong>
+              </div>
+            ))}
+          </div>
+          <div className="lv-row">
+            <Button variant="primary">Primary action</Button>
+            <Button>Secondary</Button>
+            <Button disabled>Unavailable</Button>
+          </div>
+          <p role="status">Status messages remain readable in either theme.</p>
+        </details>
+      </Card>
       <BackupCard />
       <SyncCard />
       <DeviceCard />

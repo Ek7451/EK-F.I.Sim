@@ -141,6 +141,7 @@ test('the projection chart keeps drawing when the selected year changes', async 
     });
   await expect.poll(painted, { timeout: 15_000 }).toBeGreaterThan(1000);
   const detail = page.locator('[data-tour="year-detail"]');
+  if (!(await detail.isVisible())) await page.getByRole('button', { name: 'Show details' }).click();
   const before = await detail.locator('h2, h3').first().textContent();
   const slider = page.getByRole('slider', { name: /Year/ });
   await slider.focus();
@@ -193,8 +194,12 @@ test('encrypted backup: export, delete, import brings the plan back', async ({ p
   await expect(page.locator('[data-tour="settings-plans"]')).toContainText('retiring at 50');
 });
 
-test('reports: CSV and PDF are generated on the device', async ({ page }) => {
+test('reports: CSV and PDF are generated on the device', async ({ page }, info) => {
   await seed(page);
+  await go(page, '/plan/assumptions');
+  await page
+    .getByLabel('Plan name')
+    .fill('A deliberately long household plan name with retirement, education and multigenerational goals');
   await go(page, '/reports');
   const [csv] = await Promise.all([
     page.waitForEvent('download'),
@@ -206,6 +211,8 @@ test('reports: CSV and PDF are generated on the device', async ({ page }) => {
     page.locator('[data-tour="download-pdf"]').click(),
   ]);
   expect(pdf.suggestedFilename()).toMatch(/\.pdf$/);
+  await pdf.saveAs(info.outputPath('report.pdf'));
+  await csv.saveAs(info.outputPath('report.csv'));
   const fs = await import('node:fs');
   expect(
     fs
@@ -219,6 +226,7 @@ test('reports: CSV and PDF are generated on the device', async ({ page }) => {
 test('compare: a what-if variant shows a difference', async ({ page }) => {
   await seed(page);
   await go(page, '/compare');
+  await page.getByText('Customize and save a scenario', { exact: true }).click();
   await page.locator('[data-tour="add-variant"]').click();
   await expect(page.locator('[data-tour="variant-list"]')).toBeVisible();
   await expect(page.locator('[data-tour="compare-table"]')).toContainText('$');

@@ -9,12 +9,35 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+/** Primary destinations; existing deep URLs remain the secondary navigation. */
+export const PRIMARY_NAV: NavGroup[] = [
+  {
+    id: 'workspace',
+    label: 'Workspace',
+    items: [
+      { to: '/', label: 'Overview', icon: 'home' },
+      { to: '/explore/projection', label: 'Plan', icon: 'projection' },
+      { to: '/compare', label: 'Compare', icon: 'compare' },
+      { to: '/track', label: 'Progress', icon: 'progress' },
+      { to: '/reports', label: 'Reports', icon: 'reports' },
+    ],
+  },
+  {
+    id: 'more',
+    label: 'Support',
+    items: [
+      { to: '/help/tours', label: 'Help', icon: 'help' },
+      { to: '/settings', label: 'Settings', icon: 'settings' },
+    ],
+  },
+];
+
 /** Information architecture organised by task: Plan -> Explore -> Compare -> Track (plan 10). */
 export const NAV: NavGroup[] = [
   { id: 'home', label: 'Overview', items: [{ to: '/', label: 'Home', icon: 'home' }] },
   {
     id: 'plan',
-    label: 'Plan',
+    label: 'Plan inputs',
     items: [
       { to: '/plan/household', label: 'Household', icon: 'household' },
       { to: '/plan/snapshot', label: 'What you have', icon: 'wallet' },
@@ -28,13 +51,13 @@ export const NAV: NavGroup[] = [
   },
   {
     id: 'explore',
-    label: 'Explore',
+    label: 'Plan',
     items: [
       { to: '/explore/projection', label: 'Projection', icon: 'projection' },
       { to: '/explore/cashflow', label: 'Cash flow', icon: 'cashflow' },
       { to: '/explore/taxes', label: 'Taxes', icon: 'taxes' },
-      { to: '/explore/success', label: 'Chance of success', icon: 'success' },
-      { to: '/explore/history', label: 'Against history', icon: 'history' },
+      { to: '/explore/success', label: 'Outcomes', icon: 'success' },
+      { to: '/explore/history', label: 'History', icon: 'history' },
       { to: '/explore/estate', label: 'Estate', icon: 'estate' },
     ],
   },
