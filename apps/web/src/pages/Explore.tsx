@@ -2,6 +2,7 @@ import {
   explainCashFlow,
   explainNetWorth,
   explainTax,
+  toReal,
   type ProjectionResult,
   type YearRecord,
 } from '@fisim/engine';
@@ -25,11 +26,25 @@ import { agesText, fundedStat, isShort } from '../lib/outcome';
 import { PageHead } from '../shell/Shell';
 import { usePlan, useUpdate } from '../state/store';
 
-/** Display helper: today's dollars or future dollars, as the plan is set. */
-export function useMoney(): { real: boolean; v: (r: YearRecord, x: number) => number; unit: string } {
+/**
+ * Display helper: today's dollars or future dollars, as the plan is set. Year-end balances (net worth,
+ * account values) are deflated by the year-end price level; money that moves during the year (income,
+ * spending, tax) by the price level of that year.
+ */
+export function useMoney(): {
+  real: boolean;
+  bal: (r: YearRecord, x: number) => number;
+  flow: (r: YearRecord, x: number) => number;
+  unit: string;
+} {
   const plan = usePlan();
   const real = (plan?.settings.display ?? 'real') === 'real';
-  return { real, v: (r, x) => (real ? x / r.cpi : x), unit: real ? "today's dollars" : 'future dollars' };
+  return {
+    real,
+    bal: (r, x) => (real ? toReal(x, r, 'balance') : x),
+    flow: (r, x) => (real ? toReal(x, r, 'flow') : x),
+    unit: real ? "today's dollars" : 'future dollars',
+  };
 }
 
 function Loading({ error }: { error: string | null }): ReactNode {
@@ -183,9 +198,9 @@ export function ProjectionPage(): ReactNode {
             columns: ['Year', ...series.map((x) => x[0]), 'Net worth', 'Spending covered'],
             rows: recs.map((r) => [
               r.year,
-              ...series.map((x) => formatMoney(m.v(r, x[1](r)))),
-              formatMoney(m.v(r, r.netWorth)),
-              isShort(r) ? `Short by ${formatMoney(m.v(r, r.shortfall))}` : 'Yes',
+              ...series.map((x) => formatMoney(m.bal(r, x[1](r)))),
+              formatMoney(m.bal(r, r.netWorth)),
+              isShort(r) ? `Short by ${formatMoney(m.flow(r, r.shortfall))}` : 'Yes',
             ]),
           })}
           build={(c) => ({
@@ -208,7 +223,7 @@ export function ProjectionPage(): ReactNode {
                 const r = recs[ps[0]?.dataIndex ?? 0];
                 if (!r) return '';
                 const rows = series
-                  .map(([name, f]) => [name, m.v(r, f(r))] as const)
+                  .map(([name, f]) => [name, m.bal(r, f(r))] as const)
                   .filter(([, v]) => Math.abs(v) >= 1)
                   .map(
                     ([name, v]) =>
@@ -216,9 +231,9 @@ export function ProjectionPage(): ReactNode {
                   )
                   .join('');
                 const shortLine = isShort(r)
-                  ? `<div style="color:${c.danger};margin-top:6px;font-weight:600">Spending short by ${formatMoney(m.v(r, r.shortfall))}</div>`
+                  ? `<div style="color:${c.danger};margin-top:6px;font-weight:600">Spending short by ${formatMoney(m.flow(r, r.shortfall))}</div>`
                   : `<div style="margin-top:6px;color:${c.ink2}">Spending covered</div>`;
-                return `<div style="font-weight:600;margin-bottom:4px">${r.year} · ${agesText(r)}</div><table>${rows}<tr><td style="font-weight:600;padding-top:4px">Net worth</td><td style="text-align:right;font-weight:600;padding:4px 0 0 16px">${formatMoney(m.v(r, r.netWorth))}</td></tr></table>${shortLine}`;
+                return `<div style="font-weight:600;margin-bottom:4px">${r.year} · ${agesText(r)}</div><table>${rows}<tr><td style="font-weight:600;padding-top:4px">Net worth</td><td style="text-align:right;font-weight:600;padding:4px 0 0 16px">${formatMoney(m.bal(r, r.netWorth))}</td></tr></table>${shortLine}`;
               },
             },
             xAxis: [
@@ -260,7 +275,7 @@ export function ProjectionPage(): ReactNode {
                 lineStyle: { width: 1 },
                 areaStyle: { opacity: 0.82 },
                 emphasis: { focus: 'series' },
-                data: recs.map((r) => Math.round(m.v(r, f(r)))),
+                data: recs.map((r) => Math.round(m.bal(r, f(r)))),
                 markLine:
                   i === 0
                     ? {
@@ -286,7 +301,7 @@ export function ProjectionPage(): ReactNode {
                 color: c.ink,
                 lineStyle: { width: 2, color: c.ink },
                 z: 5,
-                data: recs.map((r) => Math.round(m.v(r, r.netWorth))),
+                data: recs.map((r) => Math.round(m.bal(r, r.netWorth))),
               },
               {
                 name: 'Spending covered',
@@ -315,7 +330,7 @@ export function ProjectionPage(): ReactNode {
           <YearPicker records={recs} year={sel.year} onChange={setYear} />
           <div className="lv-grid" style={{ marginTop: 16 }}>
             <div className="lv-row" style={{ flexWrap: 'nowrap' }}>
-              <Stat label="Net worth" value={formatCompact(m.v(sel, sel.netWorth))} />
+              <Stat label="Net worth" value={formatCompact(m.bal(sel, sel.netWorth))} />
               <Explain
                 title={`net worth in ${sel.year}`}
                 lines={nw.lines}
@@ -324,7 +339,7 @@ export function ProjectionPage(): ReactNode {
               />
             </div>
             <div className="lv-row" style={{ flexWrap: 'nowrap' }}>
-              <Stat label="Spending" value={formatCompact(m.v(sel, sel.expenses.total))} />
+              <Stat label="Spending" value={formatCompact(m.flow(sel, sel.expenses.total))} />
               <Explain
                 title={`cash flow in ${sel.year}`}
                 lines={cf.lines}
@@ -334,15 +349,15 @@ export function ProjectionPage(): ReactNode {
             </div>
             <Stat
               label="Taxes"
-              value={formatCompact(m.v(sel, sel.taxes.total))}
+              value={formatCompact(m.flow(sel, sel.taxes.total))}
               note={`${formatPct(sel.taxes.effectiveRate, 1)} of income`}
             />
             <Stat
               label="Saved or withdrawn"
               value={
                 sel.withdrawals.total > sel.contributions.total
-                  ? `− ${formatCompact(m.v(sel, sel.withdrawals.total))}`
-                  : `+ ${formatCompact(m.v(sel, sel.contributions.total))}`
+                  ? `− ${formatCompact(m.flow(sel, sel.withdrawals.total))}`
+                  : `+ ${formatCompact(m.flow(sel, sel.contributions.total))}`
               }
             />
           </div>
@@ -353,7 +368,7 @@ export function ProjectionPage(): ReactNode {
           ) : null}
           {sel.shortfall > 1 ? (
             <Notice tone="danger">
-              Spending was short by {formatMoney(m.v(sel, sel.shortfall))} this year.
+              Spending was short by {formatMoney(m.flow(sel, sel.shortfall))} this year.
             </Notice>
           ) : null}
         </Card>
@@ -433,7 +448,7 @@ export function CashFlowPage(): ReactNode {
     );
   const recs = result.records;
   const r = recs.find((x) => x.year === year) ?? recs[0];
-  const val = (x: number): number => Math.round(m.v(r, x));
+  const val = (x: number): number => Math.round(m.flow(r, x));
   const inflow: [string, number][] = (
     [
       ['Wages', r.income.wages + r.income.selfEmployment],
@@ -539,10 +554,10 @@ export function CashFlowPage(): ReactNode {
             columns: ['Year', 'Living', 'Housing and debt', 'Healthcare', 'Taxes'],
             rows: recs.map((x) => [
               x.year,
-              formatMoney(m.v(x, x.expenses.living)),
-              formatMoney(m.v(x, x.expenses.housing + x.expenses.debtService)),
-              formatMoney(m.v(x, x.expenses.healthcare.total)),
-              formatMoney(m.v(x, x.taxes.total)),
+              formatMoney(m.flow(x, x.expenses.living)),
+              formatMoney(m.flow(x, x.expenses.housing + x.expenses.debtService)),
+              formatMoney(m.flow(x, x.expenses.healthcare.total)),
+              formatMoney(m.flow(x, x.taxes.total)),
             ]),
           })}
           build={(c) => ({
@@ -571,7 +586,7 @@ export function CashFlowPage(): ReactNode {
               type: 'bar',
               stack: 's',
               barCategoryGap: '12%',
-              data: recs.map((x) => Math.round(m.v(x, f(x)))),
+              data: recs.map((x) => Math.round(m.flow(x, f(x)))),
             })),
           })}
         />
@@ -655,8 +670,8 @@ export function TaxesPage(): ReactNode {
             ],
             rows: recs.map((x) => [
               x.year,
-              ...parts.map((p) => formatMoney(m.v(x, p[1](x)))),
-              formatMoney(m.v(x, x.taxes.ptc)),
+              ...parts.map((p) => formatMoney(m.flow(x, p[1](x)))),
+              formatMoney(m.flow(x, x.taxes.ptc)),
               formatPct(x.taxes.effectiveRate, 1),
               formatPct(x.taxes.marginalRate),
               x.dataStatus,
@@ -688,7 +703,7 @@ export function TaxesPage(): ReactNode {
                 type: 'bar',
                 stack: 't',
                 barCategoryGap: '12%',
-                data: recs.map((x) => Math.round(m.v(x, f(x)))),
+                data: recs.map((x) => Math.round(m.flow(x, f(x)))),
                 tooltip: { valueFormatter: (v: number) => formatMoney(v) },
               })),
               {
@@ -753,7 +768,7 @@ export function TaxesPage(): ReactNode {
                 ).map(([k, v]) => (
                   <tr key={k}>
                     <th scope="row">{k}</th>
-                    <td>{formatMoney(m.v(r, v))}</td>
+                    <td>{formatMoney(m.flow(r, v))}</td>
                   </tr>
                 ))}
                 <tr>
@@ -1205,7 +1220,7 @@ export function EstatePage(): ReactNode {
     );
   const e = result.estate;
   const last = result.records[result.records.length - 1];
-  const cpi = last.cpi * (1 + plan.assumptions.inflation.rate);
+  const cpi = last.cpiEnd;
   const real = (x: number): number => x / cpi;
   const lines = [
     { label: 'Estate at the end of the plan', amount: e.value },
@@ -1271,10 +1286,10 @@ export function EstatePage(): ReactNode {
             columns: ['Year', 'Pre-tax', 'Roth', 'Taxable and cash', 'Property net of debt'],
             rows: result.records.map((r) => [
               r.year,
-              formatMoney(r.byKind.pretax / r.cpi),
-              formatMoney(r.byKind.roth / r.cpi),
-              formatMoney((r.byKind.taxable + r.byKind.cash) / r.cpi),
-              formatMoney((r.assets - r.debts) / r.cpi),
+              formatMoney(r.byKind.pretax / r.cpiEnd),
+              formatMoney(r.byKind.roth / r.cpiEnd),
+              formatMoney((r.byKind.taxable + r.byKind.cash) / r.cpiEnd),
+              formatMoney((r.assets - r.debts) / r.cpiEnd),
             ]),
           })}
           build={(c) => ({
@@ -1306,7 +1321,7 @@ export function EstatePage(): ReactNode {
               symbol: 'none',
               areaStyle: { opacity: 0.8 },
               lineStyle: { width: 1 },
-              data: result.records.map((r) => Math.round(f(r) / r.cpi)),
+              data: result.records.map((r) => Math.round(f(r) / r.cpiEnd)),
             })),
           })}
         />

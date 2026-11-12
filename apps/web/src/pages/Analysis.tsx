@@ -142,7 +142,7 @@ export function ComparePage(): ReactNode {
     ['Lifetime tax', (r) => r.summary.lifetimeTaxReal, formatMoney, false],
     ['Lifetime spending', (r) => r.summary.lifetimeSpendingReal, formatMoney, true],
     ['Average tax rate', (r) => r.summary.averageEffectiveTaxRate, (v) => formatPct(v, 1), false],
-    ['Net to heirs', (r) => r.estate.netToHeirs / (r.records.at(-1)?.cpi ?? 1), formatMoney, true],
+    ['Net to heirs', (r) => r.estate.netToHeirs / (r.records.at(-1)?.cpiEnd ?? 1), formatMoney, true],
     [
       'Roth conversions',
       (r) => r.records.reduce((t, x) => t + x.rothConversion / x.cpi, 0),
@@ -164,7 +164,7 @@ export function ComparePage(): ReactNode {
       : [];
   const at = (r: ProjectionResult, y: number): number | null => {
     const x = r.records.find((q) => q.year === y);
-    return x ? Math.round(x.netWorth / x.cpi) : null;
+    return x ? Math.round(x.netWorth / x.cpiEnd) : null;
   };
   return (
     <>
@@ -779,7 +779,7 @@ export function ReportsPage(): ReactNode {
                     <td>{formatMoney(r.withdrawals.total / r.cpi)}</td>
                     <td>{formatMoney(r.expenses.total / r.cpi)}</td>
                     <td>{formatMoney(r.taxes.total / r.cpi)}</td>
-                    <td>{formatMoney(r.netWorth / r.cpi)}</td>
+                    <td>{formatMoney(r.netWorth / r.cpiEnd)}</td>
                   </tr>
                 ))}
               </tbody>

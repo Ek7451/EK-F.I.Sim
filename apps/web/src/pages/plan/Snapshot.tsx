@@ -72,7 +72,7 @@ export function SnapshotPage(): ReactNode {
             ))}
           </ul>
         </Card>
-        <Card title="Debts" data-tour="debts" actions={<Button icon="plus" data-tour="add-debt" onClick={() => { const id = newId('d'); update((d) => { d.debts.push({ id, ownerId: d.people[0].id, name: 'Loan', kind: 'personal', principal: 0, rate: 0.06, payment: 0, termMonths: 60, revolvingPayPct: 0.02, interestDeductible: false, refinance: [] }); }); setDebt(id); }}>Add</Button>}>
+        <Card title="Debts" data-tour="debts" actions={<Button icon="plus" data-tour="add-debt" onClick={() => { const id = newId('d'); update((d) => { d.debts.push({ id, ownerId: d.people[0].id, name: 'Loan', kind: 'personal', principal: 0, rate: 0.06, payment: 0, termMonths: 60, revolvingPayPct: 0.02, refinance: [] }); }); setDebt(id); }}>Add</Button>}>
           {plan.debts.length === 0 ? <p className="lv-muted">Mortgages, student loans, car loans and card balances.</p> : null}
           <ul className="lv-list">
             {plan.debts.map((x) => (
@@ -214,7 +214,7 @@ export function SnapshotPage(): ReactNode {
               )}
               {plan.assets.length ? <SelectField label="Secured by" value={b.linkedAssetId ?? 'none'} options={[{ value: 'none', label: 'Nothing' }, ...plan.assets.map((x) => ({ value: x.id, label: x.name }))]} onChange={(v) => setB((x) => { x.linkedAssetId = v === 'none' ? undefined : v; })} /> : null}
             </div>
-            <Switch label="Interest is deductible (home mortgage)" checked={b.interestDeductible || b.kind === 'mortgage'} onChange={(v) => setB((x) => { x.interestDeductible = v; })} />
+            <Switch label="Interest is deductible (home mortgage)" checked={b.interestDeductible ?? b.kind === 'mortgage'} onChange={(v) => setB((x) => { x.interestDeductible = v; })} />
             <WhenField plan={plan} label="Starts" optional emptyLabel="Already have it" value={b.start} onChange={(v) => setB((x) => { x.start = v; })} />
             <div className="lv-spread"><span className="lv-label">Refinancing</span><Button size="sm" icon="plus" onClick={() => setB((x) => { x.refinance.push({ when: { type: 'year', year: plan.settings.startYear + 2 }, rate: Math.max(0, x.rate - 0.01), termYears: 30, costPct: 0.02 }); })}>Add a refinance</Button></div>
             {b.refinance.map((r, i) => (

@@ -312,13 +312,17 @@ export const HELP: Record<string, string> = {
   'Wage growth above inflation':
     'How fast average pay grows above inflation. Used to project Social Security wage indexing.',
   'Expected returns':
-    'The figures I set below: Longview uses the returns you enter. Long-run historical averages: uses US market history since 1871 for US stocks, bonds and cash.',
+    'The figures I set below: Longview uses the returns you enter. Long-run historical averages: uses the compound averages of US market history since 1871 for US stocks, bonds and cash.\n\nEither way these are compound yearly rates before inflation: 7% means money grows by 7% each year on average over the long run.',
   'Dividend yield on stocks':
     "The share of a stock's value paid out each year as dividends. Dividends in a taxable account are taxed each year. About 1.5% to 2% for the US market.",
   'Bond interest yield':
     'Interest paid each year by bonds. Interest in a taxable account is taxed as income.',
   Method:
-    'Replay blocks of real history: each run strings together real past years in random order, keeping crashes and recoveries together.\n\nRandom draws: each year is drawn at random around the returns and volatility you set.',
+    'Replay blocks of real history: each run strings together real past years in random order, keeping crashes, recoveries and the way stocks, bonds and inflation moved together.\n\nRandom draws: each year is drawn at random around your expected returns, with the volatility you set.\n\nBoth methods centre on your expected returns unless you choose to replay history as it happened.',
+  'Average returns in replayed history':
+    'Shifted to my expected returns: history keeps its ups, downs and sequences, but each investment is moved so its long-run compound return matches the figure you set. The simulations and the single projection then use the same outlook.\n\nAs they happened: replays US history since 1871 with its own averages (about 7% a year above inflation for stocks), which is more generous than most forecasts today.',
+  'Yearly improvement in death rates':
+    "Life tables describe death rates today. People keep living longer, so rates in future years are likely lower. 0% uses the table as published; about 0.8% a year is close to the Social Security Trustees' middle assumption.",
   'Number of runs':
     'How many simulated futures to run. More runs give a steadier answer but take longer. 1,000 is usually enough.',
   Seed: 'The starting point for the random numbers. The same seed always gives the same answer, so a change in the result comes from a change in your plan.',
@@ -329,7 +333,7 @@ export const HELP: Record<string, string> = {
   'Let healthcare inflation vary in simulations':
     'When on, the extra healthcare inflation varies at random from run to run.',
   'Assume benefits are cut if the trust fund runs short':
-    'The Social Security trust fund is projected to run short in the 2030s, after which incoming taxes would pay about 80% of benefits unless Congress acts. Turn on to plan for that cut.',
+    'The 2026 Social Security Trustees Report projects the trust funds running short in 2034, after which incoming taxes would pay about 83% of scheduled benefits unless Congress acts. Turn on to plan for that cut.',
   'Share of benefits still paid': 'The share of scheduled benefits paid after the trust fund runs short.',
   'At age': 'The age at which this mix applies. Between ages, the mix moves gradually.',
   Name: 'A name to recognise this by.',

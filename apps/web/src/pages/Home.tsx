@@ -76,7 +76,7 @@ export function HomePage(): ReactNode {
             height={240}
             table={() => ({
               columns: ['Year', 'Net worth'],
-              rows: result.records.map((r) => [r.year, formatCompact(r.netWorth / r.cpi)]),
+              rows: result.records.map((r) => [r.year, formatCompact(r.netWorth / r.cpiEnd)]),
             })}
             build={(c) => ({
               grid: { left: 52, right: 12, top: 12, bottom: 28 },
@@ -97,7 +97,7 @@ export function HomePage(): ReactNode {
                   smooth: 0.2,
                   lineStyle: { width: 2.5, color: c.primary },
                   areaStyle: { color: c.primary, opacity: 0.12 },
-                  data: result.records.map((r) => Math.round(r.netWorth / r.cpi)),
+                  data: result.records.map((r) => Math.round(r.netWorth / r.cpiEnd)),
                 },
               ],
             })}

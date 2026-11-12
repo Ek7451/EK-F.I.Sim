@@ -8,15 +8,18 @@ const data = loadEngineData();
 const year = 2026;
 
 describe('projection chart parts', () => {
-  it.each(Object.keys(SAMPLE_PLANS))('%s: account types plus assets minus debts equal net worth every year', (id) => {
-    const plan = PlanZ.parse(SAMPLE_PLANS[id as keyof typeof SAMPLE_PLANS]());
-    const r = project(plan, data);
-    for (const x of r.records) {
-      const k = x.byKind;
-      const parts = k.cash + k.taxable + k.pretax + k.roth + k.hsa + k.other + x.assets - x.debts;
-      expect(Math.abs(parts - x.netWorth), `${id} ${x.year}`).toBeLessThan(1);
-    }
-  });
+  it.each(Object.keys(SAMPLE_PLANS))(
+    '%s: account types plus assets minus debts equal net worth every year',
+    (id) => {
+      const plan = PlanZ.parse(SAMPLE_PLANS[id as keyof typeof SAMPLE_PLANS]());
+      const r = project(plan, data);
+      for (const x of r.records) {
+        const k = x.byKind;
+        const parts = k.cash + k.taxable + k.pretax + k.roth + k.hsa + k.other + x.assets - x.debts;
+        expect(Math.abs(parts - x.netWorth), `${id} ${x.year}`).toBeLessThan(1);
+      }
+    },
+  );
 });
 
 describe('spending covered', () => {

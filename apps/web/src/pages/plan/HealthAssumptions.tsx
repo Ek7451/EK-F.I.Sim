@@ -150,11 +150,13 @@ export function AssumptionsPage(): ReactNode {
           <SelectField label="Method" value={mc.method} options={[{ value: 'bootstrap', label: 'Replay blocks of real history' }, { value: 'parametric', label: 'Random draws around my assumptions' }]} onChange={(v) => update((d) => { d.assumptions.monteCarlo.method = v; })} data-tour="mc-method" />
           <NumberField label="Number of runs" value={mc.runs} min={100} max={10000} onChange={(v) => update((d) => { d.assumptions.monteCarlo.runs = Math.max(10, v); })} data-tour="mc-runs" />
           <NumberField label="Seed" hint="The same seed always gives the same result." value={mc.seed} onChange={(v) => update((d) => { d.assumptions.monteCarlo.seed = v; })} data-tour="mc-seed" />
+          {mc.method === 'bootstrap' ? <SelectField label="Average returns in replayed history" value={mc.bootstrapMeans} options={[{ value: 'assumptions', label: 'Shifted to my expected returns' }, { value: 'historical', label: 'As they happened' }]} onChange={(v) => update((d) => { d.assumptions.monteCarlo.bootstrapMeans = v; })} data-tour="mc-bootstrap-means" /> : null}
           {mc.method === 'bootstrap' ? <NumberField label="Block length (years)" value={mc.blockLength} min={1} max={30} onChange={(v) => update((d) => { d.assumptions.monteCarlo.blockLength = v; })} /> : null}
           <SelectField label="Inflation in simulations" value={mc.inflation} options={[{ value: 'sampled', label: 'Varies, as in history' }, { value: 'fixed', label: 'Fixed at my rate' }]} onChange={(v) => update((d) => { d.assumptions.monteCarlo.inflation = v; })} />
         </div>
         <div className="lv-stack" style={{ marginTop: 12 }}>
           <LifespanSwitch plan={plan} />
+          {mc.stochasticLongevity || plan.people.some((p) => p.longevity.mode === 'stochastic') ? <div style={{ maxWidth: 320 }}><PercentField label="Yearly improvement in death rates" digits={1} value={A.mortalityImprovement} onChange={(v) => update((d) => { d.assumptions.mortalityImprovement = Math.max(0, Math.min(0.03, v)); })} /></div> : null}
           <Switch label="Let healthcare inflation vary in simulations" checked={A.healthcareInflation.stochastic} onChange={(v) => update((d) => { d.assumptions.healthcareInflation.stochastic = v; })} />
         </div>
       </Card>
@@ -183,7 +185,7 @@ export function AssumptionsPage(): ReactNode {
         <Switch label="Assume benefits are cut if the trust fund runs short" checked={A.socialSecurityCut.enabled} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.enabled = v; })} />
         {A.socialSecurityCut.enabled ? (
           <div className="form-grid" style={{ marginTop: 12 }}>
-            <NumberField label="From year" help="The first year benefits are cut. The 2025 Trustees Report projects the trust fund running short in 2034." value={A.socialSecurityCut.fromYear} min={2026} max={2100} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.fromYear = v; })} />
+            <NumberField label="From year" help="The first year benefits are cut. The 2026 Trustees Report projects the trust funds running short in 2034." value={A.socialSecurityCut.fromYear} min={2026} max={2100} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.fromYear = v; })} />
             <PercentField label="Share of benefits still paid" digits={0} value={A.socialSecurityCut.payablePct} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.payablePct = Math.max(0, Math.min(1, v)); })} />
           </div>
         ) : null}

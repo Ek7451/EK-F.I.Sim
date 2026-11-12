@@ -338,10 +338,7 @@ export function TextField({
   value: string;
   onChange: (v: string) => void;
   type?: string;
-} & Record<
-  `data-${string}`,
-  string | undefined
->): ReactNode {
+} & Record<`data-${string}`, string | undefined>): ReactNode {
   return (
     <Field label={label} hint={hint} help={help}>
       {(id, hintId) => (
@@ -415,10 +412,13 @@ export function MoneyField({
   cents,
   onChange,
   ...rest
-}: { label: string; hint?: string; help?: ReactNode; cents: number; onChange: (cents: number) => void } & Record<
-  `data-${string}`,
-  string | undefined
->): ReactNode {
+}: {
+  label: string;
+  hint?: string;
+  help?: ReactNode;
+  cents: number;
+  onChange: (cents: number) => void;
+} & Record<`data-${string}`, string | undefined>): ReactNode {
   const n = useNumberText(
     cents,
     (c) => (c / 100).toLocaleString('en-US', { maximumFractionDigits: 2 }),
@@ -466,10 +466,7 @@ export function PercentField({
   value: number;
   onChange: (v: number) => void;
   digits?: number;
-} & Record<
-  `data-${string}`,
-  string | undefined
->): ReactNode {
+} & Record<`data-${string}`, string | undefined>): ReactNode {
   const n = useNumberText(
     value,
     (v) => String(+(v * 100).toFixed(digits)),

@@ -31,7 +31,11 @@ function fieldLabels(): { label: string; file: string; explicit: boolean }[] {
       const tag = /<([A-Z]\w*)\b[^<]*$/.exec(before)?.[1];
       if (!tag || !FIELDS.has(tag)) continue;
       const after = src.slice(m.index, src.indexOf('/>', m.index));
-      out.push({ label: m[1], file, explicit: /\bhelp=/.test(before.slice(before.lastIndexOf('<')) + after) });
+      out.push({
+        label: m[1],
+        file,
+        explicit: /\bhelp=/.test(before.slice(before.lastIndexOf('<')) + after),
+      });
     }
   }
   return out;
@@ -55,15 +59,18 @@ describe('field help', () => {
 
   it('dollar limits quoted in help match the bundled 2026 limits', () => {
     const limits = JSON.parse(
-      readFileSync(join(__dirname, '..', '..', '..', '..', 'packages', 'data', 'limits', '2026.json'), 'utf8'),
+      readFileSync(
+        join(__dirname, '..', '..', '..', '..', 'packages', 'data', 'limits', '2026.json'),
+        'utf8',
+      ),
     ) as { electiveDeferral: number; catchUp50: number; catchUp60to63: number; annualAdditions: number };
     const fmt = (n: number): string => `$${n.toLocaleString('en-US')}`;
     const contrib = helpText('Contribution (share of pay)')!;
     expect(contrib).toContain(fmt(limits.electiveDeferral));
     expect(contrib).toContain(fmt(limits.catchUp50));
     expect(contrib).toContain(fmt(limits.catchUp60to63));
-    expect(helpText('Mega-backdoor Roth: after-tax contributions up to the plan limit, converted to Roth')).toContain(
-      fmt(limits.annualAdditions),
-    );
+    expect(
+      helpText('Mega-backdoor Roth: after-tax contributions up to the plan limit, converted to Roth'),
+    ).toContain(fmt(limits.annualAdditions));
   });
 });
