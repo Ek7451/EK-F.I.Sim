@@ -222,6 +222,8 @@ gh secret list
 | `CLOUDFLARE_ACCOUNT_ID` | `ci.yml`, `deploy.yml`                  | Not sensitive, kept as a secret for convenience     |
 | `FRED_API_KEY`          | `ingest.yml` only                       | Never referenced by build, test or deploy workflows |
 
+Until both Cloudflare secrets are set, the pull-request preview deploy (`ci.yml`) and every deploy job in `deploy.yml` are skipped with a notice naming the missing secrets; the checks still run.
+
 Dependabot pull requests do not receive these secrets, so their preview deploy is skipped by design. Do not
 add them to the Dependabot secret store.
 
