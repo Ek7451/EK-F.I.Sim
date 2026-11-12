@@ -25,39 +25,42 @@
      "type": "object",
      "properties": {
       "startYear": {
-       "type": "integer"
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
       },
       "timing": {
+       "default": "mid",
        "type": "string",
        "enum": [
         "start",
         "mid",
         "end"
-       ],
-       "default": "mid"
+       ]
       },
       "display": {
+       "default": "real",
        "type": "string",
        "enum": [
         "real",
         "nominal"
-       ],
-       "default": "real"
+       ]
       },
       "dataYearPolicy": {
+       "default": "latest",
        "type": "string",
        "enum": [
         "latest"
-       ],
-       "default": "latest"
+       ]
       }
      },
      "required": [
       "startYear"
-     ],
-     "additionalProperties": false
+     ]
     },
     "people": {
+     "minItems": 1,
+     "maxItems": 2,
      "type": "array",
      "items": {
       "type": "object",
@@ -81,27 +84,27 @@
         ]
        },
        "longevity": {
+        "default": {},
         "type": "object",
         "properties": {
          "mode": {
+          "default": "fixed",
           "type": "string",
           "enum": [
            "fixed",
            "stochastic"
-          ],
-          "default": "fixed"
+          ]
          },
          "age": {
+          "default": 95,
           "type": "integer",
           "minimum": 50,
-          "maximum": 120,
-          "default": 95
+          "maximum": 120
          }
-        },
-        "additionalProperties": false,
-        "default": {}
+        }
        },
        "residence": {
+        "default": [],
         "type": "array",
         "items": {
          "type": "object",
@@ -115,54 +118,64 @@
            "type": "string"
           },
           "fromYear": {
-           "type": "integer"
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
           }
          },
          "required": [
           "state",
           "fromYear"
-         ],
-         "additionalProperties": false
-        },
-        "default": []
+         ]
+        }
        },
        "socialSecurity": {
+        "default": {},
         "type": "object",
         "properties": {
          "mode": {
+          "default": "earnings",
           "type": "string",
           "enum": [
            "earnings",
            "pia",
            "none"
-          ],
-          "default": "earnings"
+          ]
          },
          "earnings": {
+          "default": [],
           "type": "array",
           "items": {
            "type": "object",
            "properties": {
             "year": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             },
             "amount": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "year",
             "amount"
-           ],
-           "additionalProperties": false
-          },
-          "default": []
+           ]
+          }
          },
          "piaMonthly": {
+          "default": 0,
           "type": "integer",
-          "default": 0
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "claimAge": {
+          "default": {
+           "years": 67,
+           "months": 0
+          },
           "type": "object",
           "properties": {
            "years": {
@@ -179,38 +192,32 @@
           "required": [
            "years",
            "months"
-          ],
-          "additionalProperties": false,
-          "default": {
-           "years": 67,
-           "months": 0
-          }
+          ]
          }
-        },
-        "additionalProperties": false,
-        "default": {}
+        }
        }
       },
       "required": [
        "id",
        "name",
        "birthDate"
-      ],
-      "additionalProperties": false
-     },
-     "minItems": 1,
-     "maxItems": 2
+      ]
+     }
     },
     "household": {
+     "default": {},
      "type": "object",
      "properties": {
       "filingStatus": {
+       "default": [],
        "type": "array",
        "items": {
         "type": "object",
         "properties": {
          "fromYear": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "status": {
           "type": "string",
@@ -226,12 +233,11 @@
         "required": [
          "fromYear",
          "status"
-        ],
-        "additionalProperties": false
-       },
-       "default": []
+        ]
+       }
       },
       "dependents": {
+       "default": [],
        "type": "array",
        "items": {
         "type": "object",
@@ -240,22 +246,21 @@
           "type": "string"
          },
          "birthYear": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          }
         },
         "required": [
          "name",
          "birthYear"
-        ],
-        "additionalProperties": false
-       },
-       "default": []
+        ]
+       }
       }
-     },
-     "additionalProperties": false,
-     "default": {}
+     }
     },
     "accounts": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -294,82 +299,91 @@
         ]
        },
        "balance": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "costBasis": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "rothBasis": {
         "type": "object",
         "properties": {
          "contributions": {
+          "default": 0,
           "type": "integer",
-          "default": 0
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "conversions": {
+          "default": [],
           "type": "array",
           "items": {
            "type": "object",
            "properties": {
             "year": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             },
             "amount": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "year",
             "amount"
-           ],
-           "additionalProperties": false
-          },
-          "default": []
+           ]
+          }
          },
          "firstContributionYear": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          }
-        },
-        "additionalProperties": false
+        }
        },
        "allocation": {
-        "type": "object",
-        "properties": {
-         "usStocks": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "default": 0
-         },
-         "usBonds": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "default": 0
-         },
-         "cash": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "default": 0
-         },
-         "intlStocks": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "default": 0
-         },
-         "reits": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1,
-          "default": 0
-         }
-        },
-        "additionalProperties": false,
         "default": {
          "usStocks": 0.6,
          "usBonds": 0.4
+        },
+        "type": "object",
+        "properties": {
+         "usStocks": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "usBonds": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "cash": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "intlStocks": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         },
+         "reits": {
+          "default": 0,
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+         }
         }
        },
        "glidePathId": {
@@ -377,23 +391,22 @@
         "minLength": 1
        },
        "fees": {
+        "default": {},
         "type": "object",
         "properties": {
          "expenseRatio": {
+          "default": 0,
           "type": "number",
           "minimum": -1,
-          "maximum": 10,
-          "default": 0
+          "maximum": 10
          },
          "advisory": {
+          "default": 0,
           "type": "number",
           "minimum": -1,
-          "maximum": 10,
-          "default": 0
+          "maximum": 10
          }
-        },
-        "additionalProperties": false,
-        "default": {}
+        }
        },
        "contribution": {
         "type": "object",
@@ -403,20 +416,23 @@
           "minLength": 1
          },
          "employeePct": {
+          "default": 0,
           "type": "number",
           "minimum": 0,
-          "maximum": 1,
-          "default": 0
+          "maximum": 1
          },
          "employeeAmount": {
+          "default": 0,
           "type": "integer",
-          "default": 0
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "maxOut": {
-          "type": "boolean",
-          "default": false
+          "default": false,
+          "type": "boolean"
          },
          "employerMatch": {
+          "default": [],
           "type": "array",
           "items": {
            "type": "object",
@@ -434,47 +450,45 @@
            "required": [
             "matchPct",
             "upToPctOfSalary"
-           ],
-           "additionalProperties": false
-          },
-          "default": []
+           ]
+          }
          },
          "employerFixedPct": {
+          "default": 0,
           "type": "number",
           "minimum": 0,
-          "maximum": 1,
-          "default": 0
+          "maximum": 1
          },
          "megaBackdoor": {
-          "type": "boolean",
-          "default": false
+          "default": false,
+          "type": "boolean"
          },
          "megaBackdoorRothAccountId": {
           "type": "string",
           "minLength": 1
          }
-        },
-        "additionalProperties": false
+        }
        },
        "ruleOf55": {
-        "type": "boolean",
-        "default": false
+        "default": false,
+        "type": "boolean"
        },
        "inherited": {
         "type": "object",
         "properties": {
          "yearOfDeath": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "decedentHadStartedRmds": {
-          "type": "boolean",
-          "default": false
+          "default": false,
+          "type": "boolean"
          }
         },
         "required": [
          "yearOfDeath"
-        ],
-        "additionalProperties": false
+        ]
        },
        "fixedYield": {
         "type": "object",
@@ -485,38 +499,38 @@
           "maximum": 10
          },
          "basis": {
+          "default": "real",
           "type": "string",
           "enum": [
            "real",
            "nominal"
-          ],
-          "default": "real"
+          ]
          }
         },
         "required": [
          "rate"
-        ],
-        "additionalProperties": false
+        ]
        },
        "plan529": {
         "type": "object",
         "properties": {
          "openedYear": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "rothRolloverAccountId": {
           "type": "string",
           "minLength": 1
          },
          "rollToRoth": {
-          "type": "boolean",
-          "default": false
+          "default": false,
+          "type": "boolean"
          }
         },
         "required": [
          "openedYear"
-        ],
-        "additionalProperties": false
+        ]
        }
       },
       "required": [
@@ -525,12 +539,11 @@
        "name",
        "type",
        "balance"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "assets": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -556,12 +569,19 @@
         ]
        },
        "value": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "costBasis": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "appreciation": {
+        "default": {
+         "rate": 0
+        },
         "type": "object",
         "properties": {
          "rate": {
@@ -570,53 +590,52 @@
           "maximum": 10
          },
          "basis": {
+          "default": "real",
           "type": "string",
           "enum": [
            "real",
            "nominal"
-          ],
-          "default": "real"
+          ]
          }
         },
         "required": [
          "rate"
-        ],
-        "additionalProperties": false,
-        "default": {
-         "rate": 0
-        }
+        ]
        },
        "property": {
         "type": "object",
         "properties": {
          "propertyTaxRate": {
+          "default": 0.011,
           "type": "number",
           "minimum": -1,
-          "maximum": 10,
-          "default": 0.011
+          "maximum": 10
          },
          "insuranceAnnual": {
+          "default": 0,
           "type": "integer",
-          "default": 0
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "maintenanceRate": {
+          "default": 0.01,
           "type": "number",
           "minimum": -1,
-          "maximum": 10,
-          "default": 0.01
+          "maximum": 10
          },
          "hoaAnnual": {
+          "default": 0,
           "type": "integer",
-          "default": 0
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          }
-        },
-        "additionalProperties": false
+        }
        },
        "purchase": {
         "type": "object",
         "properties": {
          "when": {
-          "anyOf": [
+          "oneOf": [
            {
             "type": "object",
             "properties": {
@@ -625,14 +644,15 @@
               "const": "year"
              },
              "year": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              }
             },
             "required": [
              "type",
              "year"
-            ],
-            "additionalProperties": false
+            ]
            },
            {
             "type": "object",
@@ -655,8 +675,7 @@
              "type",
              "personId",
              "age"
-            ],
-            "additionalProperties": false
+            ]
            },
            {
             "type": "object",
@@ -670,53 +689,53 @@
               "minLength": 1
              },
              "offset": {
+              "default": 0,
               "type": "integer",
-              "default": 0
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              }
             },
             "required": [
              "type",
              "milestoneId"
-            ],
-            "additionalProperties": false
+            ]
            }
           ]
          },
          "downPaymentPct": {
+          "default": 0.2,
           "type": "number",
           "minimum": 0,
-          "maximum": 1,
-          "default": 0.2
+          "maximum": 1
          },
          "closingCostPct": {
+          "default": 0.03,
           "type": "number",
           "minimum": 0,
-          "maximum": 0.2,
-          "default": 0.03
+          "maximum": 0.2
          },
          "mortgageRate": {
+          "default": 0.065,
           "type": "number",
           "minimum": -1,
-          "maximum": 10,
-          "default": 0.065
+          "maximum": 10
          },
          "mortgageTermYears": {
+          "default": 30,
           "type": "integer",
           "minimum": 1,
-          "maximum": 40,
-          "default": 30
+          "maximum": 40
          }
         },
         "required": [
          "when"
-        ],
-        "additionalProperties": false
+        ]
        },
        "sale": {
         "type": "object",
         "properties": {
          "when": {
-          "anyOf": [
+          "oneOf": [
            {
             "type": "object",
             "properties": {
@@ -725,14 +744,15 @@
               "const": "year"
              },
              "year": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              }
             },
             "required": [
              "type",
              "year"
-            ],
-            "additionalProperties": false
+            ]
            },
            {
             "type": "object",
@@ -755,8 +775,7 @@
              "type",
              "personId",
              "age"
-            ],
-            "additionalProperties": false
+            ]
            },
            {
             "type": "object",
@@ -770,23 +789,24 @@
               "minLength": 1
              },
              "offset": {
+              "default": 0,
               "type": "integer",
-              "default": 0
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              }
             },
             "required": [
              "type",
              "milestoneId"
-            ],
-            "additionalProperties": false
+            ]
            }
           ]
          },
          "sellingCostPct": {
+          "default": 0.06,
           "type": "number",
           "minimum": 0,
-          "maximum": 0.2,
-          "default": 0.06
+          "maximum": 0.2
          },
          "proceedsToAccountId": {
           "type": "string",
@@ -795,8 +815,7 @@
         },
         "required": [
          "when"
-        ],
-        "additionalProperties": false
+        ]
        }
       },
       "required": [
@@ -805,12 +824,11 @@
        "name",
        "kind",
        "value"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "debts": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -838,7 +856,9 @@
         ]
        },
        "principal": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "rate": {
         "type": "number",
@@ -846,19 +866,22 @@
         "maximum": 10
        },
        "payment": {
+        "default": 0,
         "type": "integer",
-        "default": 0
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "termMonths": {
+        "default": 0,
         "type": "integer",
         "minimum": 0,
-        "default": 0
+        "maximum": 9007199254740991
        },
        "revolvingPayPct": {
+        "default": 0.02,
         "type": "number",
         "minimum": 0,
-        "maximum": 1,
-        "default": 0.02
+        "maximum": 1
        },
        "linkedAssetId": {
         "type": "string",
@@ -868,7 +891,7 @@
         "type": "boolean"
        },
        "start": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -877,14 +900,15 @@
             "const": "year"
            },
            "year": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "year"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -907,8 +931,7 @@
            "type",
            "personId",
            "age"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -922,25 +945,27 @@
             "minLength": 1
            },
            "offset": {
+            "default": 0,
             "type": "integer",
-            "default": 0
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "milestoneId"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
        },
        "refinance": {
+        "default": [],
         "type": "array",
         "items": {
          "type": "object",
          "properties": {
           "when": {
-           "anyOf": [
+           "oneOf": [
             {
              "type": "object",
              "properties": {
@@ -949,14 +974,15 @@
                "const": "year"
               },
               "year": {
-               "type": "integer"
+               "type": "integer",
+               "minimum": -9007199254740991,
+               "maximum": 9007199254740991
               }
              },
              "required": [
               "type",
               "year"
-             ],
-             "additionalProperties": false
+             ]
             },
             {
              "type": "object",
@@ -979,8 +1005,7 @@
               "type",
               "personId",
               "age"
-             ],
-             "additionalProperties": false
+             ]
             },
             {
              "type": "object",
@@ -994,15 +1019,16 @@
                "minLength": 1
               },
               "offset": {
+               "default": 0,
                "type": "integer",
-               "default": 0
+               "minimum": -9007199254740991,
+               "maximum": 9007199254740991
               }
              },
              "required": [
               "type",
               "milestoneId"
-             ],
-             "additionalProperties": false
+             ]
             }
            ]
           },
@@ -1017,20 +1043,18 @@
            "maximum": 40
           },
           "costPct": {
+           "default": 0.02,
            "type": "number",
            "minimum": 0,
-           "maximum": 0.1,
-           "default": 0.02
+           "maximum": 0.1
           }
          },
          "required": [
           "when",
           "rate",
           "termYears"
-         ],
-         "additionalProperties": false
-        },
-        "default": []
+         ]
+        }
        }
       },
       "required": [
@@ -1040,10 +1064,8 @@
        "kind",
        "principal",
        "rate"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "incomes": {
      "type": "array",
@@ -1074,9 +1096,14 @@
         ]
        },
        "amount": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "growth": {
+        "default": {
+         "rate": 0
+        },
         "type": "object",
         "properties": {
          "rate": {
@@ -1085,24 +1112,20 @@
           "maximum": 10
          },
          "basis": {
+          "default": "real",
           "type": "string",
           "enum": [
            "real",
            "nominal"
-          ],
-          "default": "real"
+          ]
          }
         },
         "required": [
          "rate"
-        ],
-        "additionalProperties": false,
-        "default": {
-         "rate": 0
-        }
+        ]
        },
        "start": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1111,14 +1134,15 @@
             "const": "year"
            },
            "year": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "year"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1141,8 +1165,7 @@
            "type",
            "personId",
            "age"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1156,20 +1179,21 @@
             "minLength": 1
            },
            "offset": {
+            "default": 0,
             "type": "integer",
-            "default": 0
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "milestoneId"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
        },
        "end": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1178,14 +1202,15 @@
             "const": "year"
            },
            "year": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "year"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1208,8 +1233,7 @@
            "type",
            "personId",
            "age"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1223,19 +1247,21 @@
             "minLength": 1
            },
            "offset": {
+            "default": 0,
             "type": "integer",
-            "default": 0
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "milestoneId"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
        },
        "taxCharacter": {
+        "default": "earned",
         "type": "string",
         "enum": [
          "earned",
@@ -1244,13 +1270,16 @@
          "qualifiedDividend",
          "capitalGain",
          "taxFree"
-        ],
-        "default": "earned"
+        ]
        },
        "pension": {
         "type": "object",
         "properties": {
          "cola": {
+          "default": {
+           "rate": 0,
+           "basis": "nominal"
+          },
           "type": "object",
           "properties": {
            "rate": {
@@ -1259,37 +1288,31 @@
             "maximum": 10
            },
            "basis": {
+            "default": "real",
             "type": "string",
             "enum": [
              "real",
              "nominal"
-            ],
-            "default": "real"
+            ]
            }
           },
           "required": [
            "rate"
-          ],
-          "additionalProperties": false,
-          "default": {
-           "rate": 0,
-           "basis": "nominal"
-          }
+          ]
          },
          "survivorPct": {
+          "default": 0.5,
           "type": "number",
           "minimum": 0,
-          "maximum": 1,
-          "default": 0.5
+          "maximum": 1
          }
-        },
-        "additionalProperties": false
+        }
        },
        "annuityExclusionRatio": {
+        "default": 0,
         "type": "number",
         "minimum": 0,
-        "maximum": 1,
-        "default": 0
+        "maximum": 1
        },
        "linkedAssetId": {
         "type": "string",
@@ -1302,12 +1325,11 @@
        "name",
        "kind",
        "amount"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "expenses": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -1336,9 +1358,12 @@
         ]
        },
        "amount": {
-        "type": "integer"
+        "type": "integer",
+        "minimum": -9007199254740991,
+        "maximum": 9007199254740991
        },
        "inflationIndex": {
+        "default": "cpi",
         "type": "string",
         "enum": [
          "cpi",
@@ -1346,25 +1371,27 @@
          "education",
          "custom",
          "none"
-        ],
-        "default": "cpi"
+        ]
        },
        "customRate": {
+        "default": 0,
         "type": "number",
         "minimum": -1,
-        "maximum": 10,
-        "default": 0
+        "maximum": 10
        },
        "essential": {
-        "type": "boolean",
-        "default": true
+        "default": true,
+        "type": "boolean"
        },
        "followsPhases": {
-        "type": "boolean",
-        "default": false
+        "default": false,
+        "type": "boolean"
        },
        "recurrence": {
-        "anyOf": [
+        "default": {
+         "type": "annual"
+        },
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1375,8 +1402,7 @@
           },
           "required": [
            "type"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1388,8 +1414,7 @@
           },
           "required": [
            "type"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1400,22 +1425,19 @@
            },
            "everyYears": {
             "type": "integer",
-            "minimum": 1
+            "minimum": 1,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "everyYears"
-          ],
-          "additionalProperties": false
+          ]
          }
-        ],
-        "default": {
-         "type": "annual"
-        }
+        ]
        },
        "start": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1424,14 +1446,15 @@
             "const": "year"
            },
            "year": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "year"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1454,8 +1477,7 @@
            "type",
            "personId",
            "age"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1469,20 +1491,21 @@
             "minLength": 1
            },
            "offset": {
+            "default": 0,
             "type": "integer",
-            "default": 0
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "milestoneId"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
        },
        "end": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1491,14 +1514,15 @@
             "const": "year"
            },
            "year": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "year"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1521,8 +1545,7 @@
            "type",
            "personId",
            "age"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1536,15 +1559,16 @@
             "minLength": 1
            },
            "offset": {
+            "default": 0,
             "type": "integer",
-            "default": 0
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "milestoneId"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
        }
@@ -1554,12 +1578,11 @@
        "name",
        "category",
        "amount"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "milestones": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -1591,7 +1614,7 @@
         "minLength": 1
        },
        "when": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1600,14 +1623,15 @@
             "const": "year"
            },
            "year": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "year"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1621,15 +1645,16 @@
             "minLength": 1
            },
            "age": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "personId",
            "age"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1647,26 +1672,28 @@
             ]
            },
            "value": {
+            "default": 0,
             "type": "integer",
-            "default": 0
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            },
            "fiMultiple": {
-            "type": "number",
-            "default": 25
+            "default": 25,
+            "type": "number"
            }
           },
           "required": [
            "type",
            "metric"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
        },
        "effects": {
+        "default": [],
         "type": "array",
         "items": {
-         "anyOf": [
+         "oneOf": [
           {
            "type": "object",
            "properties": {
@@ -1690,8 +1717,7 @@
             "type",
             "target",
             "targetId"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -1717,8 +1743,7 @@
             "type",
             "target",
             "targetId"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -1739,7 +1764,9 @@
              "minLength": 1
             },
             "amount": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
@@ -1747,8 +1774,7 @@
             "target",
             "targetId",
             "amount"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -1778,8 +1804,7 @@
             "target",
             "targetId",
             "factor"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -1793,19 +1818,20 @@
              "minLength": 1
             },
             "amount": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             },
             "taxable": {
-             "type": "boolean",
-             "default": false
+             "default": false,
+             "type": "boolean"
             }
            },
            "required": [
             "type",
             "accountId",
             "amount"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -1826,8 +1852,7 @@
            "required": [
             "type",
             "state"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -1850,12 +1875,10 @@
            "required": [
             "type",
             "status"
-           ],
-           "additionalProperties": false
+           ]
           }
          ]
-        },
-        "default": []
+        }
        }
       },
       "required": [
@@ -1863,12 +1886,11 @@
        "name",
        "kind",
        "when"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "glidePaths": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -1881,75 +1903,75 @@
         "type": "string"
        },
        "points": {
+        "minItems": 1,
         "type": "array",
         "items": {
          "type": "object",
          "properties": {
           "age": {
-           "type": "integer"
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
           },
           "allocation": {
            "type": "object",
            "properties": {
             "usStocks": {
+             "default": 0,
              "type": "number",
              "minimum": 0,
-             "maximum": 1,
-             "default": 0
+             "maximum": 1
             },
             "usBonds": {
+             "default": 0,
              "type": "number",
              "minimum": 0,
-             "maximum": 1,
-             "default": 0
+             "maximum": 1
             },
             "cash": {
+             "default": 0,
              "type": "number",
              "minimum": 0,
-             "maximum": 1,
-             "default": 0
+             "maximum": 1
             },
             "intlStocks": {
+             "default": 0,
              "type": "number",
              "minimum": 0,
-             "maximum": 1,
-             "default": 0
+             "maximum": 1
             },
             "reits": {
+             "default": 0,
              "type": "number",
              "minimum": 0,
-             "maximum": 1,
-             "default": 0
+             "maximum": 1
             }
-           },
-           "additionalProperties": false
+           }
           }
          },
          "required": [
           "age",
           "allocation"
-         ],
-         "additionalProperties": false
-        },
-        "minItems": 1
+         ]
+        }
        }
       },
       "required": [
        "id",
        "name",
        "points"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "strategies": {
+     "default": {},
      "type": "object",
      "properties": {
       "surplusWaterfall": {
+       "default": [],
        "type": "array",
        "items": {
-        "anyOf": [
+        "oneOf": [
          {
           "type": "object",
           "properties": {
@@ -1962,16 +1984,15 @@
             "minLength": 1
            },
            "months": {
+            "default": 6,
             "type": "number",
-            "minimum": 0,
-            "default": 6
+            "minimum": 0
            }
           },
           "required": [
            "type",
            "accountId"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -1985,14 +2006,15 @@
             "minLength": 1
            },
            "maxAnnual": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "accountId"
-          ],
-          "additionalProperties": false
+          ]
          },
          {
           "type": "object",
@@ -2006,56 +2028,57 @@
             "minLength": 1
            },
            "maxAnnual": {
-            "type": "integer"
+            "type": "integer",
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            }
           },
           "required": [
            "type",
            "debtId"
-          ],
-          "additionalProperties": false
+          ]
          }
         ]
-       },
-       "default": []
+       }
       },
       "surplusDefaultAccountId": {
        "type": "string",
        "minLength": 1
       },
       "withdrawalOrder": {
+       "default": {},
        "type": "object",
        "properties": {
         "strategy": {
+         "default": "taxableFirst",
          "type": "string",
          "enum": [
           "taxableFirst",
           "proportional",
           "bracketTargeted",
           "custom"
-         ],
-         "default": "taxableFirst"
+         ]
         },
         "customOrder": {
+         "default": [],
          "type": "array",
          "items": {
           "type": "string",
           "minLength": 1
-         },
-         "default": []
+         }
         },
         "bracketRate": {
-         "type": "number",
-         "default": 0.12
+         "default": 0.12,
+         "type": "number"
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "rothConversion": {
+       "default": {},
        "type": "object",
        "properties": {
         "mode": {
+         "default": "none",
          "type": "string",
          "enum": [
           "none",
@@ -2063,19 +2086,20 @@
           "fillBracket",
           "magiTarget",
           "ladder"
-         ],
-         "default": "none"
+         ]
         },
         "amount": {
+         "default": 0,
          "type": "integer",
-         "default": 0
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
         },
         "bracketRate": {
-         "type": "number",
-         "default": 0.12
+         "default": 0.12,
+         "type": "number"
         },
         "start": {
-         "anyOf": [
+         "oneOf": [
           {
            "type": "object",
            "properties": {
@@ -2084,14 +2108,15 @@
              "const": "year"
             },
             "year": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "type",
             "year"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -2114,8 +2139,7 @@
             "type",
             "personId",
             "age"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -2129,20 +2153,21 @@
              "minLength": 1
             },
             "offset": {
+             "default": 0,
              "type": "integer",
-             "default": 0
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "type",
             "milestoneId"
-           ],
-           "additionalProperties": false
+           ]
           }
          ]
         },
         "end": {
-         "anyOf": [
+         "oneOf": [
           {
            "type": "object",
            "properties": {
@@ -2151,14 +2176,15 @@
              "const": "year"
             },
             "year": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "type",
             "year"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -2181,8 +2207,7 @@
             "type",
             "personId",
             "age"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -2196,15 +2221,16 @@
              "minLength": 1
             },
             "offset": {
+             "default": 0,
              "type": "integer",
-             "default": 0
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "type",
             "milestoneId"
-           ],
-           "additionalProperties": false
+           ]
           }
          ]
         },
@@ -2212,77 +2238,74 @@
          "type": "string",
          "minLength": 1
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "gainHarvest": {
+       "default": {},
        "type": "object",
        "properties": {
         "enabled": {
-         "type": "boolean",
-         "default": false
+         "default": false,
+         "type": "boolean"
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "lossHarvest": {
+       "default": {},
        "type": "object",
        "properties": {
         "enabled": {
-         "type": "boolean",
-         "default": false
+         "default": false,
+         "type": "boolean"
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "spendingRule": {
+       "default": {},
        "type": "object",
        "properties": {
         "type": {
+         "default": "fixed",
          "type": "string",
          "enum": [
           "fixed",
           "guardrails",
           "percentOfPortfolio",
           "floorCeiling"
-         ],
-         "default": "fixed"
+         ]
         },
         "pct": {
+         "default": 0.04,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.04
+         "maximum": 1
         },
         "guardrailBand": {
+         "default": 0.2,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.2
+         "maximum": 1
         },
         "guardrailAdjust": {
+         "default": 0.1,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.1
+         "maximum": 1
         },
         "floor": {
+         "default": 0.85,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.85
+         "maximum": 1
         },
         "ceiling": {
+         "default": 1.25,
          "type": "number",
          "minimum": 1,
-         "maximum": 5,
-         "default": 1.25
+         "maximum": 5
         },
         "start": {
-         "anyOf": [
+         "oneOf": [
           {
            "type": "object",
            "properties": {
@@ -2291,14 +2314,15 @@
              "const": "year"
             },
             "year": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "type",
             "year"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -2321,8 +2345,7 @@
             "type",
             "personId",
             "age"
-           ],
-           "additionalProperties": false
+           ]
           },
           {
            "type": "object",
@@ -2336,64 +2359,62 @@
              "minLength": 1
             },
             "offset": {
+             "default": 0,
              "type": "integer",
-             "default": 0
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             }
            },
            "required": [
             "type",
             "milestoneId"
-           ],
-           "additionalProperties": false
+           ]
           }
          ]
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "magiTarget": {
+       "default": {},
        "type": "object",
        "properties": {
         "enabled": {
-         "type": "boolean",
-         "default": false
+         "default": false,
+         "type": "boolean"
         },
         "maxFplPct": {
-         "type": "number",
-         "default": 3.99
+         "default": 3.99,
+         "type": "number"
         },
         "minFplPct": {
-         "type": "number",
-         "default": 0
+         "default": 0,
+         "type": "number"
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "rebalance": {
+       "default": {},
        "type": "object",
        "properties": {
         "mode": {
+         "default": "annual",
          "type": "string",
          "enum": [
           "none",
           "annual",
           "threshold"
-         ],
-         "default": "annual"
+         ]
         },
         "band": {
+         "default": 0.05,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.05
+         "maximum": 1
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "sepp": {
+       "default": [],
        "type": "array",
        "items": {
         "type": "object",
@@ -2403,7 +2424,7 @@
           "minLength": 1
          },
          "start": {
-          "anyOf": [
+          "oneOf": [
            {
             "type": "object",
             "properties": {
@@ -2412,14 +2433,15 @@
               "const": "year"
              },
              "year": {
-              "type": "integer"
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              }
             },
             "required": [
              "type",
              "year"
-            ],
-            "additionalProperties": false
+            ]
            },
            {
             "type": "object",
@@ -2442,8 +2464,7 @@
              "type",
              "personId",
              "age"
-            ],
-            "additionalProperties": false
+            ]
            },
            {
             "type": "object",
@@ -2457,34 +2478,34 @@
               "minLength": 1
              },
              "offset": {
+              "default": 0,
               "type": "integer",
-              "default": 0
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              }
             },
             "required": [
              "type",
              "milestoneId"
-            ],
-            "additionalProperties": false
+            ]
            }
           ]
          },
          "interestRate": {
+          "default": 0.05,
           "type": "number",
           "minimum": -1,
-          "maximum": 10,
-          "default": 0.05
+          "maximum": 10
          }
         },
         "required": [
          "accountId",
          "start"
-        ],
-        "additionalProperties": false
-       },
-       "default": []
+        ]
+       }
       },
       "spendingPhases": {
+       "default": [],
        "type": "array",
        "items": {
         "type": "object",
@@ -2493,7 +2514,9 @@
           "type": "string"
          },
          "fromAge": {
-          "type": "integer"
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
          },
          "multiplier": {
           "type": "number",
@@ -2505,63 +2528,61 @@
          "name",
          "fromAge",
          "multiplier"
-        ],
-        "additionalProperties": false
-       },
-       "default": []
+        ]
+       }
       },
       "survivorSpendingPct": {
+       "default": 1,
        "type": "number",
        "minimum": 0,
-       "maximum": 1.5,
-       "default": 1
+       "maximum": 1.5
       },
       "backdoorRoth": {
-       "type": "boolean",
-       "default": false
+       "default": false,
+       "type": "boolean"
       },
       "hsaUse": {
+       "default": "spend",
        "type": "string",
        "enum": [
         "spend",
         "save"
-       ],
-       "default": "spend"
+       ]
       },
       "estate": {
+       "default": {},
        "type": "object",
        "properties": {
         "heirMarginalRate": {
+         "default": 0.24,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.24
+         "maximum": 1
         },
         "legacyGoal": {
+         "default": 0,
          "type": "integer",
          "minimum": 0,
-         "default": 0
+         "maximum": 9007199254740991
         },
         "legacyGoalForSuccess": {
-         "type": "boolean",
-         "default": false
+         "default": false,
+         "type": "boolean"
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       }
-     },
-     "additionalProperties": false,
-     "default": {}
+     }
     },
     "healthcare": {
+     "default": {},
      "type": "object",
      "properties": {
       "enabled": {
-       "type": "boolean",
-       "default": true
+       "default": true,
+       "type": "boolean"
       },
       "people": {
+       "default": [],
        "type": "array",
        "items": {
         "type": "object",
@@ -2571,6 +2592,7 @@
           "minLength": 1
          },
          "coverage": {
+          "default": [],
           "type": "array",
           "items": {
            "type": "object",
@@ -2588,7 +2610,7 @@
              ]
             },
             "from": {
-             "anyOf": [
+             "oneOf": [
               {
                "type": "object",
                "properties": {
@@ -2597,14 +2619,15 @@
                  "const": "year"
                 },
                 "year": {
-                 "type": "integer"
+                 "type": "integer",
+                 "minimum": -9007199254740991,
+                 "maximum": 9007199254740991
                 }
                },
                "required": [
                 "type",
                 "year"
-               ],
-               "additionalProperties": false
+               ]
               },
               {
                "type": "object",
@@ -2627,8 +2650,7 @@
                 "type",
                 "personId",
                 "age"
-               ],
-               "additionalProperties": false
+               ]
               },
               {
                "type": "object",
@@ -2642,26 +2664,30 @@
                  "minLength": 1
                 },
                 "offset": {
+                 "default": 0,
                  "type": "integer",
-                 "default": 0
+                 "minimum": -9007199254740991,
+                 "maximum": 9007199254740991
                 }
                },
                "required": [
                 "type",
                 "milestoneId"
-               ],
-               "additionalProperties": false
+               ]
               }
              ]
             },
             "premiumAnnual": {
-             "type": "integer"
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
             },
             "hdhp": {
-             "type": "boolean",
-             "default": false
+             "default": false,
+             "type": "boolean"
             },
             "metal": {
+             "default": "silver",
              "type": "string",
              "enum": [
               "catastrophic",
@@ -2669,200 +2695,205 @@
               "silver",
               "gold",
               "platinum"
-             ],
-             "default": "silver"
+             ]
             },
             "cobraMonths": {
+             "default": 18,
              "type": "integer",
              "minimum": 1,
-             "maximum": 36,
-             "default": 18
+             "maximum": 36
             }
            },
            "required": [
             "type",
             "from"
-           ],
-           "additionalProperties": false
-          },
-          "default": []
+           ]
+          }
          },
          "utilization": {
+          "default": "typical",
           "type": "string",
           "enum": [
            "low",
            "typical",
            "high"
-          ],
-          "default": "typical"
+          ]
          },
          "tobacco": {
-          "type": "boolean",
-          "default": false
+          "default": false,
+          "type": "boolean"
          },
          "medicare": {
+          "default": {},
           "type": "object",
           "properties": {
            "partAPremiumFree": {
-            "type": "boolean",
-            "default": true
+            "default": true,
+            "type": "boolean"
            },
            "supplement": {
+            "default": "medigapG",
             "type": "string",
             "enum": [
              "medigapG",
              "medigapN",
              "advantage",
              "none"
-            ],
-            "default": "medigapG"
+            ]
            },
            "dentalVisionHearing": {
-            "type": "boolean",
-            "default": true
+            "default": true,
+            "type": "boolean"
            },
            "irmaaAppeal": {
-            "type": "boolean",
-            "default": false
+            "default": false,
+            "type": "boolean"
            }
-          },
-          "additionalProperties": false,
-          "default": {}
+          }
          },
          "ltc": {
+          "default": {},
           "type": "object",
           "properties": {
            "mode": {
+            "default": "none",
             "type": "string",
             "enum": [
              "none",
              "expected",
              "stochastic"
-            ],
-            "default": "none"
+            ]
            },
            "careType": {
+            "default": "assistedLiving",
             "type": "string",
             "enum": [
              "homeCare",
              "assistedLiving",
              "nursingHomeSemiPrivate",
              "nursingHomePrivate"
-            ],
-            "default": "assistedLiving"
+            ]
            },
            "onsetAge": {
+            "default": 85,
             "type": "integer",
-            "default": 85
+            "minimum": -9007199254740991,
+            "maximum": 9007199254740991
            },
            "years": {
+            "default": 3,
             "type": "number",
             "minimum": 0,
-            "maximum": 20,
-            "default": 3
+            "maximum": 20
            },
            "insurance": {
             "type": "object",
             "properties": {
              "premiumAnnual": {
+              "default": 0,
               "type": "integer",
-              "default": 0
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              },
              "annualBenefit": {
+              "default": 0,
               "type": "integer",
-              "default": 0
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
              },
              "benefitYears": {
-              "type": "number",
-              "default": 3
+              "default": 3,
+              "type": "number"
              }
-            },
-            "additionalProperties": false
+            }
            }
-          },
-          "additionalProperties": false,
-          "default": {}
+          }
          }
         },
         "required": [
          "personId"
-        ],
-        "additionalProperties": false
-       },
-       "default": []
+        ]
+       }
       },
       "slcspOverrideAge21Monthly": {
-       "type": "integer"
+       "type": "integer",
+       "minimum": -9007199254740991,
+       "maximum": 9007199254740991
       },
       "irmaaPriorMagi": {
        "type": "object",
        "properties": {
         "twoYearsBefore": {
-         "type": "integer"
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
         },
         "oneYearBefore": {
-         "type": "integer"
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
         }
-       },
-       "additionalProperties": false
+       }
       }
-     },
-     "additionalProperties": false,
-     "default": {}
+     }
     },
     "assumptions": {
+     "default": {},
      "type": "object",
      "properties": {
       "returns": {
+       "default": {},
        "type": "object",
        "properties": {
         "mode": {
+         "default": "fixed",
          "type": "string",
          "enum": [
           "fixed",
           "historicalAverage"
-         ],
-         "default": "fixed"
+         ]
         },
         "fixed": {
+         "default": {},
          "type": "object",
          "properties": {
           "usStocks": {
+           "default": 0.07,
            "type": "number",
            "minimum": -1,
-           "maximum": 10,
-           "default": 0.07
+           "maximum": 10
           },
           "usBonds": {
+           "default": 0.04,
            "type": "number",
            "minimum": -1,
-           "maximum": 10,
-           "default": 0.04
+           "maximum": 10
           },
           "cash": {
+           "default": 0.03,
            "type": "number",
            "minimum": -1,
-           "maximum": 10,
-           "default": 0.03
+           "maximum": 10
           },
           "intlStocks": {
+           "default": 0.07,
            "type": "number",
            "minimum": -1,
-           "maximum": 10,
-           "default": 0.07
+           "maximum": 10
           },
           "reits": {
+           "default": 0.065,
            "type": "number",
            "minimum": -1,
-           "maximum": 10,
-           "default": 0.065
+           "maximum": 10
           }
-         },
-         "additionalProperties": false,
-         "default": {}
+         }
         },
         "stdDev": {
          "type": "object",
+         "propertyNames": {
+          "type": "string"
+         },
          "additionalProperties": {
           "type": "number"
          }
@@ -2876,159 +2907,156 @@
           }
          }
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "inflation": {
+       "default": {},
        "type": "object",
        "properties": {
         "rate": {
+         "default": 0.025,
          "type": "number",
          "minimum": -1,
-         "maximum": 10,
-         "default": 0.025
+         "maximum": 10
         },
         "educationExcess": {
+         "default": 0.02,
          "type": "number",
          "minimum": -1,
-         "maximum": 10,
-         "default": 0.02
+         "maximum": 10
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "healthcareInflation": {
+       "default": {},
        "type": "object",
        "properties": {
         "excessOverCpi": {
+         "default": 0.02,
          "type": "number",
          "minimum": -1,
-         "maximum": 10,
-         "default": 0.02
+         "maximum": 10
         },
         "stochastic": {
-         "type": "boolean",
-         "default": true
+         "default": true,
+         "type": "boolean"
         },
         "stdDev": {
+         "default": 0.015,
          "type": "number",
          "minimum": -1,
-         "maximum": 10,
-         "default": 0.015
+         "maximum": 10
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "realWageGrowth": {
+       "default": 0.01,
        "type": "number",
        "minimum": -1,
-       "maximum": 10,
-       "default": 0.01
+       "maximum": 10
       },
       "dividendYield": {
+       "default": 0.018,
        "type": "number",
        "minimum": -1,
-       "maximum": 10,
-       "default": 0.018
+       "maximum": 10
       },
       "qualifiedDividendPct": {
+       "default": 0.9,
        "type": "number",
        "minimum": 0,
-       "maximum": 1,
-       "default": 0.9
+       "maximum": 1
       },
       "bondYield": {
+       "default": 0.04,
        "type": "number",
        "minimum": -1,
-       "maximum": 10,
-       "default": 0.04
+       "maximum": 10
       },
       "monteCarlo": {
+       "default": {},
        "type": "object",
        "properties": {
         "method": {
+         "default": "bootstrap",
          "type": "string",
          "enum": [
           "bootstrap",
           "parametric"
-         ],
-         "default": "bootstrap"
+         ]
         },
         "runs": {
+         "default": 1000,
          "type": "integer",
          "minimum": 10,
-         "maximum": 10000,
-         "default": 1000
+         "maximum": 10000
         },
         "seed": {
+         "default": 20261110,
          "type": "integer",
-         "default": 20261110
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
         },
         "blockLength": {
+         "default": 5,
          "type": "integer",
          "minimum": 1,
-         "maximum": 30,
-         "default": 5
+         "maximum": 30
         },
         "inflation": {
+         "default": "sampled",
          "type": "string",
          "enum": [
           "fixed",
           "sampled"
-         ],
-         "default": "sampled"
+         ]
         },
         "stochasticLongevity": {
-         "type": "boolean",
-         "default": false
+         "default": false,
+         "type": "boolean"
         },
         "bootstrapMeans": {
+         "default": "assumptions",
          "type": "string",
          "enum": [
           "assumptions",
           "historical"
-         ],
-         "default": "assumptions"
+         ]
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       },
       "mortalityImprovement": {
+       "default": 0,
        "type": "number",
        "minimum": 0,
-       "maximum": 0.03,
-       "default": 0
+       "maximum": 0.03
       },
       "socialSecurityCut": {
+       "default": {},
        "type": "object",
        "properties": {
         "enabled": {
-         "type": "boolean",
-         "default": false
+         "default": false,
+         "type": "boolean"
         },
         "fromYear": {
+         "default": 2034,
          "type": "integer",
-         "default": 2034
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
         },
         "payablePct": {
+         "default": 0.83,
          "type": "number",
          "minimum": 0,
-         "maximum": 1,
-         "default": 0.83
+         "maximum": 1
         }
-       },
-       "additionalProperties": false,
-       "default": {}
+       }
       }
-     },
-     "additionalProperties": false,
-     "default": {}
+     }
     },
     "scenarios": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -3041,6 +3069,7 @@
         "type": "string"
        },
        "patches": {
+        "default": [],
         "type": "array",
         "items": {
          "type": "object",
@@ -3057,22 +3086,20 @@
           "value": {}
          },
          "required": [
-          "path"
-         ],
-         "additionalProperties": false
-        },
-        "default": []
+          "path",
+          "value"
+         ]
+        }
        }
       },
       "required": [
        "id",
        "name"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     },
     "actuals": {
+     "default": [],
      "type": "array",
      "items": {
       "type": "object",
@@ -3082,18 +3109,21 @@
        },
        "balances": {
         "type": "object",
+        "propertyNames": {
+         "type": "string"
+        },
         "additionalProperties": {
-         "type": "integer"
+         "type": "integer",
+         "minimum": -9007199254740991,
+         "maximum": 9007199254740991
         }
        }
       },
       "required": [
        "date",
        "balances"
-      ],
-      "additionalProperties": false
-     },
-     "default": []
+      ]
+     }
     }
    },
    "required": [
@@ -3104,8 +3134,7 @@
     "updatedAt",
     "settings",
     "people"
-   ],
-   "additionalProperties": false
+   ]
   }
  },
  "$schema": "http://json-schema.org/draft-07/schema#"

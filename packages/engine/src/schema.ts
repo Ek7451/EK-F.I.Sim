@@ -46,7 +46,7 @@ export const PersonZ = z.object({
       mode: z.enum(['fixed', 'stochastic']).default('fixed'),
       age: z.number().int().min(50).max(120).default(95),
     })
-    .default({}),
+    .prefault({}),
   /** State residence over time (PLAN-01). */
   residence: z
     .array(
@@ -66,9 +66,9 @@ export const PersonZ = z.object({
       piaMonthly: cents.default(0),
       claimAge: z
         .object({ years: z.number().int().min(62).max(70), months: z.number().int().min(0).max(11) })
-        .default({ years: 67, months: 0 }),
+        .prefault({ years: 67, months: 0 }),
     })
-    .default({}),
+    .prefault({}),
 });
 export type Person = z.infer<typeof PersonZ>;
 
@@ -109,9 +109,9 @@ export const AccountZ = z.object({
       firstContributionYear: z.number().int().optional(),
     })
     .optional(),
-  allocation: AllocationZ.default({ usStocks: 0.6, usBonds: 0.4 }),
+  allocation: AllocationZ.prefault({ usStocks: 0.6, usBonds: 0.4 }),
   glidePathId: id.optional(),
-  fees: z.object({ expenseRatio: rate.default(0), advisory: rate.default(0) }).default({}),
+  fees: z.object({ expenseRatio: rate.default(0), advisory: rate.default(0) }).prefault({}),
   /** Payroll-level contributions (step 4 of the annual order of operations). */
   contribution: z
     .object({
@@ -157,7 +157,7 @@ export const AssetZ = z.object({
   value: cents,
   costBasis: cents.optional(),
   /** Appreciation (negative for vehicle depreciation). */
-  appreciation: GrowthZ.default({ rate: 0 }),
+  appreciation: GrowthZ.prefault({ rate: 0 }),
   property: z
     .object({
       propertyTaxRate: rate.default(0.011),
@@ -237,7 +237,7 @@ export const IncomeZ = z.preprocess(
      * year the pension starts.
      */
     amount: cents,
-    growth: GrowthZ.default({ rate: 0 }),
+    growth: GrowthZ.prefault({ rate: 0 }),
     start: YearRefZ.optional(),
     end: YearRefZ.optional(),
     taxCharacter: z
@@ -245,7 +245,7 @@ export const IncomeZ = z.preprocess(
       .default('earned'),
     pension: z
       .object({
-        cola: GrowthZ.default({ rate: 0, basis: 'nominal' }),
+        cola: GrowthZ.prefault({ rate: 0, basis: 'nominal' }),
         survivorPct: z.number().min(0).max(1).default(0.5),
       })
       .optional(),
@@ -285,7 +285,7 @@ export const ExpenseZ = z.object({
       z.object({ type: z.literal('once') }),
       z.object({ type: z.literal('interval'), everyYears: z.number().int().min(1) }),
     ])
-    .default({ type: 'annual' }),
+    .prefault({ type: 'annual' }),
   start: YearRefZ.optional(),
   end: YearRefZ.optional(),
 });
@@ -369,7 +369,7 @@ export const StrategiesZ = z.object({
       /** bracketTargeted: fill ordinary income up to the top of this bracket with pre-tax withdrawals first. */
       bracketRate: z.number().default(0.12),
     })
-    .default({}),
+    .prefault({}),
   rothConversion: z
     .object({
       mode: z.enum(['none', 'fixed', 'fillBracket', 'magiTarget', 'ladder']).default('none'),
@@ -380,9 +380,9 @@ export const StrategiesZ = z.object({
       end: YearRefZ.optional(),
       targetAccountId: id.optional(),
     })
-    .default({}),
-  gainHarvest: z.object({ enabled: z.boolean().default(false) }).default({}),
-  lossHarvest: z.object({ enabled: z.boolean().default(false) }).default({}),
+    .prefault({}),
+  gainHarvest: z.object({ enabled: z.boolean().default(false) }).prefault({}),
+  lossHarvest: z.object({ enabled: z.boolean().default(false) }).prefault({}),
   spendingRule: z
     .object({
       type: z.enum(['fixed', 'guardrails', 'percentOfPortfolio', 'floorCeiling']).default('fixed'),
@@ -397,7 +397,7 @@ export const StrategiesZ = z.object({
       /** Rules start at this point (default: first retirement milestone). */
       start: YearRefZ.optional(),
     })
-    .default({}),
+    .prefault({}),
   /** STRAT-02: keep MAGI within an FPL band while on ACA coverage. */
   magiTarget: z
     .object({
@@ -406,13 +406,13 @@ export const StrategiesZ = z.object({
       /** Keep MAGI above this multiple to stay out of Medicaid / the coverage gap (0 = off). */
       minFplPct: z.number().default(0),
     })
-    .default({}),
+    .prefault({}),
   rebalance: z
     .object({
       mode: z.enum(['none', 'annual', 'threshold']).default('annual'),
       band: z.number().min(0).max(1).default(0.05),
     })
-    .default({}),
+    .prefault({}),
   /** 72(t) SEPP schedules (fixed amortization). */
   sepp: z.array(z.object({ accountId: id, start: YearRefZ, interestRate: rate.default(0.05) })).default([]),
   spendingPhases: z
@@ -432,7 +432,7 @@ export const StrategiesZ = z.object({
       /** When on, a simulation counts as a success only if spending is covered every year AND the goal is met. */
       legacyGoalForSuccess: z.boolean().default(false),
     })
-    .default({}),
+    .prefault({}),
 });
 export type Strategies = z.infer<typeof StrategiesZ>;
 
@@ -464,7 +464,7 @@ export const HealthcareZ = z.object({
             /** Life-changing-event appeal: use current-year MAGI for IRMAA in the first two Medicare years. */
             irmaaAppeal: z.boolean().default(false),
           })
-          .default({}),
+          .prefault({}),
         ltc: z
           .object({
             mode: z.enum(['none', 'expected', 'stochastic']).default('none'),
@@ -481,7 +481,7 @@ export const HealthcareZ = z.object({
               })
               .optional(),
           })
-          .default({}),
+          .prefault({}),
       }),
     )
     .default([]),
@@ -509,20 +509,20 @@ export const AssumptionsZ = z.object({
           intlStocks: rate.default(0.07),
           reits: rate.default(0.065),
         })
-        .default({}),
+        .prefault({}),
       /** Optional user-defined volatility / correlation for parametric Monte Carlo (SIM-05). */
       stdDev: z.record(z.number()).optional(),
       correlation: z.array(z.array(z.number())).optional(),
     })
-    .default({}),
-  inflation: z.object({ rate: rate.default(0.025), educationExcess: rate.default(0.02) }).default({}),
+    .prefault({}),
+  inflation: z.object({ rate: rate.default(0.025), educationExcess: rate.default(0.02) }).prefault({}),
   healthcareInflation: z
     .object({
       excessOverCpi: rate.default(0.02),
       stochastic: z.boolean().default(true),
       stdDev: rate.default(0.015),
     })
-    .default({}),
+    .prefault({}),
   /** Real wage growth used to index future Social Security bend points / AWI. */
   realWageGrowth: rate.default(0.01),
   dividendYield: rate.default(0.018),
@@ -543,7 +543,7 @@ export const AssumptionsZ = z.object({
        */
       bootstrapMeans: z.enum(['assumptions', 'historical']).default('assumptions'),
     })
-    .default({}),
+    .prefault({}),
   /**
    * Annual improvement in death rates after the life table's year (cohort adjustment for stochastic longevity).
    * 0 uses the SSA period table as published; about 0.008 is close to the Trustees' intermediate assumption.
@@ -557,7 +557,7 @@ export const AssumptionsZ = z.object({
       fromYear: z.number().int().default(2034),
       payablePct: z.number().min(0).max(1).default(0.83),
     })
-    .default({}),
+    .prefault({}),
 });
 export type Assumptions = z.infer<typeof AssumptionsZ>;
 
@@ -599,7 +599,7 @@ export const PlanZ = z.object({
       filingStatus: z.array(z.object({ fromYear: z.number().int(), status: FilingStatusZ })).default([]),
       dependents: z.array(z.object({ name: z.string(), birthYear: z.number().int() })).default([]),
     })
-    .default({}),
+    .prefault({}),
   accounts: z.array(AccountZ).default([]),
   assets: z.array(AssetZ).default([]),
   debts: z.array(DebtZ).default([]),
@@ -607,9 +607,9 @@ export const PlanZ = z.object({
   expenses: z.array(ExpenseZ).default([]),
   milestones: z.array(MilestoneZ).default([]),
   glidePaths: z.array(GlidePathZ).default([]),
-  strategies: StrategiesZ.default({}),
-  healthcare: HealthcareZ.default({}),
-  assumptions: AssumptionsZ.default({}),
+  strategies: StrategiesZ.prefault({}),
+  healthcare: HealthcareZ.prefault({}),
+  assumptions: AssumptionsZ.prefault({}),
   scenarios: z.array(ScenarioZ).default([]),
   actuals: z.array(ActualZ).default([]),
 });

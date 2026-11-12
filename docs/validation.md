@@ -16,7 +16,7 @@ against outside references, and where they have not.
 | Accessibility (automated)              | axe WCAG 2.2 A/AA: no violations on any of 21 screens, light and dark, three sizes      |
 | Dataset checks                         | 177 datasets valid, 55 of them projected or estimated (`pnpm validate:data`)            |
 | Lighthouse (simulated mid-range phone) | Performance 99, accessibility 100, best practices 100; LCP 2.26 s, CLS 0, TBT 0 ms      |
-| Initial JavaScript                     | 226 KB gzipped (budget 250 KB)                                                          |
+| Initial JavaScript                     | 239 KB gzipped (budget 250 KB)                                                          |
 | Engine speed (this desktop)            | Projection 1.6 ms (budget 50); 1,000 simulated runs 0.55 s on one thread (budget 8 s)   |
 
 The v1.0 gate is **not met**. The open items are listed under "Release gate" below.
