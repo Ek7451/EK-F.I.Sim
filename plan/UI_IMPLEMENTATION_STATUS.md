@@ -1,6 +1,6 @@
 # UI implementation status
 
-Implementation of [PREMIUM_UX_UPGRADE.md](PREMIUM_UX_UPGRADE.md), verified locally on November 12, 2026. The six delivery phases are implemented. Final browser and loading checks are recorded below. Changes are in the working tree; this work does not publish a deployment.
+Implementation of [PREMIUM_UX_UPGRADE.md](PREMIUM_UX_UPGRADE.md), verified on November 12, 2026. The six delivery phases are implemented and merged through [PR #6](https://github.com/Ek7451/EK-F.I.Sim/pull/6). The first hosted release is available at [Longview](https://ek-fi-sim.pages.dev), protected by Cloudflare Access. See the [deployment record](../docs/deployments/2026-11-12.md).
 
 ## Delivery scorecard
 
