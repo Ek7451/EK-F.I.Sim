@@ -181,8 +181,8 @@ Do not use "Everyone" or an email-domain rule. There is no second policy.
 - [ ] After signing in with an allowed email, the app loads and sync works.
 - [ ] Signing in with a different email is refused.
 
-Playwright and Lighthouse in CI run against a locally served build, not the deployed preview, so CI needs
-no Access service token.
+Playwright and Lighthouse run locally against a locally served build, not the deployed preview (they are not
+part of CI), so CI needs no Access service token.
 
 ## 6. API token for GitHub Actions
 
@@ -221,6 +221,8 @@ gh secret list
 | `CLOUDFLARE_API_TOKEN`  | `ci.yml` (preview deploy), `deploy.yml` | Scoped as in step 6                                 |
 | `CLOUDFLARE_ACCOUNT_ID` | `ci.yml`, `deploy.yml`                  | Not sensitive, kept as a secret for convenience     |
 | `FRED_API_KEY`          | `ingest.yml` only                       | Never referenced by build, test or deploy workflows |
+
+Until both Cloudflare secrets are set, the pull-request preview deploy (`ci.yml`) and every deploy job in `deploy.yml` are skipped with a notice naming the missing secrets; the checks still run.
 
 Dependabot pull requests do not receive these secrets, so their preview deploy is skipped by design. Do not
 add them to the Dependabot secret store.

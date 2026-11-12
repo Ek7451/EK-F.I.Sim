@@ -4,6 +4,7 @@
  * The JSON Schema in schema/plan.v1.json is emitted from these Zod types (scripts/emit-schema.ts).
  */
 import { z } from 'zod';
+import { ACCOUNT_TYPES } from './constants';
 
 export const SCHEMA_VERSION = 1;
 
@@ -11,8 +12,7 @@ const cents = z.number().int();
 const id = z.string().min(1);
 const rate = z.number().min(-1).max(10);
 
-export const ASSET_CLASSES = ['usStocks', 'usBonds', 'cash', 'intlStocks', 'reits'] as const;
-export type AssetClass = (typeof ASSET_CLASSES)[number];
+export { ACCOUNT_TYPES, ASSET_CLASSES, type AccountType, type AssetClass } from './constants';
 
 export const FilingStatusZ = z.enum(['single', 'mfj', 'mfs', 'hoh', 'qss']);
 
@@ -46,7 +46,7 @@ export const PersonZ = z.object({
       mode: z.enum(['fixed', 'stochastic']).default('fixed'),
       age: z.number().int().min(50).max(120).default(95),
     })
-    .default({}),
+    .prefault({}),
   /** State residence over time (PLAN-01). */
   residence: z
     .array(
@@ -66,32 +66,11 @@ export const PersonZ = z.object({
       piaMonthly: cents.default(0),
       claimAge: z
         .object({ years: z.number().int().min(62).max(70), months: z.number().int().min(0).max(11) })
-        .default({ years: 67, months: 0 }),
+        .prefault({ years: 67, months: 0 }),
     })
-    .default({}),
+    .prefault({}),
 });
 export type Person = z.infer<typeof PersonZ>;
-
-export const ACCOUNT_TYPES = [
-  'taxable',
-  'cash',
-  'trad401k',
-  'trad403b',
-  'gov457b',
-  'tradIra',
-  'sepIra',
-  'simpleIra',
-  'solo401k',
-  'roth401k',
-  'rothIra',
-  'hsa',
-  'plan529',
-  'inheritedIra',
-  'iBond',
-  'tBill',
-  'annuity',
-] as const;
-export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 export const AccountZ = z.object({
   id,
@@ -109,9 +88,9 @@ export const AccountZ = z.object({
       firstContributionYear: z.number().int().optional(),
     })
     .optional(),
-  allocation: AllocationZ.default({ usStocks: 0.6, usBonds: 0.4 }),
+  allocation: AllocationZ.prefault({ usStocks: 0.6, usBonds: 0.4 }),
   glidePathId: id.optional(),
-  fees: z.object({ expenseRatio: rate.default(0), advisory: rate.default(0) }).default({}),
+  fees: z.object({ expenseRatio: rate.default(0), advisory: rate.default(0) }).prefault({}),
   /** Payroll-level contributions (step 4 of the annual order of operations). */
   contribution: z
     .object({
@@ -157,7 +136,7 @@ export const AssetZ = z.object({
   value: cents,
   costBasis: cents.optional(),
   /** Appreciation (negative for vehicle depreciation). */
-  appreciation: GrowthZ.default({ rate: 0 }),
+  appreciation: GrowthZ.prefault({ rate: 0 }),
   property: z
     .object({
       propertyTaxRate: rate.default(0.011),
@@ -198,7 +177,8 @@ export const DebtZ = z.object({
   termMonths: z.number().int().min(0).default(0),
   revolvingPayPct: z.number().min(0).max(1).default(0.02),
   linkedAssetId: id.optional(),
-  interestDeductible: z.boolean().default(false),
+  /** Interest counts as an itemized deduction. When absent, home mortgages are deductible and other debts are not. */
+  interestDeductible: z.boolean().optional(),
   start: YearRefZ.optional(),
   refinance: z
     .array(
@@ -213,29 +193,46 @@ export const DebtZ = z.object({
 });
 export type Debt = z.infer<typeof DebtZ>;
 
-export const IncomeZ = z.object({
-  id,
-  ownerId: id,
-  name: z.string(),
-  kind: z.enum(['wages', 'bonus', 'selfEmployment', 'rental', 'pension', 'annuity', 'other']),
-  /** Annual amount in today's (plan-start) dollars. */
-  amount: cents,
-  growth: GrowthZ.default({ rate: 0 }),
-  start: YearRefZ.optional(),
-  end: YearRefZ.optional(),
-  taxCharacter: z
-    .enum(['earned', 'selfEmployment', 'ordinary', 'qualifiedDividend', 'capitalGain', 'taxFree'])
-    .default('earned'),
-  pension: z
-    .object({
-      cola: GrowthZ.default({ rate: 0, basis: 'nominal' }),
-      survivorPct: z.number().min(0).max(1).default(0.5),
-    })
-    .optional(),
-  /** Fraction of each annuity payment that is return of basis (not taxed). */
-  annuityExclusionRatio: z.number().min(0).max(1).default(0),
-  linkedAssetId: id.optional(),
-});
+/** Tax character an income has when the plan does not say: pay is earned, everything else ordinary income. */
+const DEFAULT_TAX_CHARACTER: Record<string, string> = {
+  wages: 'earned',
+  bonus: 'earned',
+  selfEmployment: 'selfEmployment',
+};
+export const IncomeZ = z.preprocess(
+  (v) =>
+    v && typeof v === 'object' && (v as { taxCharacter?: unknown }).taxCharacter === undefined
+      ? { ...v, taxCharacter: DEFAULT_TAX_CHARACTER[String((v as { kind?: unknown }).kind)] ?? 'ordinary' }
+      : v,
+  z.object({
+    id,
+    ownerId: id,
+    name: z.string(),
+    kind: z.enum(['wages', 'bonus', 'selfEmployment', 'rental', 'pension', 'annuity', 'other']),
+    /**
+     * Annual amount in today's (plan-start) dollars, grown by `growth` from the plan start. Pensions differ: the amount
+     * is the annual benefit in its first year of payment. With a nominal COLA it is that year's nominal amount; with a
+     * real COLA it is in today's dollars and is carried to the start year by inflation. The COLA compounds from the
+     * year the pension starts.
+     */
+    amount: cents,
+    growth: GrowthZ.prefault({ rate: 0 }),
+    start: YearRefZ.optional(),
+    end: YearRefZ.optional(),
+    taxCharacter: z
+      .enum(['earned', 'selfEmployment', 'ordinary', 'qualifiedDividend', 'capitalGain', 'taxFree'])
+      .default('earned'),
+    pension: z
+      .object({
+        cola: GrowthZ.prefault({ rate: 0, basis: 'nominal' }),
+        survivorPct: z.number().min(0).max(1).default(0.5),
+      })
+      .optional(),
+    /** Fraction of each annuity payment that is return of basis (not taxed). */
+    annuityExclusionRatio: z.number().min(0).max(1).default(0),
+    linkedAssetId: id.optional(),
+  }),
+);
 export type Income = z.infer<typeof IncomeZ>;
 
 export const ExpenseZ = z.object({
@@ -267,7 +264,7 @@ export const ExpenseZ = z.object({
       z.object({ type: z.literal('once') }),
       z.object({ type: z.literal('interval'), everyYears: z.number().int().min(1) }),
     ])
-    .default({ type: 'annual' }),
+    .prefault({ type: 'annual' }),
   start: YearRefZ.optional(),
   end: YearRefZ.optional(),
 });
@@ -351,7 +348,7 @@ export const StrategiesZ = z.object({
       /** bracketTargeted: fill ordinary income up to the top of this bracket with pre-tax withdrawals first. */
       bracketRate: z.number().default(0.12),
     })
-    .default({}),
+    .prefault({}),
   rothConversion: z
     .object({
       mode: z.enum(['none', 'fixed', 'fillBracket', 'magiTarget', 'ladder']).default('none'),
@@ -362,9 +359,9 @@ export const StrategiesZ = z.object({
       end: YearRefZ.optional(),
       targetAccountId: id.optional(),
     })
-    .default({}),
-  gainHarvest: z.object({ enabled: z.boolean().default(false) }).default({}),
-  lossHarvest: z.object({ enabled: z.boolean().default(false) }).default({}),
+    .prefault({}),
+  gainHarvest: z.object({ enabled: z.boolean().default(false) }).prefault({}),
+  lossHarvest: z.object({ enabled: z.boolean().default(false) }).prefault({}),
   spendingRule: z
     .object({
       type: z.enum(['fixed', 'guardrails', 'percentOfPortfolio', 'floorCeiling']).default('fixed'),
@@ -379,7 +376,7 @@ export const StrategiesZ = z.object({
       /** Rules start at this point (default: first retirement milestone). */
       start: YearRefZ.optional(),
     })
-    .default({}),
+    .prefault({}),
   /** STRAT-02: keep MAGI within an FPL band while on ACA coverage. */
   magiTarget: z
     .object({
@@ -388,13 +385,13 @@ export const StrategiesZ = z.object({
       /** Keep MAGI above this multiple to stay out of Medicaid / the coverage gap (0 = off). */
       minFplPct: z.number().default(0),
     })
-    .default({}),
+    .prefault({}),
   rebalance: z
     .object({
       mode: z.enum(['none', 'annual', 'threshold']).default('annual'),
       band: z.number().min(0).max(1).default(0.05),
     })
-    .default({}),
+    .prefault({}),
   /** 72(t) SEPP schedules (fixed amortization). */
   sepp: z.array(z.object({ accountId: id, start: YearRefZ, interestRate: rate.default(0.05) })).default([]),
   spendingPhases: z
@@ -406,7 +403,15 @@ export const StrategiesZ = z.object({
   /** HSA: 'spend' pays medical out-of-pocket from the HSA; 'save' leaves it invested. */
   hsaUse: z.enum(['spend', 'save']).default('spend'),
   /** STRAT-03: marginal rate heirs are assumed to pay on inherited pre-tax accounts. */
-  estate: z.object({ heirMarginalRate: z.number().min(0).max(1).default(0.24) }).default({}),
+  estate: z
+    .object({
+      heirMarginalRate: z.number().min(0).max(1).default(0.24),
+      /** Net worth to leave at the end of the plan, in today's dollars (cents). 0 = no goal. */
+      legacyGoal: cents.min(0).default(0),
+      /** When on, a simulation counts as a success only if spending is covered every year AND the goal is met. */
+      legacyGoalForSuccess: z.boolean().default(false),
+    })
+    .prefault({}),
 });
 export type Strategies = z.infer<typeof StrategiesZ>;
 
@@ -438,7 +443,7 @@ export const HealthcareZ = z.object({
             /** Life-changing-event appeal: use current-year MAGI for IRMAA in the first two Medicare years. */
             irmaaAppeal: z.boolean().default(false),
           })
-          .default({}),
+          .prefault({}),
         ltc: z
           .object({
             mode: z.enum(['none', 'expected', 'stochastic']).default('none'),
@@ -455,12 +460,17 @@ export const HealthcareZ = z.object({
               })
               .optional(),
           })
-          .default({}),
+          .prefault({}),
       }),
     )
     .default([]),
   /** User-entered monthly SLCSP for a 21-year-old (state-based-exchange states or to override; flagged in results). */
   slcspOverrideAge21Monthly: cents.optional(),
+  /**
+   * IRMAA lookback for the first two plan years: modified AGI from two years and one year before the plan start
+   * (nominal cents). When absent, the plan's own first-year MAGI estimate is used.
+   */
+  irmaaPriorMagi: z.object({ twoYearsBefore: cents.optional(), oneYearBefore: cents.optional() }).optional(),
 });
 export type Healthcare = z.infer<typeof HealthcareZ>;
 
@@ -469,7 +479,7 @@ export const AssumptionsZ = z.object({
     .object({
       /** Deterministic projection return model. */
       mode: z.enum(['fixed', 'historicalAverage']).default('fixed'),
-      /** Nominal expected returns per asset class. */
+      /** Expected returns per asset class: GEOMETRIC (compound) nominal annual rates at the plan's inflation rate. */
       fixed: z
         .object({
           usStocks: rate.default(0.07),
@@ -478,20 +488,20 @@ export const AssumptionsZ = z.object({
           intlStocks: rate.default(0.07),
           reits: rate.default(0.065),
         })
-        .default({}),
+        .prefault({}),
       /** Optional user-defined volatility / correlation for parametric Monte Carlo (SIM-05). */
-      stdDev: z.record(z.number()).optional(),
+      stdDev: z.record(z.string(), z.number()).optional(),
       correlation: z.array(z.array(z.number())).optional(),
     })
-    .default({}),
-  inflation: z.object({ rate: rate.default(0.025), educationExcess: rate.default(0.02) }).default({}),
+    .prefault({}),
+  inflation: z.object({ rate: rate.default(0.025), educationExcess: rate.default(0.02) }).prefault({}),
   healthcareInflation: z
     .object({
       excessOverCpi: rate.default(0.02),
       stochastic: z.boolean().default(true),
       stdDev: rate.default(0.015),
     })
-    .default({}),
+    .prefault({}),
   /** Real wage growth used to index future Social Security bend points / AWI. */
   realWageGrowth: rate.default(0.01),
   dividendYield: rate.default(0.018),
@@ -506,16 +516,27 @@ export const AssumptionsZ = z.object({
       /** Forward runs: 'fixed' inflation or historically 'sampled' with the returns (SIM-07). */
       inflation: z.enum(['fixed', 'sampled']).default('sampled'),
       stochasticLongevity: z.boolean().default(false),
+      /**
+       * Bootstrap only: 'assumptions' re-centres history on the expected returns and inflation above (keeping its
+       * volatility, correlation and sequence); 'historical' replays raw history with its own averages.
+       */
+      bootstrapMeans: z.enum(['assumptions', 'historical']).default('assumptions'),
     })
-    .default({}),
+    .prefault({}),
+  /**
+   * Annual improvement in death rates after the life table's year (cohort adjustment for stochastic longevity).
+   * 0 uses the SSA period table as published; about 0.008 is close to the Trustees' intermediate assumption.
+   */
+  mortalityImprovement: z.number().min(0).max(0.03).default(0),
   /** PLAN-06: optional trust-fund-shortfall scenario. */
   socialSecurityCut: z
     .object({
       enabled: z.boolean().default(false),
-      fromYear: z.number().int().default(2033),
-      payablePct: z.number().min(0).max(1).default(0.77),
+      /** Defaults follow the bundled 2026 Trustees Report (combined OASDI: reserves depleted 2034, 83% payable). */
+      fromYear: z.number().int().default(2034),
+      payablePct: z.number().min(0).max(1).default(0.83),
     })
-    .default({}),
+    .prefault({}),
 });
 export type Assumptions = z.infer<typeof AssumptionsZ>;
 
@@ -536,7 +557,7 @@ export const ScenarioZ = z.object({
 });
 export type Scenario = z.infer<typeof ScenarioZ>;
 
-export const ActualZ = z.object({ date: z.string(), balances: z.record(cents) });
+export const ActualZ = z.object({ date: z.string(), balances: z.record(z.string(), cents) });
 
 export const PlanZ = z.object({
   id,
@@ -557,7 +578,7 @@ export const PlanZ = z.object({
       filingStatus: z.array(z.object({ fromYear: z.number().int(), status: FilingStatusZ })).default([]),
       dependents: z.array(z.object({ name: z.string(), birthYear: z.number().int() })).default([]),
     })
-    .default({}),
+    .prefault({}),
   accounts: z.array(AccountZ).default([]),
   assets: z.array(AssetZ).default([]),
   debts: z.array(DebtZ).default([]),
@@ -565,9 +586,9 @@ export const PlanZ = z.object({
   expenses: z.array(ExpenseZ).default([]),
   milestones: z.array(MilestoneZ).default([]),
   glidePaths: z.array(GlidePathZ).default([]),
-  strategies: StrategiesZ.default({}),
-  healthcare: HealthcareZ.default({}),
-  assumptions: AssumptionsZ.default({}),
+  strategies: StrategiesZ.prefault({}),
+  healthcare: HealthcareZ.prefault({}),
+  assumptions: AssumptionsZ.prefault({}),
   scenarios: z.array(ScenarioZ).default([]),
   actuals: z.array(ActualZ).default([]),
 });

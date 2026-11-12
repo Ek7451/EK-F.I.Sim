@@ -1,4 +1,4 @@
-import { Button, Icon, Notice } from '@fisim/ui';
+import { Badge, Button, Icon, Menu, Notice } from '@fisim/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useStore, type Theme } from '../state/store';
@@ -48,30 +48,56 @@ export function Shell({
   }, [undo, redo]);
 
   const nextTheme = THEMES[(THEMES.indexOf(settings.theme) + 1) % THEMES.length];
+  const scenarioId = useStore((s) => s.scenarioId);
+  const active = sandbox ? sandbox.plan : settings.activePlanId ? plans[settings.activePlanId] : undefined;
+  const scenario = scenarioId ? active?.scenarios.find((x) => x.id === scenarioId) : undefined;
+  const crumb = breadcrumb(loc.pathname);
+  const collapsed = settings.railCollapsed;
   return (
-    <div className="app">
+    <div className="app" data-rail={collapsed ? 'collapsed' : 'open'}>
       <a className="lv-btn skip" href="#main">
         Skip to content
       </a>
       <nav className="rail" aria-label="Main" data-open={menu} data-tour="nav">
-        <Link className="brand" to="/">
-          <img src="/icon.svg" alt="" />
-          Longview
-        </Link>
-        {NAV.map((g) => (
-          <div className="nav-group" key={g.id} data-tour={`nav-${g.id}`}>
-            <h2>{g.label}</h2>
-            <ul>
-              {g.items.map((it) => (
-                <li key={it.to}>
-                  <NavLink className="nav-link" to={it.to} end={it.to === '/'}>
-                    {it.label}
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
+        <div className="rail-head">
+          <Link className="brand" to="/" aria-label="Longview home">
+            <img src="/icon.svg" alt="" />
+            <span className="rail-text">Longview</span>
+          </Link>
+        </div>
+        <div className="rail-scroll">
+          {NAV.map((g) => (
+            <div className="nav-group" key={g.id} data-tour={`nav-${g.id}`}>
+              <h2 className="rail-text">{g.label}</h2>
+              <ul>
+                {g.items.map((it) => (
+                  <li key={it.to}>
+                    <NavLink
+                      className="nav-link"
+                      to={it.to}
+                      end={it.to === '/'}
+                      title={collapsed ? it.label : undefined}
+                    >
+                      <Icon name={it.icon} size={18} />
+                      <span className="rail-text">{it.label}</span>
+                    </NavLink>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+        <button
+          type="button"
+          className="rail-toggle hide-phone"
+          aria-label={collapsed ? 'Show navigation labels' : 'Collapse navigation to icons'}
+          title={collapsed ? 'Show labels' : 'Collapse'}
+          aria-pressed={collapsed}
+          onClick={() => setSettings({ railCollapsed: !collapsed })}
+        >
+          <Icon name="panel" size={18} />
+          <span className="rail-text">Collapse</span>
+        </button>
       </nav>
       <div className="main">
         {sandbox ? (
@@ -91,28 +117,47 @@ export function Shell({
           <Link className="brand only-phone" to="/" aria-label="Longview home">
             <img src="/icon.svg" alt="" />
           </Link>
-          <label className="lv-sr" htmlFor="plan-switch">
-            Plan
-          </label>
-          <select
-            id="plan-switch"
-            className="lv-select"
-            data-tour="plan-switcher"
-            disabled={!!sandbox}
-            value={sandbox ? '__sandbox' : (settings.activePlanId ?? '')}
-            onChange={(e) => {
-              if (e.target.value === '__new') nav('/start');
-              else setActive(e.target.value);
-            }}
-          >
-            {sandbox ? <option value="__sandbox">{sandbox.plan.name}</option> : null}
-            {Object.values(plans).map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-            {!sandbox ? <option value="__new">+ New plan…</option> : null}
-          </select>
+          <Menu
+            label="Plans"
+            items={[
+              ...Object.values(plans).map((p) => ({
+                id: p.id,
+                label: p.name,
+                checked: p.id === settings.activePlanId,
+                onSelect: () => setActive(p.id),
+              })),
+              { id: '__new', label: 'New plan…', icon: 'plus', divider: true, onSelect: () => nav('/start') },
+            ]}
+            trigger={({ open, ...p }) => (
+              <button
+                {...p}
+                type="button"
+                id="plan-switch"
+                className="plan-switch"
+                data-tour="plan-switcher"
+                disabled={!!sandbox}
+                aria-label={`Plan: ${active?.name ?? 'No plan yet'}`}
+                aria-haspopup="menu"
+              >
+                <span className="plan-dot" aria-hidden="true" />
+                <span className="lv-ellipsis">{active?.name ?? 'No plan yet'}</span>
+                <Icon name={open ? 'up' : 'down'} size={16} />
+              </button>
+            )}
+          />
+          {crumb ? (
+            <nav className="crumbs hide-phone" aria-label="Breadcrumb">
+              <Icon name="chevron" size={14} />
+              <span>{crumb.group}</span>
+              <Icon name="chevron" size={14} />
+              <span aria-current="page">{crumb.page}</span>
+            </nav>
+          ) : null}
+          {scenario ? (
+            <span data-tour="scenario-chip">
+              <Badge tone="warn">What-if: {scenario.name}</Badge>
+            </span>
+          ) : null}
           <span className="spacer" />
           <Button
             variant="ghost"
@@ -218,13 +263,23 @@ export function Shell({
   );
 }
 
+/** Where a route sits in the navigation, for the top bar ("Explore › Projection"). */
+function breadcrumb(path: string): { group: string; page: string } | null {
+  for (const g of NAV)
+    for (const it of g.items)
+      if (it.to === path || (it.to !== '/' && path.startsWith(it.to + '/')))
+        return g.id === 'home' ? null : { group: g.label, page: it.label };
+  return null;
+}
+
 /** Secondary navigation between the screens of one task group (also the phone's way around a group). */
 export function SubNav({ group }: { group: 'plan' | 'explore' }): ReactNode {
   const g = NAV.find((x) => x.id === group)!;
   return (
-    <nav className="subnav" aria-label={`${g.label} screens`} data-tour={`subnav-${group}`}>
+    <nav className="subnav lv-segmented" aria-label={`${g.label} screens`} data-tour={`subnav-${group}`}>
       {g.items.map((it) => (
         <NavLink key={it.to} to={it.to}>
+          <Icon name={it.icon} size={15} />
           {it.label}
         </NavLink>
       ))}
@@ -250,7 +305,7 @@ export function PageHead({
     <>
       {group ? <SubNav group={group} /> : null}
       <div className="page-head">
-        <div className="lv-stack" style={{ gap: 4 }}>
+        <div className="page-title">
           <h1>{title}</h1>
           {intro ? <p>{intro}</p> : null}
         </div>

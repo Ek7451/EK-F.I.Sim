@@ -78,6 +78,7 @@ const api = {
     return Comlink.transfer({ chunk, maxYears: c.maxYears }, [
       chunk.investable.buffer,
       chunk.endingReal.buffer,
+      chunk.netWorthEndReal.buffer,
       chunk.lifetimeTaxReal.buffer,
       chunk.success.buffer,
       chunk.failYear.buffer,

@@ -168,7 +168,6 @@
       "payment": 31000,
       "termMonths": 0,
       "revolvingPayPct": 0.02,
-      "interestDeductible": false,
       "refinance": []
     }
   ],
@@ -367,7 +366,9 @@
     "backdoorRoth": false,
     "hsaUse": "spend",
     "estate": {
-      "heirMarginalRate": 0.24
+      "heirMarginalRate": 0.24,
+      "legacyGoal": 0,
+      "legacyGoalForSuccess": false
     }
   },
   "healthcare": {
@@ -445,12 +446,14 @@
       "seed": 20261110,
       "blockLength": 5,
       "inflation": "sampled",
-      "stochasticLongevity": false
+      "stochasticLongevity": false,
+      "bootstrapMeans": "assumptions"
     },
+    "mortalityImprovement": 0,
     "socialSecurityCut": {
       "enabled": false,
-      "fromYear": 2033,
-      "payablePct": 0.77
+      "fromYear": 2034,
+      "payablePct": 0.83
     }
   },
   "scenarios": [],

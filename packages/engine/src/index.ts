@@ -1,8 +1,15 @@
 export * from './schema';
 export * from './data';
 export * from './migrate';
-export { compilePlan, staticYear, type Compiled, type CPerson } from './compile';
-export { runPath, fixedPath, type PathInputs, type PathResult, type YearRecord } from './projection';
+export {
+  compilePlan,
+  expectedMeans,
+  resolvedCustomOrder,
+  staticYear,
+  type Compiled,
+  type CPerson,
+} from './compile';
+export { runPath, fixedPath, toReal, type PathInputs, type PathResult, type YearRecord } from './projection';
 export * from './results';
 export * from './tax/federal';
 export * from './tax/state';

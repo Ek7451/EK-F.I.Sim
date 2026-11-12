@@ -1,4 +1,4 @@
-import type { WaterfallStep } from '@fisim/engine';
+import { resolvedCustomOrder, type WaterfallStep } from '@fisim/engine';
 import { Button, Card, MoneyField, NumberField, PercentField, SelectField, Switch } from '@fisim/ui';
 import type { ReactNode } from 'react';
 import { ACCOUNT_LABELS, WhenField } from '../../lib/fields';
@@ -15,7 +15,8 @@ export function StrategyPage(): ReactNode {
   const steps = S.surplusWaterfall;
   const name = (st: WaterfallStep): string => (st.type === 'debt' ? `Extra payments on ${plan.debts.find((d) => d.id === st.debtId)?.name ?? 'a removed debt'}` : st.type === 'emergencyFund' ? `Emergency fund in ${plan.accounts.find((a) => a.id === st.accountId)?.name ?? 'a removed account'}` : (plan.accounts.find((a) => a.id === st.accountId)?.name ?? 'a removed account'));
   const move = (i: number, by: number): void => update((d) => { const a = d.strategies.surplusWaterfall; const j = i + by; if (j < 0 || j >= a.length) return; [a[i], a[j]] = [a[j], a[i]]; });
-  const order = S.withdrawalOrder.customOrder.length ? S.withdrawalOrder.customOrder : plan.accounts.map((a) => a.id);
+  // Accounts added after the order was set slot in at their default place, exactly as the engine runs them.
+  const order = resolvedCustomOrder(plan);
   const conv = S.rothConversion;
   const rule = S.spendingRule;
 
@@ -59,7 +60,7 @@ export function StrategyPage(): ReactNode {
           <SelectField
             label="Withdrawal strategy" value={S.withdrawalOrder.strategy} data-tour="withdrawal-strategy"
             options={[{ value: 'taxableFirst', label: 'Taxable first, then pre-tax, then Roth' }, { value: 'proportional', label: 'In proportion to each account' }, { value: 'bracketTargeted', label: 'Fill a tax bracket with pre-tax money first' }, { value: 'custom', label: 'My own order' }]}
-            onChange={(v) => update((d) => { d.strategies.withdrawalOrder.strategy = v; if (v === 'custom' && !d.strategies.withdrawalOrder.customOrder.length) d.strategies.withdrawalOrder.customOrder = d.accounts.map((a) => a.id); })}
+            onChange={(v) => update((d) => { d.strategies.withdrawalOrder.strategy = v; if (v === 'custom') d.strategies.withdrawalOrder.customOrder = resolvedCustomOrder(d); })}
           />
           {S.withdrawalOrder.strategy === 'bracketTargeted' ? <SelectField label="Fill up to the top of the" value={String(S.withdrawalOrder.bracketRate)} options={['0.1', '0.12', '0.22', '0.24', '0.32'].map((r) => ({ value: r, label: `${Math.round(+r * 100)}% bracket` }))} onChange={(v) => update((d) => { d.strategies.withdrawalOrder.bracketRate = +v; })} /> : null}
           <SelectField label="Health savings account" value={S.hsaUse} options={[{ value: 'spend', label: 'Pay medical bills from it' }, { value: 'save', label: 'Leave it invested' }]} onChange={(v) => update((d) => { d.strategies.hsaUse = v; })} />
@@ -159,7 +160,9 @@ export function StrategyPage(): ReactNode {
           <SelectField label="Rebalance accounts" value={S.rebalance.mode} options={[{ value: 'annual', label: 'Every year' }, { value: 'threshold', label: 'Only when the mix drifts' }, { value: 'none', label: 'Never' }]} onChange={(v) => update((d) => { d.strategies.rebalance.mode = v; })} />
           {S.rebalance.mode === 'threshold' ? <PercentField label="Drift that triggers it" digits={0} value={S.rebalance.band} onChange={(v) => update((d) => { d.strategies.rebalance.band = Math.max(0, Math.min(1, v)); })} /> : null}
           <PercentField label="Tax rate heirs pay on inherited pre-tax accounts" digits={0} value={S.estate.heirMarginalRate} onChange={(v) => update((d) => { d.strategies.estate.heirMarginalRate = Math.max(0, Math.min(1, v)); })} data-tour="heir-rate" />
+          <MoneyField label="Leave at least (today's dollars)" cents={S.estate.legacyGoal} onChange={(v) => update((d) => { d.strategies.estate.legacyGoal = Math.max(0, v); })} data-tour="legacy-goal" />
         </div>
+        {S.estate.legacyGoal > 0 ? <div style={{ marginTop: 12 }}><Switch label="Count the goal in the chance of success" checked={S.estate.legacyGoalForSuccess} onChange={(v) => update((d) => { d.strategies.estate.legacyGoalForSuccess = v; })} /></div> : null}
       </Card>
     </>
   );

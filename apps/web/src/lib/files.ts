@@ -151,7 +151,7 @@ export async function exportPdf(
     ['Spending funded on the expected path', s.success ? 'Every year' : `Until ${s.failedYear}`],
     ['Lifetime tax (estimated)', money(s.lifetimeTaxReal)],
     ['Lifetime spending', money(s.lifetimeSpendingReal)],
-    ['Estate, net to heirs', money(result.estate.netToHeirs / (recs[recs.length - 1]?.cpi ?? 1))],
+    ['Estate, net to heirs', money(result.estate.netToHeirs / (recs[recs.length - 1]?.cpiEnd ?? 1))],
   ];
   if (mc)
     stats.push(
@@ -173,7 +173,7 @@ export async function exportPdf(
   const cw = W - 2 * M - 40;
   const x0 = M + 40;
   const y0 = y - ch;
-  const vals = recs.map((r) => r.netWorth / r.cpi);
+  const vals = recs.map((r) => r.netWorth / r.cpiEnd);
   const max = Math.max(1, ...vals);
   const min = Math.min(0, ...vals);
   for (let i = 0; i <= 4; i++) {
@@ -224,7 +224,7 @@ export async function exportPdf(
         money(r.expenses.total / r.cpi),
         money(r.taxes.total / r.cpi),
         money(r.contributions.total / r.cpi),
-        money(r.netWorth / r.cpi),
+        money(r.netWorth / r.cpiEnd),
       ],
       widths,
     );

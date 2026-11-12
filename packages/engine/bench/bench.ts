@@ -2,8 +2,11 @@
  * Engine benchmark (plan 13). Writes bench/latest.json and compares with bench/baseline.json;
  * a regression above 20% exits non-zero. Run with `pnpm bench`; refresh the baseline with `pnpm bench -- --update`.
  * Timings are single-threaded on the machine that runs them; the app splits Monte Carlo across up to 4 workers.
+ * The 20% comparison only means something on the machine (and Node version) the baseline was recorded on, so on
+ * any other machine, such as a CI runner, only the absolute budgets are enforced.
  */
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+import { arch, cpus, platform } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEngineData } from '@fisim/data/src/node';
@@ -47,8 +50,10 @@ const budgets: Record<string, number> = {
   montecarlo_1000_single_thread_ms: 2000 * 4,
   montecarlo_10000_estimate_4_workers_ms: 15000,
 };
-const latest = { node: process.version, date: new Date().toISOString().slice(0, 10), results };
-writeFileSync(join(here, 'latest.json'), JSON.stringify(latest, null, 1) + '\n');
+/** Where the timings came from: a baseline is only comparable on the same machine and Node version. */
+const machine = `${platform()}-${arch()} ${cpus()[0]?.model.trim() ?? 'unknown CPU'} ${process.version}`;
+const latest = { node: process.version, machine, date: new Date().toISOString().slice(0, 10), results };
+writeFileSync(join(here, 'latest.json'), JSON.stringify(latest, null, 2) + '\n');
 console.table(
   Object.fromEntries(
     Object.entries(results).map(([k, v]) => [k, { ms: +v.toFixed(2), budget: budgets[k] ?? '' }]),
@@ -58,11 +63,17 @@ console.table(
 const basePath = join(here, 'baseline.json');
 let failed = false;
 if (process.argv.includes('--update') || !existsSync(basePath)) {
-  writeFileSync(basePath, JSON.stringify(latest, null, 1) + '\n');
+  writeFileSync(basePath, JSON.stringify(latest, null, 2) + '\n');
   console.log('baseline written');
 } else {
-  const base = JSON.parse(readFileSync(basePath, 'utf8')) as typeof latest;
-  for (const k in results) {
+  const base = JSON.parse(readFileSync(basePath, 'utf8')) as Partial<typeof latest> &
+    Pick<typeof latest, 'results'>;
+  const comparable = base.machine === machine;
+  if (!comparable)
+    console.log(
+      `Baseline was recorded on "${base.machine ?? base.node ?? 'another machine'}", not "${machine}": checking budgets only.`,
+    );
+  for (const k in comparable ? results : {}) {
     const b = base.results[k];
     if (b && results[k] > b * 1.2 && results[k] - b > 0.5) {
       console.error(`REGRESSION ${k}: ${results[k].toFixed(2)} ms vs baseline ${b.toFixed(2)} ms`);

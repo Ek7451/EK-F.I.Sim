@@ -3,7 +3,7 @@
  * card (popover on wide screens, sheet on phones), keyboard support and saved progress. A tour runs in a sandbox on a
  * sample plan, or in observe-only mode on the user's own plan with changes switched off.
  */
-import { SAMPLE_PLANS } from '@fisim/engine';
+import { loadEngine } from '../engine/load';
 import { Button, formatCompact, formatPct } from '@fisim/ui';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import {
@@ -68,11 +68,16 @@ export function TourProvider({ children }: { children: ReactNode }): ReactNode {
     if (!tour) return;
     const st = useStore.getState();
     const own = opts.ownPlan && st.settings.activePlanId ? st.plans[st.settings.activePlanId] : null;
-    st.enterSandbox(own ?? SAMPLE_PLANS[tour.samplePlan](new Date().getFullYear()), !!own);
-    const saved = st.settings.tours[id];
-    const step = !opts.restart && saved && !saved.completed ? Math.min(saved.step, tour.steps.length - 1) : 0;
-    st.setTour(id, { step, dismissed: false });
-    setActive({ tour, step, returnTo: path.current });
+    const returnTo = path.current;
+    // The sample plans come with the engine, which may still be loading on a first visit.
+    void loadEngine().then(({ SAMPLE_PLANS }) => {
+      st.enterSandbox(own ?? SAMPLE_PLANS[tour.samplePlan](new Date().getFullYear()), !!own);
+      const saved = useStore.getState().settings.tours[id];
+      const step =
+        !opts.restart && saved && !saved.completed ? Math.min(saved.step, tour.steps.length - 1) : 0;
+      useStore.getState().setTour(id, { step, dismissed: false });
+      setActive({ tour, step, returnTo });
+    });
   }, []);
 
   const stop = useCallback(() => {

@@ -6,40 +6,9 @@
 import type { Compiled } from '../compile';
 import { runPath } from '../projection';
 import { generatePath, type PathSettings } from './paths';
+import { summarizeMonteCarlo, type McChunk, type McSummary } from './summary';
 
-export interface McChunk {
-  from: number;
-  to: number;
-  years: number;
-  /** Investable assets in today's dollars, [run * years + t]; NaN after the last death. */
-  investable: Float32Array;
-  success: Uint8Array;
-  failYear: Int32Array;
-  endingReal: Float64Array;
-  lifetimeTaxReal: Float64Array;
-  lastYearIndex: Int32Array;
-}
-
-export interface McSummary {
-  runs: number;
-  seed: number;
-  method: 'bootstrap' | 'parametric';
-  startYear: number;
-  years: number[];
-  successRate: number;
-  /** Percentile bands of investable assets in today's dollars, by year. */
-  bands: { p10: number[]; p25: number[]; p50: number[]; p75: number[]; p90: number[] };
-  /** Share of runs still solvent (no shortfall so far) by year. */
-  solventShare: number[];
-  /** Count of first-failure years. */
-  failureYears: { year: number; count: number }[];
-  /** Ending wealth distribution in today's dollars (sorted ascending). */
-  endingWealth: number[];
-  endingPercentiles: { p10: number; p25: number; p50: number; p75: number; p90: number };
-  medianLifetimeTax: number;
-  /** A few sample paths for display. */
-  samples: number[][];
-}
+export * from './summary';
 
 export function mcSettings(c: Compiled): PathSettings & { runs: number; seed: number } {
   const m = c.plan.assumptions.monteCarlo;
@@ -48,6 +17,7 @@ export function mcSettings(c: Compiled): PathSettings & { runs: number; seed: nu
     blockLength: m.blockLength,
     inflation: m.inflation,
     stochasticLongevity: m.stochasticLongevity,
+    bootstrapMeans: m.bootstrapMeans,
     runs: m.runs,
     seed: m.seed,
   };
@@ -70,8 +40,12 @@ export function runMonteCarloChunk(
     success: new Uint8Array(count),
     failYear: new Int32Array(count).fill(-1),
     endingReal: new Float64Array(count),
+    estateReal: new Float64Array(count),
+    netWorthEndReal: new Float64Array(count),
     lifetimeTaxReal: new Float64Array(count),
     lastYearIndex: new Int32Array(count),
+    cutYears: new Int32Array(count),
+    minSpendRatio: new Float64Array(count),
   };
   for (let r = 0; r < count; r++) {
     if (shouldCancel && r % 16 === 0 && shouldCancel()) {
@@ -81,122 +55,33 @@ export function runMonteCarloChunk(
     const path = generatePath(c, settings, settings.seed, from + r);
     const res = runPath(c, path);
     const o = r * years;
-    for (let t = 0; t < res.n; t++)
-      chunk.investable[o + t] = res.investable[t] / res.cpi[t] / (1 + path.inflation[t]);
+    let cuts = 0;
+    let minRatio = 1;
+    for (let t = 0; t < res.n; t++) {
+      chunk.investable[o + t] = res.investable[t] / res.cpiEnd[t];
+      const ratio = res.spendRatio[t];
+      if (ratio < 0.999) cuts++;
+      if (ratio < minRatio) minRatio = ratio;
+    }
     chunk.success[r] = res.success ? 1 : 0;
     chunk.failYear[r] = res.failedYear ?? -1;
     const last = Math.max(0, res.n - 1);
     chunk.endingReal[r] = chunk.investable[o + last];
+    chunk.estateReal[r] = res.estate.netToHeirs / (res.cpiEnd[last] || 1);
+    chunk.netWorthEndReal[r] = res.estate.value / (res.cpiEnd[last] || 1);
     chunk.lifetimeTaxReal[r] = res.lifetimeTax;
     chunk.lastYearIndex[r] = last;
+    chunk.cutYears[r] = cuts;
+    chunk.minSpendRatio[r] = minRatio;
   }
   return chunk;
 }
 
-function quantileSorted(sorted: ArrayLike<number>, n: number, q: number): number {
-  if (n === 0) return NaN;
-  const pos = (n - 1) * q;
-  const lo = Math.floor(pos);
-  const hi = Math.min(n - 1, lo + 1);
-  return sorted[lo] + (sorted[hi] - sorted[lo]) * (pos - lo);
-}
-
-export function summarizeMonteCarlo(
-  c: Compiled,
-  chunks: McChunk[],
-  seed: number,
-  method: 'bootstrap' | 'parametric',
-): McSummary {
-  const years = c.maxYears;
-  let runs = 0;
-  for (const ch of chunks) runs += ch.to - ch.from;
-  const bands = {
-    p10: [] as number[],
-    p25: [] as number[],
-    p50: [] as number[],
-    p75: [] as number[],
-    p90: [] as number[],
-  };
-  const solventShare: number[] = [];
-  const col = new Float64Array(runs);
-  let usedYears = 0;
-  for (let t = 0; t < years; t++) {
-    let n = 0;
-    let solvent = 0;
-    for (const ch of chunks) {
-      const cnt = ch.to - ch.from;
-      for (let r = 0; r < cnt; r++) {
-        const v = ch.investable[r * years + t];
-        // Runs that ended (death) carry their last value forward so bands are not biased to survivors.
-        const val = Number.isNaN(v) ? ch.endingReal[r] : v;
-        col[n++] = val;
-        const fy = ch.failYear[r];
-        if (fy < 0 || fy > c.startYear + t) solvent++;
-        if (!Number.isNaN(v)) usedYears = Math.max(usedYears, t + 1);
-      }
-    }
-    const sorted = col.subarray(0, n).slice().sort();
-    bands.p10.push(quantileSorted(sorted, n, 0.1));
-    bands.p25.push(quantileSorted(sorted, n, 0.25));
-    bands.p50.push(quantileSorted(sorted, n, 0.5));
-    bands.p75.push(quantileSorted(sorted, n, 0.75));
-    bands.p90.push(quantileSorted(sorted, n, 0.9));
-    solventShare.push(n ? solvent / n : 0);
-  }
-  for (const key of Object.keys(bands) as (keyof typeof bands)[]) bands[key].length = usedYears;
-  solventShare.length = usedYears;
-  let ok = 0;
-  const fail = new Map<number, number>();
-  const ending: number[] = [];
-  const taxes: number[] = [];
-  const samples: number[][] = [];
-  for (const ch of chunks) {
-    const cnt = ch.to - ch.from;
-    for (let r = 0; r < cnt; r++) {
-      if (ch.success[r]) ok++;
-      else fail.set(ch.failYear[r], (fail.get(ch.failYear[r]) ?? 0) + 1);
-      ending.push(ch.endingReal[r]);
-      taxes.push(ch.lifetimeTaxReal[r]);
-      if (samples.length < 12) {
-        const s: number[] = [];
-        for (let t = 0; t <= ch.lastYearIndex[r]; t++) s.push(ch.investable[r * years + t]);
-        samples.push(s);
-      }
-    }
-  }
-  ending.sort((a, b) => a - b);
-  taxes.sort((a, b) => a - b);
-  return {
-    runs,
-    seed,
-    method,
-    startYear: c.startYear,
-    years: Array.from({ length: usedYears }, (_, i) => c.startYear + i),
-    successRate: runs ? ok / runs : 0,
-    bands,
-    solventShare,
-    failureYears: [...fail.entries()]
-      .map(([year, count]) => ({ year, count }))
-      .sort((a, b) => a.year - b.year),
-    endingWealth: ending,
-    endingPercentiles: {
-      p10: quantileSorted(ending, runs, 0.1),
-      p25: quantileSorted(ending, runs, 0.25),
-      p50: quantileSorted(ending, runs, 0.5),
-      p75: quantileSorted(ending, runs, 0.75),
-      p90: quantileSorted(ending, runs, 0.9),
-    },
-    medianLifetimeTax: quantileSorted(taxes, runs, 0.5),
-    samples,
-  };
-}
-
-/** Convenience: run everything on the calling thread. */
 export function runMonteCarlo(
   c: Compiled,
   overrides: Partial<PathSettings & { runs: number; seed: number }> = {},
 ): McSummary {
   const s = { ...mcSettings(c), ...overrides };
   const chunk = runMonteCarloChunk(c, s, 0, s.runs);
-  return summarizeMonteCarlo(c, [chunk], s.seed, s.method);
+  return summarizeMonteCarlo(c, [chunk], s.seed, s.method, s);
 }

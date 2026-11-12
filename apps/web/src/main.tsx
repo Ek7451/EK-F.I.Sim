@@ -2,7 +2,9 @@ import '@fisim/ui/src/styles.css';
 import './app.css';
 import { StrictMode, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { HelpProvider } from '@fisim/ui';
 import { App } from './App';
+import { helpText } from './lib/help';
 import { logError } from './state/db';
 import { useStore } from './state/store';
 
@@ -40,7 +42,11 @@ function Root(): ReactNode {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#12181f' : '#1f6b4f');
   }, [theme]);
 
-  return <App updateReady={updateReady} applyUpdate={() => void update.current?.(true)} />;
+  return (
+    <HelpProvider value={helpText}>
+      <App updateReady={updateReady} applyUpdate={() => void update.current?.(true)} />
+    </HelpProvider>
+  );
 }
 
 createRoot(document.getElementById('root')!).render(

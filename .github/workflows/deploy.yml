@@ -34,9 +34,30 @@ jobs:
       contents: read
       deployments: write
 
+  # Until Cloudflare is set up (docs/runbooks/cloudflare-setup.md) the repository has no API token. Then the
+  # deploy jobs are skipped with a notice instead of failing every push to main; the checks still run.
+  cloudflare:
+    name: Cloudflare credentials
+    needs: checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    outputs:
+      ready: ${{ steps.cf.outputs.ready }}
+    steps:
+      - name: Check for Cloudflare credentials
+        id: cf
+        env:
+          HAS_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN != '' && secrets.CLOUDFLARE_ACCOUNT_ID != '' }}
+        run: |
+          echo "ready=${HAS_TOKEN}" >> "$GITHUB_OUTPUT"
+          if [ "${HAS_TOKEN}" != "true" ]; then
+            echo "::notice::Deploy skipped: set the CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repository secrets to enable it."
+          fi
+
   deploy-sync-preview:
     name: Sync Worker (preview env)
-    needs: checks
+    needs: [checks, cloudflare]
+    if: needs.cloudflare.outputs.ready == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -94,7 +115,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: ./.github/actions/setup
-      # The exact artifact that passed e2e, Lighthouse and the rest of the checks job.
+      # The exact artifact that passed the checks job.
       - name: Download build
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:

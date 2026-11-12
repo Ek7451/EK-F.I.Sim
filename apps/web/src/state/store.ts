@@ -2,7 +2,8 @@
  * App state (D2): Zustand store with an Immer patch log that also drives undo/redo (UX-04).
  * Plans persist to IndexedDB after every change. Guided tours run on a sandbox copy that is never saved.
  */
-import { blankPlan, loadPlan, PlanZ, SAMPLE_PLANS, type Plan, type SamplePlanId } from '@fisim/engine';
+import type { Plan, SamplePlanId } from '@fisim/engine';
+import { loadEngine } from '../engine/load';
 import { applyPatches, enablePatches, produceWithPatches, type Patch } from 'immer';
 import { create } from 'zustand';
 import {
@@ -35,9 +36,12 @@ export interface Settings {
   syncEnabled: boolean;
   lastBackupAt: string | null;
   onboarded: boolean;
+  /** Desktop navigation rail shows icons only. */
+  railCollapsed: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
+  railCollapsed: false,
   activePlanId: null,
   tours: {},
   promptsDismissed: [],
@@ -134,10 +138,12 @@ export const useStore = create<State>((set, get) => ({
     if (get().ready) return;
     const settings = { ...DEFAULT_SETTINGS, ...((await getSetting<Partial<Settings>>('app')) ?? {}) };
     const stored: StoredPlan[] = await allPlans();
+    // Checking saved plans needs the engine; a first visit has none, so the start screen does not wait for it.
+    const loadPlan = stored.length ? (await loadEngine()).loadPlan : null;
     const plans: Record<string, Plan> = {};
     const meta: Record<string, PlanMeta> = {};
     for (const s of stored) {
-      const loaded = loadPlan(s.plan);
+      const loaded = loadPlan!(s.plan);
       if (loaded.readOnly) {
         // Newer schema than this app understands: keep the file untouched and show an "update the app" notice.
         meta[s.id] = {
@@ -171,14 +177,16 @@ export const useStore = create<State>((set, get) => ({
   async createPlan(name, from) {
     const id = uid();
     const now = new Date().toISOString();
-    const base = from ? structuredClone(from) : blankPlan(id, name, new Date().getFullYear());
+    const base = from
+      ? structuredClone(from)
+      : (await loadEngine()).blankPlan(id, name, new Date().getFullYear());
     const plan: Plan = { ...base, id, name, createdAt: now, updatedAt: now };
     await get().replacePlan(plan, { dirty: true, syncVersion: 0 });
     get().setActive(id);
     return id;
   },
   async createFromSample(sample) {
-    const p = SAMPLE_PLANS[sample](new Date().getFullYear());
+    const p = (await loadEngine()).SAMPLE_PLANS[sample](new Date().getFullYear());
     return get().createPlan(p.name.replace(/^Sample: /, 'My plan: '), p);
   },
   async duplicatePlan(id) {
@@ -201,7 +209,7 @@ export const useStore = create<State>((set, get) => ({
     get().setSettings({ activePlanId });
   },
   async importPlan(raw) {
-    const loaded = loadPlan(raw);
+    const loaded = (await loadEngine()).loadPlan(raw);
     if (loaded.readOnly)
       throw new Error(
         'This backup was made by a newer version of the app. Update the app, then import it again.',
@@ -220,7 +228,7 @@ export const useStore = create<State>((set, get) => ({
     return loaded.plan.id;
   },
   async replacePlan(plan, metaPatch) {
-    const parsed = PlanZ.parse(plan);
+    const parsed = (await loadEngine()).PlanZ.parse(plan);
     const prev = get().meta[parsed.id] ?? { syncVersion: 0, dirty: false, readOnly: false };
     const m = { ...prev, ...metaPatch, readOnly: false };
     set((s) => ({

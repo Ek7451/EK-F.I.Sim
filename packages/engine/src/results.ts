@@ -2,7 +2,7 @@
 import type { DataHeader } from '@fisim/data';
 import { compilePlan, type Compiled } from './compile';
 import type { EngineData } from './data';
-import { fixedPath, runPath, type PathResult, type YearRecord } from './projection';
+import { fixedPath, runPath, toReal, type PathResult, type YearRecord } from './projection';
 import { applyScenario, type Plan } from './schema';
 
 export interface ProjectionSummary {
@@ -10,7 +10,7 @@ export interface ProjectionSummary {
   endYear: number;
   success: boolean;
   failedYear: number | null;
-  /** Year investable assets first reach 25x living expenses (or the plan's FI milestone). */
+  /** Year investable assets first reach 25x that year’s spending, see fiSpending (or the plan's FI milestone). */
   fiYear: number | null;
   retirementYear: number | null;
   endingNetWorthReal: number;
@@ -20,6 +20,9 @@ export interface ProjectionSummary {
   currentNetWorth: number;
   savingsRate: number;
   averageEffectiveTaxRate: number;
+  /** Ending net-worth goal in today's dollars (0 = none), and whether the expected path meets it. */
+  legacyGoalReal: number;
+  legacyGoalMet: boolean;
 }
 
 export interface ProjectionResult {
@@ -32,6 +35,14 @@ export interface ProjectionResult {
   milestoneYears: Record<string, number>;
   warnings: string[];
   solver: PathResult['solver'];
+}
+
+/**
+ * The spending the 25x (4% rule) independence test covers: living costs, housing, debt payments and healthcare.
+ * Taxes and one-off purchases are left out.
+ */
+export function fiSpending(r: YearRecord): number {
+  return r.expenses.living + r.expenses.housing + r.expenses.debtService + r.expenses.healthcare.total;
 }
 
 export function project(plan: Plan, data: EngineData, scenarioId: string | null = null): ProjectionResult {
@@ -50,10 +61,11 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
   let taxSum = 0;
   let grossSum = 0;
   for (const r of recs) {
-    const real = r.netWorth / r.cpi;
+    const real = toReal(r.netWorth, r);
     if (real > peak) peak = real;
-    spend += r.expenses.total / r.cpi;
-    if (fiYear === null && r.expenses.living > 0 && r.investable >= 25 * r.expenses.living) fiYear = r.year;
+    spend += toReal(r.expenses.total, r, 'flow');
+    const fiSpend = fiSpending(r);
+    if (fiYear === null && fiSpend > 0 && r.investable >= 25 * fiSpend) fiYear = r.year;
     taxSum += r.taxes.total;
     grossSum += r.income.total + r.withdrawals.pretax + r.rothConversion;
   }
@@ -79,13 +91,16 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
       failedYear: res.failedYear,
       fiYear,
       retirementYear,
-      endingNetWorthReal: last ? last.netWorth / last.cpi : 0,
+      endingNetWorthReal: last ? toReal(last.netWorth, last) : 0,
       peakNetWorthReal: peak,
       lifetimeTaxReal: res.lifetimeTax,
       lifetimeSpendingReal: spend,
       currentNetWorth: first ? first.check.opening + first.assets - first.debts : 0,
       savingsRate: first && first.income.total > 0 ? Math.max(0, saved0) / first.income.total : 0,
       averageEffectiveTaxRate: grossSum > 0 ? taxSum / grossSum : 0,
+      legacyGoalReal: plan.strategies.estate.legacyGoal / 100,
+      legacyGoalMet:
+        (last ? toReal(last.netWorth, last) : 0) >= plan.strategies.estate.legacyGoal / 100 - 0.5,
     },
     estate: res.estate,
     milestoneYears: res.milestoneYears,
@@ -94,15 +109,28 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
   };
 }
 
-/** One line of an explanation: a label and a signed amount in nominal dollars. */
+/** One line of an explanation: a label and a signed amount, in the unit the explanation was asked for. */
 export interface ExplainLine {
   label: string;
   amount: number;
 }
 
-/** Break a year's cash flow into the pieces behind it (UX-04 tooltips, RPT-06). */
-export function explainCashFlow(r: YearRecord): { result: number; lines: ExplainLine[] } {
-  const lines: ExplainLine[] = [];
+/**
+ * Which dollars an explanation is in. Nominal is the money of that year; real is today's dollars, using the
+ * same convention as the rest of the app (flows by that year’s price level, year-end balances by the
+ * year-end price level), so the lines add up to the figure shown beside them.
+ */
+export type ExplainUnit = 'nominal' | 'real';
+
+const scaleLines = (lines: ExplainLine[], k: number): ExplainLine[] =>
+  lines.map((l) => ({ label: l.label, amount: l.amount / k }));
+
+/** Break a year’s cash flow into the pieces behind it (UX-04 tooltips, RPT-06). */
+export function explainCashFlow(
+  r: YearRecord,
+  unit: ExplainUnit = 'nominal',
+): { result: number; lines: ExplainLine[] } {
+  let lines: ExplainLine[] = [];
   const add = (label: string, amount: number): void => {
     if (Math.abs(amount) >= 0.5) lines.push({ label, amount });
   };
@@ -123,24 +151,43 @@ export function explainCashFlow(r: YearRecord): { result: number; lines: Explain
   add('Living expenses', -r.expenses.living);
   add('Housing and debt payments', -(r.expenses.housing + r.expenses.debtService + r.expenses.purchases));
   add('Healthcare', -r.expenses.healthcare.total);
+  if (unit === 'real') lines = scaleLines(lines, r.cpi);
   const result = lines.reduce((s, l) => s + l.amount, 0);
   return { result, lines };
 }
 
-export function explainNetWorth(r: YearRecord): { result: number; lines: ExplainLine[] } {
-  const lines: ExplainLine[] = [
-    { label: 'Investments at start of year', amount: r.check.opening },
-    { label: 'Added', amount: r.check.deposits },
-    { label: 'Withdrawn', amount: -r.check.withdrawals },
-    { label: 'Investment returns', amount: r.returns },
-    { label: 'Fees', amount: -r.fees },
-    { label: 'Property and other assets', amount: r.assets },
-    { label: 'Debts', amount: -r.debts },
-  ].filter((l) => Math.abs(l.amount) >= 0.5);
-  return { result: r.netWorth, lines };
+/**
+ * Year-end net worth from the start-of-year investments. In today's dollars the opening balance is valued at
+ * the start-of-year price level and everything else at the year-end level, so a line for the year’s inflation
+ * keeps the sum equal to year-end net worth in today's dollars.
+ */
+export function explainNetWorth(
+  r: YearRecord,
+  unit: ExplainUnit = 'nominal',
+): { result: number; lines: ExplainLine[] } {
+  const k = unit === 'real' ? r.cpiEnd : 1;
+  const raw: ExplainLine[] = [
+    {
+      label: 'Investments at start of year',
+      amount: unit === 'real' ? r.check.opening / r.cpi : r.check.opening,
+    },
+    ...(unit === 'real'
+      ? [{ label: 'Inflation during the year', amount: r.check.opening / r.cpiEnd - r.check.opening / r.cpi }]
+      : []),
+    { label: 'Added', amount: r.check.deposits / k },
+    { label: 'Withdrawn', amount: -r.check.withdrawals / k },
+    { label: 'Investment returns', amount: r.returns / k },
+    { label: 'Fees', amount: -r.fees / k },
+    { label: 'Property and other assets', amount: r.assets / k },
+    { label: 'Debts', amount: -r.debts / k },
+  ];
+  return { result: r.netWorth / k, lines: raw.filter((l) => Math.abs(l.amount) >= 0.5) };
 }
 
-export function explainTax(r: YearRecord): { result: number; lines: ExplainLine[] } {
+export function explainTax(
+  r: YearRecord,
+  unit: ExplainUnit = 'nominal',
+): { result: number; lines: ExplainLine[] } {
   const t = r.taxes;
   const lines: ExplainLine[] = [
     { label: 'Tax at ordinary rates', amount: t.ordinaryTax },
@@ -153,7 +200,9 @@ export function explainTax(r: YearRecord): { result: number; lines: ExplainLine[
     { label: 'Early-withdrawal penalties', amount: t.penalties },
     { label: 'Premium tax credit', amount: -t.ptc },
   ].filter((l) => Math.abs(l.amount) >= 0.5);
-  return { result: t.total, lines };
+  return unit === 'real'
+    ? { result: t.total / r.cpi, lines: scaleLines(lines, r.cpi) }
+    : { result: t.total, lines };
 }
 
 // ------------------------------------------------------------------ methodology (RPT-06)
@@ -277,7 +326,7 @@ export function methodology(data: EngineData, year: number): MethodEntry[] {
       title: 'Medicare and IRMAA',
       featureIds: ['HC-09', 'TAX-10'],
       summary:
-        'Part B and Part D premiums rise in steps with income from two years earlier. Supplement, drug-plan and dental figures start from typical values that you can edit.',
+        'Part B and Part D premiums rise in steps with income from two years earlier. If you choose to appeal after retiring, the year’s own income is used once household pay drops by 10% or more (a life-changing event, form SSA-44). Supplement, drug-plan and dental figures start from typical values that you can edit.',
       formula: 'premium tier(year) = table lookup of MAGI(year − 2)',
       sources: src('Medicare premiums and IRMAA', pick(data.medicare)),
     },
@@ -298,9 +347,36 @@ export function methodology(data: EngineData, year: number): MethodEntry[] {
       title: 'Chance of success',
       featureIds: ['SIM-02', 'SIM-03', 'SIM-10'],
       summary:
-        'Each run strings together blocks of real historical years (stocks, bonds, cash and inflation move together as they did), or draws from a correlated lognormal model. Success means every year’s spending was funded. The same seed always gives the same answer.',
+        'Each run strings together blocks of real historical years (stocks, bonds, cash and inflation move together as they did), or draws from a correlated lognormal model. Both centre on the same expected returns as the single projection, unless you choose to replay history with its own averages. Success means every year’s spending was funded, and, if you ask for it, that the plan ends with at least your goal. The same seed always gives the same answer.',
       formula: 'success rate = runs with no shortfall ÷ runs',
       sources: [...src('Market history', data.market), ...src('Return assumptions', data.returnAssumptions)],
+    },
+    {
+      id: 'spending-rules',
+      title: 'Flexible spending and essential costs',
+      featureIds: ['STRAT-01'],
+      summary:
+        'A flexible rule (guardrails, a share of the portfolio, or a floor and ceiling) sets a target for the year. A cut never touches expenses marked essential: the flexible expenses absorb it, down to nothing. A raise applies to everything.',
+      formula: 'flexible × k = target − essential, k ≥ 0',
+      sources: [],
+    },
+    {
+      id: 'fi',
+      title: 'Financially independent',
+      featureIds: ['SIM-01'],
+      summary:
+        'The first year investments reach 25 times that year’s spending on living costs, housing, debt payments and healthcare (taxes and one-off purchases left out), the common 4% rule of thumb. A financial-independence milestone, if you set one, takes its place.',
+      formula: 'investments ≥ 25 × (living + housing + debt payments + healthcare)',
+      sources: [],
+    },
+    {
+      id: 'part-year',
+      title: 'Pay that ends at a birthday',
+      featureIds: ['SIM-01'],
+      summary:
+        'Pay that ends at an age (directly or through a retirement milestone set by age) runs up to that birthday, so the final year earns the share of the year before the birthday. The Social Security earnings record uses the same share.',
+      formula: 'final-year pay = yearly pay × (birth month − 1 + day ÷ 31) ÷ 12',
+      sources: [],
     },
     {
       id: 'backtest',
@@ -342,6 +418,7 @@ const CSV_COLUMNS: [string, (r: YearRecord) => number | string][] = [
   ['state', (r) => r.state],
   ['tax_data', (r) => r.dataStatus],
   ['cpi_factor', (r) => r.cpi.toFixed(6)],
+  ['cpi_end_factor', (r) => r.cpiEnd.toFixed(6)],
   ['income_total', (r) => r.income.total],
   ['wages', (r) => r.income.wages + r.income.selfEmployment],
   ['social_security', (r) => r.income.socialSecurity],
@@ -371,7 +448,7 @@ const CSV_COLUMNS: [string, (r: YearRecord) => number | string][] = [
   ['other_assets', (r) => r.assets],
   ['debts', (r) => r.debts],
   ['net_worth', (r) => r.netWorth],
-  ['net_worth_todays_dollars', (r) => r.netWorth / r.cpi],
+  ['net_worth_todays_dollars', (r) => toReal(r.netWorth, r)],
   ['shortfall', (r) => r.shortfall],
 ];
 

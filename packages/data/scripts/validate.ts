@@ -16,7 +16,7 @@ const Header = z
     sha256: z.string().regex(/^[0-9a-f]{64}$/, 'sha256 must be 64 hex characters'),
     schema: z.string().regex(/^[a-z0-9-]+\.v\d+$/, 'schema must look like "name.v1"'),
     notes: z.string().optional(),
-    fieldFlags: z.record(z.string()).optional(),
+    fieldFlags: z.record(z.string(), z.string()).optional(),
   })
   .passthrough();
 

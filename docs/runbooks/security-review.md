@@ -74,7 +74,7 @@ the result.
 | 2.7  | Service worker          | Served from the app origin with a correct scope; it caches only same-origin responses; it does not cache sync API responses.                                                                                                                                                                                    |
 | 2.8  | Worker CORS             | `Access-Control-Allow-Origin` is the exact app origin (production and the preview pattern), never `*`. Credentials are allowed only for those origins.                                                                                                                                                          |
 | 2.9  | Worker logging          | The Worker never logs request bodies (plan §12.2). Read the code and tail the logs while pushing a plan: `pnpm --filter @fisim/sync-worker exec wrangler tail --env preview`.                                                                                                                                   |
-| 2.10 | CSP in tests            | An e2e check fails on any CSP violation report, so regressions are caught in CI.                                                                                                                                                                                                                                |
+| 2.10 | CSP in tests            | An e2e check fails on any CSP violation report, so regressions are caught by `pnpm e2e` (run locally).                                                                                                                                                                                                          |
 
 ## 3. Sync API authorisation
 

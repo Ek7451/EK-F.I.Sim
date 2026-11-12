@@ -96,8 +96,10 @@ research/            Local-only design reference material. Git-ignored; never co
 
 - **CI** (`.github/workflows/ci.yml`) runs on every pull request: lint and format, typecheck, dependency
   audit, unit and property tests, data validation, the validation suite, the Tax-Calculator fixture check,
-  build with an initial-JS budget, Playwright (flows, tours, axe), Lighthouse budgets
-  (`lighthouserc.json`), the engine benchmark, and a Cloudflare Pages preview deploy.
+  build with an initial-JS budget, the engine benchmark, and a Cloudflare Pages preview deploy.
+- **Browser tests and Lighthouse run locally, not in CI:** `pnpm build && pnpm e2e` (Playwright: flows,
+  tours, axe) and `pnpm build && pnpm lighthouse` (budgets in `lighthouserc.json`). Run both before a
+  release.
 - **Deploy** (`.github/workflows/deploy.yml`) runs the same checks on every push to `main`, then applies D1
   migrations, deploys the sync Worker and publishes the web app to Cloudflare Pages.
 - **Data ingest** (`.github/workflows/ingest.yml`) refreshes market history each January and on demand, and

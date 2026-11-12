@@ -1,5 +1,5 @@
 import { ACCOUNT_TYPES, type Account, type Asset, type Debt } from '@fisim/engine';
-import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField, Stat, Switch, TextField, formatMoney } from '@fisim/ui';
+import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField, Stat, Switch, TextField, formatMoney, IconTile } from '@fisim/ui';
 import { useState, type ReactNode } from 'react';
 import { ACCOUNT_LABELS, AllocationEditor, EditDialog, EmptyState, GrowthField, WhenField, describeWhen, ownerOptions } from '../../lib/fields';
 import { PageHead } from '../../shell/Shell';
@@ -9,6 +9,27 @@ const PRETAX = ['trad401k', 'trad403b', 'gov457b', 'tradIra', 'sepIra', 'simpleI
 const HAS_BASIS = ['taxable', 'annuity', 'iBond', 'plan529'];
 const PAYROLL = ['trad401k', 'trad403b', 'gov457b', 'roth401k', 'solo401k', 'simpleIra', 'sepIra', 'hsa'];
 const CASHLIKE = ['cash', 'tBill', 'iBond'];
+
+/** Icon for each account type, by what the account is for. */
+const ACCOUNT_ICON: Record<string, string> = {
+  taxable: 'trendUp',
+  cash: 'piggy',
+  tBill: 'piggy',
+  iBond: 'shield',
+  trad401k: 'briefcase',
+  trad403b: 'briefcase',
+  gov457b: 'briefcase',
+  solo401k: 'briefcase',
+  sepIra: 'briefcase',
+  simpleIra: 'briefcase',
+  tradIra: 'bank',
+  inheritedIra: 'bank',
+  roth401k: 'leaf',
+  rothIra: 'leaf',
+  hsa: 'heart',
+  plan529: 'school',
+  annuity: 'clock',
+};
 
 export function SnapshotPage(): ReactNode {
   const plan = usePlan()!;
@@ -48,6 +69,7 @@ export function SnapshotPage(): ReactNode {
         <ul className="lv-list">
           {plan.accounts.map((x) => (
             <li key={x.id} data-tour="account-row">
+              <IconTile icon={ACCOUNT_ICON[x.type] ?? 'bank'} />
               <div className="lv-grow">
                 <div className="lv-ellipsis"><strong>{x.name}</strong></div>
                 <div className="lv-muted lv-small">{ACCOUNT_LABELS[x.type]} · {ownerName(x.ownerId)}{x.contribution ? ' · payroll savings on' : ''}</div>
@@ -65,6 +87,7 @@ export function SnapshotPage(): ReactNode {
           <ul className="lv-list">
             {plan.assets.map((x) => (
               <li key={x.id}>
+                <IconTile icon={x.kind === 'vehicle' ? 'car' : 'estate'} kind="milestone" />
                 <div className="lv-grow"><strong>{x.name}</strong><div className="lv-muted lv-small">{x.purchase ? `Planned purchase: ${describeWhen(plan, x.purchase.when)}` : x.kind === 'primaryHome' ? 'Primary home' : x.kind}{x.sale ? ` · sells ${describeWhen(plan, x.sale.when)}` : ''}</div></div>
                 <span className="lv-num">{formatMoney(x.value / 100)}</span>
                 <Button size="sm" icon="edit" label={`Edit ${x.name}`} onClick={() => setAsset(x.id)} />
@@ -72,11 +95,12 @@ export function SnapshotPage(): ReactNode {
             ))}
           </ul>
         </Card>
-        <Card title="Debts" data-tour="debts" actions={<Button icon="plus" data-tour="add-debt" onClick={() => { const id = newId('d'); update((d) => { d.debts.push({ id, ownerId: d.people[0].id, name: 'Loan', kind: 'personal', principal: 0, rate: 0.06, payment: 0, termMonths: 60, revolvingPayPct: 0.02, interestDeductible: false, refinance: [] }); }); setDebt(id); }}>Add</Button>}>
+        <Card title="Debts" data-tour="debts" actions={<Button icon="plus" data-tour="add-debt" onClick={() => { const id = newId('d'); update((d) => { d.debts.push({ id, ownerId: d.people[0].id, name: 'Loan', kind: 'personal', principal: 0, rate: 0.06, payment: 0, termMonths: 60, revolvingPayPct: 0.02, refinance: [] }); }); setDebt(id); }}>Add</Button>}>
           {plan.debts.length === 0 ? <p className="lv-muted">Mortgages, student loans, car loans and card balances.</p> : null}
           <ul className="lv-list">
             {plan.debts.map((x) => (
               <li key={x.id}>
+                <IconTile icon={x.kind === 'mortgage' ? 'estate' : x.kind === 'student' ? 'school' : x.kind === 'auto' ? 'car' : 'card'} kind="debt" />
                 <div className="lv-grow"><strong>{x.name}</strong><div className="lv-muted lv-small">{(x.rate * 100).toFixed(2)}% · {x.payment ? `${formatMoney(x.payment / 100)}/mo` : x.termMonths ? `${x.termMonths} months left` : 'interest only'}</div></div>
                 <span className="lv-num">{formatMoney(x.principal / 100)}</span>
                 <Button size="sm" icon="edit" label={`Edit ${x.name}`} onClick={() => setDebt(x.id)} />
@@ -214,7 +238,7 @@ export function SnapshotPage(): ReactNode {
               )}
               {plan.assets.length ? <SelectField label="Secured by" value={b.linkedAssetId ?? 'none'} options={[{ value: 'none', label: 'Nothing' }, ...plan.assets.map((x) => ({ value: x.id, label: x.name }))]} onChange={(v) => setB((x) => { x.linkedAssetId = v === 'none' ? undefined : v; })} /> : null}
             </div>
-            <Switch label="Interest is deductible (home mortgage)" checked={b.interestDeductible || b.kind === 'mortgage'} onChange={(v) => setB((x) => { x.interestDeductible = v; })} />
+            <Switch label="Interest is deductible (home mortgage)" checked={b.interestDeductible ?? b.kind === 'mortgage'} onChange={(v) => setB((x) => { x.interestDeductible = v; })} />
             <WhenField plan={plan} label="Starts" optional emptyLabel="Already have it" value={b.start} onChange={(v) => setB((x) => { x.start = v; })} />
             <div className="lv-spread"><span className="lv-label">Refinancing</span><Button size="sm" icon="plus" onClick={() => setB((x) => { x.refinance.push({ when: { type: 'year', year: plan.settings.startYear + 2 }, rate: Math.max(0, x.rate - 0.01), termYears: 30, costPct: 0.02 }); })}>Add a refinance</Button></div>
             {b.refinance.map((r, i) => (

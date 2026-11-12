@@ -127,7 +127,44 @@ export function spousalFactor(claimMonths: number, fra: number): number {
   return 1 - (Math.min(early, 36) * 25) / 3600 - (Math.max(0, early - 36) * 5) / 1200;
 }
 
-/** Annual benefit withheld by the retirement earnings test. */
+/**
+ * Survivor-benefit factor (widow(er)'s reduction): 100% at the survivor FRA, falling linearly to 71.5% at age 60
+ * (SSA POMS RS 00615.301). `survivorFra` is the FRA for survivors, which runs two birth years behind the retirement FRA.
+ */
+export function survivorFactor(ageMonths: number, survivorFra: number): number {
+  if (ageMonths >= survivorFra) return 1;
+  const m = Math.max(720, ageMonths);
+  return 1 - (0.285 * (survivorFra - m)) / Math.max(1, survivorFra - 720);
+}
+
+/**
+ * Survivor benefit (annual) from the deceased's PIA and record, before the survivor's own age reduction is applied:
+ * - claimed with delayed credits, or died past FRA without claiming: the PIA plus credits earned up to the claim or
+ *   the death (never past 70);
+ * - otherwise the full PIA, and if the deceased took a reduced benefit the result is capped at the widow(er)'s limit,
+ *   the larger of what they received and 82.5% of the PIA (POMS RS 00615.320).
+ */
+export function survivorBase(
+  piaAnnual: number,
+  fra: number,
+  claimed: boolean,
+  claimMonths: number,
+  deathAgeMonths: number,
+): { base: number; limit: number } {
+  if (piaAnnual <= 0) return { base: 0, limit: 0 };
+  const f = claimed
+    ? claimFactor(claimMonths, fra)
+    : deathAgeMonths > fra
+      ? claimFactor(deathAgeMonths, fra)
+      : 1;
+  if (f < 1) return { base: piaAnnual, limit: Math.max(piaAnnual * f, 0.825 * piaAnnual) };
+  return { base: piaAnnual * f, limit: Infinity };
+}
+
+/**
+ * Annual benefit withheld by the retirement earnings test. In the year FRA is reached only the months before FRA
+ * count: earnings are prorated to those months and only those months' benefits can be withheld.
+ */
 export function earningsTestWithholding(
   annualBenefit: number,
   earnings: number,
@@ -137,7 +174,9 @@ export function earningsTestWithholding(
   exemptYearOfFra: number,
 ): number {
   if (ageMonthsAtYearStart >= fra) return 0;
-  if (ageMonthsAtYearStart + 12 > fra)
-    return Math.min(annualBenefit, Math.max(0, earnings - exemptYearOfFra) / 3);
+  if (ageMonthsAtYearStart + 12 > fra) {
+    const share = (fra - ageMonthsAtYearStart) / 12;
+    return Math.min(annualBenefit * share, Math.max(0, earnings * share - exemptYearOfFra) / 3);
+  }
   return Math.min(annualBenefit, Math.max(0, earnings - exemptUnderFra) / 2);
 }

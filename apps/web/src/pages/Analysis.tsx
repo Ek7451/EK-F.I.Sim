@@ -19,6 +19,7 @@ import { Chart, axis, short, tooltip } from '../charts/Chart';
 import { useMonteCarlo, useProjection, useProjectionOf } from '../engine/useResults';
 import { ACCOUNT_LABELS } from '../lib/fields';
 import { exportCsv, exportPdf } from '../lib/files';
+import { fundedStat } from '../lib/outcome';
 import { DISCLAIMER } from '../shell/nav';
 import { PageHead } from '../shell/Shell';
 import { getSetting, setSetting } from '../state/db';
@@ -141,7 +142,7 @@ export function ComparePage(): ReactNode {
     ['Lifetime tax', (r) => r.summary.lifetimeTaxReal, formatMoney, false],
     ['Lifetime spending', (r) => r.summary.lifetimeSpendingReal, formatMoney, true],
     ['Average tax rate', (r) => r.summary.averageEffectiveTaxRate, (v) => formatPct(v, 1), false],
-    ['Net to heirs', (r) => r.estate.netToHeirs / (r.records.at(-1)?.cpi ?? 1), formatMoney, true],
+    ['Net to heirs', (r) => r.estate.netToHeirs / (r.records.at(-1)?.cpiEnd ?? 1), formatMoney, true],
     [
       'Roth conversions',
       (r) => r.records.reduce((t, x) => t + x.rothConversion / x.cpi, 0),
@@ -163,7 +164,7 @@ export function ComparePage(): ReactNode {
       : [];
   const at = (r: ProjectionResult, y: number): number | null => {
     const x = r.records.find((q) => q.year === y);
-    return x ? Math.round(x.netWorth / x.cpi) : null;
+    return x ? Math.round(x.netWorth / x.cpiEnd) : null;
   };
   return (
     <>
@@ -341,9 +342,9 @@ export function ComparePage(): ReactNode {
                 </thead>
                 <tbody>
                   <tr>
-                    <th scope="row">Spending funded</th>
-                    <td>{A.summary.success ? 'Every year' : `Until ${A.summary.failedYear}`}</td>
-                    <td>{B.summary.success ? 'Every year' : `Until ${B.summary.failedYear}`}</td>
+                    <th scope="row">Spending covered</th>
+                    <td>{fundedStat(A).value}</td>
+                    <td>{fundedStat(B).value}</td>
                     <td />
                   </tr>
                   <tr>
@@ -778,7 +779,7 @@ export function ReportsPage(): ReactNode {
                     <td>{formatMoney(r.withdrawals.total / r.cpi)}</td>
                     <td>{formatMoney(r.expenses.total / r.cpi)}</td>
                     <td>{formatMoney(r.taxes.total / r.cpi)}</td>
-                    <td>{formatMoney(r.netWorth / r.cpi)}</td>
+                    <td>{formatMoney(r.netWorth / r.cpiEnd)}</td>
                   </tr>
                 ))}
               </tbody>

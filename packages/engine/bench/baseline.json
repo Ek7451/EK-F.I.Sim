@@ -1,11 +1,12 @@
 {
   "node": "v24.18.0",
-  "date": "2026-11-11",
+  "machine": "win32-x64 13th Gen Intel(R) Core(TM) i7-13700K v24.18.0",
+  "date": "2026-11-12",
   "results": {
-    "deterministic_60y_ms": 1.6296000000000106,
-    "deterministic_couple_ms": 1.535699999999963,
-    "montecarlo_1000_single_thread_ms": 538.3677000000002,
-    "montecarlo_1000_couple_single_thread_ms": 516.8070000000007,
-    "montecarlo_10000_estimate_4_workers_ms": 1345.9192500000006
+    "deterministic_60y_ms": 1.944500000000005,
+    "deterministic_couple_ms": 2.0961999999999534,
+    "montecarlo_1000_single_thread_ms": 664.8184999999999,
+    "montecarlo_1000_couple_single_thread_ms": 627.1351000000004,
+    "montecarlo_10000_estimate_4_workers_ms": 1662.0462499999996
   }
 }

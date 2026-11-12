@@ -124,8 +124,8 @@ importers:
         specifier: ^5.4.21
         version: 5.4.21(@types/node@22.20.5)(terser@5.51.2)
       zod:
-        specifier: ^3.25.76
-        version: 3.25.76
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/engine:
     dependencies:
@@ -133,11 +133,8 @@ importers:
         specifier: workspace:*
         version: link:../data
       zod:
-        specifier: ^3.23.8
-        version: 3.25.76
-      zod-to-json-schema:
-        specifier: ^3.23.5
-        version: 3.25.2(zod@3.25.76)
+        specifier: ^4.6.7
+        version: 4.6.7
 
   packages/ui:
     dependencies:
@@ -3489,16 +3486,11 @@ packages:
   youch@3.3.4:
     resolution: {integrity: sha512-UeVBXie8cA35DS6+nBkls68xaBBXCye0CNznrhszZjTbRVnJKQuNsyLKBTTL4ln1o1rh2PKtv35twV7irj5SEg==}
 
-  zod-to-json-schema@3.25.2:
-    resolution: {integrity: sha512-O/PgfnpT1xKSDeQYSCfRI5Gy3hPf91mKVDuYLUHZJMiDFptvP41MSnWofm8dnCm0256ZNfZIM7DSzuSMAFnjHA==}
-    peerDependencies:
-      zod: ^3.25.28 || ^4
-
   zod@3.22.3:
     resolution: {integrity: sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==}
 
-  zod@3.25.76:
-    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+  zod@4.6.7:
+    resolution: {integrity: sha512-g8W2D2kU6a8untc053fX1uVBKzM7yqAxW/3zwk83+6RyF2+SKOuV+c0wBDhUwzV1PaGapmZH+rmcUzPf+3CGwg==}
 
   zrender@5.6.1:
     resolution: {integrity: sha512-OFXkDJKcrlx5su2XbzJvj/34Q3m6PvyCZkVPHGYpcCJ52ek4U/ymZyfuV1nKE23AyBJ51E/6Yr0mhZ7xGTO4ag==}
@@ -7014,13 +7006,9 @@ snapshots:
       mustache: 4.2.0
       stacktracey: 2.2.0
 
-  zod-to-json-schema@3.25.2(zod@3.25.76):
-    dependencies:
-      zod: 3.25.76
-
   zod@3.22.3: {}
 
-  zod@3.25.76: {}
+  zod@4.6.7: {}
 
   zrender@5.6.1:
     dependencies:

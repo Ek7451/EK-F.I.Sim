@@ -1,5 +1,5 @@
 import type { Milestone, MilestoneEffect } from '@fisim/engine';
-import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField, Switch, TextField, formatMoney } from '@fisim/ui';
+import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField, Switch, TextField, formatMoney, IconTile } from '@fisim/ui';
 import { useRef, useState, type ReactNode } from 'react';
 import { useProjection } from '../../engine/useResults';
 import { EditDialog, EmptyState, STATES, STATUS_LABELS, ownerOptions } from '../../lib/fields';
@@ -112,6 +112,7 @@ export function TimelinePage(): ReactNode {
             const y = yearOf(x);
             return (
               <li key={x.id} data-tour="milestone-row">
+                <IconTile icon={x.kind === 'retirement' ? 'sun' : x.kind === 'fi' ? 'target' : x.when.type === 'condition' ? 'sparkle' : 'flag'} kind="milestone" />
                 <div className="lv-grow">
                   <strong>{x.name}</strong> {x.when.type === 'condition' ? <Badge tone="warn">When a condition is met</Badge> : null}
                   <div className="lv-muted lv-small">{y ?? 'Not reached in this projection'}{x.effects.length ? ` · ${x.effects.map((e) => effectText(plan, e)).join('; ')}` : ''}</div>

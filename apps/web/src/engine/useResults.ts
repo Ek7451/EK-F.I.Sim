@@ -1,6 +1,6 @@
 /** Hooks that keep results in step with the plan: instant deterministic recompute, background Monte Carlo. */
 import type { BacktestResult, McSummary, Plan, ProjectionResult } from '@fisim/engine';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { logError } from '../state/db';
 import { usePlan, useStore } from '../state/store';
@@ -8,7 +8,9 @@ import { backtest, monteCarlo, project, type McHandle } from './pool';
 
 interface ResultState {
   projection: ProjectionResult | null;
-  projectionKey: string;
+  /** The plan object and scenario the current projection was computed from. */
+  projectionPlan: Plan | null;
+  projectionScenario: string | null;
   ms: number;
   error: string | null;
   mc: McSummary | null;
@@ -18,7 +20,8 @@ interface ResultState {
 }
 const useResults = create<ResultState>(() => ({
   projection: null,
-  projectionKey: '',
+  projectionPlan: null,
+  projectionScenario: null,
   ms: 0,
   error: null,
   mc: null,
@@ -30,42 +33,70 @@ const useResults = create<ResultState>(() => ({
 const keyOf = (plan: Plan, scenarioId: string | null): string =>
   `${plan.id}|${plan.updatedAt}|${scenarioId ?? ''}|${JSON.stringify(plan).length}`;
 
+// One projection request per (plan object, scenario), however many components are listening.
 let seq = 0;
-/** Deterministic projection for the plan on screen; recomputes whenever the plan changes. */
+let requested: { plan: Plan; scenarioId: string | null } | null = null;
+function requestProjection(plan: Plan, scenarioId: string | null): void {
+  if (requested && requested.plan === plan && requested.scenarioId === scenarioId) return;
+  requested = { plan, scenarioId };
+  const mine = ++seq;
+  useResults.setState({ error: null });
+  project(plan, scenarioId)
+    .then(({ result, ms }) => {
+      if (mine === seq)
+        useResults.setState({
+          projection: result,
+          projectionPlan: plan,
+          projectionScenario: scenarioId,
+          ms,
+          error: null,
+        });
+    })
+    .catch((e: unknown) => {
+      const msg = e instanceof Error ? e.message : String(e);
+      void logError(`projection: ${msg}`);
+      if (mine === seq) {
+        useResults.setState({ error: msg });
+        // Allow the same plan to be retried after a failure.
+        requested = null;
+      }
+    });
+}
+
+/** Deterministic projection for the plan on screen; recomputes whenever the plan or scenario changes. */
 export function useProjection(): {
   result: ProjectionResult | null;
   ms: number;
   error: string | null;
+  /** True while the result shown is from an earlier version of the plan (a recompute is in flight). */
   stale: boolean;
 } {
   const plan = usePlan();
   const scenarioId = useStore((s) => s.scenarioId);
-  const r = useResults();
-  const planRef = useRef<Plan | null>(null);
+  // Narrow subscriptions: Monte Carlo progress must not re-render projection screens.
+  const projection = useResults((s) => s.projection);
+  const projectionPlan = useResults((s) => s.projectionPlan);
+  const projectionScenario = useResults((s) => s.projectionScenario);
+  const ms = useResults((s) => s.ms);
+  const error = useResults((s) => s.error);
   useEffect(() => {
-    if (!plan || planRef.current === plan) return;
-    planRef.current = plan;
-    const key = keyOf(plan, scenarioId) + Math.random();
-    const mine = ++seq;
-    project(plan, scenarioId)
-      .then(({ result, ms }) => {
-        if (mine === seq) useResults.setState({ projection: result, projectionKey: key, ms, error: null });
-      })
-      .catch((e: unknown) => {
-        const msg = e instanceof Error ? e.message : String(e);
-        void logError(`projection: ${msg}`);
-        if (mine === seq) useResults.setState({ error: msg });
-      });
+    if (plan) requestProjection(plan, scenarioId);
   }, [plan, scenarioId]);
-  // A scenario switch must also trigger a recompute.
-  useEffect(() => {
-    planRef.current = null;
-  }, [scenarioId]);
-  const matches = !!plan && !!r.projection && r.projection.planId === plan.id;
-  return { result: matches ? r.projection : null, ms: r.ms, error: r.error, stale: !matches };
+  const matches =
+    !!plan && !!projection && projection.planId === plan.id && projectionScenario === scenarioId;
+  return {
+    result: matches ? projection : null,
+    ms,
+    error,
+    stale: !matches || projectionPlan !== plan,
+  };
 }
 
 let handle: McHandle | null = null;
+/** How many mounted components currently want Monte Carlo results. */
+let mcConsumers = 0;
+let mcIdleTimer: ReturnType<typeof setTimeout> | null = null;
+
 /** Monte Carlo for the plan on screen. Runs when `enabled`, reruns on change, streams progress, can be cancelled. */
 export function useMonteCarlo(enabled: boolean): {
   summary: McSummary | null;
@@ -76,8 +107,27 @@ export function useMonteCarlo(enabled: boolean): {
 } {
   const plan = usePlan();
   const scenarioId = useStore((s) => s.scenarioId);
-  const r = useResults();
+  const mc = useResults((s) => (enabled ? s.mc : null));
+  const progress = useResults((s) => (enabled ? s.mcProgress : 0));
+  const running = useResults((s) => enabled && s.mcRunning);
   const [nonce, setNonce] = useState(0);
+  // Stop a run nobody is looking at, so it does not hold the workers.
+  useEffect(() => {
+    if (!enabled) return;
+    mcConsumers++;
+    if (mcIdleTimer) clearTimeout(mcIdleTimer);
+    return () => {
+      mcConsumers--;
+      if (mcConsumers > 0) return;
+      mcIdleTimer = setTimeout(() => {
+        if (mcConsumers > 0 || !useResults.getState().mcRunning) return;
+        handle?.cancel();
+        handle = null;
+        // Forget the key so the run starts again (rather than showing a partial result) next time.
+        useResults.setState({ mcRunning: false, mcKey: '' });
+      }, 500);
+    };
+  }, [enabled]);
   useEffect(() => {
     if (!enabled || !plan) return;
     const key = keyOf(plan, scenarioId) + `|${nonce}`;
@@ -106,9 +156,9 @@ export function useMonteCarlo(enabled: boolean): {
     return () => clearTimeout(t);
   }, [enabled, plan, scenarioId, nonce]);
   return {
-    summary: r.mc,
-    progress: r.mcProgress,
-    running: r.mcRunning,
+    summary: mc,
+    progress,
+    running,
     cancel: () => {
       handle?.cancel();
       useResults.setState({ mcRunning: false });

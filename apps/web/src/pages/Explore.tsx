@@ -2,6 +2,7 @@ import {
   explainCashFlow,
   explainNetWorth,
   explainTax,
+  toReal,
   type ProjectionResult,
   type YearRecord,
 } from '@fisim/engine';
@@ -10,6 +11,8 @@ import {
   Button,
   Card,
   Explain,
+  HelpTip,
+  KpiStrip,
   Notice,
   Slider,
   Stat,
@@ -19,16 +22,31 @@ import {
 } from '@fisim/ui';
 import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Chart, axis, short, tooltip } from '../charts/Chart';
+import { Chart, alpha, areaSeries, axis, kindColor, short, tooltip, tooltipCard } from '../charts/Chart';
 import { useBacktest, useMonteCarlo, useProjection } from '../engine/useResults';
+import { agesText, fundedStat, isShort } from '../lib/outcome';
 import { PageHead } from '../shell/Shell';
 import { usePlan, useUpdate } from '../state/store';
 
-/** Display helper: today's dollars or future dollars, as the plan is set. */
-export function useMoney(): { real: boolean; v: (r: YearRecord, x: number) => number; unit: string } {
+/**
+ * Display helper: today's dollars or future dollars, as the plan is set. Year-end balances (net worth,
+ * account values) are deflated by the year-end price level; money that moves during the year (income,
+ * spending, tax) by the price level of that year.
+ */
+export function useMoney(): {
+  real: boolean;
+  bal: (r: YearRecord, x: number) => number;
+  flow: (r: YearRecord, x: number) => number;
+  unit: string;
+} {
   const plan = usePlan();
   const real = (plan?.settings.display ?? 'real') === 'real';
-  return { real, v: (r, x) => (real ? x / r.cpi : x), unit: real ? "today's dollars" : 'future dollars' };
+  return {
+    real,
+    bal: (r, x) => (real ? toReal(x, r, 'balance') : x),
+    flow: (r, x) => (real ? toReal(x, r, 'flow') : x),
+    unit: real ? "today's dollars" : 'future dollars',
+  };
 }
 
 function Loading({ error }: { error: string | null }): ReactNode {
@@ -40,6 +58,35 @@ function Loading({ error }: { error: string | null }): ReactNode {
         Working out the projection…
       </p>
     </Card>
+  );
+}
+
+/** A failed recompute while an earlier result is still on screen: say so instead of showing stale numbers silently. */
+function RecomputeError({ error }: { error: string | null }): ReactNode {
+  return error ? (
+    <Notice tone="danger">
+      Your latest change could not be worked out ({error}). The figures below are from before that change.
+    </Notice>
+  ) : null;
+}
+
+/** Engine notes about a projection, folded into one row that opens on demand. */
+function Warnings({ warnings }: { warnings: string[] }): ReactNode {
+  if (!warnings.length) return null;
+  return (
+    <details className="warn-chips" data-tour="projection-warnings">
+      <summary>
+        <Badge tone="warn">
+          {warnings.length === 1 ? '1 note' : `${warnings.length} notes`} about these figures
+        </Badge>
+        <span className="lv-small lv-muted lv-ellipsis">{warnings[0]}</span>
+      </summary>
+      <ul>
+        {warnings.map((w) => (
+          <li key={w}>{w}</li>
+        ))}
+      </ul>
+    </details>
   );
 }
 
@@ -97,176 +144,293 @@ export function ProjectionPage(): ReactNode {
   const recs = result.records;
   const sel = recs.find((r) => r.year === year) ?? recs[0];
   const s = result.summary;
-  const nw = explainNetWorth(sel);
-  const cf = explainCashFlow(sel);
-  const series: [string, (r: YearRecord) => number][] = [
-    ['Cash', (r) => r.byKind.cash],
-    ['Taxable', (r) => r.byKind.taxable],
-    ['Pre-tax', (r) => r.byKind.pretax],
-    ['Roth', (r) => r.byKind.roth],
-    ['HSA and other', (r) => r.byKind.hsa + r.byKind.other],
-    ['Property (net of debt)', (r) => Math.max(0, r.assets - r.debts)],
+  const unit = m.real ? 'real' : 'nominal';
+  const nw = explainNetWorth(sel, unit);
+  const cf = explainCashFlow(sel, unit);
+  // What you own stacks up from zero, what you owe stacks down from it, and the net-worth line is the
+  // difference, so the picture adds up to the figure in the table.
+  const series: [string, (r: YearRecord) => number, Parameters<typeof kindColor>[1]][] = [
+    ['Cash', (r) => r.byKind.cash, 'cash'],
+    ['Taxable', (r) => r.byKind.taxable, 'taxable'],
+    ['Pre-tax', (r) => r.byKind.pretax, 'pretax'],
+    ['Roth', (r) => r.byKind.roth, 'roth'],
+    ['HSA and other', (r) => r.byKind.hsa + r.byKind.other, 'hsa'],
+    ['Property and other assets', (r) => r.assets, 'property'],
+    ['Debts', (r) => -r.debts, 'debts'],
   ];
   const marks = plan.milestones
     .map((ms2) => ({ name: ms2.name, year: result.milestoneYears[ms2.id] }))
     .filter((x) => x.year !== undefined);
+  const covered = fundedStat(result);
+  const endAges = agesText(recs[recs.length - 1]);
   return (
     <>
       <PageHead
         group="explore"
         title="Projection"
-        intro={`One path using your expected returns, shown in ${m.unit}. It is a single estimate, not a forecast: see Chance of success for the range.`}
+        intro={`One path on your expected returns, in ${m.unit}: an estimate, not a forecast.`}
         actions={<ProjectedBadge result={result} />}
       />
-      {result.warnings.length ? (
-        <Notice tone="warn">
-          <ul style={{ margin: 0, paddingLeft: 18 }}>
-            {result.warnings.slice(0, 4).map((w) => (
-              <li key={w}>{w}</li>
-            ))}
-          </ul>
-        </Notice>
-      ) : null}
-      <Card data-tour="projection-stats">
-        <div className="lv-grid">
-          <Stat label="Net worth today" value={formatCompact(s.currentNetWorth)} />
-          <Stat
-            label="At the end of the plan"
-            value={formatCompact(s.endingNetWorthReal)}
-            note={`${s.endYear}, today's dollars`}
-          />
-          <Stat
-            label="Financially independent"
-            value={s.fiYear ?? 'Not reached'}
-            note="Investments reach 25× yearly spending"
-            data-tour="fi-year"
-          />
-          <Stat
-            label="Spending funded"
-            value={s.success ? 'Every year' : `Until ${s.failedYear}`}
-            note={s.success ? undefined : 'On this path, money runs short'}
-          />
-        </div>
-      </Card>
-      <Card
-        title="Net worth over time"
-        actions={
-          <span className="lv-muted lv-small" data-tour="recompute-time">
-            Recalculated in {ms.toFixed(0)} ms
-          </span>
-        }
-        data-tour="net-worth-chart"
-      >
-        <Chart
-          label="Net worth by account type over time"
-          deps={[result, m.real]}
-          height={380}
-          onClick={(p) => setYear(recs[p.dataIndex]?.year ?? null)}
-          table={() => ({
-            columns: ['Year', ...series.map((x) => x[0]), 'Net worth'],
-            rows: recs.map((r) => [
-              r.year,
-              ...series.map((x) => formatMoney(m.v(r, x[1](r)))),
-              formatMoney(m.v(r, r.netWorth)),
-            ]),
-          })}
-          build={(c) => ({
-            grid: { left: 56, right: 16, top: 36, bottom: 56 },
-            legend: { type: 'scroll', top: 0, textStyle: { color: c.ink2 }, icon: 'roundRect' },
-            tooltip: { ...tooltip(c), trigger: 'axis', valueFormatter: (v: number) => formatMoney(v) },
-            xAxis: {
-              type: 'category',
-              data: recs.map((r) => r.year),
-              boundaryGap: false,
-              ...axis(c),
-              splitLine: { show: false },
-            },
-            yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
-            dataZoom: [{ type: 'inside' }],
-            series: series.map(([name, f], i) => ({
-              name,
-              type: 'line',
-              stack: 'nw',
-              symbol: 'none',
-              smooth: 0.15,
-              lineStyle: { width: 1 },
-              areaStyle: { opacity: 0.82 },
-              emphasis: { focus: 'series' },
-              data: recs.map((r) => Math.round(m.v(r, f(r)))),
-              markLine:
-                i === 0
-                  ? {
-                      symbol: 'none',
-                      silent: true,
-                      lineStyle: { color: c.ink3, type: 'dashed' },
-                      label: {
-                        color: c.ink2,
-                        fontSize: 11,
-                        formatter: '{b}',
-                        rotate: 0,
-                        position: 'insideEndTop',
-                      },
-                      data: marks.map((x) => ({ name: x.name, xAxis: String(x.year) })),
-                    }
-                  : undefined,
-            })),
-          })}
+      <RecomputeError error={error} />
+      <Warnings warnings={result.warnings} />
+      <KpiStrip data-tour="projection-stats">
+        <Stat
+          icon="wallet"
+          label="Net worth today"
+          value={formatCompact(s.currentNetWorth)}
+          note={`Start of ${s.startYear}; the chart shows each year's end`}
         />
-      </Card>
-      <div className="two-col">
-        <Card title={`In ${sel.year}`} data-tour="year-detail">
-          <YearPicker records={recs} year={sel.year} onChange={setYear} />
-          <div className="lv-grid" style={{ marginTop: 16 }}>
-            <div className="lv-row" style={{ flexWrap: 'nowrap' }}>
-              <Stat label="Net worth" value={formatCompact(m.v(sel, sel.netWorth))} />
+        <Stat
+          icon="estate"
+          label="Left at the end of the plan"
+          value={formatCompact(s.endingNetWorthReal)}
+          delta={
+            s.legacyGoalReal > 0
+              ? {
+                  dir: s.legacyGoalMet ? 'up' : 'down',
+                  text: `${s.legacyGoalMet ? 'Meets' : 'Short of'} your ${formatCompact(s.legacyGoalReal)} goal`,
+                }
+              : undefined
+          }
+          note={`Net worth in ${s.endYear} (${endAges}), today's dollars`}
+        />
+        <Stat
+          icon="target"
+          label="Financially independent"
+          value={s.fiYear ?? 'Not reached'}
+          note="Investments reach 25× a year's spending, with housing and healthcare"
+          data-tour="fi-year"
+        />
+        <Stat
+          icon="check"
+          label="Spending covered"
+          value={covered.value}
+          note={covered.note}
+          data-tour="spending-covered"
+        />
+      </KpiStrip>
+      <div className="chart-ledger">
+        <Card
+          title="Net worth over time"
+          actions={
+            <span className="lv-muted lv-small" data-tour="recompute-time">
+              {m.unit} · recalculated in {ms.toFixed(0)} ms
+            </span>
+          }
+          data-tour="net-worth-chart"
+        >
+          <Chart
+            label="Net worth by account type over time"
+            deps={[result, m.real]}
+            height="var(--chart-h)"
+            onClick={(p) => setYear(recs[p.dataIndex]?.year ?? null)}
+            footer={
+              <p className="lv-muted lv-small funded-key">
+                <span className="funded-swatch" data-short="false" aria-hidden="true" /> Spending covered{' '}
+                <span className="funded-swatch" data-short="true" aria-hidden="true" /> Money runs short.{' '}
+                {covered.note}.
+              </p>
+            }
+            table={() => ({
+              columns: ['Year', ...series.map((x) => x[0]), 'Net worth', 'Spending covered'],
+              rows: recs.map((r) => [
+                r.year,
+                ...series.map((x) => formatMoney(m.bal(r, x[1](r)))),
+                formatMoney(m.bal(r, r.netWorth)),
+                isShort(r) ? `Short by ${formatMoney(m.flow(r, r.shortfall))}` : 'Yes',
+              ]),
+            })}
+            build={(c) => ({
+              grid: [
+                { left: 52, right: 12, top: 34, bottom: 74 },
+                // A thin strip under the year labels: one block per year, marked when spending ran short.
+                { left: 52, right: 12, height: 6, bottom: 46 },
+              ],
+              legend: { type: 'scroll', top: 0, left: 0, data: [...series.map((x) => x[0]), 'Net worth'] },
+              tooltip: {
+                ...tooltip(c),
+                trigger: 'axis',
+                formatter: (ps: { dataIndex: number }[]) => {
+                  const r = recs[ps[0]?.dataIndex ?? 0];
+                  if (!r) return '';
+                  return tooltipCard(c, {
+                    title: `End of ${r.year}`,
+                    subtitle: agesText(r),
+                    rows: series
+                      .map(([name, fn, k]) => ({ name, v: m.bal(r, fn(r)), color: kindColor(c, k) }))
+                      .filter((x) => Math.abs(x.v) >= 1)
+                      .map((x) => ({ name: x.name, color: x.color, value: formatMoney(x.v) })),
+                    total: { name: 'Net worth', value: formatMoney(m.bal(r, r.netWorth)) },
+                    notes: [
+                      ...(r.milestones.length ? [{ text: r.milestones.join(', ') }] : []),
+                      isShort(r)
+                        ? {
+                            text: `Spending short by ${formatMoney(m.flow(r, r.shortfall))}`,
+                            tone: 'danger' as const,
+                          }
+                        : { text: 'Spending covered', tone: 'muted' as const },
+                    ],
+                  });
+                },
+              },
+              xAxis: [
+                {
+                  type: 'category',
+                  data: recs.map((r) => r.year),
+                  boundaryGap: false,
+                  ...axis(c),
+                  splitLine: { show: false },
+                },
+                { type: 'category', gridIndex: 1, data: recs.map((r) => r.year), show: false },
+              ],
+              yAxis: [
+                { type: 'value', ...axis(c), axisLabel: { color: c.ink3, fontSize: 11, formatter: short } },
+                { type: 'value', gridIndex: 1, min: 0, max: 1, show: false },
+              ],
+              dataZoom: [
+                { type: 'inside', xAxisIndex: [0, 1], zoomOnMouseWheel: 'ctrl', moveOnMouseWheel: false },
+                {
+                  type: 'slider',
+                  xAxisIndex: [0, 1],
+                  height: 16,
+                  bottom: 4,
+                  borderColor: c.line,
+                  fillerColor: alpha(c.primary, 0.12),
+                  handleStyle: { color: c.surface, borderColor: c.ink3 },
+                  moveHandleSize: 0,
+                  textStyle: { color: c.ink3, fontSize: 10 },
+                  dataBackground: {
+                    lineStyle: { color: c.ink3, opacity: 0.4 },
+                    areaStyle: { color: c.line },
+                  },
+                },
+              ],
+              series: [
+                ...series.map(([name, fn, k], i) => ({
+                  ...areaSeries(
+                    name,
+                    kindColor(c, k),
+                    recs.map((r) => Math.round(m.bal(r, fn(r)))),
+                    { stack: name === 'Debts' ? 'owed' : 'owned', smooth: true },
+                  ),
+                  markLine:
+                    i === 0
+                      ? {
+                          symbol: 'none',
+                          silent: true,
+                          lineStyle: { color: c.ink3, type: 'dashed', opacity: 0.7 },
+                          label: {
+                            color: c.ink2,
+                            fontSize: 11,
+                            formatter: '{b}',
+                            position: 'end',
+                            rotate: 0,
+                            backgroundColor: c.surface,
+                            padding: [2, 4],
+                            borderRadius: 4,
+                          },
+                          data: marks.map((x) => ({ name: x.name, xAxis: String(x.year) })),
+                        }
+                      : undefined,
+                })),
+                {
+                  name: 'Net worth',
+                  type: 'line',
+                  symbol: 'none',
+                  smooth: 0.25,
+                  color: c.ink,
+                  lineStyle: { width: 2, color: c.ink },
+                  z: 5,
+                  data: recs.map((r) => Math.round(m.bal(r, r.netWorth))),
+                },
+                {
+                  name: 'Spending covered',
+                  type: 'bar',
+                  xAxisIndex: 1,
+                  yAxisIndex: 1,
+                  barCategoryGap: '18%',
+                  silent: true,
+                  tooltip: { show: false },
+                  data: recs.map((r) => ({
+                    value: 1,
+                    itemStyle: {
+                      color: isShort(r) ? c.danger : c.primary,
+                      opacity: isShort(r) ? 1 : 0.3,
+                      borderRadius: 2,
+                    },
+                  })),
+                },
+              ],
+            })}
+          />
+        </Card>
+        <Card title={`End of ${sel.year}`} data-tour="year-detail">
+          <div className="ledger">
+            <YearPicker records={recs} year={sel.year} onChange={setYear} />
+            <div className="ledger-row">
+              <Stat label="Net worth" value={formatCompact(m.bal(sel, sel.netWorth))} />
               <Explain
                 title={`net worth in ${sel.year}`}
                 lines={nw.lines}
                 total={nw.result}
-                source="Future dollars for that year"
+                source={m.real ? "Today's dollars, at the end of the year" : `Dollars of ${sel.year}`}
               />
             </div>
-            <div className="lv-row" style={{ flexWrap: 'nowrap' }}>
-              <Stat label="Spending" value={formatCompact(m.v(sel, sel.expenses.total))} />
+            <div className="ledger-row">
+              <Stat label="Spending" value={formatCompact(m.flow(sel, sel.expenses.total))} />
               <Explain
                 title={`cash flow in ${sel.year}`}
                 lines={cf.lines}
                 total={cf.result}
-                source="Money in less money out; what is left is saved"
+                source={`Money in less money out; what is left is saved. In ${m.real ? "today's dollars" : `dollars of ${sel.year}`}.`}
               />
             </div>
-            <Stat
-              label="Taxes"
-              value={formatCompact(m.v(sel, sel.taxes.total))}
-              note={`${formatPct(sel.taxes.effectiveRate, 1)} of income`}
-            />
-            <Stat
-              label="Saved or withdrawn"
-              value={
-                sel.withdrawals.total > sel.contributions.total
-                  ? `− ${formatCompact(m.v(sel, sel.withdrawals.total))}`
-                  : `+ ${formatCompact(m.v(sel, sel.contributions.total))}`
-              }
-            />
+            <div className="ledger-row">
+              <Stat
+                label="Taxes"
+                value={formatCompact(m.flow(sel, sel.taxes.total))}
+                note={`${formatPct(sel.taxes.effectiveRate, 1)} of income`}
+              />
+            </div>
+            <div className="ledger-row">
+              <Stat
+                label={sel.withdrawals.total > sel.contributions.total ? 'Withdrawn' : 'Saved'}
+                value={
+                  sel.withdrawals.total > sel.contributions.total
+                    ? `− ${formatCompact(m.flow(sel, sel.withdrawals.total))}`
+                    : `+ ${formatCompact(m.flow(sel, sel.contributions.total))}`
+                }
+              />
+            </div>
+            {sel.milestones.length ? (
+              <p>
+                <Badge tone="ok">{sel.milestones.join(', ')}</Badge>
+              </p>
+            ) : null}
+            {sel.shortfall > 1 ? (
+              <Notice tone="danger">
+                Spending was short by {formatMoney(m.flow(sel, sel.shortfall))} this year.
+              </Notice>
+            ) : null}
           </div>
-          {sel.milestones.length ? (
-            <p style={{ marginTop: 12 }}>
-              <Badge tone="ok">{sel.milestones.join(', ')}</Badge>
-            </p>
-          ) : null}
-          {sel.shortfall > 1 ? (
-            <Notice tone="danger">
-              Spending was short by {formatMoney(m.v(sel, sel.shortfall))} this year.
-            </Notice>
-          ) : null}
         </Card>
-        <Card title="Quick what-ifs" data-tour="what-if-sliders">
-          <p className="lv-muted lv-small" style={{ marginBottom: 12 }}>
-            Drag to see the projection move. These change the plan; Undo puts them back.
-          </p>
-          <div className="lv-stack">
+      </div>
+      <Card
+        title="Quick what-ifs"
+        actions={
+          <Link className="lv-small" to="/explore/success">
+            See the chance of success →
+          </Link>
+        }
+        data-tour="what-if-sliders"
+      >
+        <p className="lv-muted lv-small" style={{ marginBottom: 12 }}>
+          Drag to see the projection move. These change the plan; Undo puts them back.
+        </p>
+        <div className="form-grid">
+          {plan.assumptions.returns.mode === 'fixed' ? (
             <Slider
-              label="Stock return"
+              label="US stock return"
               value={plan.assumptions.returns.fixed.usStocks}
               min={0.02}
               max={0.12}
@@ -274,49 +438,53 @@ export function ProjectionPage(): ReactNode {
               format={(v) => formatPct(v, 2)}
               onChange={(v) =>
                 update((d) => {
-                  d.assumptions.returns.fixed.usStocks = v;
-                  d.assumptions.returns.fixed.intlStocks = v;
+                  // International stocks move by the same amount, keeping the gap you set between them.
+                  const f = d.assumptions.returns.fixed;
+                  f.intlStocks = Math.max(0, Math.min(0.2, f.intlStocks + (v - f.usStocks)));
+                  f.usStocks = v;
                 })
               }
             />
-            <Slider
-              label="Inflation"
-              value={plan.assumptions.inflation.rate}
-              min={0}
-              max={0.07}
-              step={0.0025}
-              format={(v) => formatPct(v, 2)}
-              onChange={(v) =>
-                update((d) => {
-                  d.assumptions.inflation.rate = v;
-                })
-              }
-            />
-            {plan.milestones
-              .filter((x) => x.kind === 'retirement' && x.when.type === 'age')
-              .slice(0, 1)
-              .map((x) => (
-                <Slider
-                  key={x.id}
-                  label={`${x.name} at age`}
-                  value={x.when.type === 'age' ? x.when.age : 65}
-                  min={40}
-                  max={75}
-                  step={1}
-                  onChange={(v) =>
-                    update((d) => {
-                      const k = d.milestones.find((q) => q.id === x.id);
-                      if (k && k.when.type === 'age') k.when.age = v;
-                    })
-                  }
-                />
-              ))}
-          </div>
-          <p className="lv-small" style={{ marginTop: 12 }}>
-            <Link to="/explore/success">See the chance of success →</Link>
-          </p>
-        </Card>
-      </div>
+          ) : (
+            <p className="lv-muted lv-small" data-tour="what-if-returns-off">
+              Stock returns follow long-run history under Assumptions, so there is no return slider here.
+              Choose &ldquo;The figures I set&rdquo; there to try other returns.
+            </p>
+          )}
+          <Slider
+            label="Inflation"
+            value={plan.assumptions.inflation.rate}
+            min={0}
+            max={0.07}
+            step={0.0025}
+            format={(v) => formatPct(v, 2)}
+            onChange={(v) =>
+              update((d) => {
+                d.assumptions.inflation.rate = v;
+              })
+            }
+          />
+          {plan.milestones
+            .filter((x) => x.kind === 'retirement' && x.when.type === 'age')
+            .slice(0, 1)
+            .map((x) => (
+              <Slider
+                key={x.id}
+                label={`${x.name} at age`}
+                value={x.when.type === 'age' ? x.when.age : 65}
+                min={40}
+                max={75}
+                step={1}
+                onChange={(v) =>
+                  update((d) => {
+                    const k = d.milestones.find((q) => q.id === x.id);
+                    if (k && k.when.type === 'age') k.when.age = v;
+                  })
+                }
+              />
+            ))}
+        </div>
+      </Card>
     </>
   );
 }
@@ -336,7 +504,7 @@ export function CashFlowPage(): ReactNode {
     );
   const recs = result.records;
   const r = recs.find((x) => x.year === year) ?? recs[0];
-  const val = (x: number): number => Math.round(m.v(r, x));
+  const val = (x: number): number => Math.round(m.flow(r, x));
   const inflow: [string, number][] = (
     [
       ['Wages', r.income.wages + r.income.selfEmployment],
@@ -362,7 +530,7 @@ export function CashFlowPage(): ReactNode {
       ['Other savings', r.contributions.afterTax],
     ] as [string, number][]
   ).filter((x) => x[1] > 0.5);
-  const cf = explainCashFlow(r);
+  const cf = explainCashFlow(r, m.real ? 'real' : 'nominal');
   return (
     <>
       <PageHead
@@ -371,6 +539,7 @@ export function CashFlowPage(): ReactNode {
         intro={`Where each year's money comes from and where it goes, in ${m.unit}.`}
         actions={<ProjectedBadge result={result} />}
       />
+      <RecomputeError error={error} />
       <Card>
         <YearPicker records={recs} year={r.year} onChange={setYear} />
       </Card>
@@ -441,10 +610,10 @@ export function CashFlowPage(): ReactNode {
             columns: ['Year', 'Living', 'Housing and debt', 'Healthcare', 'Taxes'],
             rows: recs.map((x) => [
               x.year,
-              formatMoney(m.v(x, x.expenses.living)),
-              formatMoney(m.v(x, x.expenses.housing + x.expenses.debtService)),
-              formatMoney(m.v(x, x.expenses.healthcare.total)),
-              formatMoney(m.v(x, x.taxes.total)),
+              formatMoney(m.flow(x, x.expenses.living)),
+              formatMoney(m.flow(x, x.expenses.housing + x.expenses.debtService)),
+              formatMoney(m.flow(x, x.expenses.healthcare.total)),
+              formatMoney(m.flow(x, x.taxes.total)),
             ]),
           })}
           build={(c) => ({
@@ -472,8 +641,9 @@ export function CashFlowPage(): ReactNode {
               name,
               type: 'bar',
               stack: 's',
-              barCategoryGap: '12%',
-              data: recs.map((x) => Math.round(m.v(x, f(x)))),
+              barCategoryGap: '24%',
+              itemStyle: { borderColor: c.surface, borderWidth: 1 },
+              data: recs.map((x) => Math.round(m.flow(x, f(x)))),
             })),
           })}
         />
@@ -497,7 +667,7 @@ export function TaxesPage(): ReactNode {
     );
   const recs = result.records;
   const r = recs.find((x) => x.year === year) ?? recs[0];
-  const ex = explainTax(r);
+  const ex = explainTax(r, m.real ? 'real' : 'nominal');
   const parts: [string, (x: YearRecord) => number][] = [
     ['Federal income tax', (x) => Math.max(0, x.taxes.federalIncome)],
     ['Payroll tax', (x) => x.taxes.fica + x.taxes.selfEmployment],
@@ -511,8 +681,21 @@ export function TaxesPage(): ReactNode {
         group="explore"
         title="Taxes"
         intro={`Estimated federal, payroll and state tax each year, in ${m.unit}. For planning only; this is not a tax return.`}
-        actions={<ProjectedBadge result={result} />}
+        actions={
+          <span className="lv-row">
+            {recs.some((x) => x.taxes.state > 0.5) ? (
+              <span
+                title="State tax uses each state's brackets, deductions and main retirement exclusions, but not every credit or local tax. Treat it as a rough estimate."
+                data-tour="state-tax-estimate"
+              >
+                <Badge tone="warn">State tax is a rough estimate</Badge>
+              </span>
+            ) : null}
+            <ProjectedBadge result={result} />
+          </span>
+        }
       />
+      <RecomputeError error={error} />
       <Card data-tour="tax-stats">
         <div className="lv-grid">
           <Stat
@@ -543,7 +726,7 @@ export function TaxesPage(): ReactNode {
         <Chart
           label="Tax by type each year, with effective and marginal rates"
           deps={[result, m.real]}
-          height={360}
+          height="var(--chart-h)"
           onClick={(p) => setYear(recs[p.dataIndex]?.year ?? null)}
           table={() => ({
             columns: [
@@ -556,31 +739,51 @@ export function TaxesPage(): ReactNode {
             ],
             rows: recs.map((x) => [
               x.year,
-              ...parts.map((p) => formatMoney(m.v(x, p[1](x)))),
-              formatMoney(m.v(x, x.taxes.ptc)),
+              ...parts.map((p) => formatMoney(m.flow(x, p[1](x)))),
+              formatMoney(m.flow(x, x.taxes.ptc)),
               formatPct(x.taxes.effectiveRate, 1),
               formatPct(x.taxes.marginalRate),
               x.dataStatus,
             ]),
           })}
           build={(c) => ({
-            grid: { left: 56, right: 48, top: 36, bottom: 32 },
-            legend: { type: 'scroll', top: 0, textStyle: { color: c.ink2 }, icon: 'roundRect' },
+            // Two panels sharing the years, each with one value axis: tax in dollars above, rates below.
+            grid: [
+              { left: 56, right: 12, top: 34, bottom: '34%' },
+              { left: 56, right: 12, height: '18%', bottom: 28 },
+            ],
+            axisPointer: { link: [{ xAxisIndex: 'all' }] },
+            legend: { type: 'scroll', top: 0, left: 0 },
             tooltip: { ...tooltip(c), trigger: 'axis' },
-            xAxis: {
-              type: 'category',
-              data: recs.map((x) => x.year),
-              ...axis(c),
-              splitLine: { show: false },
-            },
-            yAxis: [
-              { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
+            xAxis: [
               {
-                type: 'value',
-                max: 0.5,
+                type: 'category',
+                data: recs.map((x) => x.year),
+                ...axis(c),
+                axisLabel: { show: false },
+                splitLine: { show: false },
+              },
+              {
+                type: 'category',
+                gridIndex: 1,
+                data: recs.map((x) => x.year),
                 ...axis(c),
                 splitLine: { show: false },
-                axisLabel: { color: c.ink3, formatter: (v: number) => `${Math.round(v * 100)}%` },
+              },
+            ],
+            yAxis: [
+              { type: 'value', ...axis(c), axisLabel: { color: c.ink3, fontSize: 11, formatter: short } },
+              {
+                type: 'value',
+                gridIndex: 1,
+                max: 0.5,
+                splitNumber: 2,
+                ...axis(c),
+                axisLabel: {
+                  color: c.ink3,
+                  fontSize: 11,
+                  formatter: (v: number) => `${Math.round(v * 100)}%`,
+                },
               },
             ],
             series: [
@@ -588,13 +791,15 @@ export function TaxesPage(): ReactNode {
                 name,
                 type: 'bar',
                 stack: 't',
-                barCategoryGap: '12%',
-                data: recs.map((x) => Math.round(m.v(x, f(x)))),
+                barCategoryGap: '24%',
+                itemStyle: { borderColor: c.surface, borderWidth: 1 },
+                data: recs.map((x) => Math.round(m.flow(x, f(x)))),
                 tooltip: { valueFormatter: (v: number) => formatMoney(v) },
               })),
               {
                 name: 'Effective rate',
                 type: 'line',
+                xAxisIndex: 1,
                 yAxisIndex: 1,
                 symbol: 'none',
                 lineStyle: { width: 2, color: c.ink },
@@ -605,6 +810,7 @@ export function TaxesPage(): ReactNode {
               {
                 name: 'Marginal rate',
                 type: 'line',
+                xAxisIndex: 1,
                 yAxisIndex: 1,
                 step: 'middle',
                 symbol: 'none',
@@ -625,7 +831,7 @@ export function TaxesPage(): ReactNode {
               title={`tax in ${r.year}`}
               lines={ex.lines}
               total={ex.result}
-              source={`Tables: ${r.dataStatus}`}
+              source={`Tables: ${r.dataStatus}. In ${m.unit}.`}
             />
           }
           data-tour="tax-breakdown"
@@ -654,7 +860,7 @@ export function TaxesPage(): ReactNode {
                 ).map(([k, v]) => (
                   <tr key={k}>
                     <th scope="row">{k}</th>
-                    <td>{formatMoney(m.v(r, v))}</td>
+                    <td>{formatMoney(m.flow(r, v))}</td>
                   </tr>
                 ))}
                 <tr>
@@ -733,11 +939,19 @@ export function SuccessPage(): ReactNode {
               value={summary ? formatPct(summary.successRate) : '…'}
               note={
                 summary
-                  ? `${summary.runs.toLocaleString()} of ${mc.runs.toLocaleString()} runs · seed ${mc.seed}`
+                  ? `${summary.runs.toLocaleString()} of ${mc.runs.toLocaleString()} runs · seed ${mc.seed}${summary.legacyGoal?.countsForSuccess ? ' · includes your ending goal' : ''}`
                   : 'Starting…'
               }
               data-tour="success-rate"
             />
+            {summary?.legacyGoal ? (
+              <Stat
+                label={`Leave at least ${formatCompact(summary.legacyGoal.goal)}`}
+                value={formatPct(summary.legacyGoal.metRate)}
+                note={`of runs end with that much or more. Spending covered every year in ${formatPct(summary.fundedRate)}`}
+                data-tour="legacy-goal-rate"
+              />
+            ) : null}
             <Stat
               label="Median ending wealth"
               value={summary ? formatCompact(summary.endingPercentiles.p50) : '…'}
@@ -782,7 +996,7 @@ export function SuccessPage(): ReactNode {
             <Chart
               label="Investments over time: median with 25th to 75th and 10th to 90th percentile bands"
               deps={[summary]}
-              height={380}
+              height="var(--chart-h)"
               table={() => ({
                 columns: ['Year', '10th', '25th', 'Median', '75th', '90th', 'Still funded'],
                 rows: summary.years.map((y, i) => [
@@ -895,7 +1109,7 @@ export function SuccessPage(): ReactNode {
                         type: 'bar',
                         name: 'Runs',
                         data: summary.failureYears.map((f) => f.count),
-                        itemStyle: { color: c.danger },
+                        itemStyle: { color: c.danger, borderRadius: [4, 4, 0, 0] },
                       },
                     ],
                   })}
@@ -1002,11 +1216,24 @@ export function HistoryPage(): ReactNode {
               />
             </div>
           </Card>
-          <Card title="Every start year" data-tour="history-chart">
+          <Card
+            title={
+              <span className="lv-label-row">
+                Every start year
+                <HelpTip>
+                  International stocks and REITs follow US stocks here because they have no long public
+                  history. Bonds are 10-year Treasuries, which lost more in the 1970s than the intermediate
+                  bonds used in the Bengen and Trinity studies, so a 4% plan here can look a few points worse
+                  than those studies report.
+                </HelpTip>
+              </span>
+            }
+            data-tour="history-chart"
+          >
             <Chart
               label="Investments over the plan for each historical start year; the hardest start year is highlighted"
               deps={[result]}
-              height={400}
+              height="var(--chart-h)"
               table={() => ({
                 columns: ['Start year', 'Outcome', 'Years funded', 'Ending wealth', 'Lowest point'],
                 rows: sorted.map((c) => [
@@ -1055,9 +1282,8 @@ export function HistoryPage(): ReactNode {
               })}
             />
             <p className="lv-muted lv-small">
-              Each line is one start year, in today's dollars. Red lines ran short. The thick line is the
-              hardest start year. International stocks and REITs follow US stocks here because they have no
-              long public history.
+              Each line is one start year, in today's dollars. Red lines ran short; the thick line is the
+              hardest start year.
             </p>
           </Card>
           <Card title="The ten hardest start years" data-tour="worst-table">
@@ -1106,12 +1332,12 @@ export function EstatePage(): ReactNode {
     );
   const e = result.estate;
   const last = result.records[result.records.length - 1];
-  const cpi = last.cpi * (1 + plan.assumptions.inflation.rate);
+  const cpi = last.cpiEnd;
   const real = (x: number): number => x / cpi;
   const lines = [
-    { label: 'Estate at the end of the plan', amount: e.value },
-    { label: 'Federal estate tax', amount: -e.estateTax },
-    { label: 'Income tax heirs owe on pre-tax accounts', amount: -e.heirPretaxDrag },
+    { label: 'Estate at the end of the plan', amount: real(e.value) },
+    { label: 'Federal estate tax', amount: -real(e.estateTax) },
+    { label: 'Income tax heirs owe on pre-tax accounts', amount: -real(e.heirPretaxDrag) },
   ];
   return (
     <>
@@ -1121,6 +1347,7 @@ export function EstatePage(): ReactNode {
         intro="What is left for heirs at the end of the plan on the expected path, and what tax takes from it. In today's dollars."
         actions={<ProjectedBadge result={result} />}
       />
+      <RecomputeError error={error} />
       <Card data-tour="estate-stats">
         <div className="lv-grid">
           <Stat
@@ -1134,8 +1361,8 @@ export function EstatePage(): ReactNode {
             <Explain
               title="what heirs receive"
               lines={lines}
-              total={e.netToHeirs}
-              source={`Future dollars in ${last.year}`}
+              total={real(e.netToHeirs)}
+              source={`Today's dollars, valued at the end of ${last.year}`}
             />
           </div>
           <Stat
@@ -1166,15 +1393,15 @@ export function EstatePage(): ReactNode {
         <Chart
           label="Estate value by year, split by account type"
           deps={[result]}
-          height={340}
+          height="var(--chart-h)"
           table={() => ({
             columns: ['Year', 'Pre-tax', 'Roth', 'Taxable and cash', 'Property net of debt'],
             rows: result.records.map((r) => [
               r.year,
-              formatMoney(r.byKind.pretax / r.cpi),
-              formatMoney(r.byKind.roth / r.cpi),
-              formatMoney((r.byKind.taxable + r.byKind.cash) / r.cpi),
-              formatMoney((r.assets - r.debts) / r.cpi),
+              formatMoney(r.byKind.pretax / r.cpiEnd),
+              formatMoney(r.byKind.roth / r.cpiEnd),
+              formatMoney((r.byKind.taxable + r.byKind.cash) / r.cpiEnd),
+              formatMoney((r.assets - r.debts) / r.cpiEnd),
             ]),
           })}
           build={(c) => ({
@@ -1199,15 +1426,14 @@ export function EstatePage(): ReactNode {
                 ],
                 ['Property net of debt', (r: YearRecord) => Math.max(0, r.assets - r.debts)],
               ] as [string, (r: YearRecord) => number][]
-            ).map(([name, f]) => ({
-              name,
-              type: 'line',
-              stack: 'e',
-              symbol: 'none',
-              areaStyle: { opacity: 0.8 },
-              lineStyle: { width: 1 },
-              data: result.records.map((r) => Math.round(f(r) / r.cpi)),
-            })),
+            ).map(([name, f], i) =>
+              areaSeries(
+                name,
+                c.series[[2, 3, 1, 6][i] ?? i],
+                result.records.map((r) => Math.round(f(r) / r.cpiEnd)),
+                { stack: 'e', smooth: true },
+              ),
+            ),
           })}
         />
       </Card>

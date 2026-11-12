@@ -10,13 +10,13 @@ against outside references, and where they have not.
 
 | Area                                   | Result                                                                                  |
 | -------------------------------------- | --------------------------------------------------------------------------------------- |
-| Unit, property and validation tests    | 318 pass, 2 marked todo (`pnpm test`)                                                   |
-| Browser tests (phone, tablet, desktop) | 96 pass, 4 skipped by design (`pnpm e2e`)                                               |
+| Unit, property and validation tests    | 432 pass, 2 marked todo (`pnpm test`)                                                   |
+| Browser tests (phone, tablet, desktop) | 107 pass, 8 skipped by design (`pnpm e2e`), including one-screen layout checks          |
 | Guided tours                           | All 25 complete with the keyboard alone on phone and desktop sizes; every target exists |
 | Accessibility (automated)              | axe WCAG 2.2 A/AA: no violations on any of 21 screens, light and dark, three sizes      |
 | Dataset checks                         | 177 datasets valid, 55 of them projected or estimated (`pnpm validate:data`)            |
-| Lighthouse (simulated mid-range phone) | Performance 99, accessibility 100, best practices 100; LCP 2.26 s, CLS 0, TBT 0 ms      |
-| Initial JavaScript                     | 204 KB gzipped (budget 250 KB)                                                          |
+| Lighthouse (simulated mid-range phone) | Performance 100, accessibility 100, best practices 100; LCP 1.80 s, CLS 0, TBT 10 ms    |
+| Initial JavaScript                     | 130 KB gzipped (budget 250 KB); the engine and datasets load after the first screen     |
 | Engine speed (this desktop)            | Projection 1.6 ms (budget 50); 1,000 simulated runs 0.55 s on one thread (budget 8 s)   |
 
 The v1.0 gate is **not met**. The open items are listed under "Release gate" below.
@@ -33,21 +33,21 @@ The v1.0 gate is **not met**. The open items are listed under "Release gate" bel
 | V-06 | Premium tax credit                                                     | **Partly covered**    | The credit arithmetic passes (prior-year poverty guideline, applicable-percentage interpolation, the 400% cliff in force for 2026 and 2027). Benchmark-premium lookups against HealthCare.gov for sample ZIP codes are **not automated** (todo): they need live lookups.                                                                               |
 | V-07 | Retiree healthcare cost estimators (Fidelity, Vanguard, BiggerPockets) | **Not done**          | Marked todo. None of the references has a machine-readable interface, so no automated comparison exists. A manual comparison has not been made.                                                                                                                                                                                                        |
 | V-08 | RMDs against the IRS Uniform Lifetime Table                            | **Pass**              | Every age; start age 73 or 75 by birth year.                                                                                                                                                                                                                                                                                                           |
-| V-09 | Simulation statistics                                                  | **Pass**              | Resampled returns match the source mean and variance within sampling error; seeded runs reproduce exactly; chunked runs merge to the same answer as one pass.                                                                                                                                                                                          |
+| V-09 | Simulation statistics                                                  | **Pass**              | In raw-history mode, resampled returns match the source mean and variance within sampling error. In the default re-centred mode, real log returns centre on the plan's expected return and keep the historical variance. Seeded runs reproduce exactly; chunked runs merge to the same answer as one pass.                                             |
 
 ## Release gate (plan §16)
 
-| Gate item                                                 | State                                                                                                                |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Every parity-matrix row done                              | **Not met.** 54 done, 10 implemented without a dedicated test, 12 partial. See [parity-matrix.md](parity-matrix.md). |
-| Validation cases V-01 to V-09 within tolerance            | **Not met.** V-01, V-02 and part of V-03 are outside tolerance; V-06 lookups and V-07 are not done.                  |
-| All 25 tours pass e2e on phone and desktop, keyboard only | Met.                                                                                                                 |
-| Accessibility                                             | Automated checks met. A manual screen-reader audit has **not** been done.                                            |
-| Performance budgets on both reference devices             | Lighthouse budgets met under simulated throttling. The physical reference phones were **not** measured.              |
-| Security review                                           | Runbook written (`runbooks/security-review.md`); the review itself has **not** been carried out.                     |
-| Sync deployed and restore drill run                       | **Not done.** Nothing has been deployed. The sync Worker and client have only been tested separately.                |
-| Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                        |
-| CI green                                                  | The workflows in `.github/workflows/` have never run: nothing has been committed or pushed.                          |
+| Gate item                                                 | State                                                                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Every parity-matrix row done                              | **Not met.** 64 done, 1 implemented without a dedicated test, 11 partial. See [parity-matrix.md](parity-matrix.md). |
+| Validation cases V-01 to V-09 within tolerance            | **Not met.** V-01, V-02 and part of V-03 are outside tolerance; V-06 lookups and V-07 are not done.                 |
+| All 25 tours pass e2e on phone and desktop, keyboard only | Met.                                                                                                                |
+| Accessibility                                             | Automated checks met. A manual screen-reader audit has **not** been done.                                           |
+| Performance budgets on both reference devices             | Lighthouse budgets met under simulated throttling. The physical reference phones were **not** measured.             |
+| Security review                                           | Runbook written (`runbooks/security-review.md`); the review itself has **not** been carried out.                    |
+| Sync deployed and restore drill run                       | **Not done.** Nothing has been deployed. The sync Worker and client have only been tested separately.               |
+| Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                       |
+| CI green                                                  | CI runs on pull requests. Playwright and Lighthouse are run locally, not in CI.                                     |
 
 ## Known limitations of the model
 
@@ -62,6 +62,8 @@ Tax
 - Rebalancing happens at the start of the year. The advance premium tax credit is treated as exact, so
   repaying excess credit at tax time is not modelled.
 - The IRMAA life-changing-event appeal is stored in the plan but not applied.
+- Mortgage interest is deductible unless the debt's "interest is deductible" flag is set to false (the flag
+  was previously ignored for mortgages).
 
 Healthcare
 
@@ -72,10 +74,58 @@ Healthcare
 
 Simulation
 
-- History-based simulation replays real past returns, which were higher than most forward-looking
-  assumptions. It can look more generous than the single-path projection. The Chance of success screen
-  says this; choose the parametric method to test your own return assumptions.
-- Optional SOA mortality tables are not included; longevity uses SSA period tables.
+- Expected returns are **geometric** (compound) nominal annual rates, read at the plan's inflation rate,
+  in all three models. The single-path projection compounds them as entered; the parametric model uses them
+  as the lognormal median; the history-based model re-centres each class's historical log returns (and
+  inflation) on them, keeping history's volatility, cross-correlation and year-to-year sequence. A "raw
+  history" option replays past returns with their own averages (US stocks about 9.4% nominal, 7.1% real),
+  and the results report which means were used.
+- For a single asset class the median simulated path lands within a few percent of the single-path
+  projection (history's negative skew puts the bootstrap median slightly above it). For a rebalanced mix the
+  simulated median runs above the single path by the diversification return, about 0.4% a year for 60/40,
+  which a constant-rate path cannot show. This is expected, not an error.
+- Today's-dollar figures: year-end balances deflate by year-end CPI (`cpiEnd`), flows by start-of-year CPI
+  (`cpi`), through `toReal()`. The projection and Monte Carlo now use the same convention.
+- Parametric inflation follows an AR(1) process with the historical lag-1 autocorrelation (about 0.6 for
+  1928-2025); it is still independent of the return draws.
+- Spending-cut statistics (share of runs and years below plan, lowest spending as a share of plan) and a
+  net-estate distribution are reported. With random lifespans, runs that have ended drop out of the
+  percentile bands (`activeShare` says how many remain) instead of carrying their last balance forward.
+- Under "long-run historical averages" the single projection and the simulations both centre on the
+  compound averages of the bundled history (`expectedMeans()`), so the two no longer disagree.
+- Years are still whole years, with one refinement: pay that ends at an age runs to that birthday (by birth
+  month and day), in the projection and in the Social Security earnings record. Health coverage still
+  switches at the start of that year, so the retirement year counts a full year of the new coverage
+  alongside part-year pay.
+- Flexible spending rules never cut expenses marked essential; the flexible expenses absorb the cut.
+- An optional ending net-worth goal can be reported or counted in the success rate (`legacyGoalForSuccess`).
+- Optional SOA mortality tables are not included; longevity uses SSA period tables, with an optional annual
+  mortality-improvement rate (off by default; about 0.8% is close to the Trustees' intermediate assumption).
+
+Social Security
+
+- Survivor benefits are figured from the deceased's own record: delayed credits stop at death, an early
+  claimer's survivor is held to the larger of their benefit and 82.5% of the PIA, and a survivor who starts
+  before the survivor FRA is reduced (to 71.5% at 60). The survivor benefit starts at the later of the death
+  and the survivor's own claiming age (or survivor FRA if earlier); the model does not search for the best
+  switching strategy.
+- The spousal reduction uses the age when the spousal benefit starts (the later of the two filings).
+- The earnings test counts only pre-FRA months in the FRA year, and withheld months are credited back from the
+  first year that starts at or after FRA (SSA does it in the FRA month itself).
+- The earnings record used for the PIA follows milestone stop effects; an income that ends on a condition
+  milestone uses the year it fires in one deterministic pre-pass.
+
+Healthcare and tax details
+
+- Children under 26 are costed on the family's coverage: the employer family tier while a parent has
+  employer coverage, family COBRA while it lasts, otherwise the marketplace (at most three children under 21
+  charged). CHIP eligibility is not modelled separately; children follow the household's Medicaid result.
+- IRMAA in the first two plan years uses MAGI entered for the years before the start, or else the first
+  year's own MAGI estimate.
+- Estate tax applies portability for married couples: the survivor adds the first spouse's unused exemption,
+  fixed in the year of the first death, assuming everything passed to the spouse and the election was made.
+- Pension amounts are the first-year benefit; the COLA compounds from the start year (nominal COLA: the amount
+  is that year's nominal figure; real COLA: today's dollars carried forward by inflation).
 
 App
 
@@ -106,7 +156,7 @@ pnpm bench
 pnpm build
 pnpm --filter @fisim/e2e exec playwright install chromium
 pnpm e2e
-pnpm dlx @lhci/cli@0.16.0 autorun --config=lighthouserc.json
+pnpm lighthouse
 ```
 
 The Tax-Calculator fixtures are regenerated with `tests/validation/taxcalc/generate_fixtures.py` (see its
