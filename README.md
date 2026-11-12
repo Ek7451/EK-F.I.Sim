@@ -104,6 +104,8 @@ research/            Local-only design reference material. Git-ignored; never co
 
 ## Documentation
 
+Hosted app: [Longview](https://ek-fi-sim.pages.dev) (Cloudflare sign-in required). See the [first deployment record](docs/deployments/2026-11-12.md) for storage, access and publishing details.
+
 | Document                                                                       | What it covers                                                                                 |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | [plan/BUILD_PLAN.md](plan/BUILD_PLAN.md)                                       | The specification: goals, feature IDs, engine, data, security, delivery, roadmap, release gate |
