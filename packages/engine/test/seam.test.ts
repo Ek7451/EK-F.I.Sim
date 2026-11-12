@@ -37,7 +37,7 @@ const person = (id: string, birthDate: string, extra: Over = {}): Over => ({
 const mk = (o: Over): Plan =>
   PlanZ.parse({
     id: 't',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 't',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',

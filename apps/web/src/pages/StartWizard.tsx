@@ -237,7 +237,7 @@ export function buildPlan(d: Draft, year: number): PlanInput {
   const firstRetire = ppl[0].salary > 0 ? ppl[0].retireAge : year - ppl[0].birthYear;
   return {
     id: 'new',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: d.partner ? `${ppl[0].name.trim() ? possessive(ppl[0].name.trim()) : 'Our'} plan` : 'My plan',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),

@@ -13,6 +13,10 @@
  * listed in NO_HELP.
  */
 export const HELP: Record<string, string> = {
+  'Search accounts':
+    'Filter this list by account name. This changes the view only; every account remains in the projection.',
+  'Tax treatment':
+    'Filter accounts by how contributions and withdrawals are taxed. This does not change an account’s type or the plan.',
   // ---------------------------------------------------------------- shared ideas
   '@when':
     'When this happens: in a calendar year, when someone reaches an age, or when a milestone is reached (for example "Retire"). Linking to a milestone keeps things in step if you later move the milestone.',

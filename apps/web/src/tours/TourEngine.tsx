@@ -19,6 +19,7 @@ import {
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMonteCarlo, useProjection } from '../engine/useResults';
 import { useStore } from '../state/store';
+import { useDraft, type DraftTransaction } from '../state/draft';
 import { tourById, tourForRoute } from './catalog';
 import type { TourDef, TourStep } from './types';
 
@@ -57,6 +58,7 @@ export function findTarget(target: string | undefined): HTMLElement | null {
 }
 
 export function TourProvider({ children }: { children: ReactNode }): ReactNode {
+  const savedDraft = useRef<DraftTransaction | null>(null);
   const [active, setActive] = useState<Active | null>(null);
   const nav = useNavigate();
   const loc = useLocation();
@@ -71,6 +73,8 @@ export function TourProvider({ children }: { children: ReactNode }): ReactNode {
     const returnTo = path.current;
     // The sample plans come with the engine, which may still be loading on a first visit.
     void loadEngine().then(({ SAMPLE_PLANS }) => {
+      if (!useStore.getState().sandbox) savedDraft.current = useDraft.getState().transaction;
+      useDraft.getState().discard();
       st.enterSandbox(own ?? SAMPLE_PLANS[tour.samplePlan](new Date().getFullYear()), !!own);
       const saved = useStore.getState().settings.tours[id];
       const step =
@@ -86,6 +90,7 @@ export function TourProvider({ children }: { children: ReactNode }): ReactNode {
         const st = useStore.getState();
         st.setTour(a.tour.id, { step: a.step });
         st.exitSandbox();
+        useDraft.getState().restore(savedDraft.current);
         nav(a.returnTo);
       } else useStore.getState().exitSandbox();
       return null;
@@ -101,6 +106,7 @@ export function TourProvider({ children }: { children: ReactNode }): ReactNode {
         if (next >= a.tour.steps.length) {
           st.setTour(a.tour.id, { completed: true, step: 0 });
           st.exitSandbox();
+          useDraft.getState().restore(savedDraft.current);
           st.notify(`Tour finished: ${a.tour.title}.`, 'ok');
           nav('/help/tours');
           return null;

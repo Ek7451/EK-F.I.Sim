@@ -18,7 +18,7 @@ export function withdrawalPlan(o: {
   const startYear = o.startYear ?? 2026;
   return PlanZ.parse({
     id: 'validation',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'validation',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',

@@ -1,12 +1,12 @@
 /**
- * Plan schema v1 (build plan §5). Money in the plan file is nominal USD **cents** (integers).
+ * Plan schema v2 (build plan §5). Money in the plan file is nominal USD **cents** (integers).
  * The engine converts to float dollars when it compiles a plan and rounds only at display/export.
- * The JSON Schema in schema/plan.v1.json is emitted from these Zod types (scripts/emit-schema.ts).
+ * The JSON Schema in schema/plan.v2.json is emitted from these Zod types (scripts/emit-schema.ts).
  */
 import { z } from 'zod';
 import { ACCOUNT_TYPES } from './constants';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const cents = z.number().int();
 const id = z.string().min(1);
@@ -607,16 +607,31 @@ export function applyScenario(plan: Plan, scenarioId: string | null | undefined)
   if (!sc) return plan;
   const copy = structuredClone(plan) as unknown as Record<string | number, unknown>;
   for (const p of sc.patches) {
+    if (
+      !p.path.length ||
+      p.path.some((part) => ['__proto__', 'constructor', 'prototype'].includes(String(part)))
+    )
+      throw new Error(`Scenario "${sc.name}" has an invalid change path.`);
     let node: Record<string | number, unknown> = copy;
     for (let i = 0; i < p.path.length - 1; i++) {
-      const next = node[p.path[i]];
+      const part = p.path[i];
+      const next =
+        Array.isArray(node) && typeof part === 'string' && part.startsWith('@')
+          ? node.find((item: { id?: string }) => item.id === part.slice(1))
+          : node[part];
       if (next === null || typeof next !== 'object') {
-        node = null as never;
-        break;
+        throw new Error(
+          `Scenario "${sc.name}" refers to a removed or changed item. Review its changes before running it.`,
+        );
       }
       node = next as Record<string | number, unknown>;
     }
-    if (node) node[p.path[p.path.length - 1]] = structuredClone(p.value);
+    const tail = p.path[p.path.length - 1];
+    if (Array.isArray(node) && typeof tail === 'string' && tail.startsWith('@')) {
+      const index = node.findIndex((item: { id?: string }) => item.id === tail.slice(1));
+      if (index < 0) throw new Error(`Scenario "${sc.name}" refers to a removed or changed item.`);
+      node[index] = structuredClone(p.value);
+    } else node[tail] = structuredClone(p.value);
   }
   return PlanZ.parse(copy);
 }

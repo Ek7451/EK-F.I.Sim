@@ -133,7 +133,7 @@ App
   HTML for tooltips. The rest of the policy is strict (no inline scripts, no third-party origins).
 - Storybook is not set up. Components are exercised through the app and the browser tests.
 - The plan file's JSON Schema is generated from the Zod schema, the reverse of the plan's wording.
-  `packages/engine/schema/plan.v1.json` is the published artefact either way.
+  `packages/engine/schema/plan.v2.json` is the current published artefact. The v1 artefact remains for recovery and compatibility fixtures.
 
 ## Open decisions
 

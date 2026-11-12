@@ -7,6 +7,7 @@ import { agesText, fundedStat } from '../lib/outcome';
 import { PageHead } from '../shell/Shell';
 import { usePlan, useStore } from '../state/store';
 import { StartPage } from './StartWizard';
+import { CalculationStatus } from './workspace/CalculationStatus';
 
 export function HomePage(): ReactNode {
   const plan = usePlan();
@@ -69,6 +70,26 @@ export function HomePage(): ReactNode {
         title={plan.name}
         intro="The headline numbers for this plan, in today's dollars. Every figure is an estimate that updates as you edit."
       />
+      <CalculationStatus />
+      {result && (
+        <div className="next-decision">
+          <div>
+            <strong>Next decision</strong>
+            <p>
+              {plan.milestones
+                .filter((m) => m.kind === 'retirement')
+                .map(
+                  (m) =>
+                    `${m.name}: ${m.when.type === 'age' ? `age ${m.when.age}` : (result.milestoneYears[m.id] ?? 'Not reached')}`,
+                )
+                .join(' · ') || 'Add your first milestone'}
+            </p>
+          </div>
+          <Link className="lv-btn" data-variant="primary" to="/explore/projection">
+            Explore a change
+          </Link>
+        </div>
+      )}
       <div className="home-hero">
         <Card variant="hero" data-tour="home-stats">
           <div className="lv-stack" style={{ gap: 16 }}>
@@ -78,6 +99,21 @@ export function HomePage(): ReactNode {
               value={s ? formatCompact(s.currentNetWorth) : <Skeleton height={44} width={180} />}
               note={s ? `Start of ${s.startYear}` : undefined}
             />
+            <p className="lv-small lv-muted">
+              Opening balances from your plan inputs.{' '}
+              {plan.actuals.length ? (
+                <Link to="/track">
+                  Latest recorded investments:{' '}
+                  {formatMoney(
+                    Object.values(plan.actuals.at(-1)!.balances).reduce((sum, value) => sum + value, 0) / 100,
+                  )}{' '}
+                  on {plan.actuals.at(-1)!.date}
+                </Link>
+              ) : (
+                <Link to="/track">Record actual balances</Link>
+              )}
+              . The chart shows projected year-end values.
+            </p>
             {changed ? (
               <p className="home-changed" data-tour="what-changed">
                 <Icon name="sparkle" size={16} />
@@ -160,8 +196,7 @@ export function HomePage(): ReactNode {
                     ...areaSeries(
                       'Net worth',
                       c.primary,
-                      result.records.map((r) => Math.round(r.netWorth / r.cpiEnd)),
-                      { smooth: true },
+                      result.records.map((r) => r.netWorth / r.cpiEnd),
                     ),
                     lineStyle: { width: 2.5, color: c.primary },
                   },

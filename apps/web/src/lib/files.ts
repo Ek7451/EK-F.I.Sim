@@ -39,7 +39,25 @@ export async function readBackup(file: File, passphrase: string): Promise<unknow
 }
 
 export function exportCsv(plan: Plan, result: ProjectionResult, label: string): void {
-  download(`${slug(plan.name)}-${slug(label)}-yearly.csv`, recordsToCsv(result.records), 'text/csv');
+  const quote = (value: string): string => `"${value.replace(/"/g, '""')}"`;
+  const metadata = [
+    plan.name,
+    label,
+    'nominal USD; net_worth_todays_dollars uses start-year purchasing power',
+    result.dataRelease,
+    plan.updatedAt,
+  ]
+    .map(quote)
+    .join(',');
+  const lines = recordsToCsv(result.records).trimEnd().split('\n');
+  const csv =
+    lines
+      .map(
+        (line, i) =>
+          `${line},${i === 0 ? 'plan_name,scenario,dollar_basis,data_release,plan_updated_at' : metadata}`,
+      )
+      .join('\n') + '\n';
+  download(`${slug(plan.name)}-${slug(label)}-yearly.csv`, csv, 'text/csv');
 }
 
 const money = (v: number): string => `$${Math.round(v).toLocaleString('en-US')}`;
@@ -57,10 +75,10 @@ export async function exportPdf(
   doc.setCreator('Longview');
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const serif = await doc.embedFont(StandardFonts.TimesRomanBold);
+  const serif = bold;
   const ink = rgb(0.11, 0.15, 0.2);
   const muted = rgb(0.36, 0.4, 0.44);
-  const green = rgb(0.12, 0.42, 0.31);
+  const green = rgb(0.31, 0.36, 0.84);
   const W = 612;
   const H = 792;
   const M = 48;
@@ -93,9 +111,17 @@ export async function exportPdf(
     if (y - h < 56) newPage();
   };
   const text = (s: string, size = 10, f = font, color = ink, x = M): void => {
-    need(size + 4);
-    page.drawText(s, { x, y: y - size, size, font: f, color });
-    y -= size + 5;
+    let rest = s;
+    while (rest.length) {
+      let end = rest.length;
+      while (end > 1 && f.widthOfTextAtSize(rest.slice(0, end), size) > W - M - x) end--;
+      const space = rest.lastIndexOf(' ', end);
+      if (end < rest.length && space > end / 2) end = space;
+      need(size + 4);
+      page.drawText(rest.slice(0, end), { x, y: y - size, size, font: f, color });
+      y -= size + 5;
+      rest = rest.slice(end).trimStart();
+    }
   };
   const para = (s: string, size = 9): void => {
     const words = s.split(' ');
@@ -121,8 +147,15 @@ export async function exportPdf(
     need(size + 5);
     let x = M;
     cells.forEach((c, i) => {
-      const w = f.widthOfTextAtSize(c, size);
-      page.drawText(c, { x: i === 0 ? x : x + widths[i] - w - 4, y: y - size, size, font: f, color: ink });
+      const cellSize = Math.min(size, (size * (widths[i] - 8)) / Math.max(1, f.widthOfTextAtSize(c, size)));
+      const w = f.widthOfTextAtSize(c, cellSize);
+      page.drawText(c, {
+        x: i === 0 ? x : x + widths[i] - w - 4,
+        y: y - size,
+        size: cellSize,
+        font: f,
+        color: ink,
+      });
       x += widths[i];
     });
     y -= size + 5;
@@ -132,8 +165,8 @@ export async function exportPdf(
   const recs = result.records;
   page.drawText('Longview', { x: M, y: y - 12, size: 12, font: bold, color: green });
   y -= 26;
-  page.drawText(plan.name, { x: M, y: y - 24, size: 24, font: serif, color: ink });
-  y -= 36;
+  text(plan.name, 24, serif);
+  y -= 7;
   text(
     `${label} · ${s.startYear} to ${s.endYear} · amounts in today's dollars unless marked`,
     9,

@@ -37,6 +37,21 @@ function loadECharts(): Promise<ECharts> {
 }
 
 export interface ChartColors {
+  financial: Record<
+    | 'cash'
+    | 'taxable'
+    | 'pretax'
+    | 'roth'
+    | 'hsa'
+    | 'property'
+    | 'debts'
+    | 'income'
+    | 'expense'
+    | 'tax'
+    | 'baseline'
+    | 'draft',
+    string
+  >;
   ink: string;
   ink2: string;
   ink3: string;
@@ -52,6 +67,22 @@ export function readColors(): ChartColors {
   const s = getComputedStyle(document.documentElement);
   const v = (n: string): string => s.getPropertyValue(n).trim();
   return {
+    financial: Object.fromEntries(
+      [
+        'cash',
+        'taxable',
+        'pretax',
+        'roth',
+        'hsa',
+        'property',
+        'debts',
+        'income',
+        'expense',
+        'tax',
+        'baseline',
+        'draft',
+      ].map((key) => [key, v(`--financial-${key}`)]),
+    ) as ChartColors['financial'],
     ink: v('--ink'),
     ink2: v('--ink-2'),
     ink3: v('--ink-3'),
@@ -78,6 +109,8 @@ export function Chart({
   table,
   footer,
   onClick,
+  onHover,
+  onZoom,
   ...rest
 }: {
   /** Builds the ECharts option from the current theme colours. */
@@ -90,12 +123,19 @@ export function Chart({
   /** A key or note shown on the same row as the table toggle, under the chart. */
   footer?: ReactNode;
   onClick?: (params: { dataIndex: number }) => void;
+  onHover?: (params: { dataIndex: number } | null) => void;
+  onZoom?: (range: [number, number]) => void;
 } & Record<`data-${string}`, string | undefined>): ReactNode {
   const el = useRef<HTMLDivElement>(null);
   const inst = useRef<ReturnType<ECharts['init']> | null>(null);
+  const keyboardIndex = useRef(0);
   // Keep the latest click handler without re-initialising the chart (it would otherwise go stale).
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
+  const hoverRef = useRef(onHover);
+  hoverRef.current = onHover;
+  const zoomRef = useRef(onZoom);
+  zoomRef.current = onZoom;
   const theme = useStore((s) => s.settings.theme);
   const [showTable, setShowTable] = useState(false);
   const [dark, setDark] = useState(false);
@@ -129,6 +169,21 @@ export function Chart({
         const idx = Math.round(x?.[0] ?? NaN);
         if (Number.isFinite(idx)) clickRef.current({ dataIndex: idx });
       });
+      chart.getZr().on('mousemove', (e: { offsetX: number; offsetY: number }) => {
+        if (!hoverRef.current) return;
+        const pt = [e.offsetX, e.offsetY];
+        if (!chart.containPixel({ gridIndex: 0 }, pt)) {
+          hoverRef.current(null);
+          return;
+        }
+        const x = chart.convertFromPixel({ gridIndex: 0 }, pt) as number[] | null;
+        if (x && Number.isFinite(x[0])) hoverRef.current({ dataIndex: Math.round(x[0]) });
+      });
+      chart.getZr().on('globalout', () => hoverRef.current?.(null));
+      chart.on('datazoom', () => {
+        const z = (chart.getOption() as { dataZoom?: { start: number; end: number }[] }).dataZoom?.[0];
+        if (z) zoomRef.current?.([z.start, z.end]);
+      });
       ro = new ResizeObserver(() => chart.resize());
       ro.observe(node);
       setReady((n) => n + 1);
@@ -151,8 +206,8 @@ export function Chart({
     const base: EChartsCoreOption = {
       color: c.series,
       animation: !reduce,
-      animationDuration: 350,
-      animationDurationUpdate: 300,
+      animationDuration: 200,
+      animationDurationUpdate: 220,
       textStyle: { color: c.ink2, fontFamily: getComputedStyle(document.body).fontFamily, fontSize: 12 },
       aria: { enabled: true, label: { description: label } },
     };
@@ -164,10 +219,13 @@ export function Chart({
       itemGap: 14,
     };
     // Keep the user's zoom window across rebuilds.
-    const prev = chart.getOption() as { dataZoom?: { start?: number; end?: number }[] } | undefined;
+    const prev = chart.getOption() as
+      | { dataZoom?: { start?: number; end?: number }[]; legend?: { selected?: Record<string, boolean> }[] }
+      | undefined;
     const opt = { ...base, ...build(c) } as EChartsCoreOption & { dataZoom?: object[]; legend?: object };
     // Charts that ask for a legend get the shared legend style (charts without one stay without).
-    if (opt.legend && !Array.isArray(opt.legend)) opt.legend = { ...legendStyle, ...opt.legend };
+    if (opt.legend && !Array.isArray(opt.legend))
+      opt.legend = { ...legendStyle, selected: prev?.legend?.[0]?.selected, ...opt.legend };
     if (prev?.dataZoom?.length && Array.isArray(opt.dataZoom)) {
       opt.dataZoom = opt.dataZoom.map((z, i) => ({
         ...z,
@@ -175,7 +233,13 @@ export function Chart({
         end: prev.dataZoom?.[i]?.end ?? 100,
       }));
     }
-    chart.setOption(opt, { notMerge: true });
+    const typed = opt as typeof opt & { series?: { id?: string; name?: string; type?: string }[] };
+    if (Array.isArray(typed.series))
+      typed.series = typed.series.map((s, i) => ({
+        ...s,
+        id: s.id ?? `${s.type}:${s.name ?? 'series'}:${i}`,
+      }));
+    chart.setOption(typed, { replaceMerge: ['series', 'xAxis', 'yAxis', 'grid', 'dataZoom'] });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [...deps, theme, dark, ready]);
 
@@ -223,6 +287,36 @@ export function Chart({
           style={{ width: '100%', height, touchAction: 'pan-y pinch-zoom' }}
           role="img"
           aria-label={label}
+          tabIndex={onClick ? 0 : undefined}
+          aria-description={
+            onClick
+              ? 'Use left and right arrow keys to select a year; Home and End select the first and last year.'
+              : undefined
+          }
+          onKeyDown={(e) => {
+            if (!onClick || !['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(e.key)) return;
+            const axes = inst.current?.getOption().xAxis as { data?: unknown[] }[] | undefined;
+            const count = axes?.[0]?.data?.length ?? 0;
+            if (!count) return;
+            e.preventDefault();
+            keyboardIndex.current = Math.max(
+              0,
+              Math.min(
+                count - 1,
+                e.key === 'Home'
+                  ? 0
+                  : e.key === 'End'
+                    ? count - 1
+                    : keyboardIndex.current + (e.key === 'ArrowRight' ? 1 : -1),
+              ),
+            );
+            onClick({ dataIndex: keyboardIndex.current });
+            inst.current?.dispatchAction({
+              type: 'showTip',
+              seriesIndex: 0,
+              dataIndex: keyboardIndex.current,
+            });
+          }}
         />
       )}
       {table || footer ? (
@@ -301,6 +395,7 @@ export function areaSeries(
   opts: { stack?: string; smooth?: boolean } = {},
 ): object {
   return {
+    id: name,
     name,
     type: 'line',
     stack: opts.stack,
@@ -355,8 +450,7 @@ export function kindColor(
   c: ChartColors,
   kind: 'cash' | 'taxable' | 'pretax' | 'roth' | 'hsa' | 'property' | 'debts',
 ): string {
-  const slot = { cash: 0, taxable: 1, pretax: 2, roth: 3, hsa: 4, property: 6, debts: 7 }[kind];
-  return c.series[slot];
+  return c.financial[kind];
 }
 export const short = (v: number): string => {
   const a = Math.abs(v);

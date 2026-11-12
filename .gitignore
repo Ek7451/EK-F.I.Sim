@@ -1,4 +1,6 @@
 .playwright-mcp/
+.playwright-cli/
+output/
 __pycache__/
 node_modules/
 dist/

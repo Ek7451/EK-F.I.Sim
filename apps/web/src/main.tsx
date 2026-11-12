@@ -1,4 +1,5 @@
 import '@fisim/ui/src/styles.css';
+import './font.css';
 import './app.css';
 import { StrictMode, useEffect, useRef, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -39,7 +40,7 @@ function Root(): ReactNode {
     else root.dataset.theme = theme;
     const dark =
       theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#12181f' : '#1f6b4f');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#101827' : '#4f5dd5');
   }, [theme]);
 
   return (

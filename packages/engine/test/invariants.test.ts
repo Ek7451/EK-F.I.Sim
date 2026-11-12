@@ -71,7 +71,7 @@ function maxedCouple(startYear: number): Plan {
   });
   return PlanZ.parse({
     id: 'maxed',
-    schemaVersion: 1,
+    schemaVersion: 2,
     name: 'maxed',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
