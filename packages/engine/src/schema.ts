@@ -198,7 +198,8 @@ export const DebtZ = z.object({
   termMonths: z.number().int().min(0).default(0),
   revolvingPayPct: z.number().min(0).max(1).default(0.02),
   linkedAssetId: id.optional(),
-  interestDeductible: z.boolean().default(false),
+  /** Interest counts as an itemized deduction. When absent, home mortgages are deductible and other debts are not. */
+  interestDeductible: z.boolean().optional(),
   start: YearRefZ.optional(),
   refinance: z
     .array(
@@ -218,7 +219,12 @@ export const IncomeZ = z.object({
   ownerId: id,
   name: z.string(),
   kind: z.enum(['wages', 'bonus', 'selfEmployment', 'rental', 'pension', 'annuity', 'other']),
-  /** Annual amount in today's (plan-start) dollars. */
+  /**
+   * Annual amount in today's (plan-start) dollars, grown by `growth` from the plan start. Pensions differ: the amount
+   * is the annual benefit in its first year of payment. With a nominal COLA it is that year's nominal amount; with a
+   * real COLA it is in today's dollars and is carried to the start year by inflation. The COLA compounds from the
+   * year the pension starts.
+   */
   amount: cents,
   growth: GrowthZ.default({ rate: 0 }),
   start: YearRefZ.optional(),
@@ -461,6 +467,11 @@ export const HealthcareZ = z.object({
     .default([]),
   /** User-entered monthly SLCSP for a 21-year-old (state-based-exchange states or to override; flagged in results). */
   slcspOverrideAge21Monthly: cents.optional(),
+  /**
+   * IRMAA lookback for the first two plan years: modified AGI from two years and one year before the plan start
+   * (nominal cents). When absent, the plan's own first-year MAGI estimate is used.
+   */
+  irmaaPriorMagi: z.object({ twoYearsBefore: cents.optional(), oneYearBefore: cents.optional() }).optional(),
 });
 export type Healthcare = z.infer<typeof HealthcareZ>;
 
@@ -469,7 +480,7 @@ export const AssumptionsZ = z.object({
     .object({
       /** Deterministic projection return model. */
       mode: z.enum(['fixed', 'historicalAverage']).default('fixed'),
-      /** Nominal expected returns per asset class. */
+      /** Expected returns per asset class: GEOMETRIC (compound) nominal annual rates at the plan's inflation rate. */
       fixed: z
         .object({
           usStocks: rate.default(0.07),
@@ -506,14 +517,25 @@ export const AssumptionsZ = z.object({
       /** Forward runs: 'fixed' inflation or historically 'sampled' with the returns (SIM-07). */
       inflation: z.enum(['fixed', 'sampled']).default('sampled'),
       stochasticLongevity: z.boolean().default(false),
+      /**
+       * Bootstrap only: 'assumptions' re-centres history on the expected returns and inflation above (keeping its
+       * volatility, correlation and sequence); 'historical' replays raw history with its own averages.
+       */
+      bootstrapMeans: z.enum(['assumptions', 'historical']).default('assumptions'),
     })
     .default({}),
+  /**
+   * Annual improvement in death rates after the life table's year (cohort adjustment for stochastic longevity).
+   * 0 uses the SSA period table as published; about 0.008 is close to the Trustees' intermediate assumption.
+   */
+  mortalityImprovement: z.number().min(0).max(0.03).default(0),
   /** PLAN-06: optional trust-fund-shortfall scenario. */
   socialSecurityCut: z
     .object({
       enabled: z.boolean().default(false),
-      fromYear: z.number().int().default(2033),
-      payablePct: z.number().min(0).max(1).default(0.77),
+      /** Defaults follow the bundled 2026 Trustees Report (combined OASDI: reserves depleted 2034, 83% payable). */
+      fromYear: z.number().int().default(2034),
+      payablePct: z.number().min(0).max(1).default(0.83),
     })
     .default({}),
 });

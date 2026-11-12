@@ -1,4 +1,11 @@
-/** Return-path generators: block bootstrap (SIM-02), parametric (SIM-03), historical cohorts (SIM-04), longevity (SIM-08). */
+/**
+ * Return-path generators: block bootstrap (SIM-02), parametric (SIM-03), historical cohorts (SIM-04), longevity (SIM-08).
+ *
+ * Return convention (C1): every "expected return" in the plan is a GEOMETRIC (compound) nominal annual rate,
+ * read at the plan's inflation rate. The deterministic projection compounds it as-is; the parametric model uses
+ * it as the lognormal median; the bootstrap re-centres each class's historical log returns on it (keeping the
+ * history's volatility, cross-correlation and sequence) unless `bootstrapMeans` is 'historical'.
+ */
 import type { MarketHistory, MortalityTable } from '@fisim/data';
 import { NC, type Compiled } from '../compile';
 import type { PathInputs } from '../projection';
@@ -9,6 +16,11 @@ export interface PathSettings {
   blockLength: number;
   inflation: 'fixed' | 'sampled';
   stochasticLongevity: boolean;
+  /**
+   * Bootstrap only. 'assumptions' (default) re-centres the historical US stock, bond, cash and inflation log returns
+   * on the plan's expected returns and inflation; 'historical' replays raw history with its own means.
+   */
+  bootstrapMeans?: 'assumptions' | 'historical';
 }
 
 interface Prepared {
@@ -17,14 +29,26 @@ interface Prepared {
   realStocks: Float64Array;
   realBonds: Float64Array;
   realCash: Float64Array;
+  /** Historical real log returns for US stocks, bonds, cash, and log(1 + inflation). */
+  logReal: [Float64Array, Float64Array, Float64Array];
+  logInfl: Float64Array;
+  /** Means of the arrays above. */
+  histLogMean: [number, number, number];
+  histInflLogMean: number;
   /** Log-return standardisation of the US stock series (to correlate the parametric classes with it). */
   stockLogMean: number;
   stockLogSd: number;
+  /** Plan's target nominal log mean per class: ln(1 + geometric expected return). */
   mu: number[];
+  /** Lognormal sigma per class from the plan's (or default) standard deviation. */
   sigma: number[];
   chol: number[][];
+  /** ln(1 + plan inflation). */
+  inflLog: number;
   inflMean: number;
   inflSd: number;
+  /** Lag-1 autocorrelation of annual inflation (1928 on), used by the parametric AR(1) inflation model. */
+  inflPhi: number;
   rhoIntl: number;
   rhoReit: number;
 }
@@ -32,9 +56,14 @@ interface Prepared {
 const prepCache = new WeakMap<Compiled, Prepared>();
 const CLASS_NAMES = ['usStocks', 'usBonds', 'cash', 'intlStocks', 'reits'];
 
-function lognormalParams(mean: number, sd: number): [number, number] {
-  const s2 = Math.log(1 + (sd * sd) / ((1 + mean) * (1 + mean)));
-  return [Math.log(1 + mean) - s2 / 2, Math.sqrt(s2)];
+/**
+ * Lognormal parameters for a GEOMETRIC mean `g` (the median of 1 + r is 1 + g) and a standard deviation `sd` of
+ * simple returns. Solves Var = (1+g)^2 u (u - 1) for u = exp(sigma^2).
+ */
+export function lognormalParams(g: number, sd: number): [number, number] {
+  const ratio = sd / (1 + g);
+  const u = (1 + Math.sqrt(1 + 4 * ratio * ratio)) / 2;
+  return [Math.log(1 + g), Math.sqrt(Math.log(u))];
 }
 
 export function prepare(c: Compiled): Prepared {
@@ -45,17 +74,42 @@ export function prepare(c: Compiled): Prepared {
   const realStocks = new Float64Array(n);
   const realBonds = new Float64Array(n);
   const realCash = new Float64Array(n);
-  let lm = 0;
+  const logReal: [Float64Array, Float64Array, Float64Array] = [
+    new Float64Array(n),
+    new Float64Array(n),
+    new Float64Array(n),
+  ];
+  const logInfl = new Float64Array(n);
+  const histLogMean: [number, number, number] = [0, 0, 0];
+  let histInflLogMean = 0;
   for (let i = 0; i < n; i++) {
     const d = 1 + hist.inflation[i];
     realStocks[i] = (1 + hist.usStocks[i]) / d - 1;
     realBonds[i] = (1 + hist.usBonds[i]) / d - 1;
     realCash[i] = (1 + hist.cash[i]) / d - 1;
-    lm += Math.log(1 + realStocks[i]);
+    logReal[0][i] = Math.log(1 + realStocks[i]);
+    logReal[1][i] = Math.log(1 + realBonds[i]);
+    logReal[2][i] = Math.log(1 + realCash[i]);
+    logInfl[i] = Math.log(d);
+    for (let k = 0; k < 3; k++) histLogMean[k] += logReal[k][i] / n;
+    histInflLogMean += logInfl[i] / n;
   }
-  lm /= n;
+  const lm = histLogMean[0];
   let lv = 0;
-  for (let i = 0; i < n; i++) lv += (Math.log(1 + realStocks[i]) - lm) ** 2;
+  for (let i = 0; i < n; i++) lv += (logReal[0][i] - lm) ** 2;
+  // Inflation persistence over the same window as the parametric defaults (1928 on).
+  const from = Math.max(0, hist.years.indexOf(1928));
+  let im = 0;
+  for (let i = from; i < n; i++) im += hist.inflation[i];
+  im /= Math.max(1, n - from);
+  let iv = 0;
+  let ic = 0;
+  for (let i = from; i < n; i++) {
+    iv += (hist.inflation[i] - im) ** 2;
+    if (i > from) ic += (hist.inflation[i] - im) * (hist.inflation[i - 1] - im);
+  }
+  const inflPhi = iv > 0 ? Math.max(0, Math.min(0.95, ic / iv)) : 0;
+
   const ra = c.data.returnAssumptions;
   const A = c.plan.assumptions;
   const fixed = A.returns.fixed;
@@ -83,13 +137,19 @@ export function prepare(c: Compiled): Prepared {
     realStocks,
     realBonds,
     realCash,
+    logReal,
+    logInfl,
+    histLogMean,
+    histInflLogMean,
     stockLogMean: lm,
     stockLogSd: Math.sqrt(lv / (n - 1)),
     mu,
     sigma,
     chol: cholesky(corr),
+    inflLog: Math.log(1 + A.inflation.rate),
     inflMean: A.inflation.rate,
     inflSd: ra.inflationStdDev,
+    inflPhi,
     rhoIntl: corr[0][3],
     rhoReit: corr[0][4],
   };
@@ -97,28 +157,85 @@ export function prepare(c: Compiled): Prepared {
   return p;
 }
 
-/** Sample an age at death from period q(x), conditional on being alive at `ageNow`. */
+/** Geometric nominal annual means a Monte Carlo run uses, per class and for inflation (reported with results). */
+export interface ReturnMeans {
+  basis: 'assumptions' | 'historical';
+  usStocks: number;
+  usBonds: number;
+  cash: number;
+  intlStocks: number;
+  reits: number;
+  inflation: number;
+}
+
+export function returnMeansUsed(c: Compiled, settings: PathSettings): ReturnMeans {
+  const A = c.plan.assumptions;
+  const f = A.returns.fixed;
+  const fromPlan: ReturnMeans = {
+    basis: 'assumptions',
+    usStocks: f.usStocks,
+    usBonds: f.usBonds,
+    cash: f.cash,
+    intlStocks: f.intlStocks,
+    reits: f.reits,
+    inflation: A.inflation.rate,
+  };
+  if (settings.method !== 'bootstrap' || settings.bootstrapMeans !== 'historical') return fromPlan;
+  const p = prepare(c);
+  const inflLog = settings.inflation === 'sampled' ? p.histInflLogMean : p.inflLog;
+  const nom = (k: number): number => Math.exp(p.histLogMean[k] + inflLog) - 1;
+  return {
+    ...fromPlan,
+    basis: 'historical',
+    usStocks: nom(0),
+    usBonds: nom(1),
+    cash: nom(2),
+    inflation: Math.exp(inflLog) - 1,
+  };
+}
+
+/** Death probability at `age`, optionally with annual mortality improvement after the table year (cohort adjustment). */
+function qAt(
+  table: MortalityTable,
+  q: number[],
+  age: number,
+  improve?: { rate: number; birthYear: number },
+): number {
+  const base = q[age];
+  if (!improve || improve.rate <= 0) return base;
+  const yearsAhead = improve.birthYear + age - table.year;
+  return yearsAhead > 0 ? base * Math.pow(1 - improve.rate, yearsAhead) : base;
+}
+
+/**
+ * Sample an age at death from period q(x), conditional on being alive at `ageNow`. With `improve`, each q(x) is
+ * reduced by `rate` a year for every calendar year after the table's year in which the person would reach age x
+ * (a simple cohort mortality-improvement adjustment, as in the SSA Trustees' projections).
+ */
 export function sampleDeathAge(
   table: MortalityTable,
   sex: 'male' | 'female',
   ageNow: number,
   rng: Rng,
+  improve?: { rate: number; birthYear: number },
 ): number {
   const q = sex === 'male' ? table.male : table.female;
-  for (let age = Math.max(0, ageNow); age < q.length; age++) if (rng.next() < q[age]) return age;
+  for (let age = Math.max(0, ageNow); age < q.length; age++)
+    if (rng.next() < qAt(table, q, age, improve)) return age;
   return q.length - 1;
 }
 
-/** Probability of surviving from `fromAge` to `toAge`. */
+/** Probability of surviving from `fromAge` to `toAge` (with the same optional improvement adjustment). */
 export function survivalProbability(
   table: MortalityTable,
   sex: 'male' | 'female',
   fromAge: number,
   toAge: number,
+  improve?: { rate: number; birthYear: number },
 ): number {
   const q = sex === 'male' ? table.male : table.female;
   let s = 1;
-  for (let a = fromAge; a < toAge && a < q.length; a++) s *= 1 - q[a];
+  for (let a = fromAge; a < toAge && a < q.length; a++) s *= 1 - qAt(table, q, a, improve);
   return s;
 }
 
@@ -134,38 +251,48 @@ export function generatePath(c: Compiled, settings: PathSettings, seed: number, 
   };
   const A = c.plan.assumptions;
   const fixedInfl = A.inflation.rate;
+  // Real log medians for the classes with no long free history (and for the parametric model).
+  const muReal = p.mu.map((m) => m - p.inflLog);
   if (settings.method === 'bootstrap') {
     // Circular block bootstrap of joint real returns (and inflation), plan 7.1.
+    const recentre = settings.bootstrapMeans !== 'historical';
+    const shift = [0, 1, 2].map((k) => (recentre ? muReal[k] - p.histLogMean[k] : 0));
+    const inflShift = recentre ? p.inflLog - p.histInflLogMean : 0;
     const L = Math.max(1, settings.blockLength);
     let idx = 0;
     for (let t = 0; t < years; t++) {
       if (t % L === 0) idx = rng.int(p.n);
       else idx = (idx + 1) % p.n;
-      const infl = settings.inflation === 'sampled' ? p.hist.inflation[idx] : fixedInfl;
+      const infl = settings.inflation === 'sampled' ? Math.exp(p.logInfl[idx] + inflShift) - 1 : fixedInfl;
       const g = 1 + infl;
-      const rs = p.realStocks[idx];
       path.inflation[t] = infl;
-      path.returns[t * NC] = (1 + rs) * g - 1;
-      path.returns[t * NC + 1] = (1 + p.realBonds[idx]) * g - 1;
-      path.returns[t * NC + 2] = (1 + p.realCash[idx]) * g - 1;
+      for (let k = 0; k < 3; k++) path.returns[t * NC + k] = Math.exp(p.logReal[k][idx] + shift[k]) * g - 1;
       // No long free history for these two: lognormal draws correlated with the sampled US stock return.
-      const z = (Math.log(1 + rs) - p.stockLogMean) / p.stockLogSd;
+      const z = (p.logReal[0][idx] - p.stockLogMean) / p.stockLogSd;
       const zi = p.rhoIntl * z + Math.sqrt(Math.max(0, 1 - p.rhoIntl * p.rhoIntl)) * rng.normal();
       const zr = p.rhoReit * z + Math.sqrt(Math.max(0, 1 - p.rhoReit * p.rhoReit)) * rng.normal();
-      path.returns[t * NC + 3] = Math.exp(p.mu[3] + p.sigma[3] * zi) - 1 + (infl - fixedInfl);
-      path.returns[t * NC + 4] = Math.exp(p.mu[4] + p.sigma[4] * zr) - 1 + (infl - fixedInfl);
+      path.returns[t * NC + 3] = Math.exp(muReal[3] + p.sigma[3] * zi) * g - 1;
+      path.returns[t * NC + 4] = Math.exp(muReal[4] + p.sigma[4] * zr) * g - 1;
     }
   } else {
     const z = new Array<number>(NC);
+    // AR(1) inflation with the historical persistence; its stationary sd is the historical sd.
+    const phi = p.inflPhi;
+    const innov = p.inflSd * Math.sqrt(1 - phi * phi);
+    let dev = 0;
     for (let t = 0; t < years; t++) {
       for (let k = 0; k < NC; k++) z[k] = rng.normal();
-      const infl =
-        settings.inflation === 'sampled' ? Math.max(-0.05, p.inflMean + p.inflSd * rng.normal()) : fixedInfl;
+      let infl = fixedInfl;
+      if (settings.inflation === 'sampled') {
+        dev = phi * dev + innov * rng.normal();
+        infl = Math.max(-0.05, p.inflMean + dev);
+      }
       path.inflation[t] = infl;
+      const g = 1 + infl;
       for (let i = 0; i < NC; i++) {
         let x = 0;
         for (let j = 0; j <= i; j++) x += p.chol[i][j] * z[j];
-        path.returns[t * NC + i] = Math.exp(p.mu[i] + p.sigma[i] * x) - 1 + (infl - fixedInfl);
+        path.returns[t * NC + i] = Math.exp(muReal[i] + p.sigma[i] * x) * g - 1;
       }
     }
   }
@@ -173,9 +300,19 @@ export function generatePath(c: Compiled, settings: PathSettings, seed: number, 
   for (let t = 0; t < years; t++)
     path.healthExcess[t] = h.stochastic ? h.excessOverCpi + h.stdDev * rng.normal() : h.excessOverCpi;
   // Longevity (SIM-08): independent draws per person give joint survival for couples.
+  const improveRate = A.mortalityImprovement;
   path.deathAge = c.people.map((person) =>
     person.stochasticLongevity
-      ? Math.min(109, sampleDeathAge(c.data.mortality, person.sex, c.startYear - person.birthYear, rng))
+      ? Math.min(
+          109,
+          sampleDeathAge(
+            c.data.mortality,
+            person.sex,
+            c.startYear - person.birthYear,
+            rng,
+            improveRate > 0 ? { rate: improveRate, birthYear: person.birthYear } : undefined,
+          ),
+        )
       : person.deathAge,
   );
   // Long-term-care events (HC-10).

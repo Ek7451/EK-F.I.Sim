@@ -8,6 +8,7 @@ import {
   generatePath,
   historicalPath,
   pickYear,
+  PlanZ,
   project,
   runBacktest,
   runPath,
@@ -49,6 +50,74 @@ const variant = fc.record({
   run: fc.integer({ min: 0, max: 5000 }),
   method: fc.constantFrom('bootstrap', 'parametric' as const),
 });
+
+/** Two high earners aged 58 who max out 401(k)s (with Roth accounts for the catch-up rule) and a family HSA. */
+function maxedCouple(startYear: number): Plan {
+  const person = (id: string) => ({
+    id,
+    name: id,
+    birthDate: '1968-03-01',
+    residence: [{ state: 'TX', fromYear: startYear }],
+    socialSecurity: { mode: 'none' as const },
+    longevity: { age: 90 },
+  });
+  const acct = (id: string, ownerId: string, type: string, contribution?: object) => ({
+    id,
+    ownerId,
+    name: id,
+    type,
+    balance: 0,
+    ...(contribution ? { contribution } : {}),
+  });
+  return PlanZ.parse({
+    id: 'maxed',
+    schemaVersion: 1,
+    name: 'maxed',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+    settings: { startYear },
+    people: [person('a'), person('b')],
+    accounts: [
+      acct('ka', 'a', 'trad401k', { incomeId: 'wa', maxOut: true }),
+      acct('ra', 'a', 'roth401k'),
+      acct('kb', 'b', 'trad401k', { incomeId: 'wb', maxOut: true }),
+      acct('rb', 'b', 'roth401k'),
+      acct('h', 'a', 'hsa', { incomeId: 'wa', maxOut: true }),
+      { ...acct('c', 'a', 'cash'), balance: 5000000 },
+    ],
+    incomes: [
+      {
+        id: 'wa',
+        ownerId: 'a',
+        name: 'A',
+        kind: 'wages',
+        amount: 25000000,
+        end: { type: 'age', personId: 'a', age: 66 },
+      },
+      {
+        id: 'wb',
+        ownerId: 'b',
+        name: 'B',
+        kind: 'wages',
+        amount: 25000000,
+        end: { type: 'age', personId: 'b', age: 66 },
+      },
+    ],
+    expenses: [{ id: 'e', name: 'Living', category: 'other', amount: 8000000 }],
+    healthcare: {
+      people: [
+        {
+          personId: 'a',
+          coverage: [{ type: 'employer', from: { type: 'year', year: startYear }, hdhp: true }],
+        },
+        {
+          personId: 'b',
+          coverage: [{ type: 'spouseEmployer', from: { type: 'year', year: startYear }, hdhp: true }],
+        },
+      ],
+    },
+  });
+}
 
 function build(v: {
   sample: number;
@@ -108,18 +177,39 @@ describe('engine invariants', () => {
     }
   });
 
-  it('contributions never exceed their limits', () => {
-    for (const mk of samples) {
+  it('contributions never exceed their limits (per living person, by age)', () => {
+    for (const mk of [...samples, maxedCouple]) {
       const plan = mk(2026);
       const res = project(plan, data);
+      let tight = 0;
       for (const r of res.records) {
-        const lim = pickYear(data.limits, r.year).value;
-        const scale = r.year > 2027 ? r.cpi / res.records[Math.min(1, res.records.length - 1)].cpi : 1;
-        const perPerson = (lim.electiveDeferral + lim.catchUp60to63) * scale * 1.0001;
-        expect(r.contributions.pretax).toBeLessThanOrEqual(perPerson * plan.people.length + 1);
-        const hsaMax = (lim.hsa.family + 2 * lim.hsa.catchUp55) * scale * 1.0001;
-        expect(r.contributions.hsa).toBeLessThanOrEqual(hsaMax + 1);
+        const pick = pickYear(data.limits, r.year);
+        const lim = pick.value;
+        const base = res.records.find((x) => x.year === pick.dataYear);
+        const scale = (base ? r.cpi / base.cpi : 1) * 1.0001;
+        let deferral = 0;
+        let hsa = 0;
+        let anyAlive = 0;
+        r.alive.forEach((alive, i) => {
+          if (!alive) return;
+          anyAlive++;
+          const age = r.ages[i];
+          const cu = age >= 60 && age <= 63 ? lim.catchUp60to63 : age >= 50 ? lim.catchUp50 : 0;
+          deferral += (lim.electiveDeferral + cu) * scale;
+          hsa += age >= 55 ? lim.hsa.catchUp55 : 0;
+        });
+        // Employee deferrals (pre-tax and Roth payroll) against 402(g) + the age-based catch-up of each living person.
+        expect(r.contributions.pretax + r.contributions.roth).toBeLessThanOrEqual(deferral + 1);
+        // HSA: one family limit (indexed) per household plus each person's (unindexed) catch-up.
+        if (anyAlive) expect(r.contributions.hsa).toBeLessThanOrEqual(lim.hsa.family * scale + hsa + 1);
+        if (
+          r.income.wages > 0 &&
+          Math.abs(r.contributions.pretax + r.contributions.roth - deferral / 1.0001) < 2
+        )
+          tight++;
       }
+      // The maxed-out couple sits exactly on the age-based limit every working year (50+ and 60-63 catch-ups).
+      if (mk === maxedCouple) expect(tight).toBe(res.records.filter((r) => r.income.wages > 0).length);
     }
   });
 

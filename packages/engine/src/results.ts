@@ -2,7 +2,7 @@
 import type { DataHeader } from '@fisim/data';
 import { compilePlan, type Compiled } from './compile';
 import type { EngineData } from './data';
-import { fixedPath, runPath, type PathResult, type YearRecord } from './projection';
+import { fixedPath, runPath, toReal, type PathResult, type YearRecord } from './projection';
 import { applyScenario, type Plan } from './schema';
 
 export interface ProjectionSummary {
@@ -50,9 +50,9 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
   let taxSum = 0;
   let grossSum = 0;
   for (const r of recs) {
-    const real = r.netWorth / r.cpi;
+    const real = toReal(r.netWorth, r);
     if (real > peak) peak = real;
-    spend += r.expenses.total / r.cpi;
+    spend += toReal(r.expenses.total, r, 'flow');
     if (fiYear === null && r.expenses.living > 0 && r.investable >= 25 * r.expenses.living) fiYear = r.year;
     taxSum += r.taxes.total;
     grossSum += r.income.total + r.withdrawals.pretax + r.rothConversion;
@@ -79,7 +79,7 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
       failedYear: res.failedYear,
       fiYear,
       retirementYear,
-      endingNetWorthReal: last ? last.netWorth / last.cpi : 0,
+      endingNetWorthReal: last ? toReal(last.netWorth, last) : 0,
       peakNetWorthReal: peak,
       lifetimeTaxReal: res.lifetimeTax,
       lifetimeSpendingReal: spend,
@@ -342,6 +342,7 @@ const CSV_COLUMNS: [string, (r: YearRecord) => number | string][] = [
   ['state', (r) => r.state],
   ['tax_data', (r) => r.dataStatus],
   ['cpi_factor', (r) => r.cpi.toFixed(6)],
+  ['cpi_end_factor', (r) => r.cpiEnd.toFixed(6)],
   ['income_total', (r) => r.income.total],
   ['wages', (r) => r.income.wages + r.income.selfEmployment],
   ['social_security', (r) => r.income.socialSecurity],
@@ -371,7 +372,7 @@ const CSV_COLUMNS: [string, (r: YearRecord) => number | string][] = [
   ['other_assets', (r) => r.assets],
   ['debts', (r) => r.debts],
   ['net_worth', (r) => r.netWorth],
-  ['net_worth_todays_dollars', (r) => r.netWorth / r.cpi],
+  ['net_worth_todays_dollars', (r) => toReal(r.netWorth, r)],
   ['shortfall', (r) => r.shortfall],
 ];
 
