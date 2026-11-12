@@ -159,6 +159,98 @@
   grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
   gap: var(--space-4);
 }
+/* ------------------------------------------------------------------ projection: spending-covered strip key */
+.funded-key {
+  margin-top: 4px;
+}
+.funded-swatch {
+  display: inline-block;
+  width: 14px;
+  height: 8px;
+  margin: 0 4px 0 8px;
+  border-radius: 2px;
+  vertical-align: middle;
+  background: var(--primary);
+  opacity: 0.35;
+}
+.funded-swatch:first-child {
+  margin-left: 0;
+}
+.funded-swatch[data-short='true'] {
+  background: var(--danger);
+  opacity: 1;
+}
+
+/* ------------------------------------------------------------------ household people list */
+.lv-list > li.person-row {
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+.person-age {
+  width: 220px;
+  max-width: 100%;
+}
+
+/* ------------------------------------------------------------------ first-plan wizard */
+.wizard-heading {
+  margin: 20px 0 16px;
+}
+.wizard-person {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  margin: 0;
+  min-width: 0;
+}
+.wizard-person > legend {
+  padding: 0 var(--space-2);
+  font-weight: 600;
+  color: var(--ink);
+}
+.wizard-readout {
+  grid-column: 1 / -1;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+.lv-warn-text {
+  color: var(--warn);
+  font-weight: 600;
+}
+.wizard-narrow {
+  max-width: 420px;
+}
+.wizard-nav {
+  margin-top: 24px;
+}
+.wizard-assumptions {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+}
+.wizard-assumptions > div {
+  display: grid;
+  grid-template-columns: minmax(140px, 200px) 1fr;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: 1px solid var(--line);
+}
+.wizard-assumptions dt {
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+.wizard-assumptions dd {
+  margin: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+@media (max-width: 560px) {
+  .wizard-assumptions > div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}
+
 .subnav {
   display: flex;
   gap: var(--space-2);

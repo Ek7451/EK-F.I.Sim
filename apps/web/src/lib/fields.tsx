@@ -1,8 +1,9 @@
 /** Shared plan-editing fields and labels. */
 import type { Allocation, Plan, YearRef } from '@fisim/engine';
 import { ASSET_CLASSES } from '@fisim/engine';
-import { Button, Dialog, NumberField, PercentField, SelectField, formatPct } from '@fisim/ui';
+import { Button, Dialog, HelpTip, NumberField, PercentField, SelectField, formatPct } from '@fisim/ui';
 import type { ReactNode } from 'react';
+import { helpText } from './help';
 
 export const ACCOUNT_LABELS: Record<string, string> = {
   taxable: 'Taxable brokerage',
@@ -65,9 +66,11 @@ export function WhenField({
   onChange,
   optional,
   emptyLabel = 'Not set',
+  help = helpText('@when'),
 }: {
   plan: Plan;
   label: string;
+  help?: ReactNode;
   value: YearRef | undefined;
   onChange: (v: YearRef | undefined) => void;
   optional?: boolean;
@@ -85,6 +88,7 @@ export function WhenField({
       <div style={{ flex: 1, minWidth: 0 }}>
         <SelectField
           label={label}
+          help={help}
           value={type}
           options={opts}
           onChange={(t) => {
@@ -148,11 +152,13 @@ export function GrowthField({
   value,
   onChange,
   hint,
+  help,
 }: {
   label: string;
   value: { rate: number; basis: 'real' | 'nominal' };
   onChange: (v: { rate: number; basis: 'real' | 'nominal' }) => void;
   hint?: string;
+  help?: ReactNode;
 }): ReactNode {
   return (
     <div className="lv-row" style={{ alignItems: 'flex-end', flexWrap: 'nowrap' }}>
@@ -160,6 +166,7 @@ export function GrowthField({
         <PercentField
           label={label}
           hint={hint}
+          help={help}
           value={value.rate}
           onChange={(rate) => onChange({ ...value, rate })}
         />
@@ -167,6 +174,7 @@ export function GrowthField({
       <div style={{ flex: 1 }}>
         <SelectField
           label="Measured"
+          help={helpText('@growthBasis')}
           value={value.basis}
           options={[
             { value: 'real', label: 'Above inflation' },
@@ -190,7 +198,7 @@ export function AllocationEditor({
   return (
     <fieldset style={{ border: 0, padding: 0, margin: 0 }} data-tour="allocation">
       <legend className="lv-label" style={{ marginBottom: 8 }}>
-        Investment mix{' '}
+        Investment mix <HelpTip>{helpText('@allocation')}</HelpTip>{' '}
         <span className={Math.abs(sum - 1) > 0.005 ? '' : 'lv-muted'} style={{ fontWeight: 400 }}>
           (adds up to {formatPct(sum)}
           {Math.abs(sum - 1) > 0.005 ? '; it will be scaled to 100%' : ''})

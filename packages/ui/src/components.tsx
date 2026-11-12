@@ -6,14 +6,26 @@ import {
   flip,
   offset,
   shift,
+  safePolygon,
   useClick,
   useDismiss,
   useFloating,
+  useFocus,
+  useHover,
   useInteractions,
   useRole,
   type Placement,
 } from '@floating-ui/react';
-import { useEffect, useId, useRef, useState, type ButtonHTMLAttributes, type ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type ButtonHTMLAttributes,
+  type ReactNode,
+} from 'react';
 import { createPortal } from 'react-dom';
 
 // ------------------------------------------------------------------ formatting
@@ -199,20 +211,108 @@ export function Notice({
 
 // ------------------------------------------------------------------ fields
 
+/**
+ * Where fields find their help text when they are not given a `help` prop: the app provides a lookup by
+ * label, so every field with a known label gets an (i) without each screen wiring it up. Pass
+ * `help={null}` to a field to switch it off.
+ */
+const HelpLookup = createContext<(label: string) => ReactNode>(() => undefined);
+export const HelpProvider = HelpLookup.Provider;
+function useHelp(label: string, help: ReactNode | undefined): ReactNode {
+  const lookup = useContext(HelpLookup);
+  return help === undefined ? lookup(label) : help;
+}
+
+/**
+ * A small (i) button beside a label. The explanation opens on hover, on keyboard focus and on tap, and
+ * closes with Escape or by moving away. It is text only (no links), so it can be a tooltip.
+ */
+export function HelpTip({
+  children,
+  describedBy,
+  placement = 'top',
+}: {
+  children: ReactNode;
+  /** Id of the label this help is about, so assistive tech reads "Help, <label>". */
+  describedBy?: string;
+  placement?: Placement;
+}): ReactNode {
+  const [open, setOpen] = useState(false);
+  const tipId = useId();
+  const { refs, floatingStyles, context } = useFloating({
+    open,
+    onOpenChange: setOpen,
+    placement,
+    whileElementsMounted: autoUpdate,
+    middleware: [offset(6), flip(), shift({ padding: 12 })],
+  });
+  const { getReferenceProps, getFloatingProps } = useInteractions([
+    useHover(context, { delay: { open: 120, close: 60 }, handleClose: safePolygon() }),
+    useFocus(context),
+    useClick(context, { ignoreMouse: true }),
+    useDismiss(context),
+    useRole(context, { role: 'tooltip' }),
+  ]);
+  return (
+    <>
+      <button
+        type="button"
+        className="lv-help"
+        aria-label="Help"
+        aria-describedby={[describedBy, open ? tipId : undefined].filter(Boolean).join(' ') || undefined}
+        aria-expanded={open}
+        data-help=""
+        ref={refs.setReference}
+        {...getReferenceProps()}
+      >
+        <Icon name="info" size={15} />
+      </button>
+      {open ? (
+        <FloatingPortal>
+          <div
+            ref={refs.setFloating}
+            id={tipId}
+            className="lv-helptip"
+            style={floatingStyles}
+            {...getFloatingProps()}
+          >
+            {typeof children === 'string'
+              ? children.split('\n\n').map((p, i) => <p key={i}>{p}</p>)
+              : children}
+          </div>
+        </FloatingPortal>
+      ) : null}
+    </>
+  );
+}
+
 export function Field({
   label,
   hint,
+  help,
   children,
 }: {
   label: string;
   hint?: string;
+  /** Longer explanation shown from an (i) button beside the label. */
+  help?: ReactNode;
   children: (id: string, hintId: string | undefined) => ReactNode;
 }): ReactNode {
   const id = useId();
   const hintId = hint ? `${id}-hint` : undefined;
+  const helpBody = useHelp(label, help);
   return (
     <div className="lv-field">
-      <label htmlFor={id}>{label}</label>
+      {helpBody ? (
+        <div className="lv-label-row">
+          <label htmlFor={id} id={`${id}-label`}>
+            {label}
+          </label>
+          <HelpTip describedBy={`${id}-label`}>{helpBody}</HelpTip>
+        </div>
+      ) : (
+        <label htmlFor={id}>{label}</label>
+      )}
       {children(id, hintId)}
       {hint ? (
         <span className="lv-hint" id={hintId}>
@@ -226,16 +326,24 @@ export function Field({
 export function TextField({
   label,
   hint,
+  help,
   value,
   onChange,
   type = 'text',
   ...rest
-}: { label: string; hint?: string; value: string; onChange: (v: string) => void; type?: string } & Record<
+}: {
+  label: string;
+  hint?: string;
+  help?: ReactNode;
+  value: string;
+  onChange: (v: string) => void;
+  type?: string;
+} & Record<
   `data-${string}`,
   string | undefined
 >): ReactNode {
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} help={help}>
       {(id, hintId) => (
         <input
           id={id}
@@ -303,10 +411,11 @@ const parseLoose = (s: string): number => {
 export function MoneyField({
   label,
   hint,
+  help,
   cents,
   onChange,
   ...rest
-}: { label: string; hint?: string; cents: number; onChange: (cents: number) => void } & Record<
+}: { label: string; hint?: string; help?: ReactNode; cents: number; onChange: (cents: number) => void } & Record<
   `data-${string}`,
   string | undefined
 >): ReactNode {
@@ -317,7 +426,7 @@ export function MoneyField({
     onChange,
   );
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} help={help}>
       {(id, hintId) => (
         <div className="lv-affix">
           <span data-side="left" aria-hidden="true">
@@ -345,11 +454,19 @@ export function MoneyField({
 export function PercentField({
   label,
   hint,
+  help,
   value,
   onChange,
   digits = 2,
   ...rest
-}: { label: string; hint?: string; value: number; onChange: (v: number) => void; digits?: number } & Record<
+}: {
+  label: string;
+  hint?: string;
+  help?: ReactNode;
+  value: number;
+  onChange: (v: number) => void;
+  digits?: number;
+} & Record<
   `data-${string}`,
   string | undefined
 >): ReactNode {
@@ -360,7 +477,7 @@ export function PercentField({
     onChange,
   );
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} help={help}>
       {(id, hintId) => (
         <div className="lv-affix">
           <input
@@ -387,6 +504,7 @@ export function PercentField({
 export function NumberField({
   label,
   hint,
+  help,
   value,
   onChange,
   min,
@@ -395,6 +513,7 @@ export function NumberField({
 }: {
   label: string;
   hint?: string;
+  help?: ReactNode;
   value: number;
   onChange: (v: number) => void;
   min?: number;
@@ -412,7 +531,7 @@ export function NumberField({
     { accept: (v) => v === clamp(v), settle: clamp },
   );
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} help={help}>
       {(id, hintId) => (
         <input
           id={id}
@@ -437,6 +556,7 @@ export function NumberField({
 export function SelectField<T extends string>({
   label,
   hint,
+  help,
   value,
   onChange,
   options,
@@ -444,12 +564,13 @@ export function SelectField<T extends string>({
 }: {
   label: string;
   hint?: string;
+  help?: ReactNode;
   value: T;
   onChange: (v: T) => void;
   options: { value: T; label: string }[];
 } & Record<`data-${string}`, string | undefined>): ReactNode {
   return (
-    <Field label={label} hint={hint}>
+    <Field label={label} hint={hint} help={help}>
       {(id, hintId) => (
         <select
           id={id}
@@ -472,23 +593,35 @@ export function SelectField<T extends string>({
 
 export function Switch({
   label,
+  help,
   checked,
   onChange,
   ...rest
-}: { label: string; checked: boolean; onChange: (v: boolean) => void } & Record<
+}: { label: string; help?: ReactNode; checked: boolean; onChange: (v: boolean) => void } & Record<
   `data-${string}`,
   string | undefined
 >): ReactNode {
-  return (
+  const id = useId();
+  const helpBody = useHelp(label, help);
+  const sw = (
     <label className="lv-switch" {...rest}>
       <input type="checkbox" role="switch" checked={checked} onChange={(e) => onChange(e.target.checked)} />
-      <span>{label}</span>
+      <span id={`${id}-label`}>{label}</span>
     </label>
+  );
+  return helpBody ? (
+    <span className="lv-label-row">
+      {sw}
+      <HelpTip describedBy={`${id}-label`}>{helpBody}</HelpTip>
+    </span>
+  ) : (
+    sw
   );
 }
 
 export function Slider({
   label,
+  help,
   value,
   onChange,
   min,
@@ -498,6 +631,7 @@ export function Slider({
   ...rest
 }: {
   label: string;
+  help?: ReactNode;
   value: number;
   onChange: (v: number) => void;
   min: number;
@@ -506,10 +640,16 @@ export function Slider({
   format?: (v: number) => string;
 } & Record<`data-${string}`, string | undefined>): ReactNode {
   const id = useId();
+  const helpBody = useHelp(label, help);
   return (
     <div className="lv-field" {...rest}>
       <div className="lv-spread">
-        <label htmlFor={id}>{label}</label>
+        <span className="lv-label-row">
+          <label htmlFor={id} id={`${id}-label`}>
+            {label}
+          </label>
+          {helpBody ? <HelpTip describedBy={`${id}-label`}>{helpBody}</HelpTip> : null}
+        </span>
         <span className="lv-num">{format ? format(value) : value}</span>
       </div>
       <input

@@ -1,7 +1,8 @@
 import { Component, Suspense, lazy, type ComponentType, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
 // The landing screens ship in the first download: no second round trip, and no layout shift, before first paint.
-import { HomePage, StartPage } from './pages/Home';
+import { HomePage } from './pages/Home';
+import { StartPage } from './pages/StartWizard';
 import { Shell } from './shell/Shell';
 import { logError } from './state/db';
 import { usePlan, useStore } from './state/store';

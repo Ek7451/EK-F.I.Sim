@@ -3,6 +3,7 @@ import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField
 import type { ReactNode } from 'react';
 import { useProjection } from '../../engine/useResults';
 import { AllocationEditor, CLASS_LABELS, WhenField } from '../../lib/fields';
+import { LifespanSwitch } from '../../lib/lifespan';
 import { PageHead } from '../../shell/Shell';
 import { newId, usePlan, useUpdate } from '../../state/store';
 
@@ -153,7 +154,7 @@ export function AssumptionsPage(): ReactNode {
           <SelectField label="Inflation in simulations" value={mc.inflation} options={[{ value: 'sampled', label: 'Varies, as in history' }, { value: 'fixed', label: 'Fixed at my rate' }]} onChange={(v) => update((d) => { d.assumptions.monteCarlo.inflation = v; })} />
         </div>
         <div className="lv-stack" style={{ marginTop: 12 }}>
-          <Switch label="Let lifespans vary in simulations (SSA life tables)" checked={mc.stochasticLongevity} onChange={(v) => update((d) => { d.assumptions.monteCarlo.stochasticLongevity = v; })} />
+          <LifespanSwitch plan={plan} />
           <Switch label="Let healthcare inflation vary in simulations" checked={A.healthcareInflation.stochastic} onChange={(v) => update((d) => { d.assumptions.healthcareInflation.stochastic = v; })} />
         </div>
       </Card>
@@ -182,7 +183,7 @@ export function AssumptionsPage(): ReactNode {
         <Switch label="Assume benefits are cut if the trust fund runs short" checked={A.socialSecurityCut.enabled} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.enabled = v; })} />
         {A.socialSecurityCut.enabled ? (
           <div className="form-grid" style={{ marginTop: 12 }}>
-            <NumberField label="From year" value={A.socialSecurityCut.fromYear} min={2026} max={2100} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.fromYear = v; })} />
+            <NumberField label="From year" help="The first year benefits are cut. The 2025 Trustees Report projects the trust fund running short in 2034." value={A.socialSecurityCut.fromYear} min={2026} max={2100} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.fromYear = v; })} />
             <PercentField label="Share of benefits still paid" digits={0} value={A.socialSecurityCut.payablePct} onChange={(v) => update((d) => { d.assumptions.socialSecurityCut.payablePct = Math.max(0, Math.min(1, v)); })} />
           </div>
         ) : null}

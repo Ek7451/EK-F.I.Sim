@@ -1,7 +1,8 @@
 import type { Person } from '@fisim/engine';
-import { Button, Card, MoneyField, NumberField, SelectField, Switch, TextField, formatMoney } from '@fisim/ui';
+import { Button, Card, MoneyField, NumberField, SelectField, TextField, formatMoney } from '@fisim/ui';
 import { useState, type ReactNode } from 'react';
 import { EditDialog, STATES, STATUS_LABELS } from '../../lib/fields';
+import { LifespanSwitch, lifespansVary, survivalNote } from '../../lib/lifespan';
 import { PageHead } from '../../shell/Shell';
 import { newId, usePlan, useUpdate } from '../../state/store';
 
@@ -31,16 +32,20 @@ export function HouseholdPage(): ReactNode {
         ) : null}
       >
         <ul className="lv-list">
-          {plan.people.map((p) => (
-            <li key={p.id}>
+          {plan.people.map((p, pi) => (
+            <li key={p.id} className="person-row">
               <div className="lv-grow">
                 <strong>{p.name}</strong>
-                <div className="lv-muted lv-small">Born {p.birthDate.slice(0, 4)} · plan runs to age {p.longevity.age}{p.longevity.mode === 'stochastic' ? ' (lifespan varies in simulations)' : ''} · {p.residence[p.residence.length - 1]?.state ?? 'no state set'}</div>
+                <div className="lv-muted lv-small">Born {p.birthDate.slice(0, 4)} · {p.residence[p.residence.length - 1]?.state ?? 'no state set'}{lifespansVary(plan) ? ' · lifespan varies in simulations' : ''}</div>
+              </div>
+              <div className="person-age" data-tour={pi === 0 ? 'plan-until-age' : undefined}>
+                <NumberField label="Plan until age" hint={survivalNote(+p.birthDate.slice(0, 4), p.sex, p.longevity.age, plan.settings.startYear) ?? undefined} value={p.longevity.age} min={50} max={115} onChange={(v) => update((d) => { d.people[pi].longevity.age = v; })} />
               </div>
               <Button size="sm" icon="edit" onClick={() => setEditing(p.id)} data-tour="edit-person">Edit</Button>
             </li>
           ))}
         </ul>
+        <div style={{ marginTop: 12 }}><LifespanSwitch plan={plan} /></div>
       </Card>
 
       <Card title="Filing status over time" data-tour="filing-status" actions={<Button size="sm" icon="plus" onClick={() => update((d) => { d.household.filingStatus = [...status, { fromYear: (status[status.length - 1]?.fromYear ?? d.settings.startYear) + 5, status: 'single' }]; })}>Add a change</Button>}>
@@ -76,9 +81,9 @@ export function HouseholdPage(): ReactNode {
               <TextField label="Name" value={person.name} onChange={(v) => set((p) => { p.name = v; })} />
               <TextField label="Date of birth" type="date" value={person.birthDate} onChange={(v) => { if (/^\d{4}-\d{2}-\d{2}$/.test(v)) set((p) => { p.birthDate = v; }); }} />
               <SelectField label="Sex (for life tables)" value={person.sex ?? 'unset'} options={[{ value: 'unset', label: 'Prefer not to say' }, { value: 'female', label: 'Female' }, { value: 'male', label: 'Male' }]} onChange={(v) => set((p) => { p.sex = v === 'unset' ? undefined : (v as 'male' | 'female'); })} />
-              <NumberField label="Plan to age" hint="The planning horizon for this person." value={person.longevity.age} min={60} max={115} onChange={(v) => set((p) => { p.longevity.age = v; })} />
+              <NumberField label="Plan until age" hint={survivalNote(+person.birthDate.slice(0, 4), person.sex, person.longevity.age, plan.settings.startYear) ?? undefined} value={person.longevity.age} min={50} max={115} onChange={(v) => set((p) => { p.longevity.age = v; })} />
             </div>
-            <Switch label="Let lifespan vary in simulations (SSA life tables)" checked={person.longevity.mode === 'stochastic'} onChange={(v) => set((p) => { p.longevity.mode = v ? 'stochastic' : 'fixed'; })} />
+            <LifespanSwitch plan={plan} />
             <h3>Where they live</h3>
             {person.residence.map((r, i) => (
               <div className="lv-row" key={i} style={{ alignItems: 'flex-end' }}>

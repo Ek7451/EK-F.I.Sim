@@ -8,12 +8,75 @@ test('first visit opens the wizard, which builds a working plan', async ({ page 
   await expect(page).toHaveURL(/\/start$/);
   await page.getByLabel('Your first name').fill('Riley');
   await page.locator('[data-tour="wizard-next"]').click();
-  await page.getByLabel('Your yearly pay before tax').fill('95000');
+  await page.getByLabel('Yearly pay before tax').fill('95000');
   for (let i = 0; i < 4; i++) await page.locator('[data-tour="wizard-next"]').click();
   await page.locator('[data-tour="wizard-skip-tour"]').click();
   await expect(page.locator('[data-tour="home-stats"]')).toBeVisible();
   await expect(page.locator('[data-tour="home-stats"]')).toContainText('$');
+  await expect(page.locator('[data-tour="home-covered"]')).toContainText(/Every year|Short in/);
   expect(errors).toEqual([]);
+});
+
+test('the wizard asks each partner about pay, saving, lifespan and retirement, and shows its assumptions', async ({
+  page,
+}) => {
+  const errors = watchErrors(page);
+  await page.goto('/start');
+  await page.getByLabel('Your first name').fill('Riley');
+  await page.getByRole('switch', { name: 'Plan with a partner' }).check();
+  await page.getByLabel("Partner's first name").fill('Jo');
+  const partner = page.getByRole('group', { name: 'Your partner' });
+  await expect(partner.getByLabel('Plan until age')).toHaveValue('95');
+  await expect(partner.getByText(/Chance of reaching 95/)).toBeVisible();
+  await page.locator('[data-tour="wizard-next"]').click();
+
+  // Step 2: a block per earner, with the employer match shown and the result spelled out.
+  const jo = page.getByRole('group', { name: 'Jo' });
+  await jo.getByLabel('Yearly pay before tax').fill('70000');
+  await jo.getByLabel('Contribution (share of pay)').fill('10');
+  await expect(jo.getByText(/\$7,000.*a year from Jo plus \$2,100 from the employer/)).toBeVisible();
+  // Above the IRS limit, the readout says so.
+  await jo.getByLabel('Contribution (share of pay)').fill('50');
+  await expect(jo.getByText(/over the \d{4} limit/)).toBeVisible();
+  await jo.getByLabel('Contribution (share of pay)').fill('10');
+
+  for (let i = 0; i < 3; i++) await page.locator('[data-tour="wizard-next"]').click();
+  await expect(
+    page.getByRole('group', { name: 'Jo' }).getByLabel('Age you would like to retire'),
+  ).toBeVisible();
+  await page.locator('[data-tour="wizard-next"]').click();
+
+  const review = page.locator('[data-tour="wizard-review"]');
+  for (const item of ['Lifespan', 'Investment returns', 'Social Security', 'Healthcare', 'Taxes'])
+    await expect(review.getByText(item, { exact: true })).toBeVisible();
+  await expect(review).toContainText('Married filing jointly');
+  await page.locator('[data-tour="wizard-skip-tour"]').click();
+  await expect(page.locator('[data-tour="home-stats"]')).toBeVisible();
+  expect(errors).toEqual([]);
+});
+
+test('fields explain themselves from an (i) beside the label', async ({ page }) => {
+  await page.goto('/start');
+  const field = page.getByRole('group', { name: 'You' });
+  const help = field
+    .locator('.lv-label-row')
+    .filter({ hasText: 'Plan until age' })
+    .getByRole('button', { name: 'Help' });
+  // Keyboard focus opens it (and so does hover with a mouse, or a tap on a phone).
+  await help.focus();
+  await expect(page.getByRole('tooltip')).toContainText('The age to plan for');
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('tooltip')).toBeHidden();
+  // Plan editors pick up their help from the shared copy without per-screen wiring.
+  await seed(page);
+  await go(page, '/plan/assumptions');
+  await expect(
+    page
+      .locator('.lv-label-row')
+      .filter({ hasText: 'Inflation' })
+      .first()
+      .getByRole('button', { name: 'Help' }),
+  ).toBeVisible();
 });
 
 test('every screen renders without errors', async ({ page }) => {

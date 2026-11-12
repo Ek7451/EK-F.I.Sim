@@ -21,6 +21,7 @@ import { useMemo, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Chart, axis, short, tooltip } from '../charts/Chart';
 import { useBacktest, useMonteCarlo, useProjection } from '../engine/useResults';
+import { agesText, fundedStat, isShort } from '../lib/outcome';
 import { PageHead } from '../shell/Shell';
 import { usePlan, useUpdate } from '../state/store';
 
@@ -108,17 +109,22 @@ export function ProjectionPage(): ReactNode {
   const s = result.summary;
   const nw = explainNetWorth(sel);
   const cf = explainCashFlow(sel);
+  // What you own stacks up from zero, what you owe stacks down from it, and the net-worth line is the
+  // difference, so the picture adds up to the figure in the table.
   const series: [string, (r: YearRecord) => number][] = [
     ['Cash', (r) => r.byKind.cash],
     ['Taxable', (r) => r.byKind.taxable],
     ['Pre-tax', (r) => r.byKind.pretax],
     ['Roth', (r) => r.byKind.roth],
     ['HSA and other', (r) => r.byKind.hsa + r.byKind.other],
-    ['Property (net of debt)', (r) => Math.max(0, r.assets - r.debts)],
+    ['Property and other assets', (r) => r.assets],
+    ['Debts', (r) => -r.debts],
   ];
   const marks = plan.milestones
     .map((ms2) => ({ name: ms2.name, year: result.milestoneYears[ms2.id] }))
     .filter((x) => x.year !== undefined);
+  const covered = fundedStat(result);
+  const endAges = agesText(recs[recs.length - 1]);
   return (
     <>
       <PageHead
@@ -141,9 +147,9 @@ export function ProjectionPage(): ReactNode {
         <div className="lv-grid">
           <Stat label="Net worth today" value={formatCompact(s.currentNetWorth)} />
           <Stat
-            label="At the end of the plan"
+            label="Left at the end of the plan"
             value={formatCompact(s.endingNetWorthReal)}
-            note={`${s.endYear}, today's dollars`}
+            note={`Net worth in ${s.endYear} (${endAges}), today's dollars`}
           />
           <Stat
             label="Financially independent"
@@ -152,9 +158,10 @@ export function ProjectionPage(): ReactNode {
             data-tour="fi-year"
           />
           <Stat
-            label="Spending funded"
-            value={s.success ? 'Every year' : `Until ${s.failedYear}`}
-            note={s.success ? undefined : 'On this path, money runs short'}
+            label="Spending covered"
+            value={covered.value}
+            note={covered.note}
+            data-tour="spending-covered"
           />
         </div>
       </Card>
@@ -173,29 +180,66 @@ export function ProjectionPage(): ReactNode {
           height={380}
           onClick={(p) => setYear(recs[p.dataIndex]?.year ?? null)}
           table={() => ({
-            columns: ['Year', ...series.map((x) => x[0]), 'Net worth'],
+            columns: ['Year', ...series.map((x) => x[0]), 'Net worth', 'Spending covered'],
             rows: recs.map((r) => [
               r.year,
               ...series.map((x) => formatMoney(m.v(r, x[1](r)))),
               formatMoney(m.v(r, r.netWorth)),
+              isShort(r) ? `Short by ${formatMoney(m.v(r, r.shortfall))}` : 'Yes',
             ]),
           })}
           build={(c) => ({
-            grid: { left: 56, right: 16, top: 36, bottom: 64 },
-            legend: { type: 'scroll', top: 0, textStyle: { color: c.ink2 }, icon: 'roundRect' },
-            tooltip: { ...tooltip(c), trigger: 'axis', valueFormatter: (v: number) => formatMoney(v) },
-            xAxis: {
-              type: 'category',
-              data: recs.map((r) => r.year),
-              boundaryGap: false,
-              ...axis(c),
-              splitLine: { show: false },
+            grid: [
+              { left: 56, right: 16, top: 36, bottom: 102 },
+              // A thin strip under the year labels: one block per year, marked when spending ran short.
+              { left: 56, right: 16, height: 8, bottom: 62 },
+            ],
+            legend: {
+              type: 'scroll',
+              top: 0,
+              textStyle: { color: c.ink2 },
+              icon: 'roundRect',
+              data: [...series.map((x) => x[0]), 'Net worth'],
             },
-            yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
+            tooltip: {
+              ...tooltip(c),
+              trigger: 'axis',
+              formatter: (ps: { dataIndex: number }[]) => {
+                const r = recs[ps[0]?.dataIndex ?? 0];
+                if (!r) return '';
+                const rows = series
+                  .map(([name, f]) => [name, m.v(r, f(r))] as const)
+                  .filter(([, v]) => Math.abs(v) >= 1)
+                  .map(
+                    ([name, v]) =>
+                      `<tr><td>${name}</td><td style="text-align:right;padding-left:16px">${formatMoney(v)}</td></tr>`,
+                  )
+                  .join('');
+                const shortLine = isShort(r)
+                  ? `<div style="color:${c.danger};margin-top:6px;font-weight:600">Spending short by ${formatMoney(m.v(r, r.shortfall))}</div>`
+                  : `<div style="margin-top:6px;color:${c.ink2}">Spending covered</div>`;
+                return `<div style="font-weight:600;margin-bottom:4px">${r.year} · ${agesText(r)}</div><table>${rows}<tr><td style="font-weight:600;padding-top:4px">Net worth</td><td style="text-align:right;font-weight:600;padding:4px 0 0 16px">${formatMoney(m.v(r, r.netWorth))}</td></tr></table>${shortLine}`;
+              },
+            },
+            xAxis: [
+              {
+                type: 'category',
+                data: recs.map((r) => r.year),
+                boundaryGap: false,
+                ...axis(c),
+                splitLine: { show: false },
+              },
+              { type: 'category', gridIndex: 1, data: recs.map((r) => r.year), show: false },
+            ],
+            yAxis: [
+              { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
+              { type: 'value', gridIndex: 1, min: 0, max: 1, show: false },
+            ],
             dataZoom: [
-              { type: 'inside', zoomOnMouseWheel: 'ctrl', moveOnMouseWheel: false },
+              { type: 'inside', xAxisIndex: [0, 1], zoomOnMouseWheel: 'ctrl', moveOnMouseWheel: false },
               {
                 type: 'slider',
+                xAxisIndex: [0, 1],
                 height: 18,
                 bottom: 6,
                 borderColor: c.line,
@@ -205,35 +249,66 @@ export function ProjectionPage(): ReactNode {
                 dataBackground: { lineStyle: { color: c.ink3 }, areaStyle: { color: c.line } },
               },
             ],
-            series: series.map(([name, f], i) => ({
-              name,
-              type: 'line',
-              stack: 'nw',
-              symbol: 'none',
-              smooth: 0.15,
-              lineStyle: { width: 1 },
-              areaStyle: { opacity: 0.82 },
-              emphasis: { focus: 'series' },
-              data: recs.map((r) => Math.round(m.v(r, f(r)))),
-              markLine:
-                i === 0
-                  ? {
-                      symbol: 'none',
-                      silent: true,
-                      lineStyle: { color: c.ink3, type: 'dashed' },
-                      label: {
-                        color: c.ink2,
-                        fontSize: 11,
-                        formatter: '{b}',
-                        rotate: 0,
-                        position: 'insideEndTop',
-                      },
-                      data: marks.map((x) => ({ name: x.name, xAxis: String(x.year) })),
-                    }
-                  : undefined,
-            })),
+            series: [
+              ...series.map(([name, f], i) => ({
+                name,
+                type: 'line',
+                stack: name === 'Debts' ? 'owed' : 'owned',
+                ...(name === 'Debts' ? { color: c.danger } : {}),
+                symbol: 'none',
+                smooth: 0.15,
+                lineStyle: { width: 1 },
+                areaStyle: { opacity: 0.82 },
+                emphasis: { focus: 'series' },
+                data: recs.map((r) => Math.round(m.v(r, f(r)))),
+                markLine:
+                  i === 0
+                    ? {
+                        symbol: 'none',
+                        silent: true,
+                        lineStyle: { color: c.ink3, type: 'dashed' },
+                        label: {
+                          color: c.ink2,
+                          fontSize: 11,
+                          formatter: '{b}',
+                          rotate: 0,
+                          position: 'insideEndTop',
+                        },
+                        data: marks.map((x) => ({ name: x.name, xAxis: String(x.year) })),
+                      }
+                    : undefined,
+              })),
+              {
+                name: 'Net worth',
+                type: 'line',
+                symbol: 'none',
+                smooth: 0.15,
+                color: c.ink,
+                lineStyle: { width: 2, color: c.ink },
+                z: 5,
+                data: recs.map((r) => Math.round(m.v(r, r.netWorth))),
+              },
+              {
+                name: 'Spending covered',
+                type: 'bar',
+                xAxisIndex: 1,
+                yAxisIndex: 1,
+                barCategoryGap: '10%',
+                silent: true,
+                tooltip: { show: false },
+                data: recs.map((r) => ({
+                  value: 1,
+                  itemStyle: { color: isShort(r) ? c.danger : c.primary, opacity: isShort(r) ? 1 : 0.35 },
+                })),
+              },
+            ],
           })}
         />
+        <p className="lv-muted lv-small funded-key">
+          <span className="funded-swatch" data-short="false" aria-hidden="true" /> Spending covered{' '}
+          <span className="funded-swatch" data-short="true" aria-hidden="true" /> Money runs short.{' '}
+          {covered.note}.
+        </p>
       </Card>
       <div className="two-col">
         <Card title={`In ${sel.year}`} data-tour="year-detail">

@@ -19,6 +19,7 @@ import { Chart, axis, short, tooltip } from '../charts/Chart';
 import { useMonteCarlo, useProjection, useProjectionOf } from '../engine/useResults';
 import { ACCOUNT_LABELS } from '../lib/fields';
 import { exportCsv, exportPdf } from '../lib/files';
+import { fundedStat } from '../lib/outcome';
 import { DISCLAIMER } from '../shell/nav';
 import { PageHead } from '../shell/Shell';
 import { getSetting, setSetting } from '../state/db';
@@ -341,9 +342,9 @@ export function ComparePage(): ReactNode {
                 </thead>
                 <tbody>
                   <tr>
-                    <th scope="row">Spending funded</th>
-                    <td>{A.summary.success ? 'Every year' : `Until ${A.summary.failedYear}`}</td>
-                    <td>{B.summary.success ? 'Every year' : `Until ${B.summary.failedYear}`}</td>
+                    <th scope="row">Spending covered</th>
+                    <td>{fundedStat(A).value}</td>
+                    <td>{fundedStat(B).value}</td>
                     <td />
                   </tr>
                   <tr>
