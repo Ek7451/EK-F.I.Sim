@@ -1,6 +1,6 @@
 /** Start page and first-plan wizard (UX-05): five short steps, one block per person, nothing assumed silently. */
-import { bundledEngineData } from '@fisim/data/src/bundle';
-import { PlanZ, type Plan, type PlanInput, type SamplePlanId } from '@fisim/engine';
+import { contributionLimits } from '@fisim/data/src/light';
+import type { Plan, PlanInput, SamplePlanId } from '@fisim/engine';
 import {
   Button,
   Card,
@@ -14,13 +14,14 @@ import {
   formatMoney,
   formatPct,
 } from '@fisim/ui';
-import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { STATES } from '../lib/fields';
 import { survivalNote } from '../lib/lifespan';
 import { PageHead } from '../shell/Shell';
 import { useStore } from '../state/store';
 import { useTour } from '../tours/TourEngine';
+import { loadEngine } from '../engine/load';
 
 const D = (n: number): number => Math.round(n * 100);
 
@@ -88,7 +89,7 @@ function deferralLimit(
   year: number,
   age: number,
 ): { limit: number; base: number; catchUp: number; dataYear: number } {
-  const all = bundledEngineData().limits;
+  const all = contributionLimits();
   const dataYear = Math.max(
     ...Object.keys(all)
       .map(Number)
@@ -357,17 +358,37 @@ export function StartPage(): ReactNode {
   }, [step]);
 
   // The parsed plan, for the review screen: it shows the defaults the plan will really use.
-  const preview = useMemo((): Plan | null => {
-    if (step < 5) return null;
-    const r = PlanZ.safeParse(buildPlan(d, year));
-    return r.success ? r.data : null;
+  const [preview, setPreview] = useState<Plan | null>(null);
+  useEffect(() => {
+    if (step < 5) return;
+    let live = true;
+    void loadEngine().then(({ PlanZ }) => {
+      const r = PlanZ.safeParse(buildPlan(d, year));
+      if (live) setPreview(r.success ? r.data : null);
+    });
+    return () => {
+      live = false;
+    };
   }, [d, step, year]);
+  // Fetch the engine while the person fills in the first steps: a moment after the screen has drawn, so the
+  // download does not compete with it (the same delay main.tsx uses for sync), or at once on the first input.
+  useEffect(() => {
+    const go = (): void => void loadEngine();
+    const t = setTimeout(go, 1500);
+    window.addEventListener('pointerdown', go, { once: true });
+    window.addEventListener('keydown', go, { once: true });
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener('pointerdown', go);
+      window.removeEventListener('keydown', go);
+    };
+  }, []);
 
   const finish = async (takeTour: boolean): Promise<void> => {
     setBusy(true);
     setFinishError(null);
     try {
-      const plan = PlanZ.parse(buildPlan(d, year));
+      const plan = (await loadEngine()).PlanZ.parse(buildPlan(d, year));
       await createPlan(plan.name, plan);
       setSettings({ onboarded: true });
       nav('/');

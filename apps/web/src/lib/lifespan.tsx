@@ -1,5 +1,5 @@
 /** Lifespan helpers shared by the wizard, Household and Assumptions. */
-import { bundledEngineData } from '@fisim/data/src/bundle';
+import { mortalityTable } from '@fisim/data/src/light';
 import { survivalProbability, type Plan } from '@fisim/engine';
 import { Switch } from '@fisim/ui';
 import type { ReactNode } from 'react';
@@ -17,7 +17,7 @@ export function survivalOdds(
 ): number | null {
   const now = year - birthYear;
   if (age <= now) return null;
-  const table = bundledEngineData().mortality;
+  const table = mortalityTable();
   return sex
     ? survivalProbability(table, sex, now, age)
     : (survivalProbability(table, 'female', now, age) + survivalProbability(table, 'male', now, age)) / 2;

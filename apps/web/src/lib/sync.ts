@@ -14,7 +14,8 @@ import {
   unlockWithRecoveryKey,
   type KeyBundle,
 } from '@fisim/crypto';
-import { loadPlan, type Plan } from '@fisim/engine';
+import type { Plan } from '@fisim/engine';
+import { loadEngine } from '../engine/load';
 import { create } from 'zustand';
 import { addSnapshot, dequeue, getSetting, queue, setSetting } from '../state/db';
 import { useStore, type TourProgress } from '../state/store';
@@ -179,7 +180,7 @@ async function download(c: SyncClient, id: string): Promise<{ plan: Plan; versio
   const got = await c.getPlan(id);
   if (!got) return null;
   const raw = JSON.parse(dec.decode(await decryptPlan(dek!, id, got.version, got.data)));
-  const loaded = loadPlan(raw);
+  const loaded = (await loadEngine()).loadPlan(raw);
   if (!loaded.plan) return null;
   return { plan: loaded.plan, version: got.version };
 }

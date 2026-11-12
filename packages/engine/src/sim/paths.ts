@@ -6,10 +6,13 @@
  * it as the lognormal median; the bootstrap re-centres each class's historical log returns on it (keeping the
  * history's volatility, cross-correlation and sequence) unless `bootstrapMeans` is 'historical'.
  */
-import type { MarketHistory, MortalityTable } from '@fisim/data';
+import type { MarketHistory } from '@fisim/data';
 import { expectedMeans, NC, type Compiled } from '../compile';
 import type { PathInputs } from '../projection';
+import { sampleDeathAge } from './mortality';
 import { cholesky, Rng } from './rng';
+
+export { sampleDeathAge, survivalProbability } from './mortality';
 
 export interface PathSettings {
   method: 'bootstrap' | 'parametric';
@@ -191,51 +194,6 @@ export function returnMeansUsed(c: Compiled, settings: PathSettings): ReturnMean
     cash: nom(2),
     inflation: Math.exp(inflLog) - 1,
   };
-}
-
-/** Death probability at `age`, optionally with annual mortality improvement after the table year (cohort adjustment). */
-function qAt(
-  table: MortalityTable,
-  q: number[],
-  age: number,
-  improve?: { rate: number; birthYear: number },
-): number {
-  const base = q[age];
-  if (!improve || improve.rate <= 0) return base;
-  const yearsAhead = improve.birthYear + age - table.year;
-  return yearsAhead > 0 ? base * Math.pow(1 - improve.rate, yearsAhead) : base;
-}
-
-/**
- * Sample an age at death from period q(x), conditional on being alive at `ageNow`. With `improve`, each q(x) is
- * reduced by `rate` a year for every calendar year after the table's year in which the person would reach age x
- * (a simple cohort mortality-improvement adjustment, as in the SSA Trustees' projections).
- */
-export function sampleDeathAge(
-  table: MortalityTable,
-  sex: 'male' | 'female',
-  ageNow: number,
-  rng: Rng,
-  improve?: { rate: number; birthYear: number },
-): number {
-  const q = sex === 'male' ? table.male : table.female;
-  for (let age = Math.max(0, ageNow); age < q.length; age++)
-    if (rng.next() < qAt(table, q, age, improve)) return age;
-  return q.length - 1;
-}
-
-/** Probability of surviving from `fromAge` to `toAge` (with the same optional improvement adjustment). */
-export function survivalProbability(
-  table: MortalityTable,
-  sex: 'male' | 'female',
-  fromAge: number,
-  toAge: number,
-  improve?: { rate: number; birthYear: number },
-): number {
-  const q = sex === 'male' ? table.male : table.female;
-  let s = 1;
-  for (let a = fromAge; a < toAge && a < q.length; a++) s *= 1 - qAt(table, q, a, improve);
-  return s;
 }
 
 export function generatePath(c: Compiled, settings: PathSettings, seed: number, run: number): PathInputs {

@@ -1,16 +1,7 @@
 /** Worker pool (plan 11): hardwareConcurrency - 1 workers, at most 4. Worker 0 is kept for the projection; Monte Carlo is split into batches across the rest. */
-import { bundledEngineData } from '@fisim/data/src/bundle';
-import {
-  applyScenario,
-  compilePlan,
-  summarizeMonteCarlo,
-  type BacktestResult,
-  type McChunk,
-  type McSummary,
-  type Plan,
-  type ProjectionResult,
-} from '@fisim/engine';
+import type { BacktestResult, McChunk, McSummary, Plan, ProjectionResult } from '@fisim/engine';
 import * as Comlink from 'comlink';
+import { loadDataBundle, loadEngine } from './load';
 import type { EngineApi } from './worker';
 
 const size = Math.max(
@@ -65,17 +56,23 @@ export function monteCarlo(
   let cancelled = false;
   let next = 0;
   const chunks: McChunk[] = [];
-  // Compile once on the main thread only to size and label the summary (cheap, no simulation).
-  const c = compilePlan(applyScenario(plan, scenarioId), bundledEngineData(), {
-    stochasticLongevity: plan.assumptions.monteCarlo.stochasticLongevity,
-  });
-  const summarize = (): McSummary =>
-    summarizeMonteCarlo(
+  // Compile once on the main thread only to size and label the summary (cheap, no simulation). The engine and
+  // data load on demand, in parallel with the first batches.
+  const ready = Promise.all([loadEngine(), loadDataBundle()]).then(([e, d]) => ({
+    e,
+    c: e.compilePlan(e.applyScenario(plan, scenarioId), d.bundledEngineData(), {
+      stochasticLongevity: plan.assumptions.monteCarlo.stochasticLongevity,
+    }),
+  }));
+  const summarize = async (): Promise<McSummary> => {
+    const { e, c } = await ready;
+    return e.summarizeMonteCarlo(
       c,
       [...chunks].sort((a, b) => a.from - b.from),
       plan.assumptions.monteCarlo.seed,
       plan.assumptions.monteCarlo.method,
     );
+  };
   const lane = async (w: Comlink.Remote<EngineApi>): Promise<void> => {
     while (!cancelled && next < total) {
       const from = next;
@@ -86,7 +83,9 @@ export function monteCarlo(
       chunks.push(chunk);
       let done = 0;
       for (const ch of chunks) done += ch.to - ch.from;
-      onProgress(done, total, summarize());
+      const partial = await summarize();
+      if (cancelled) return;
+      onProgress(done, total, partial);
     }
   };
   const done = Promise.all(lanes.map(lane)).then(() => (cancelled ? null : summarize()));

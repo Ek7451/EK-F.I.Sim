@@ -4,6 +4,7 @@
  * The JSON Schema in schema/plan.v1.json is emitted from these Zod types (scripts/emit-schema.ts).
  */
 import { z } from 'zod';
+import { ACCOUNT_TYPES } from './constants';
 
 export const SCHEMA_VERSION = 1;
 
@@ -11,8 +12,7 @@ const cents = z.number().int();
 const id = z.string().min(1);
 const rate = z.number().min(-1).max(10);
 
-export const ASSET_CLASSES = ['usStocks', 'usBonds', 'cash', 'intlStocks', 'reits'] as const;
-export type AssetClass = (typeof ASSET_CLASSES)[number];
+export { ACCOUNT_TYPES, ASSET_CLASSES, type AccountType, type AssetClass } from './constants';
 
 export const FilingStatusZ = z.enum(['single', 'mfj', 'mfs', 'hoh', 'qss']);
 
@@ -71,27 +71,6 @@ export const PersonZ = z.object({
     .prefault({}),
 });
 export type Person = z.infer<typeof PersonZ>;
-
-export const ACCOUNT_TYPES = [
-  'taxable',
-  'cash',
-  'trad401k',
-  'trad403b',
-  'gov457b',
-  'tradIra',
-  'sepIra',
-  'simpleIra',
-  'solo401k',
-  'roth401k',
-  'rothIra',
-  'hsa',
-  'plan529',
-  'inheritedIra',
-  'iBond',
-  'tBill',
-  'annuity',
-] as const;
-export type AccountType = (typeof ACCOUNT_TYPES)[number];
 
 export const AccountZ = z.object({
   id,
@@ -511,7 +490,7 @@ export const AssumptionsZ = z.object({
         })
         .prefault({}),
       /** Optional user-defined volatility / correlation for parametric Monte Carlo (SIM-05). */
-      stdDev: z.record(z.number()).optional(),
+      stdDev: z.record(z.string(), z.number()).optional(),
       correlation: z.array(z.array(z.number())).optional(),
     })
     .prefault({}),
@@ -578,7 +557,7 @@ export const ScenarioZ = z.object({
 });
 export type Scenario = z.infer<typeof ScenarioZ>;
 
-export const ActualZ = z.object({ date: z.string(), balances: z.record(cents) });
+export const ActualZ = z.object({ date: z.string(), balances: z.record(z.string(), cents) });
 
 export const PlanZ = z.object({
   id,
