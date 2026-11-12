@@ -18,73 +18,73 @@ that without using "FI", "lab", "projection", "plan" or any other word that lean
 Rules:
 
 - One word, capital L only. No tagline lock-up, no mascot.
-- The mark is typographic: the word set in the display serif. No pictorial logo for v1.0.
+- The mark is the Longview icon (a rising line on an emerald tile) beside the word, set semibold in the UI font.
 - Never place the name next to another product's name in the UI. The reference product is not named
   anywhere in the app, the reports or the tours.
 
-## 2. Visual language: paper and ink
+## 2. Visual language: a calm, modern instrument
 
-The app should feel like a well-kept ledger or a printed annual statement, not a software dashboard.
+Revised 2026-11 (review plan, Phase 4). The first release used a "paper and ink" look: warm off-white, serif
+numerals, flat fills. Testing showed it read as dated and made dense results hard to scan. Longview now looks
+like a polished modern dashboard: neutral surfaces, one confident emerald primary, clear hierarchy, and numbers
+that are large where they matter and compact everywhere else. It keeps its own name, mark and palette and
+borrows no other product's look (section 6 and the reference-map guardrails).
 
 ### 2.1 Palette intent
 
-Token names and exact values live in `packages/ui`. This table fixes the intent so that any value change can
-be judged against it.
+Token names and exact values live in `packages/ui/src/styles.css`. This table fixes the intent.
 
-| Role                | Light theme                                     | Dark theme                        | Notes                                                                                                           |
-| ------------------- | ----------------------------------------------- | --------------------------------- | --------------------------------------------------------------------------------------------------------------- |
-| Page background     | Warm off-white "paper"                          | Deep ink-navy                     | Never pure white or neutral near-black. The warmth (light) and the blue cast (dark) are the identity.           |
-| Surface             | Paper, one step lighter or darker than the page | Ink, one step lighter             | Surfaces are separated by hairline rules and spacing first, elevation last.                                     |
-| Text                | Ink (near-black navy)                           | Paper (warm off-white)            | Body text meets WCAG 2.2 AA (4.5:1) on every surface.                                                           |
-| Primary             | Evergreen                                       | Evergreen, lightened for contrast | Primary actions, the selected navigation item, the "your plan" series in charts.                                |
-| Accent              | Ochre                                           | Ochre                             | Used sparingly: the single thing to notice on a screen (a milestone marker, a changed value, a focused series). |
-| Caution / shortfall | Brick (a muted red-brown)                       | Brick, lightened                  | Shortfalls and failed runs. Always paired with a text label or pattern; never colour alone.                     |
-| Projected data      | Ink at reduced strength plus a hatch pattern    | Same                              | Marks `projected` parameters (plan §1.3, TAX-13). Enacted values get no decoration.                             |
+| Role            | Light theme                       | Dark theme                                  | Notes                                                                  |
+| --------------- | --------------------------------- | ------------------------------------------- | ---------------------------------------------------------------------- |
+| Page background | Cool neutral grey (#F5F6F8)       | Near-black with a faint blue cast (#0F1115) | Cards sit on it as white (light) or one step lighter (dark).           |
+| Surface         | White, with a hairline border     | #171A21, raised #1F232C                     | Elevation is a soft shadow plus the border, never a heavy drop shadow. |
+| Text            | Near-black ink, two quieter steps | Off-white, two quieter steps                | Body and secondary text meet WCAG 2.2 AA (4.5:1) on every surface.     |
+| Primary         | Emerald (#0B7A62)                 | Emerald, lightened (#34C29C)                | Primary actions, the selected navigation item, the headline series.    |
+| Accent          | Amber                             | Amber                                       | Sparingly: the one thing to notice (a milestone, a changed value).     |
+| Status          | Green, amber, red                 | Same hues, lightened                        | Always paired with a word or an icon; never colour alone.              |
+| Projected data  | Reduced strength plus a hatch     | Same                                        | Marks `projected` parameters (plan §1.3, TAX-13).                      |
 
 Rules:
 
-- No blue primary, no teal success colour, no saturated rainbow categorical palette, no gradients on
-  surfaces or borders, no translucent "glass" panels.
-- Semantic colour is never the only signal. Each state also has a word, an icon shape or a pattern.
-- The chart palette (section 4) is derived from the same four families: evergreen, ochre, ink and brick,
-  plus two muted earth tones. It is defined once and shared by every chart.
+- The primary is emerald, not blue. Blue appears only as one chart series.
+- Gradients appear in one place only: the fill under a chart area, fading to transparent. Surfaces, borders
+  and buttons are solid. No glass panels; the sticky top bar may blur what scrolls beneath it.
+- Semantic colour is never the only signal.
+- The chart palette (section 4) is eight validated hues, defined once and shared by every chart.
 
 ### 2.2 Type
 
-- **System fonts only.** No web-font download: it keeps the first load small (plan §13), works offline and
-  sends no request to a third party (plan §2.7, §12.1 CSP).
-- **Text:** the platform UI sans-serif stack.
-- **Display numerals and headings:** the platform serif stack. Key numbers (net worth, chance of success,
-  a year's tax) are set in the serif at a large size with old-style proportions where the platform font
-  offers them.
-- **Tables and anything compared digit by digit:** tabular lining numerals.
-- No all-caps letter-spaced micro-labels. Labels are sentence case, at normal tracking.
-- Scale, line heights and weights are tokens in `packages/ui`. Two weights are normally enough: regular and
-  semibold.
+- **System fonts, modern stack:** Inter when the device has it, then Segoe UI Variable, the platform UI font
+  (SF Pro), Roboto. No web font is downloaded for now: it keeps the first load small, works offline and sends no
+  third-party request (plan §2.7). The CSP already allows self-hosted fonts, so a bundled woff2 can be added
+  later without a policy change.
+- **One family** for text, headings and numerals. Headings are semibold with slightly tight tracking.
+- **Numbers:** tabular lining numerals wherever money is shown. Hero figures (net worth, chance of success) are
+  2.25 to 3rem semibold, card figures 1.5rem, table figures body size.
+- **Labels** are sentence case, 12 to 13px, medium weight, in the secondary ink. No letter-spaced upper-case
+  micro-labels.
+- Scale: 12, 13, 14, 16, 20, 24, 32 and 44px.
 
 ### 2.3 Shape, depth and density
 
-- Small corner radii. Cards look like sheets of paper, not pills.
-- Hairline rules and whitespace do the grouping. Shadows are reserved for things that really float:
-  popovers, bottom sheets, the tour step.
-- Inputs are outlined with the label above the field, always visible. No filled grey fields with floating
-  labels.
-- Fewer, calmer screens over dense ones: each screen answers one question, with detail one tap away.
+- Radius scale 6 (inputs, buttons), 10 (cards), 14 (dialogs) and 20 (hero panels).
+- Three shadow levels (resting card, raised menu, dialog), plus a hover lift on interactive cards.
+- Compact density: 36px inputs and buttons on desktop (44px on touch), an 8px grid, 16px card padding.
+- **One screen, no scroll.** On a 1440×900 desktop, and on a 1366×768 laptop, each major screen shows its key
+  visual and headline numbers without scrolling. Detail sits below the fold, behind tabs or in drawers.
 
 ### 2.4 Iconography
 
-- A small, single-weight line-icon set drawn for the product. Icons support labels; they never replace
-  them.
-- No coloured icon badges as the identity of an item. An account, an income or a milestone is identified by
-  its name and a short type label in text.
-- No pictorial illustrations of people, palm trees, flags and the like for life events. Milestones are
-  typographic markers.
+- One line-icon set drawn for Longview (24px grid, 1.8px stroke). Icons support labels and never replace
+  them, except in the collapsed navigation rail, where each icon has a tooltip and an accessible name.
+- **Icon tiles** identify item types (account, income, expense, milestone, debt): a line icon on a softly
+  tinted square, always beside the item's name and type label.
+- No pictorial illustrations and no emoji.
 
 ### 2.5 Motion
 
-Plan UX-06. Motion explains a change (a chart easing to its new shape after an edit, a sheet arriving from
-the bottom). Nothing loops and nothing decorates. `prefers-reduced-motion` turns every non-essential
-transition into a cut.
+Plan UX-06. Motion explains a change (a chart easing to its new shape, a sheet arriving). Durations are 120
+to 220ms. Nothing loops. `prefers-reduced-motion` turns every non-essential transition into a cut.
 
 ## 3. Information architecture
 
@@ -110,7 +110,7 @@ Decisions and reasons:
 - **The plan is a context, not a destination.** A plan switcher sits at the top of the navigation. Every
   Plan, Explore, Compare and Track screen shows the selected plan. There is no "all plans" dashboard of
   preview cards.
-- **Home is a statement, not a dashboard.** It shows a handful of key numbers in large serif numerals and a
+- **Home is a statement, not a dashboard.** It shows a handful of key numbers as large figures and a
   plain-language "what changed" strip (for example: what the last edit did to the chance of success, or
   which data year became enacted). No draggable widgets, no chart wall.
 - **Strategy is one place.** Cash-flow priorities, withdrawal order, Roth conversions, harvesting and
@@ -135,33 +135,30 @@ Decisions and reasons:
 
 ## 4. Chart styling principles
 
-Charts are built on ECharts with our own theme layer (decision D3). These rules apply to every chart.
+Charts are built on ECharts with our own theme layer (`apps/web/src/charts/Chart.tsx`, decision D3).
 
-1. **Ink first.** Axes, labels and the primary series are ink on paper. Colour is added only where it
-   separates things the reader must tell apart.
-2. **One palette, six steps.** Evergreen, ochre, ink, brick and two muted earth tones. If a chart needs more
-   than six categories, group the rest as "Other" and offer the data table.
-3. **Label directly.** Series are labelled at the end of the line or inside the band. A separate legend box
-   is a fallback for small screens only.
-4. **Quiet scaffolding.** Solid hairline gridlines at low contrast on the value axis only; no chart border;
-   no drop shadows; no gradient or translucent fills under lines. Areas are flat fills.
-5. **Uncertainty is a band, not a dial.** Ranges are shown as nested percentile bands around a median line
-   (10/25/50/75/90, plan SIM-02). A probability is stated as a sentence and a count ("912 of 1,000 runs"),
-   never as a gauge.
-6. **Milestones are annotations.** A thin vertical rule with a short text label on a rail beneath the plot.
-   No floating pictorial icons over the data.
-7. **Every number explains itself.** The tooltip shows the arithmetic behind the point and links to the
-   matching entry in "How this is calculated" (plan §10, RPT-06). On touch, tap pins the tooltip.
+1. **Eight hues in a fixed order:** emerald, blue, amber, violet, olive, rose, cyan, rust. Each is stepped
+   separately for light and dark and checked for colour-vision separation and contrast. Colour follows the
+   thing (pre-tax is always the same hue), never its rank. More than eight categories fold into "Other".
+2. **Areas fade.** Stacked areas use a vertical gradient from the series colour to nearly transparent, with a
+   2px line on top. Bars have 4px rounded data ends.
+3. **A legend plus direct labels.** Two or more series always get a legend; up to four may also be labelled at
+   the line end.
+4. **Quiet scaffolding.** Solid hairline gridlines on the value axis only, no chart border, axis labels in the
+   muted ink.
+5. **Rich tooltips.** A card with a header (year and ages), a swatch row per series, bold values and a total
+   line, and the arithmetic behind the point where it helps. A crosshair follows the pointer.
+6. **Uncertainty is a band.** Ranges are nested percentile bands around a median line (10/25/50/75/90). The
+   chance of success is a large percentage with the run count in words beside it; never a gauge or ring.
+7. **Milestones are markers on a rail** beneath the plot: a small glyph and a label, spread apart when two fall
+   in the same year.
 8. **Estimated and projected are visible.** Values computed from `projected` parameters carry the hatch
    treatment and a footnote marker (plan §1.3).
-9. **A table is always available.** Every chart has a "View as table" alternative with the same numbers
-   (UX-09).
-10. **Selection by brushing.** Time ranges are chosen by dragging on a slim overview strip (with keyboard
-    equivalents), not by a row of preset range buttons.
-11. **Comparison uses position and label first.** In Compare, scenarios are told apart by direct labels and
-    a paired difference chart. Line dash style is not the primary encoding.
-12. **Money formatting.** Whole dollars in tables; compact form (for example `$1.2M`) only in chart labels
-    and Home. The basis (today's dollars or future dollars) is always stated in the chart subtitle.
+9. **A table is always available** (UX-09).
+10. **Time ranges** can be brushed on a slim strip or chosen with range chips (5Y, 10Y, 20Y, All).
+11. **One value axis.** Never two y-scales.
+12. **Money formatting.** Whole dollars in tables; compact form (`$1.2M`) in chart labels and stat tiles. The
+    basis (today's or future dollars) is always stated.
 
 ## 5. Tone of voice
 
@@ -198,7 +195,8 @@ Charts are built on ECharts with our own theme layer (decision D3). These rules 
 ## 6. What we do not do
 
 - No copied screens, layouts, icons, illustrations, palettes, product names or copy text from any other
-  product (plan §1.3, §10.1 guardrails).
+  product (plan §1.3, §10.1 guardrails). Using a common convention (a stacked area chart, a row of key figures,
+  an icon tile) is fine; reproducing another product's arrangement or colours is not.
 - No third-party fonts, scripts, analytics or embeds (plan §2.7).
 - No dark patterns: no upsell, no nag, no streaks. The only reminder the app gives is to make a backup
   (plan §14.4).

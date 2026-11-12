@@ -1,5 +1,5 @@
 import type { Expense, Income } from '@fisim/engine';
-import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField, Stat, Switch, TextField, formatMoney } from '@fisim/ui';
+import { Badge, Button, Card, MoneyField, NumberField, PercentField, SelectField, Stat, Switch, TextField, formatMoney, IconTile } from '@fisim/ui';
 import { useState, type ReactNode } from 'react';
 import { EditDialog, EmptyState, GrowthField, WhenField, describeWhen, ownerOptions } from '../../lib/fields';
 import { PageHead } from '../../shell/Shell';
@@ -15,6 +15,19 @@ const INCOME_KINDS: { value: Income['kind']; label: string; tax: Income['taxChar
   { value: 'other', label: 'Other', tax: 'ordinary' },
 ];
 const TAX_LABELS: Record<Income['taxCharacter'], string> = { earned: 'Wages (income and payroll tax)', selfEmployment: 'Self-employment', ordinary: 'Ordinary income', qualifiedDividend: 'Qualified dividends', capitalGain: 'Long-term gains', taxFree: 'Not taxed' };
+
+/** Icon for each spending category. */
+const EXPENSE_ICON: Record<string, string> = {
+  housing: 'estate',
+  food: 'spending',
+  transport: 'car',
+  travel: 'sparkle',
+  education: 'school',
+  giving: 'gift',
+  healthcare: 'heart',
+  insurance: 'shield',
+  childcare: 'household',
+};
 
 export function IncomePage(): ReactNode {
   const plan = usePlan()!;
@@ -33,6 +46,7 @@ export function IncomePage(): ReactNode {
         <ul className="lv-list">
           {plan.incomes.map((x) => (
             <li key={x.id} data-tour="income-row">
+              <IconTile icon={x.kind === 'pension' || x.kind === 'annuity' ? 'clock' : x.kind === 'rental' ? 'estate' : x.kind === 'selfEmployment' ? 'briefcase' : 'income'} kind="income" />
               <div className="lv-grow">
                 <strong>{x.name}</strong>
                 <div className="lv-muted lv-small">{plan.people.find((p) => p.id === x.ownerId)?.name} · {describeWhen(plan, x.start, 'Now')} → {describeWhen(plan, x.end, 'for life')} · grows {(x.growth.rate * 100).toFixed(1)}% {x.growth.basis === 'real' ? 'above inflation' : 'a year'}</div>
@@ -100,6 +114,7 @@ export function SpendingPage(): ReactNode {
         <ul className="lv-list">
           {plan.expenses.map((x) => (
             <li key={x.id} data-tour="expense-row">
+              <IconTile icon={EXPENSE_ICON[x.category] ?? 'spending'} kind="expense" />
               <div className="lv-grow">
                 <strong>{x.name}</strong>{' '}
                 {x.recurrence.type === 'once' ? <Badge>One time</Badge> : x.recurrence.type === 'interval' ? <Badge>Every {x.recurrence.everyYears} years</Badge> : null}{' '}

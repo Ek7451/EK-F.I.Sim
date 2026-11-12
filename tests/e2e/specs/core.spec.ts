@@ -100,7 +100,7 @@ test('edits are saved as you type, survive a reload, and can be undone', async (
   await go(page, '/plan/assumptions');
   const name = page.getByLabel('Plan name');
   await name.fill('Renamed plan');
-  await expect(page.locator('#plan-switch option:checked')).toHaveText('Renamed plan');
+  await expect(page.locator('#plan-switch .lv-ellipsis')).toHaveText('Renamed plan');
   await page.waitForTimeout(500);
   await page.reload();
   await expect(page.getByLabel('Plan name')).toHaveValue('Renamed plan');

@@ -1,609 +1,609 @@
 {
- "id": "sample-early-retiree",
- "schemaVersion": 1,
- "name": "Sample: retiring at 50",
- "createdAt": "2026-01-01T00:00:00.000Z",
- "updatedAt": "2026-01-01T00:00:00.000Z",
- "settings": {
-  "startYear": 2026,
-  "timing": "mid",
-  "display": "real",
-  "dataYearPolicy": "latest"
- },
- "people": [
-  {
-   "id": "p1",
-   "name": "Morgan",
-   "birthDate": "1979-02-20",
-   "sex": "female",
-   "longevity": {
-    "mode": "fixed",
-    "age": 95
-   },
-   "residence": [
-    {
-     "state": "NC",
-     "countyFips": "37183",
-     "fromYear": 2026
-    }
-   ],
-   "socialSecurity": {
-    "mode": "pia",
-    "earnings": [],
-    "piaMonthly": 265000,
-    "claimAge": {
-     "years": 67,
-     "months": 0
-    }
-   }
+  "id": "sample-early-retiree",
+  "schemaVersion": 1,
+  "name": "Sample: retiring at 50",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "settings": {
+    "startYear": 2026,
+    "timing": "mid",
+    "display": "real",
+    "dataYearPolicy": "latest"
   },
-  {
-   "id": "p2",
-   "name": "Devon",
-   "birthDate": "1979-09-03",
-   "sex": "male",
-   "longevity": {
-    "mode": "fixed",
-    "age": 92
-   },
-   "residence": [
-    {
-     "state": "NC",
-     "countyFips": "37183",
-     "fromYear": 2026
-    }
-   ],
-   "socialSecurity": {
-    "mode": "pia",
-    "earnings": [],
-    "piaMonthly": 220000,
-    "claimAge": {
-     "years": 67,
-     "months": 0
-    }
-   }
-  }
- ],
- "household": {
-  "filingStatus": [
-   {
-    "fromYear": 2026,
-    "status": "mfj"
-   }
-  ],
-  "dependents": []
- },
- "accounts": [
-  {
-   "id": "a-cash",
-   "ownerId": "joint",
-   "name": "Cash reserve",
-   "type": "cash",
-   "balance": 9000000,
-   "allocation": {
-    "usStocks": 0.6,
-    "usBonds": 0.4,
-    "cash": 0,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false,
-   "fixedYield": {
-    "rate": 0.035,
-    "basis": "nominal"
-   }
-  },
-  {
-   "id": "a-brokerage",
-   "ownerId": "joint",
-   "name": "Joint brokerage",
-   "type": "taxable",
-   "balance": 72000000,
-   "costBasis": 43000000,
-   "allocation": {
-    "usStocks": 0.6,
-    "usBonds": 0.25,
-    "cash": 0,
-    "intlStocks": 0.15,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0.0006,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-401k-1",
-   "ownerId": "p1",
-   "name": "Morgan's 401(k)",
-   "type": "trad401k",
-   "balance": 61000000,
-   "allocation": {
-    "usStocks": 0.6,
-    "usBonds": 0.3,
-    "cash": 0,
-    "intlStocks": 0.1,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "contribution": {
-    "incomeId": "i-1",
-    "employeePct": 0,
-    "employeeAmount": 0,
-    "maxOut": true,
-    "employerMatch": [
-     {
-      "matchPct": 0.5,
-      "upToPctOfSalary": 0.06
-     }
-    ],
-    "employerFixedPct": 0,
-    "megaBackdoor": false
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-401k-2",
-   "ownerId": "p2",
-   "name": "Devon's 401(k)",
-   "type": "trad401k",
-   "balance": 48000000,
-   "allocation": {
-    "usStocks": 0.6,
-    "usBonds": 0.3,
-    "cash": 0,
-    "intlStocks": 0.1,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "contribution": {
-    "incomeId": "i-2",
-    "employeePct": 0.12,
-    "employeeAmount": 0,
-    "maxOut": false,
-    "employerMatch": [
-     {
-      "matchPct": 1,
-      "upToPctOfSalary": 0.03
-     }
-    ],
-    "employerFixedPct": 0,
-    "megaBackdoor": false
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-roth-1",
-   "ownerId": "p1",
-   "name": "Morgan's Roth IRA",
-   "type": "rothIra",
-   "balance": 14000000,
-   "rothBasis": {
-    "contributions": 8200000,
-    "conversions": [],
-    "firstContributionYear": 2011
-   },
-   "allocation": {
-    "usStocks": 0.8,
-    "usBonds": 0,
-    "cash": 0,
-    "intlStocks": 0.2,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-roth-2",
-   "ownerId": "p2",
-   "name": "Devon's Roth IRA",
-   "type": "rothIra",
-   "balance": 11800000,
-   "rothBasis": {
-    "contributions": 7400000,
-    "conversions": [],
-    "firstContributionYear": 2012
-   },
-   "allocation": {
-    "usStocks": 0.8,
-    "usBonds": 0,
-    "cash": 0,
-    "intlStocks": 0.2,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-hsa",
-   "ownerId": "p1",
-   "name": "HSA",
-   "type": "hsa",
-   "balance": 4600000,
-   "allocation": {
-    "usStocks": 0.7,
-    "usBonds": 0.3,
-    "cash": 0,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  }
- ],
- "assets": [
-  {
-   "id": "as-home",
-   "ownerId": "joint",
-   "name": "Home",
-   "kind": "primaryHome",
-   "value": 52000000,
-   "costBasis": 34000000,
-   "appreciation": {
-    "rate": 0.005,
-    "basis": "real"
-   },
-   "property": {
-    "propertyTaxRate": 0.009,
-    "insuranceAnnual": 240000,
-    "maintenanceRate": 0.01,
-    "hoaAnnual": 0
-   }
-  }
- ],
- "debts": [
-  {
-   "id": "d-mortgage",
-   "ownerId": "joint",
-   "name": "Mortgage",
-   "kind": "mortgage",
-   "principal": 16800000,
-   "rate": 0.0325,
-   "payment": 148000,
-   "termMonths": 0,
-   "revolvingPayPct": 0.02,
-   "linkedAssetId": "as-home",
-   "interestDeductible": true,
-   "refinance": []
-  }
- ],
- "incomes": [
-  {
-   "id": "i-1",
-   "ownerId": "p1",
-   "name": "Morgan's salary",
-   "kind": "wages",
-   "amount": 16500000,
-   "growth": {
-    "rate": 0.005,
-    "basis": "real"
-   },
-   "end": {
-    "type": "milestone",
-    "milestoneId": "m-retire",
-    "offset": 0
-   },
-   "taxCharacter": "earned",
-   "annuityExclusionRatio": 0
-  },
-  {
-   "id": "i-2",
-   "ownerId": "p2",
-   "name": "Devon's salary",
-   "kind": "wages",
-   "amount": 11800000,
-   "growth": {
-    "rate": 0.005,
-    "basis": "real"
-   },
-   "end": {
-    "type": "milestone",
-    "milestoneId": "m-retire",
-    "offset": 0
-   },
-   "taxCharacter": "earned",
-   "annuityExclusionRatio": 0
-  }
- ],
- "expenses": [
-  {
-   "id": "e-core",
-   "name": "Core living",
-   "category": "food",
-   "amount": 5200000,
-   "inflationIndex": "cpi",
-   "customRate": 0,
-   "essential": true,
-   "followsPhases": false,
-   "recurrence": {
-    "type": "annual"
-   }
-  },
-  {
-   "id": "e-travel",
-   "name": "Travel",
-   "category": "travel",
-   "amount": 1400000,
-   "inflationIndex": "cpi",
-   "customRate": 0,
-   "essential": false,
-   "followsPhases": true,
-   "recurrence": {
-    "type": "annual"
-   }
-  },
-  {
-   "id": "e-giving",
-   "name": "Giving",
-   "category": "giving",
-   "amount": 400000,
-   "inflationIndex": "cpi",
-   "customRate": 0,
-   "essential": false,
-   "followsPhases": false,
-   "recurrence": {
-    "type": "annual"
-   }
-  }
- ],
- "milestones": [
-  {
-   "id": "m-retire",
-   "name": "Both retire",
-   "kind": "retirement",
-   "when": {
-    "type": "age",
-    "personId": "p1",
-    "age": 50
-   },
-   "effects": []
-  }
- ],
- "glidePaths": [],
- "strategies": {
-  "surplusWaterfall": [
-   {
-    "type": "account",
-    "accountId": "a-brokerage"
-   }
-  ],
-  "withdrawalOrder": {
-   "strategy": "taxableFirst",
-   "customOrder": [],
-   "bracketRate": 0.12
-  },
-  "rothConversion": {
-   "mode": "fillBracket",
-   "amount": 0,
-   "bracketRate": 0.12,
-   "start": {
-    "type": "milestone",
-    "milestoneId": "m-retire",
-    "offset": 0
-   },
-   "end": {
-    "type": "age",
-    "personId": "p1",
-    "age": 65
-   }
-  },
-  "gainHarvest": {
-   "enabled": false
-  },
-  "lossHarvest": {
-   "enabled": false
-  },
-  "spendingRule": {
-   "type": "fixed",
-   "pct": 0.04,
-   "guardrailBand": 0.2,
-   "guardrailAdjust": 0.1,
-   "floor": 0.85,
-   "ceiling": 1.25
-  },
-  "magiTarget": {
-   "enabled": true,
-   "maxFplPct": 3.95,
-   "minFplPct": 1.4
-  },
-  "rebalance": {
-   "mode": "annual",
-   "band": 0.05
-  },
-  "sepp": [],
-  "spendingPhases": [
-   {
-    "name": "Go-go",
-    "fromAge": 50,
-    "multiplier": 1.1
-   },
-   {
-    "name": "Slow-go",
-    "fromAge": 72,
-    "multiplier": 0.9
-   },
-   {
-    "name": "No-go",
-    "fromAge": 84,
-    "multiplier": 0.75
-   }
-  ],
-  "survivorSpendingPct": 0.75,
-  "backdoorRoth": false,
-  "hsaUse": "spend",
-  "estate": {
-   "heirMarginalRate": 0.24,
-   "legacyGoal": 0,
-   "legacyGoalForSuccess": false
-  }
- },
- "healthcare": {
-  "enabled": true,
   "people": [
-   {
-    "personId": "p1",
-    "coverage": [
-     {
-      "type": "employer",
-      "from": {
-       "type": "year",
-       "year": 2026
+    {
+      "id": "p1",
+      "name": "Morgan",
+      "birthDate": "1979-02-20",
+      "sex": "female",
+      "longevity": {
+        "mode": "fixed",
+        "age": 95
       },
-      "hdhp": true,
-      "metal": "silver",
-      "cobraMonths": 18
-     },
-     {
-      "type": "cobra",
-      "from": {
-       "type": "milestone",
-       "milestoneId": "m-retire",
-       "offset": 0
-      },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 6
-     },
-     {
-      "type": "aca",
-      "from": {
-       "type": "milestone",
-       "milestoneId": "m-retire",
-       "offset": 1
-      },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 18
-     }
-    ],
-    "utilization": "typical",
-    "tobacco": false,
-    "medicare": {
-     "partAPremiumFree": true,
-     "supplement": "medigapG",
-     "dentalVisionHearing": true,
-     "irmaaAppeal": false
+      "residence": [
+        {
+          "state": "NC",
+          "countyFips": "37183",
+          "fromYear": 2026
+        }
+      ],
+      "socialSecurity": {
+        "mode": "pia",
+        "earnings": [],
+        "piaMonthly": 265000,
+        "claimAge": {
+          "years": 67,
+          "months": 0
+        }
+      }
     },
-    "ltc": {
-     "mode": "none",
-     "careType": "assistedLiving",
-     "onsetAge": 85,
-     "years": 3
+    {
+      "id": "p2",
+      "name": "Devon",
+      "birthDate": "1979-09-03",
+      "sex": "male",
+      "longevity": {
+        "mode": "fixed",
+        "age": 92
+      },
+      "residence": [
+        {
+          "state": "NC",
+          "countyFips": "37183",
+          "fromYear": 2026
+        }
+      ],
+      "socialSecurity": {
+        "mode": "pia",
+        "earnings": [],
+        "piaMonthly": 220000,
+        "claimAge": {
+          "years": 67,
+          "months": 0
+        }
+      }
     }
-   },
-   {
-    "personId": "p2",
-    "coverage": [
-     {
-      "type": "spouseEmployer",
-      "from": {
-       "type": "year",
-       "year": 2026
-      },
-      "hdhp": true,
-      "metal": "silver",
-      "cobraMonths": 18
-     },
-     {
-      "type": "cobra",
-      "from": {
-       "type": "milestone",
-       "milestoneId": "m-retire",
-       "offset": 0
-      },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 6
-     },
-     {
-      "type": "aca",
-      "from": {
-       "type": "milestone",
-       "milestoneId": "m-retire",
-       "offset": 1
-      },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 18
-     }
+  ],
+  "household": {
+    "filingStatus": [
+      {
+        "fromYear": 2026,
+        "status": "mfj"
+      }
     ],
-    "utilization": "typical",
-    "tobacco": false,
-    "medicare": {
-     "partAPremiumFree": true,
-     "supplement": "medigapG",
-     "dentalVisionHearing": true,
-     "irmaaAppeal": false
+    "dependents": []
+  },
+  "accounts": [
+    {
+      "id": "a-cash",
+      "ownerId": "joint",
+      "name": "Cash reserve",
+      "type": "cash",
+      "balance": 9000000,
+      "allocation": {
+        "usStocks": 0.6,
+        "usBonds": 0.4,
+        "cash": 0,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false,
+      "fixedYield": {
+        "rate": 0.035,
+        "basis": "nominal"
+      }
     },
-    "ltc": {
-     "mode": "none",
-     "careType": "assistedLiving",
-     "onsetAge": 85,
-     "years": 3
+    {
+      "id": "a-brokerage",
+      "ownerId": "joint",
+      "name": "Joint brokerage",
+      "type": "taxable",
+      "balance": 72000000,
+      "costBasis": 43000000,
+      "allocation": {
+        "usStocks": 0.6,
+        "usBonds": 0.25,
+        "cash": 0,
+        "intlStocks": 0.15,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0.0006,
+        "advisory": 0
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-401k-1",
+      "ownerId": "p1",
+      "name": "Morgan's 401(k)",
+      "type": "trad401k",
+      "balance": 61000000,
+      "allocation": {
+        "usStocks": 0.6,
+        "usBonds": 0.3,
+        "cash": 0,
+        "intlStocks": 0.1,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "contribution": {
+        "incomeId": "i-1",
+        "employeePct": 0,
+        "employeeAmount": 0,
+        "maxOut": true,
+        "employerMatch": [
+          {
+            "matchPct": 0.5,
+            "upToPctOfSalary": 0.06
+          }
+        ],
+        "employerFixedPct": 0,
+        "megaBackdoor": false
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-401k-2",
+      "ownerId": "p2",
+      "name": "Devon's 401(k)",
+      "type": "trad401k",
+      "balance": 48000000,
+      "allocation": {
+        "usStocks": 0.6,
+        "usBonds": 0.3,
+        "cash": 0,
+        "intlStocks": 0.1,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "contribution": {
+        "incomeId": "i-2",
+        "employeePct": 0.12,
+        "employeeAmount": 0,
+        "maxOut": false,
+        "employerMatch": [
+          {
+            "matchPct": 1,
+            "upToPctOfSalary": 0.03
+          }
+        ],
+        "employerFixedPct": 0,
+        "megaBackdoor": false
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-roth-1",
+      "ownerId": "p1",
+      "name": "Morgan's Roth IRA",
+      "type": "rothIra",
+      "balance": 14000000,
+      "rothBasis": {
+        "contributions": 8200000,
+        "conversions": [],
+        "firstContributionYear": 2011
+      },
+      "allocation": {
+        "usStocks": 0.8,
+        "usBonds": 0,
+        "cash": 0,
+        "intlStocks": 0.2,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-roth-2",
+      "ownerId": "p2",
+      "name": "Devon's Roth IRA",
+      "type": "rothIra",
+      "balance": 11800000,
+      "rothBasis": {
+        "contributions": 7400000,
+        "conversions": [],
+        "firstContributionYear": 2012
+      },
+      "allocation": {
+        "usStocks": 0.8,
+        "usBonds": 0,
+        "cash": 0,
+        "intlStocks": 0.2,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-hsa",
+      "ownerId": "p1",
+      "name": "HSA",
+      "type": "hsa",
+      "balance": 4600000,
+      "allocation": {
+        "usStocks": 0.7,
+        "usBonds": 0.3,
+        "cash": 0,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
     }
-   }
-  ]
- },
- "assumptions": {
-  "returns": {
-   "mode": "fixed",
-   "fixed": {
-    "usStocks": 0.07,
-    "usBonds": 0.04,
-    "cash": 0.03,
-    "intlStocks": 0.07,
-    "reits": 0.065
-   }
+  ],
+  "assets": [
+    {
+      "id": "as-home",
+      "ownerId": "joint",
+      "name": "Home",
+      "kind": "primaryHome",
+      "value": 52000000,
+      "costBasis": 34000000,
+      "appreciation": {
+        "rate": 0.005,
+        "basis": "real"
+      },
+      "property": {
+        "propertyTaxRate": 0.009,
+        "insuranceAnnual": 240000,
+        "maintenanceRate": 0.01,
+        "hoaAnnual": 0
+      }
+    }
+  ],
+  "debts": [
+    {
+      "id": "d-mortgage",
+      "ownerId": "joint",
+      "name": "Mortgage",
+      "kind": "mortgage",
+      "principal": 16800000,
+      "rate": 0.0325,
+      "payment": 148000,
+      "termMonths": 0,
+      "revolvingPayPct": 0.02,
+      "linkedAssetId": "as-home",
+      "interestDeductible": true,
+      "refinance": []
+    }
+  ],
+  "incomes": [
+    {
+      "id": "i-1",
+      "ownerId": "p1",
+      "name": "Morgan's salary",
+      "kind": "wages",
+      "amount": 16500000,
+      "growth": {
+        "rate": 0.005,
+        "basis": "real"
+      },
+      "end": {
+        "type": "milestone",
+        "milestoneId": "m-retire",
+        "offset": 0
+      },
+      "taxCharacter": "earned",
+      "annuityExclusionRatio": 0
+    },
+    {
+      "id": "i-2",
+      "ownerId": "p2",
+      "name": "Devon's salary",
+      "kind": "wages",
+      "amount": 11800000,
+      "growth": {
+        "rate": 0.005,
+        "basis": "real"
+      },
+      "end": {
+        "type": "milestone",
+        "milestoneId": "m-retire",
+        "offset": 0
+      },
+      "taxCharacter": "earned",
+      "annuityExclusionRatio": 0
+    }
+  ],
+  "expenses": [
+    {
+      "id": "e-core",
+      "name": "Core living",
+      "category": "food",
+      "amount": 5200000,
+      "inflationIndex": "cpi",
+      "customRate": 0,
+      "essential": true,
+      "followsPhases": false,
+      "recurrence": {
+        "type": "annual"
+      }
+    },
+    {
+      "id": "e-travel",
+      "name": "Travel",
+      "category": "travel",
+      "amount": 1400000,
+      "inflationIndex": "cpi",
+      "customRate": 0,
+      "essential": false,
+      "followsPhases": true,
+      "recurrence": {
+        "type": "annual"
+      }
+    },
+    {
+      "id": "e-giving",
+      "name": "Giving",
+      "category": "giving",
+      "amount": 400000,
+      "inflationIndex": "cpi",
+      "customRate": 0,
+      "essential": false,
+      "followsPhases": false,
+      "recurrence": {
+        "type": "annual"
+      }
+    }
+  ],
+  "milestones": [
+    {
+      "id": "m-retire",
+      "name": "Both retire",
+      "kind": "retirement",
+      "when": {
+        "type": "age",
+        "personId": "p1",
+        "age": 50
+      },
+      "effects": []
+    }
+  ],
+  "glidePaths": [],
+  "strategies": {
+    "surplusWaterfall": [
+      {
+        "type": "account",
+        "accountId": "a-brokerage"
+      }
+    ],
+    "withdrawalOrder": {
+      "strategy": "taxableFirst",
+      "customOrder": [],
+      "bracketRate": 0.12
+    },
+    "rothConversion": {
+      "mode": "fillBracket",
+      "amount": 0,
+      "bracketRate": 0.12,
+      "start": {
+        "type": "milestone",
+        "milestoneId": "m-retire",
+        "offset": 0
+      },
+      "end": {
+        "type": "age",
+        "personId": "p1",
+        "age": 65
+      }
+    },
+    "gainHarvest": {
+      "enabled": false
+    },
+    "lossHarvest": {
+      "enabled": false
+    },
+    "spendingRule": {
+      "type": "fixed",
+      "pct": 0.04,
+      "guardrailBand": 0.2,
+      "guardrailAdjust": 0.1,
+      "floor": 0.85,
+      "ceiling": 1.25
+    },
+    "magiTarget": {
+      "enabled": true,
+      "maxFplPct": 3.95,
+      "minFplPct": 1.4
+    },
+    "rebalance": {
+      "mode": "annual",
+      "band": 0.05
+    },
+    "sepp": [],
+    "spendingPhases": [
+      {
+        "name": "Go-go",
+        "fromAge": 50,
+        "multiplier": 1.1
+      },
+      {
+        "name": "Slow-go",
+        "fromAge": 72,
+        "multiplier": 0.9
+      },
+      {
+        "name": "No-go",
+        "fromAge": 84,
+        "multiplier": 0.75
+      }
+    ],
+    "survivorSpendingPct": 0.75,
+    "backdoorRoth": false,
+    "hsaUse": "spend",
+    "estate": {
+      "heirMarginalRate": 0.24,
+      "legacyGoal": 0,
+      "legacyGoalForSuccess": false
+    }
   },
-  "inflation": {
-   "rate": 0.025,
-   "educationExcess": 0.02
+  "healthcare": {
+    "enabled": true,
+    "people": [
+      {
+        "personId": "p1",
+        "coverage": [
+          {
+            "type": "employer",
+            "from": {
+              "type": "year",
+              "year": 2026
+            },
+            "hdhp": true,
+            "metal": "silver",
+            "cobraMonths": 18
+          },
+          {
+            "type": "cobra",
+            "from": {
+              "type": "milestone",
+              "milestoneId": "m-retire",
+              "offset": 0
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 6
+          },
+          {
+            "type": "aca",
+            "from": {
+              "type": "milestone",
+              "milestoneId": "m-retire",
+              "offset": 1
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 18
+          }
+        ],
+        "utilization": "typical",
+        "tobacco": false,
+        "medicare": {
+          "partAPremiumFree": true,
+          "supplement": "medigapG",
+          "dentalVisionHearing": true,
+          "irmaaAppeal": false
+        },
+        "ltc": {
+          "mode": "none",
+          "careType": "assistedLiving",
+          "onsetAge": 85,
+          "years": 3
+        }
+      },
+      {
+        "personId": "p2",
+        "coverage": [
+          {
+            "type": "spouseEmployer",
+            "from": {
+              "type": "year",
+              "year": 2026
+            },
+            "hdhp": true,
+            "metal": "silver",
+            "cobraMonths": 18
+          },
+          {
+            "type": "cobra",
+            "from": {
+              "type": "milestone",
+              "milestoneId": "m-retire",
+              "offset": 0
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 6
+          },
+          {
+            "type": "aca",
+            "from": {
+              "type": "milestone",
+              "milestoneId": "m-retire",
+              "offset": 1
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 18
+          }
+        ],
+        "utilization": "typical",
+        "tobacco": false,
+        "medicare": {
+          "partAPremiumFree": true,
+          "supplement": "medigapG",
+          "dentalVisionHearing": true,
+          "irmaaAppeal": false
+        },
+        "ltc": {
+          "mode": "none",
+          "careType": "assistedLiving",
+          "onsetAge": 85,
+          "years": 3
+        }
+      }
+    ]
   },
-  "healthcareInflation": {
-   "excessOverCpi": 0.02,
-   "stochastic": true,
-   "stdDev": 0.015
+  "assumptions": {
+    "returns": {
+      "mode": "fixed",
+      "fixed": {
+        "usStocks": 0.07,
+        "usBonds": 0.04,
+        "cash": 0.03,
+        "intlStocks": 0.07,
+        "reits": 0.065
+      }
+    },
+    "inflation": {
+      "rate": 0.025,
+      "educationExcess": 0.02
+    },
+    "healthcareInflation": {
+      "excessOverCpi": 0.02,
+      "stochastic": true,
+      "stdDev": 0.015
+    },
+    "realWageGrowth": 0.01,
+    "dividendYield": 0.018,
+    "qualifiedDividendPct": 0.9,
+    "bondYield": 0.04,
+    "monteCarlo": {
+      "method": "bootstrap",
+      "runs": 1000,
+      "seed": 20261110,
+      "blockLength": 5,
+      "inflation": "sampled",
+      "stochasticLongevity": false,
+      "bootstrapMeans": "assumptions"
+    },
+    "mortalityImprovement": 0,
+    "socialSecurityCut": {
+      "enabled": false,
+      "fromYear": 2034,
+      "payablePct": 0.83
+    }
   },
-  "realWageGrowth": 0.01,
-  "dividendYield": 0.018,
-  "qualifiedDividendPct": 0.9,
-  "bondYield": 0.04,
-  "monteCarlo": {
-   "method": "bootstrap",
-   "runs": 1000,
-   "seed": 20261110,
-   "blockLength": 5,
-   "inflation": "sampled",
-   "stochasticLongevity": false,
-   "bootstrapMeans": "assumptions"
-  },
-  "mortalityImprovement": 0,
-  "socialSecurityCut": {
-   "enabled": false,
-   "fromYear": 2034,
-   "payablePct": 0.83
-  }
- },
- "scenarios": [],
- "actuals": []
+  "scenarios": [],
+  "actuals": []
 }

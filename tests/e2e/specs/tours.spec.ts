@@ -80,7 +80,7 @@ for (const tour of TOURS) {
 
 test("a tour never changes the user's plan, saves its place, and Esc leaves it", async ({ page }) => {
   await seed(page, 'early');
-  const name = await page.locator('#plan-switch option:checked').textContent();
+  const name = await page.locator('#plan-switch .lv-ellipsis').textContent();
   await page.goto('/help/tours');
   await page
     .locator('[data-tour-id="T-B05"]')
@@ -96,7 +96,7 @@ test("a tour never changes the user's plan, saves its place, and Esc leaves it",
   await page.keyboard.press('Escape');
   await expect(card).toBeHidden();
   await expect(page).toHaveURL(/\/help\/tours$/);
-  await expect(page.locator('#plan-switch option:checked')).toHaveText(name ?? '');
+  await expect(page.locator('#plan-switch .lv-ellipsis')).toHaveText(name ?? '');
   // Progress is kept and the tour resumes where it stopped.
   const tile = page.locator('[data-tour-id="T-B05"]');
   await expect(tile.getByText('Step 4 of')).toBeVisible();
@@ -112,7 +112,7 @@ test('observe-only mode shows my own plan with changes switched off', async ({ p
     .getByRole('button', { name: /^On my plan/ })
     .click();
   await expect(page.locator('[data-tour="sandbox-banner"]')).toContainText('changes are switched off');
-  await expect(page.locator('#plan-switch option:checked')).toHaveText(/retiring at 50/);
+  await expect(page.locator('#plan-switch .lv-ellipsis')).toHaveText(/retiring at 50/);
 });
 
 test('the wizard offers the welcome tour', async ({ page }) => {

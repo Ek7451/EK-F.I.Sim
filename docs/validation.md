@@ -10,8 +10,8 @@ against outside references, and where they have not.
 
 | Area                                   | Result                                                                                  |
 | -------------------------------------- | --------------------------------------------------------------------------------------- |
-| Unit, property and validation tests    | 361 pass, 2 marked todo (`pnpm test`)                                                   |
-| Browser tests (phone, tablet, desktop) | 96 pass, 4 skipped by design (`pnpm e2e`)                                               |
+| Unit, property and validation tests    | 432 pass, 2 marked todo (`pnpm test`)                                                   |
+| Browser tests (phone, tablet, desktop) | 107 pass, 8 skipped by design (`pnpm e2e`), including one-screen layout checks          |
 | Guided tours                           | All 25 complete with the keyboard alone on phone and desktop sizes; every target exists |
 | Accessibility (automated)              | axe WCAG 2.2 A/AA: no violations on any of 21 screens, light and dark, three sizes      |
 | Dataset checks                         | 177 datasets valid, 55 of them projected or estimated (`pnpm validate:data`)            |
@@ -37,17 +37,17 @@ The v1.0 gate is **not met**. The open items are listed under "Release gate" bel
 
 ## Release gate (plan §16)
 
-| Gate item                                                 | State                                                                                                                |
-| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| Every parity-matrix row done                              | **Not met.** 54 done, 10 implemented without a dedicated test, 12 partial. See [parity-matrix.md](parity-matrix.md). |
-| Validation cases V-01 to V-09 within tolerance            | **Not met.** V-01, V-02 and part of V-03 are outside tolerance; V-06 lookups and V-07 are not done.                  |
-| All 25 tours pass e2e on phone and desktop, keyboard only | Met.                                                                                                                 |
-| Accessibility                                             | Automated checks met. A manual screen-reader audit has **not** been done.                                            |
-| Performance budgets on both reference devices             | Lighthouse budgets met under simulated throttling. The physical reference phones were **not** measured.              |
-| Security review                                           | Runbook written (`runbooks/security-review.md`); the review itself has **not** been carried out.                     |
-| Sync deployed and restore drill run                       | **Not done.** Nothing has been deployed. The sync Worker and client have only been tested separately.                |
-| Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                        |
-| CI green                                                  | The workflows in `.github/workflows/` have never run: nothing has been committed or pushed.                          |
+| Gate item                                                 | State                                                                                                               |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Every parity-matrix row done                              | **Not met.** 64 done, 1 implemented without a dedicated test, 11 partial. See [parity-matrix.md](parity-matrix.md). |
+| Validation cases V-01 to V-09 within tolerance            | **Not met.** V-01, V-02 and part of V-03 are outside tolerance; V-06 lookups and V-07 are not done.                 |
+| All 25 tours pass e2e on phone and desktop, keyboard only | Met.                                                                                                                |
+| Accessibility                                             | Automated checks met. A manual screen-reader audit has **not** been done.                                           |
+| Performance budgets on both reference devices             | Lighthouse budgets met under simulated throttling. The physical reference phones were **not** measured.             |
+| Security review                                           | Runbook written (`runbooks/security-review.md`); the review itself has **not** been carried out.                    |
+| Sync deployed and restore drill run                       | **Not done.** Nothing has been deployed. The sync Worker and client have only been tested separately.               |
+| Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                       |
+| CI green                                                  | The workflows in `.github/workflows/` have never run: nothing has been committed or pushed.                         |
 
 ## Known limitations of the model
 
@@ -91,6 +91,14 @@ Simulation
 - Spending-cut statistics (share of runs and years below plan, lowest spending as a share of plan) and a
   net-estate distribution are reported. With random lifespans, runs that have ended drop out of the
   percentile bands (`activeShare` says how many remain) instead of carrying their last balance forward.
+- Under "long-run historical averages" the single projection and the simulations both centre on the
+  compound averages of the bundled history (`expectedMeans()`), so the two no longer disagree.
+- Years are still whole years, with one refinement: pay that ends at an age runs to that birthday (by birth
+  month and day), in the projection and in the Social Security earnings record. Health coverage still
+  switches at the start of that year, so the retirement year counts a full year of the new coverage
+  alongside part-year pay.
+- Flexible spending rules never cut expenses marked essential; the flexible expenses absorb the cut.
+- An optional ending net-worth goal can be reported or counted in the success rate (`legacyGoalForSuccess`).
 - Optional SOA mortality tables are not included; longevity uses SSA period tables, with an optional annual
   mortality-improvement rate (off by default; about 0.8% is close to the Trustees' intermediate assumption).
 

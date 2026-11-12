@@ -1,855 +1,855 @@
 {
- "id": "sample-couple-ss",
- "schemaVersion": 1,
- "name": "Sample: nearing retirement",
- "createdAt": "2026-01-01T00:00:00.000Z",
- "updatedAt": "2026-01-01T00:00:00.000Z",
- "settings": {
-  "startYear": 2026,
-  "timing": "mid",
-  "display": "real",
-  "dataYearPolicy": "latest"
- },
- "people": [
-  {
-   "id": "p1",
-   "name": "Pat",
-   "birthDate": "1963-03-08",
-   "sex": "male",
-   "longevity": {
-    "mode": "fixed",
-    "age": 90
-   },
-   "residence": [
-    {
-     "state": "OH",
-     "countyFips": "39049",
-     "fromYear": 2026
-    }
-   ],
-   "socialSecurity": {
-    "mode": "earnings",
-    "earnings": [
-     {
-      "year": 1986,
-      "amount": 3788600
-     },
-     {
-      "year": 1987,
-      "amount": 3921200
-     },
-     {
-      "year": 1988,
-      "amount": 4058400
-     },
-     {
-      "year": 1989,
-      "amount": 4200500
-     },
-     {
-      "year": 1990,
-      "amount": 4347500
-     },
-     {
-      "year": 1991,
-      "amount": 4499700
-     },
-     {
-      "year": 1992,
-      "amount": 4657100
-     },
-     {
-      "year": 1993,
-      "amount": 4820100
-     },
-     {
-      "year": 1994,
-      "amount": 4988800
-     },
-     {
-      "year": 1995,
-      "amount": 5163500
-     },
-     {
-      "year": 1996,
-      "amount": 5344200
-     },
-     {
-      "year": 1997,
-      "amount": 5531200
-     },
-     {
-      "year": 1998,
-      "amount": 5724800
-     },
-     {
-      "year": 1999,
-      "amount": 5925200
-     },
-     {
-      "year": 2000,
-      "amount": 6132600
-     },
-     {
-      "year": 2001,
-      "amount": 6347200
-     },
-     {
-      "year": 2002,
-      "amount": 6569400
-     },
-     {
-      "year": 2003,
-      "amount": 6799300
-     },
-     {
-      "year": 2004,
-      "amount": 7037300
-     },
-     {
-      "year": 2005,
-      "amount": 7283600
-     },
-     {
-      "year": 2006,
-      "amount": 7538500
-     },
-     {
-      "year": 2007,
-      "amount": 7802300
-     },
-     {
-      "year": 2008,
-      "amount": 8075400
-     },
-     {
-      "year": 2009,
-      "amount": 8358100
-     },
-     {
-      "year": 2010,
-      "amount": 8650600
-     },
-     {
-      "year": 2011,
-      "amount": 8953400
-     },
-     {
-      "year": 2012,
-      "amount": 9266700
-     },
-     {
-      "year": 2013,
-      "amount": 9591100
-     },
-     {
-      "year": 2014,
-      "amount": 9926700
-     },
-     {
-      "year": 2015,
-      "amount": 10274200
-     },
-     {
-      "year": 2016,
-      "amount": 10633800
-     },
-     {
-      "year": 2017,
-      "amount": 11006000
-     },
-     {
-      "year": 2018,
-      "amount": 11391200
-     },
-     {
-      "year": 2019,
-      "amount": 11789900
-     },
-     {
-      "year": 2020,
-      "amount": 12202500
-     },
-     {
-      "year": 2021,
-      "amount": 12629600
-     },
-     {
-      "year": 2022,
-      "amount": 13071600
-     },
-     {
-      "year": 2023,
-      "amount": 13529100
-     },
-     {
-      "year": 2024,
-      "amount": 14002700
-     },
-     {
-      "year": 2025,
-      "amount": 14492800
-     }
-    ],
-    "piaMonthly": 0,
-    "claimAge": {
-     "years": 70,
-     "months": 0
-    }
-   }
+  "id": "sample-couple-ss",
+  "schemaVersion": 1,
+  "name": "Sample: nearing retirement",
+  "createdAt": "2026-01-01T00:00:00.000Z",
+  "updatedAt": "2026-01-01T00:00:00.000Z",
+  "settings": {
+    "startYear": 2026,
+    "timing": "mid",
+    "display": "real",
+    "dataYearPolicy": "latest"
   },
-  {
-   "id": "p2",
-   "name": "Sam",
-   "birthDate": "1965-11-22",
-   "sex": "female",
-   "longevity": {
-    "mode": "fixed",
-    "age": 96
-   },
-   "residence": [
-    {
-     "state": "OH",
-     "countyFips": "39049",
-     "fromYear": 2026
-    }
-   ],
-   "socialSecurity": {
-    "mode": "earnings",
-    "earnings": [
-     {
-      "year": 1988,
-      "amount": 1298700
-     },
-     {
-      "year": 1989,
-      "amount": 1344200
-     },
-     {
-      "year": 1990,
-      "amount": 1391200
-     },
-     {
-      "year": 1991,
-      "amount": 1439900
-     },
-     {
-      "year": 1992,
-      "amount": 1490300
-     },
-     {
-      "year": 1993,
-      "amount": 1542400
-     },
-     {
-      "year": 1994,
-      "amount": 1596400
-     },
-     {
-      "year": 1995,
-      "amount": 1652300
-     },
-     {
-      "year": 1996,
-      "amount": 1710100
-     },
-     {
-      "year": 1997,
-      "amount": 1770000
-     },
-     {
-      "year": 1998,
-      "amount": 1831900
-     },
-     {
-      "year": 1999,
-      "amount": 1896100
-     },
-     {
-      "year": 2000,
-      "amount": 1962400
-     },
-     {
-      "year": 2001,
-      "amount": 2031100
-     },
-     {
-      "year": 2002,
-      "amount": 2102200
-     },
-     {
-      "year": 2003,
-      "amount": 2175800
-     },
-     {
-      "year": 2004,
-      "amount": 2251900
-     },
-     {
-      "year": 2005,
-      "amount": 2330700
-     },
-     {
-      "year": 2006,
-      "amount": 2412300
-     },
-     {
-      "year": 2007,
-      "amount": 2496700
-     },
-     {
-      "year": 2008,
-      "amount": 2584100
-     },
-     {
-      "year": 2009,
-      "amount": 2674600
-     },
-     {
-      "year": 2010,
-      "amount": 2768200
-     },
-     {
-      "year": 2011,
-      "amount": 2865100
-     },
-     {
-      "year": 2012,
-      "amount": 2965400
-     },
-     {
-      "year": 2013,
-      "amount": 3069100
-     },
-     {
-      "year": 2014,
-      "amount": 3176600
-     },
-     {
-      "year": 2015,
-      "amount": 3287700
-     },
-     {
-      "year": 2016,
-      "amount": 3402800
-     },
-     {
-      "year": 2017,
-      "amount": 3521900
-     },
-     {
-      "year": 2018,
-      "amount": 3645200
-     },
-     {
-      "year": 2019,
-      "amount": 3772800
-     },
-     {
-      "year": 2020,
-      "amount": 3904800
-     },
-     {
-      "year": 2021,
-      "amount": 4041500
-     },
-     {
-      "year": 2022,
-      "amount": 4182900
-     },
-     {
-      "year": 2023,
-      "amount": 4329300
-     },
-     {
-      "year": 2024,
-      "amount": 4480900
-     },
-     {
-      "year": 2025,
-      "amount": 4637700
-     }
-    ],
-    "piaMonthly": 0,
-    "claimAge": {
-     "years": 67,
-     "months": 0
-    }
-   }
-  }
- ],
- "household": {
-  "filingStatus": [
-   {
-    "fromYear": 2026,
-    "status": "mfj"
-   }
-  ],
-  "dependents": []
- },
- "accounts": [
-  {
-   "id": "a-cash",
-   "ownerId": "joint",
-   "name": "Savings",
-   "type": "cash",
-   "balance": 7000000,
-   "allocation": {
-    "usStocks": 0.6,
-    "usBonds": 0.4,
-    "cash": 0,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false,
-   "fixedYield": {
-    "rate": 0.035,
-    "basis": "nominal"
-   }
-  },
-  {
-   "id": "a-brokerage",
-   "ownerId": "joint",
-   "name": "Brokerage",
-   "type": "taxable",
-   "balance": 38000000,
-   "costBasis": 21000000,
-   "allocation": {
-    "usStocks": 0.5,
-    "usBonds": 0.4,
-    "cash": 0.1,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-ira-1",
-   "ownerId": "p1",
-   "name": "Pat's rollover IRA",
-   "type": "tradIra",
-   "balance": 165000000,
-   "allocation": {
-    "usStocks": 0.5,
-    "usBonds": 0.45,
-    "cash": 0.05,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "glidePathId": "g-1",
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-401k-1",
-   "ownerId": "p1",
-   "name": "Pat's 401(k)",
-   "type": "trad401k",
-   "balance": 24000000,
-   "allocation": {
-    "usStocks": 0.5,
-    "usBonds": 0.5,
-    "cash": 0,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "contribution": {
-    "incomeId": "i-1",
-    "employeePct": 0,
-    "employeeAmount": 0,
-    "maxOut": true,
-    "employerMatch": [
-     {
-      "matchPct": 0.5,
-      "upToPctOfSalary": 0.06
-     }
-    ],
-    "employerFixedPct": 0,
-    "megaBackdoor": false
-   },
-   "ruleOf55": true
-  },
-  {
-   "id": "a-ira-2",
-   "ownerId": "p2",
-   "name": "Sam's IRA",
-   "type": "tradIra",
-   "balance": 31000000,
-   "allocation": {
-    "usStocks": 0.5,
-    "usBonds": 0.5,
-    "cash": 0,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  },
-  {
-   "id": "a-roth-2",
-   "ownerId": "p2",
-   "name": "Sam's Roth IRA",
-   "type": "rothIra",
-   "balance": 9500000,
-   "rothBasis": {
-    "contributions": 6000000,
-    "conversions": [],
-    "firstContributionYear": 2014
-   },
-   "allocation": {
-    "usStocks": 0.7,
-    "usBonds": 0.3,
-    "cash": 0,
-    "intlStocks": 0,
-    "reits": 0
-   },
-   "fees": {
-    "expenseRatio": 0,
-    "advisory": 0
-   },
-   "ruleOf55": false
-  }
- ],
- "assets": [
-  {
-   "id": "as-home",
-   "ownerId": "joint",
-   "name": "Home",
-   "kind": "primaryHome",
-   "value": 41000000,
-   "costBasis": 18000000,
-   "appreciation": {
-    "rate": 0,
-    "basis": "real"
-   },
-   "property": {
-    "propertyTaxRate": 0.015,
-    "insuranceAnnual": 190000,
-    "maintenanceRate": 0.01,
-    "hoaAnnual": 0
-   }
-  }
- ],
- "debts": [],
- "incomes": [
-  {
-   "id": "i-1",
-   "ownerId": "p1",
-   "name": "Pat's salary",
-   "kind": "wages",
-   "amount": 15000000,
-   "growth": {
-    "rate": 0,
-    "basis": "real"
-   },
-   "end": {
-    "type": "milestone",
-    "milestoneId": "m-retire",
-    "offset": 0
-   },
-   "taxCharacter": "earned",
-   "annuityExclusionRatio": 0
-  },
-  {
-   "id": "i-pension",
-   "ownerId": "p2",
-   "name": "Sam's pension",
-   "kind": "pension",
-   "amount": 2160000,
-   "growth": {
-    "rate": 0,
-    "basis": "real"
-   },
-   "taxCharacter": "ordinary",
-   "pension": {
-    "cola": {
-     "rate": 0.01,
-     "basis": "nominal"
-    },
-    "survivorPct": 0.5
-   },
-   "annuityExclusionRatio": 0
-  }
- ],
- "expenses": [
-  {
-   "id": "e-core",
-   "name": "Core living",
-   "category": "food",
-   "amount": 6400000,
-   "inflationIndex": "cpi",
-   "customRate": 0,
-   "essential": true,
-   "followsPhases": false,
-   "recurrence": {
-    "type": "annual"
-   }
-  },
-  {
-   "id": "e-travel",
-   "name": "Travel",
-   "category": "travel",
-   "amount": 1800000,
-   "inflationIndex": "cpi",
-   "customRate": 0,
-   "essential": false,
-   "followsPhases": true,
-   "recurrence": {
-    "type": "annual"
-   }
-  }
- ],
- "milestones": [
-  {
-   "id": "m-retire",
-   "name": "Pat retires",
-   "kind": "retirement",
-   "personId": "p1",
-   "when": {
-    "type": "age",
-    "personId": "p1",
-    "age": 65
-   },
-   "effects": []
-  }
- ],
- "glidePaths": [
-  {
-   "id": "g-1",
-   "name": "Ease into bonds",
-   "points": [
-    {
-     "age": 63,
-     "allocation": {
-      "usStocks": 0.55,
-      "usBonds": 0.4,
-      "cash": 0.05,
-      "intlStocks": 0,
-      "reits": 0
-     }
-    },
-    {
-     "age": 80,
-     "allocation": {
-      "usStocks": 0.4,
-      "usBonds": 0.5,
-      "cash": 0.1,
-      "intlStocks": 0,
-      "reits": 0
-     }
-    }
-   ]
-  }
- ],
- "strategies": {
-  "surplusWaterfall": [
-   {
-    "type": "account",
-    "accountId": "a-brokerage"
-   }
-  ],
-  "withdrawalOrder": {
-   "strategy": "bracketTargeted",
-   "customOrder": [],
-   "bracketRate": 0.22
-  },
-  "rothConversion": {
-   "mode": "fillBracket",
-   "amount": 0,
-   "bracketRate": 0.22,
-   "start": {
-    "type": "milestone",
-    "milestoneId": "m-retire",
-    "offset": 0
-   },
-   "end": {
-    "type": "age",
-    "personId": "p1",
-    "age": 73
-   }
-  },
-  "gainHarvest": {
-   "enabled": false
-  },
-  "lossHarvest": {
-   "enabled": false
-  },
-  "spendingRule": {
-   "type": "fixed",
-   "pct": 0.04,
-   "guardrailBand": 0.2,
-   "guardrailAdjust": 0.1,
-   "floor": 0.85,
-   "ceiling": 1.25
-  },
-  "magiTarget": {
-   "enabled": false,
-   "maxFplPct": 3.99,
-   "minFplPct": 0
-  },
-  "rebalance": {
-   "mode": "annual",
-   "band": 0.05
-  },
-  "sepp": [],
-  "spendingPhases": [
-   {
-    "name": "Go-go",
-    "fromAge": 65,
-    "multiplier": 1.1
-   },
-   {
-    "name": "Slow-go",
-    "fromAge": 76,
-    "multiplier": 0.9
-   },
-   {
-    "name": "No-go",
-    "fromAge": 86,
-    "multiplier": 0.75
-   }
-  ],
-  "survivorSpendingPct": 0.7,
-  "backdoorRoth": false,
-  "hsaUse": "spend",
-  "estate": {
-   "heirMarginalRate": 0.24,
-   "legacyGoal": 0,
-   "legacyGoalForSuccess": false
-  }
- },
- "healthcare": {
-  "enabled": true,
   "people": [
-   {
-    "personId": "p1",
-    "coverage": [
-     {
-      "type": "employer",
-      "from": {
-       "type": "year",
-       "year": 2026
+    {
+      "id": "p1",
+      "name": "Pat",
+      "birthDate": "1963-03-08",
+      "sex": "male",
+      "longevity": {
+        "mode": "fixed",
+        "age": 90
       },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 18
-     }
-    ],
-    "utilization": "typical",
-    "tobacco": false,
-    "medicare": {
-     "partAPremiumFree": true,
-     "supplement": "medigapG",
-     "dentalVisionHearing": true,
-     "irmaaAppeal": false
+      "residence": [
+        {
+          "state": "OH",
+          "countyFips": "39049",
+          "fromYear": 2026
+        }
+      ],
+      "socialSecurity": {
+        "mode": "earnings",
+        "earnings": [
+          {
+            "year": 1986,
+            "amount": 3788600
+          },
+          {
+            "year": 1987,
+            "amount": 3921200
+          },
+          {
+            "year": 1988,
+            "amount": 4058400
+          },
+          {
+            "year": 1989,
+            "amount": 4200500
+          },
+          {
+            "year": 1990,
+            "amount": 4347500
+          },
+          {
+            "year": 1991,
+            "amount": 4499700
+          },
+          {
+            "year": 1992,
+            "amount": 4657100
+          },
+          {
+            "year": 1993,
+            "amount": 4820100
+          },
+          {
+            "year": 1994,
+            "amount": 4988800
+          },
+          {
+            "year": 1995,
+            "amount": 5163500
+          },
+          {
+            "year": 1996,
+            "amount": 5344200
+          },
+          {
+            "year": 1997,
+            "amount": 5531200
+          },
+          {
+            "year": 1998,
+            "amount": 5724800
+          },
+          {
+            "year": 1999,
+            "amount": 5925200
+          },
+          {
+            "year": 2000,
+            "amount": 6132600
+          },
+          {
+            "year": 2001,
+            "amount": 6347200
+          },
+          {
+            "year": 2002,
+            "amount": 6569400
+          },
+          {
+            "year": 2003,
+            "amount": 6799300
+          },
+          {
+            "year": 2004,
+            "amount": 7037300
+          },
+          {
+            "year": 2005,
+            "amount": 7283600
+          },
+          {
+            "year": 2006,
+            "amount": 7538500
+          },
+          {
+            "year": 2007,
+            "amount": 7802300
+          },
+          {
+            "year": 2008,
+            "amount": 8075400
+          },
+          {
+            "year": 2009,
+            "amount": 8358100
+          },
+          {
+            "year": 2010,
+            "amount": 8650600
+          },
+          {
+            "year": 2011,
+            "amount": 8953400
+          },
+          {
+            "year": 2012,
+            "amount": 9266700
+          },
+          {
+            "year": 2013,
+            "amount": 9591100
+          },
+          {
+            "year": 2014,
+            "amount": 9926700
+          },
+          {
+            "year": 2015,
+            "amount": 10274200
+          },
+          {
+            "year": 2016,
+            "amount": 10633800
+          },
+          {
+            "year": 2017,
+            "amount": 11006000
+          },
+          {
+            "year": 2018,
+            "amount": 11391200
+          },
+          {
+            "year": 2019,
+            "amount": 11789900
+          },
+          {
+            "year": 2020,
+            "amount": 12202500
+          },
+          {
+            "year": 2021,
+            "amount": 12629600
+          },
+          {
+            "year": 2022,
+            "amount": 13071600
+          },
+          {
+            "year": 2023,
+            "amount": 13529100
+          },
+          {
+            "year": 2024,
+            "amount": 14002700
+          },
+          {
+            "year": 2025,
+            "amount": 14492800
+          }
+        ],
+        "piaMonthly": 0,
+        "claimAge": {
+          "years": 70,
+          "months": 0
+        }
+      }
     },
-    "ltc": {
-     "mode": "none",
-     "careType": "assistedLiving",
-     "onsetAge": 85,
-     "years": 3
+    {
+      "id": "p2",
+      "name": "Sam",
+      "birthDate": "1965-11-22",
+      "sex": "female",
+      "longevity": {
+        "mode": "fixed",
+        "age": 96
+      },
+      "residence": [
+        {
+          "state": "OH",
+          "countyFips": "39049",
+          "fromYear": 2026
+        }
+      ],
+      "socialSecurity": {
+        "mode": "earnings",
+        "earnings": [
+          {
+            "year": 1988,
+            "amount": 1298700
+          },
+          {
+            "year": 1989,
+            "amount": 1344200
+          },
+          {
+            "year": 1990,
+            "amount": 1391200
+          },
+          {
+            "year": 1991,
+            "amount": 1439900
+          },
+          {
+            "year": 1992,
+            "amount": 1490300
+          },
+          {
+            "year": 1993,
+            "amount": 1542400
+          },
+          {
+            "year": 1994,
+            "amount": 1596400
+          },
+          {
+            "year": 1995,
+            "amount": 1652300
+          },
+          {
+            "year": 1996,
+            "amount": 1710100
+          },
+          {
+            "year": 1997,
+            "amount": 1770000
+          },
+          {
+            "year": 1998,
+            "amount": 1831900
+          },
+          {
+            "year": 1999,
+            "amount": 1896100
+          },
+          {
+            "year": 2000,
+            "amount": 1962400
+          },
+          {
+            "year": 2001,
+            "amount": 2031100
+          },
+          {
+            "year": 2002,
+            "amount": 2102200
+          },
+          {
+            "year": 2003,
+            "amount": 2175800
+          },
+          {
+            "year": 2004,
+            "amount": 2251900
+          },
+          {
+            "year": 2005,
+            "amount": 2330700
+          },
+          {
+            "year": 2006,
+            "amount": 2412300
+          },
+          {
+            "year": 2007,
+            "amount": 2496700
+          },
+          {
+            "year": 2008,
+            "amount": 2584100
+          },
+          {
+            "year": 2009,
+            "amount": 2674600
+          },
+          {
+            "year": 2010,
+            "amount": 2768200
+          },
+          {
+            "year": 2011,
+            "amount": 2865100
+          },
+          {
+            "year": 2012,
+            "amount": 2965400
+          },
+          {
+            "year": 2013,
+            "amount": 3069100
+          },
+          {
+            "year": 2014,
+            "amount": 3176600
+          },
+          {
+            "year": 2015,
+            "amount": 3287700
+          },
+          {
+            "year": 2016,
+            "amount": 3402800
+          },
+          {
+            "year": 2017,
+            "amount": 3521900
+          },
+          {
+            "year": 2018,
+            "amount": 3645200
+          },
+          {
+            "year": 2019,
+            "amount": 3772800
+          },
+          {
+            "year": 2020,
+            "amount": 3904800
+          },
+          {
+            "year": 2021,
+            "amount": 4041500
+          },
+          {
+            "year": 2022,
+            "amount": 4182900
+          },
+          {
+            "year": 2023,
+            "amount": 4329300
+          },
+          {
+            "year": 2024,
+            "amount": 4480900
+          },
+          {
+            "year": 2025,
+            "amount": 4637700
+          }
+        ],
+        "piaMonthly": 0,
+        "claimAge": {
+          "years": 67,
+          "months": 0
+        }
+      }
     }
-   },
-   {
-    "personId": "p2",
-    "coverage": [
-     {
-      "type": "spouseEmployer",
-      "from": {
-       "type": "year",
-       "year": 2026
-      },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 18
-     },
-     {
-      "type": "aca",
-      "from": {
-       "type": "milestone",
-       "milestoneId": "m-retire",
-       "offset": 0
-      },
-      "hdhp": false,
-      "metal": "silver",
-      "cobraMonths": 18
-     }
+  ],
+  "household": {
+    "filingStatus": [
+      {
+        "fromYear": 2026,
+        "status": "mfj"
+      }
     ],
-    "utilization": "typical",
-    "tobacco": false,
-    "medicare": {
-     "partAPremiumFree": true,
-     "supplement": "medigapN",
-     "dentalVisionHearing": true,
-     "irmaaAppeal": false
+    "dependents": []
+  },
+  "accounts": [
+    {
+      "id": "a-cash",
+      "ownerId": "joint",
+      "name": "Savings",
+      "type": "cash",
+      "balance": 7000000,
+      "allocation": {
+        "usStocks": 0.6,
+        "usBonds": 0.4,
+        "cash": 0,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false,
+      "fixedYield": {
+        "rate": 0.035,
+        "basis": "nominal"
+      }
     },
-    "ltc": {
-     "mode": "expected",
-     "careType": "assistedLiving",
-     "onsetAge": 90,
-     "years": 3
+    {
+      "id": "a-brokerage",
+      "ownerId": "joint",
+      "name": "Brokerage",
+      "type": "taxable",
+      "balance": 38000000,
+      "costBasis": 21000000,
+      "allocation": {
+        "usStocks": 0.5,
+        "usBonds": 0.4,
+        "cash": 0.1,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-ira-1",
+      "ownerId": "p1",
+      "name": "Pat's rollover IRA",
+      "type": "tradIra",
+      "balance": 165000000,
+      "allocation": {
+        "usStocks": 0.5,
+        "usBonds": 0.45,
+        "cash": 0.05,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "glidePathId": "g-1",
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-401k-1",
+      "ownerId": "p1",
+      "name": "Pat's 401(k)",
+      "type": "trad401k",
+      "balance": 24000000,
+      "allocation": {
+        "usStocks": 0.5,
+        "usBonds": 0.5,
+        "cash": 0,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "contribution": {
+        "incomeId": "i-1",
+        "employeePct": 0,
+        "employeeAmount": 0,
+        "maxOut": true,
+        "employerMatch": [
+          {
+            "matchPct": 0.5,
+            "upToPctOfSalary": 0.06
+          }
+        ],
+        "employerFixedPct": 0,
+        "megaBackdoor": false
+      },
+      "ruleOf55": true
+    },
+    {
+      "id": "a-ira-2",
+      "ownerId": "p2",
+      "name": "Sam's IRA",
+      "type": "tradIra",
+      "balance": 31000000,
+      "allocation": {
+        "usStocks": 0.5,
+        "usBonds": 0.5,
+        "cash": 0,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
+    },
+    {
+      "id": "a-roth-2",
+      "ownerId": "p2",
+      "name": "Sam's Roth IRA",
+      "type": "rothIra",
+      "balance": 9500000,
+      "rothBasis": {
+        "contributions": 6000000,
+        "conversions": [],
+        "firstContributionYear": 2014
+      },
+      "allocation": {
+        "usStocks": 0.7,
+        "usBonds": 0.3,
+        "cash": 0,
+        "intlStocks": 0,
+        "reits": 0
+      },
+      "fees": {
+        "expenseRatio": 0,
+        "advisory": 0
+      },
+      "ruleOf55": false
     }
-   }
-  ]
- },
- "assumptions": {
-  "returns": {
-   "mode": "fixed",
-   "fixed": {
-    "usStocks": 0.07,
-    "usBonds": 0.04,
-    "cash": 0.03,
-    "intlStocks": 0.07,
-    "reits": 0.065
-   }
+  ],
+  "assets": [
+    {
+      "id": "as-home",
+      "ownerId": "joint",
+      "name": "Home",
+      "kind": "primaryHome",
+      "value": 41000000,
+      "costBasis": 18000000,
+      "appreciation": {
+        "rate": 0,
+        "basis": "real"
+      },
+      "property": {
+        "propertyTaxRate": 0.015,
+        "insuranceAnnual": 190000,
+        "maintenanceRate": 0.01,
+        "hoaAnnual": 0
+      }
+    }
+  ],
+  "debts": [],
+  "incomes": [
+    {
+      "id": "i-1",
+      "ownerId": "p1",
+      "name": "Pat's salary",
+      "kind": "wages",
+      "amount": 15000000,
+      "growth": {
+        "rate": 0,
+        "basis": "real"
+      },
+      "end": {
+        "type": "milestone",
+        "milestoneId": "m-retire",
+        "offset": 0
+      },
+      "taxCharacter": "earned",
+      "annuityExclusionRatio": 0
+    },
+    {
+      "id": "i-pension",
+      "ownerId": "p2",
+      "name": "Sam's pension",
+      "kind": "pension",
+      "amount": 2160000,
+      "growth": {
+        "rate": 0,
+        "basis": "real"
+      },
+      "taxCharacter": "ordinary",
+      "pension": {
+        "cola": {
+          "rate": 0.01,
+          "basis": "nominal"
+        },
+        "survivorPct": 0.5
+      },
+      "annuityExclusionRatio": 0
+    }
+  ],
+  "expenses": [
+    {
+      "id": "e-core",
+      "name": "Core living",
+      "category": "food",
+      "amount": 6400000,
+      "inflationIndex": "cpi",
+      "customRate": 0,
+      "essential": true,
+      "followsPhases": false,
+      "recurrence": {
+        "type": "annual"
+      }
+    },
+    {
+      "id": "e-travel",
+      "name": "Travel",
+      "category": "travel",
+      "amount": 1800000,
+      "inflationIndex": "cpi",
+      "customRate": 0,
+      "essential": false,
+      "followsPhases": true,
+      "recurrence": {
+        "type": "annual"
+      }
+    }
+  ],
+  "milestones": [
+    {
+      "id": "m-retire",
+      "name": "Pat retires",
+      "kind": "retirement",
+      "personId": "p1",
+      "when": {
+        "type": "age",
+        "personId": "p1",
+        "age": 65
+      },
+      "effects": []
+    }
+  ],
+  "glidePaths": [
+    {
+      "id": "g-1",
+      "name": "Ease into bonds",
+      "points": [
+        {
+          "age": 63,
+          "allocation": {
+            "usStocks": 0.55,
+            "usBonds": 0.4,
+            "cash": 0.05,
+            "intlStocks": 0,
+            "reits": 0
+          }
+        },
+        {
+          "age": 80,
+          "allocation": {
+            "usStocks": 0.4,
+            "usBonds": 0.5,
+            "cash": 0.1,
+            "intlStocks": 0,
+            "reits": 0
+          }
+        }
+      ]
+    }
+  ],
+  "strategies": {
+    "surplusWaterfall": [
+      {
+        "type": "account",
+        "accountId": "a-brokerage"
+      }
+    ],
+    "withdrawalOrder": {
+      "strategy": "bracketTargeted",
+      "customOrder": [],
+      "bracketRate": 0.22
+    },
+    "rothConversion": {
+      "mode": "fillBracket",
+      "amount": 0,
+      "bracketRate": 0.22,
+      "start": {
+        "type": "milestone",
+        "milestoneId": "m-retire",
+        "offset": 0
+      },
+      "end": {
+        "type": "age",
+        "personId": "p1",
+        "age": 73
+      }
+    },
+    "gainHarvest": {
+      "enabled": false
+    },
+    "lossHarvest": {
+      "enabled": false
+    },
+    "spendingRule": {
+      "type": "fixed",
+      "pct": 0.04,
+      "guardrailBand": 0.2,
+      "guardrailAdjust": 0.1,
+      "floor": 0.85,
+      "ceiling": 1.25
+    },
+    "magiTarget": {
+      "enabled": false,
+      "maxFplPct": 3.99,
+      "minFplPct": 0
+    },
+    "rebalance": {
+      "mode": "annual",
+      "band": 0.05
+    },
+    "sepp": [],
+    "spendingPhases": [
+      {
+        "name": "Go-go",
+        "fromAge": 65,
+        "multiplier": 1.1
+      },
+      {
+        "name": "Slow-go",
+        "fromAge": 76,
+        "multiplier": 0.9
+      },
+      {
+        "name": "No-go",
+        "fromAge": 86,
+        "multiplier": 0.75
+      }
+    ],
+    "survivorSpendingPct": 0.7,
+    "backdoorRoth": false,
+    "hsaUse": "spend",
+    "estate": {
+      "heirMarginalRate": 0.24,
+      "legacyGoal": 0,
+      "legacyGoalForSuccess": false
+    }
   },
-  "inflation": {
-   "rate": 0.025,
-   "educationExcess": 0.02
+  "healthcare": {
+    "enabled": true,
+    "people": [
+      {
+        "personId": "p1",
+        "coverage": [
+          {
+            "type": "employer",
+            "from": {
+              "type": "year",
+              "year": 2026
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 18
+          }
+        ],
+        "utilization": "typical",
+        "tobacco": false,
+        "medicare": {
+          "partAPremiumFree": true,
+          "supplement": "medigapG",
+          "dentalVisionHearing": true,
+          "irmaaAppeal": false
+        },
+        "ltc": {
+          "mode": "none",
+          "careType": "assistedLiving",
+          "onsetAge": 85,
+          "years": 3
+        }
+      },
+      {
+        "personId": "p2",
+        "coverage": [
+          {
+            "type": "spouseEmployer",
+            "from": {
+              "type": "year",
+              "year": 2026
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 18
+          },
+          {
+            "type": "aca",
+            "from": {
+              "type": "milestone",
+              "milestoneId": "m-retire",
+              "offset": 0
+            },
+            "hdhp": false,
+            "metal": "silver",
+            "cobraMonths": 18
+          }
+        ],
+        "utilization": "typical",
+        "tobacco": false,
+        "medicare": {
+          "partAPremiumFree": true,
+          "supplement": "medigapN",
+          "dentalVisionHearing": true,
+          "irmaaAppeal": false
+        },
+        "ltc": {
+          "mode": "expected",
+          "careType": "assistedLiving",
+          "onsetAge": 90,
+          "years": 3
+        }
+      }
+    ]
   },
-  "healthcareInflation": {
-   "excessOverCpi": 0.02,
-   "stochastic": true,
-   "stdDev": 0.015
+  "assumptions": {
+    "returns": {
+      "mode": "fixed",
+      "fixed": {
+        "usStocks": 0.07,
+        "usBonds": 0.04,
+        "cash": 0.03,
+        "intlStocks": 0.07,
+        "reits": 0.065
+      }
+    },
+    "inflation": {
+      "rate": 0.025,
+      "educationExcess": 0.02
+    },
+    "healthcareInflation": {
+      "excessOverCpi": 0.02,
+      "stochastic": true,
+      "stdDev": 0.015
+    },
+    "realWageGrowth": 0.01,
+    "dividendYield": 0.018,
+    "qualifiedDividendPct": 0.9,
+    "bondYield": 0.04,
+    "monteCarlo": {
+      "method": "bootstrap",
+      "runs": 1000,
+      "seed": 20261110,
+      "blockLength": 5,
+      "inflation": "sampled",
+      "stochasticLongevity": false,
+      "bootstrapMeans": "assumptions"
+    },
+    "mortalityImprovement": 0,
+    "socialSecurityCut": {
+      "enabled": false,
+      "fromYear": 2034,
+      "payablePct": 0.83
+    }
   },
-  "realWageGrowth": 0.01,
-  "dividendYield": 0.018,
-  "qualifiedDividendPct": 0.9,
-  "bondYield": 0.04,
-  "monteCarlo": {
-   "method": "bootstrap",
-   "runs": 1000,
-   "seed": 20261110,
-   "blockLength": 5,
-   "inflation": "sampled",
-   "stochasticLongevity": false,
-   "bootstrapMeans": "assumptions"
-  },
-  "mortalityImprovement": 0,
-  "socialSecurityCut": {
-   "enabled": false,
-   "fromYear": 2034,
-   "payablePct": 0.83
-  }
- },
- "scenarios": [],
- "actuals": []
+  "scenarios": [],
+  "actuals": []
 }

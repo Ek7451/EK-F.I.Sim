@@ -35,9 +35,12 @@ export interface Settings {
   syncEnabled: boolean;
   lastBackupAt: string | null;
   onboarded: boolean;
+  /** Desktop navigation rail shows icons only. */
+  railCollapsed: boolean;
 }
 const DEFAULT_SETTINGS: Settings = {
   theme: 'system',
+  railCollapsed: false,
   activePlanId: null,
   tours: {},
   promptsDismissed: [],

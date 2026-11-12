@@ -10,7 +10,7 @@ export interface ProjectionSummary {
   endYear: number;
   success: boolean;
   failedYear: number | null;
-  /** Year investable assets first reach 25x that year's spending, see fiSpending (or the plan's FI milestone). */
+  /** Year investable assets first reach 25x that year’s spending, see fiSpending (or the plan's FI milestone). */
   fiYear: number | null;
   retirementYear: number | null;
   endingNetWorthReal: number;
@@ -117,7 +117,7 @@ export interface ExplainLine {
 
 /**
  * Which dollars an explanation is in. Nominal is the money of that year; real is today's dollars, using the
- * same convention as the rest of the app (flows by that year's price level, year-end balances by the
+ * same convention as the rest of the app (flows by that year’s price level, year-end balances by the
  * year-end price level), so the lines add up to the figure shown beside them.
  */
 export type ExplainUnit = 'nominal' | 'real';
@@ -125,7 +125,7 @@ export type ExplainUnit = 'nominal' | 'real';
 const scaleLines = (lines: ExplainLine[], k: number): ExplainLine[] =>
   lines.map((l) => ({ label: l.label, amount: l.amount / k }));
 
-/** Break a year's cash flow into the pieces behind it (UX-04 tooltips, RPT-06). */
+/** Break a year’s cash flow into the pieces behind it (UX-04 tooltips, RPT-06). */
 export function explainCashFlow(
   r: YearRecord,
   unit: ExplainUnit = 'nominal',
@@ -158,7 +158,7 @@ export function explainCashFlow(
 
 /**
  * Year-end net worth from the start-of-year investments. In today's dollars the opening balance is valued at
- * the start-of-year price level and everything else at the year-end level, so a line for the year's inflation
+ * the start-of-year price level and everything else at the year-end level, so a line for the year’s inflation
  * keeps the sum equal to year-end net worth in today's dollars.
  */
 export function explainNetWorth(
@@ -326,7 +326,7 @@ export function methodology(data: EngineData, year: number): MethodEntry[] {
       title: 'Medicare and IRMAA',
       featureIds: ['HC-09', 'TAX-10'],
       summary:
-        'Part B and Part D premiums rise in steps with income from two years earlier. Supplement, drug-plan and dental figures start from typical values that you can edit.',
+        'Part B and Part D premiums rise in steps with income from two years earlier. If you choose to appeal after retiring, the year’s own income is used once household pay drops by 10% or more (a life-changing event, form SSA-44). Supplement, drug-plan and dental figures start from typical values that you can edit.',
       formula: 'premium tier(year) = table lookup of MAGI(year − 2)',
       sources: src('Medicare premiums and IRMAA', pick(data.medicare)),
     },
@@ -347,9 +347,36 @@ export function methodology(data: EngineData, year: number): MethodEntry[] {
       title: 'Chance of success',
       featureIds: ['SIM-02', 'SIM-03', 'SIM-10'],
       summary:
-        'Each run strings together blocks of real historical years (stocks, bonds, cash and inflation move together as they did), or draws from a correlated lognormal model. Success means every year’s spending was funded. The same seed always gives the same answer.',
+        'Each run strings together blocks of real historical years (stocks, bonds, cash and inflation move together as they did), or draws from a correlated lognormal model. Both centre on the same expected returns as the single projection, unless you choose to replay history with its own averages. Success means every year’s spending was funded, and, if you ask for it, that the plan ends with at least your goal. The same seed always gives the same answer.',
       formula: 'success rate = runs with no shortfall ÷ runs',
       sources: [...src('Market history', data.market), ...src('Return assumptions', data.returnAssumptions)],
+    },
+    {
+      id: 'spending-rules',
+      title: 'Flexible spending and essential costs',
+      featureIds: ['STRAT-01'],
+      summary:
+        'A flexible rule (guardrails, a share of the portfolio, or a floor and ceiling) sets a target for the year. A cut never touches expenses marked essential: the flexible expenses absorb it, down to nothing. A raise applies to everything.',
+      formula: 'flexible × k = target − essential, k ≥ 0',
+      sources: [],
+    },
+    {
+      id: 'fi',
+      title: 'Financially independent',
+      featureIds: ['SIM-01'],
+      summary:
+        'The first year investments reach 25 times that year’s spending on living costs, housing, debt payments and healthcare (taxes and one-off purchases left out), the common 4% rule of thumb. A financial-independence milestone, if you set one, takes its place.',
+      formula: 'investments ≥ 25 × (living + housing + debt payments + healthcare)',
+      sources: [],
+    },
+    {
+      id: 'part-year',
+      title: 'Pay that ends at a birthday',
+      featureIds: ['SIM-01'],
+      summary:
+        'Pay that ends at an age (directly or through a retirement milestone set by age) runs up to that birthday, so the final year earns the share of the year before the birthday. The Social Security earnings record uses the same share.',
+      formula: 'final-year pay = yearly pay × (birth month − 1 + day ÷ 31) ÷ 12',
+      sources: [],
     },
     {
       id: 'backtest',

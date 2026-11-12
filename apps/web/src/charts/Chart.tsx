@@ -61,7 +61,7 @@ export function readColors(): ChartColors {
     primary: v('--primary'),
     accent: v('--accent-fill'),
     danger: v('--danger'),
-    series: [1, 2, 3, 4, 5, 6, 7].map((i) => v(`--chart-${i}`)),
+    series: [1, 2, 3, 4, 5, 6, 7, 8].map((i) => v(`--chart-${i}`)),
   };
 }
 
@@ -82,7 +82,8 @@ export function Chart({
   /** Builds the ECharts option from the current theme colours. */
   build: (c: ChartColors) => EChartsCoreOption;
   deps: unknown[];
-  height?: number;
+  /** Pixels, or a CSS length such as var(--chart-h) so the chart fills the screen. */
+  height?: number | string;
   label: string;
   table?: () => ChartTable;
   onClick?: (params: { dataIndex: number }) => void;
@@ -149,12 +150,21 @@ export function Chart({
       animation: !reduce,
       animationDuration: 350,
       animationDurationUpdate: 300,
-      textStyle: { color: c.ink2, fontFamily: getComputedStyle(document.body).fontFamily },
+      textStyle: { color: c.ink2, fontFamily: getComputedStyle(document.body).fontFamily, fontSize: 12 },
       aria: { enabled: true, label: { description: label } },
+    };
+    const legendStyle = {
+      textStyle: { color: c.ink2, fontSize: 12 },
+      icon: 'roundRect',
+      itemWidth: 10,
+      itemHeight: 10,
+      itemGap: 14,
     };
     // Keep the user's zoom window across rebuilds.
     const prev = chart.getOption() as { dataZoom?: { start?: number; end?: number }[] } | undefined;
-    const opt = { ...base, ...build(c) } as EChartsCoreOption & { dataZoom?: object[] };
+    const opt = { ...base, ...build(c) } as EChartsCoreOption & { dataZoom?: object[]; legend?: object };
+    // Charts that ask for a legend get the shared legend style (charts without one stay without).
+    if (opt.legend && !Array.isArray(opt.legend)) opt.legend = { ...legendStyle, ...opt.legend };
     if (prev?.dataZoom?.length && Array.isArray(opt.dataZoom)) {
       opt.dataZoom = opt.dataZoom.map((z, i) => ({
         ...z,
@@ -233,18 +243,109 @@ export function axis(c: ChartColors): {
   return {
     axisLine: { lineStyle: { color: c.line } },
     axisTick: { show: false },
-    axisLabel: { color: c.ink3, fontSize: 12 },
-    splitLine: { lineStyle: { color: c.line, type: 'dashed' } },
+    axisLabel: { color: c.ink3, fontSize: 11 },
+    splitLine: { lineStyle: { color: c.line, type: 'solid', width: 1 } },
   };
 }
 export function tooltip(c: ChartColors): object {
   return {
     backgroundColor: c.surface,
     borderColor: c.line,
-    textStyle: { color: c.ink, fontSize: 13 },
+    borderWidth: 1,
+    padding: [10, 12],
+    textStyle: { color: c.ink, fontSize: 12 },
     confine: true,
-    extraCssText: 'box-shadow:0 8px 28px rgba(0,0,0,.18);border-radius:8px;',
+    axisPointer: { type: 'line', lineStyle: { color: c.ink3, width: 1, type: 'solid' } },
+    extraCssText: 'box-shadow:0 10px 30px rgba(0,0,0,.16);border-radius:10px;',
   };
+}
+
+/** Hex colour with an alpha, for gradient stops. */
+export function alpha(hex: string, a: number): string {
+  const h = hex.replace('#', '');
+  const n = parseInt(h.length === 3 ? h.replace(/./g, (x) => x + x) : h, 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/** A vertical fade from the series colour (brand.md §4.2). Stacked layers stay denser so the stack reads. */
+export function fade(color: string, stacked = false): object {
+  return {
+    type: 'linear',
+    x: 0,
+    y: 0,
+    x2: 0,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color: alpha(color, stacked ? 0.9 : 0.38) },
+      { offset: 1, color: alpha(color, stacked ? 0.55 : 0.02) },
+    ],
+  };
+}
+
+/** One area series in the Longview style: 2px line, fading fill, focus on hover. */
+export function areaSeries(
+  name: string,
+  color: string,
+  data: number[],
+  opts: { stack?: string; smooth?: boolean } = {},
+): object {
+  return {
+    name,
+    type: 'line',
+    stack: opts.stack,
+    symbol: 'none',
+    smooth: opts.smooth ? 0.25 : false,
+    color,
+    lineStyle: { width: opts.stack ? 1 : 2, color },
+    areaStyle: { color: fade(color, !!opts.stack) },
+    emphasis: { focus: 'series' },
+    data,
+  };
+}
+
+const esc = (x: string): string =>
+  x.replace(/[&<>"]/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch] ?? ch);
+
+/**
+ * The tooltip card every chart shares: a header, a swatch row per value, an optional bold total and notes.
+ * Values are preformatted strings; nothing here is user HTML except escaped names.
+ */
+export function tooltipCard(
+  c: ChartColors,
+  t: {
+    title: string;
+    subtitle?: string;
+    rows: { name: string; color?: string; value: string }[];
+    total?: { name: string; value: string };
+    notes?: { text: string; tone?: 'danger' | 'muted' }[];
+  },
+): string {
+  const row = (r: { name: string; color?: string; value: string }): string =>
+    `<tr><td style="padding:2px 12px 2px 0;color:${c.ink2}">${r.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${r.color};margin-right:6px"></span>` : ''}${esc(r.name)}</td><td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${r.value}</td></tr>`;
+  return [
+    `<div style="font-weight:650;font-size:13px">${esc(t.title)}</div>`,
+    t.subtitle
+      ? `<div style="color:${c.ink3};font-size:11px;margin-bottom:6px">${esc(t.subtitle)}</div>`
+      : '<div style="height:6px"></div>',
+    `<table style="border-collapse:collapse;font-size:12px">${t.rows.map(row).join('')}`,
+    t.total
+      ? `<tr><td style="padding:6px 12px 0 0;border-top:1px solid ${c.line};font-weight:650">${esc(t.total.name)}</td><td style="padding-top:6px;border-top:1px solid ${c.line};text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${t.total.value}</td></tr>`
+      : '',
+    '</table>',
+    ...(t.notes ?? []).map(
+      (n) =>
+        `<div style="margin-top:6px;font-size:12px;color:${n.tone === 'danger' ? c.danger : c.ink3};font-weight:${n.tone === 'danger' ? 600 : 400}">${esc(n.text)}</div>`,
+    ),
+  ].join('');
+}
+
+/** Which hue a kind of holding gets, everywhere (colour follows the thing, brand.md §4.1). */
+export function kindColor(
+  c: ChartColors,
+  kind: 'cash' | 'taxable' | 'pretax' | 'roth' | 'hsa' | 'property' | 'debts',
+): string {
+  const slot = { cash: 0, taxable: 1, pretax: 2, roth: 3, hsa: 4, property: 6, debts: 7 }[kind];
+  return c.series[slot];
 }
 export const short = (v: number): string => {
   const a = Math.abs(v);
