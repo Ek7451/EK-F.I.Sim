@@ -7,7 +7,6 @@ import { ASSET_CLASSES } from './schema';
 import type { EngineData } from './data';
 import { applyColas, claimFactor, computePia, fraMonths, awiFor } from './social-security';
 // Circular by design: the M1 pre-pass runs one deterministic projection. Only used inside compilePlan at call time.
-import { fixedPath, runPath } from './projection';
 
 export const NC = ASSET_CLASSES.length;
 export const enum Kind {
@@ -192,6 +191,16 @@ function earningsNeedConditionYears(plan: Plan): boolean {
   return false;
 }
 
+/**
+ * Runs the deterministic projection of a compiled plan and returns the years its milestones fire. projection.ts
+ * registers it when it loads; until then (code that only compiles, such as the app's main thread summarising
+ * simulations) the Social Security earnings pre-pass for condition milestones is skipped.
+ */
+let conditionPrepass: ((c: Compiled) => Record<string, number>) | null = null;
+export function registerConditionPrepass(fn: (c: Compiled) => Record<string, number>): void {
+  conditionPrepass = fn;
+}
+
 export function compilePlan(
   plan: Plan,
   data: EngineData,
@@ -203,10 +212,9 @@ export function compilePlan(
 ): Compiled {
   // M1: when an earned income ends (or a milestone stops it) on a condition milestone, run the deterministic
   // projection once to find when it fires, then compile again with that year.
-  if (!opts.conditionYears && earningsNeedConditionYears(plan)) {
+  if (!opts.conditionYears && conditionPrepass && earningsNeedConditionYears(plan)) {
     const first = compilePlan(plan, data, { ...opts, conditionYears: {} });
-    const res = runPath(first, fixedPath(first));
-    return compilePlan(plan, data, { ...opts, conditionYears: res.milestoneYears });
+    return compilePlan(plan, data, { ...opts, conditionYears: conditionPrepass(first) });
   }
   const warnings: string[] = [];
   const startYear = plan.settings.startYear;

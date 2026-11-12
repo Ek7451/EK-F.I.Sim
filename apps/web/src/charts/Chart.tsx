@@ -76,6 +76,7 @@ export function Chart({
   height = 340,
   label,
   table,
+  footer,
   onClick,
   ...rest
 }: {
@@ -86,6 +87,8 @@ export function Chart({
   height?: number | string;
   label: string;
   table?: () => ChartTable;
+  /** A key or note shown on the same row as the table toggle, under the chart. */
+  footer?: ReactNode;
   onClick?: (params: { dataIndex: number }) => void;
 } & Record<`data-${string}`, string | undefined>): ReactNode {
   const el = useRef<HTMLDivElement>(null);
@@ -222,11 +225,19 @@ export function Chart({
           aria-label={label}
         />
       )}
-      {table ? (
-        <div style={{ marginTop: 8 }}>
-          <Button size="sm" variant="ghost" onClick={() => setShowTable((v) => !v)} aria-pressed={showTable}>
-            {showTable ? 'Show chart' : 'Show as table'}
-          </Button>
+      {table || footer ? (
+        <div className="chart-foot">
+          {table ? (
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setShowTable((v) => !v)}
+              aria-pressed={showTable}
+            >
+              {showTable ? 'Show chart' : 'Show as table'}
+            </Button>
+          ) : null}
+          {footer}
         </div>
       ) : null}
     </div>

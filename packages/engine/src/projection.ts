@@ -11,6 +11,7 @@ import {
   Kind,
   NC,
   partYearBefore,
+  registerConditionPrepass,
   resolvedCustomOrder,
   staticYear,
   withdrawalRank,
@@ -2851,3 +2852,6 @@ export function fixedPath(c: Compiled, years?: number): PathInputs {
 }
 
 export type { CAccount };
+
+// The Social Security earnings pre-pass in compilePlan runs this loop (M1); see registerConditionPrepass.
+registerConditionPrepass((c) => runPath(c, fixedPath(c)).milestoneYears);

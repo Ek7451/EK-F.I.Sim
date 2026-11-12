@@ -224,6 +224,13 @@ export function ProjectionPage(): ReactNode {
             deps={[result, m.real]}
             height="var(--chart-h)"
             onClick={(p) => setYear(recs[p.dataIndex]?.year ?? null)}
+            footer={
+              <p className="lv-muted lv-small funded-key">
+                <span className="funded-swatch" data-short="false" aria-hidden="true" /> Spending covered{' '}
+                <span className="funded-swatch" data-short="true" aria-hidden="true" /> Money runs short.{' '}
+                {covered.note}.
+              </p>
+            }
             table={() => ({
               columns: ['Year', ...series.map((x) => x[0]), 'Net worth', 'Spending covered'],
               rows: recs.map((r) => [
@@ -356,11 +363,6 @@ export function ProjectionPage(): ReactNode {
               ],
             })}
           />
-          <p className="lv-muted lv-small funded-key">
-            <span className="funded-swatch" data-short="false" aria-hidden="true" /> Spending covered{' '}
-            <span className="funded-swatch" data-short="true" aria-hidden="true" /> Money runs short.{' '}
-            {covered.note}.
-          </p>
         </Card>
         <Card title={`End of ${sel.year}`} data-tour="year-detail">
           <div className="ledger">
