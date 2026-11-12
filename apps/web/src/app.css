@@ -3,7 +3,7 @@
   --rail-w: 232px;
   --topbar-h: 48px;
   /* A chart sized to fill what is left of a 900px-tall window under the shell and a KPI strip. */
-  --chart-h: clamp(240px, calc(100dvh - 500px), 560px);
+  --chart-h: clamp(240px, calc(100dvh - 510px), 560px);
   --chart-h-home: clamp(240px, calc(100dvh - 400px), 520px);
 }
 .app {

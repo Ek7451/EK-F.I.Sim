@@ -168,7 +168,7 @@ export function ProjectionPage(): ReactNode {
       <PageHead
         group="explore"
         title="Projection"
-        intro={`One path using your expected returns, shown in ${m.unit}. It is a single estimate, not a forecast: see Chance of success for the range.`}
+        intro={`One path on your expected returns, in ${m.unit}: an estimate, not a forecast.`}
         actions={<ProjectedBadge result={result} />}
       />
       <RecomputeError error={error} />
