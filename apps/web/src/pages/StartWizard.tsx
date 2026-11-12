@@ -27,7 +27,6 @@ const D = (n: number): number => Math.round(n * 100);
 /** Defaults the wizard uses without asking. Every one of these is listed on the review screen. */
 const ASSUMED = {
   salaryGrowthReal: 0.01,
-  cashYield: 0.035,
   mix: { usStocks: 0.7, usBonds: 0.2, intlStocks: 0.1 },
   rothMix: { usStocks: 0.8, intlStocks: 0.2 },
   brokerageBasisShare: 0.7,
@@ -115,7 +114,7 @@ export function buildPlan(d: Draft, year: number): PlanInput {
       name: 'Savings',
       type: 'cash',
       balance: D(d.cash),
-      fixedYield: { rate: ASSUMED.cashYield, basis: 'nominal' },
+      // No fixed yield: cash earns the cash return under Assumptions and follows short-term rates in simulations.
     },
     {
       id: 'a-brokerage',
@@ -679,7 +678,7 @@ function Assumptions({ plan, d, year }: { plan: Plan; d: Draft; year: number }):
     ['Pay', `Rises ${pct(ASSUMED.salaryGrowthReal)} a year above inflation until each person retires.`],
     [
       'Savings',
-      `Cash earns ${pct(ASSUMED.cashYield, 1)} a year. ${ASSUMED.emergencyMonths} months of spending stays in cash; money left over each year goes to ${d.partner ? 'your Roth IRAs' : 'your Roth IRA'} (within the income limits), then the brokerage account.`,
+      `Cash earns the cash return under Assumptions (${pct(r.cash, 1)} a year) and follows short-term interest rates in simulations. ${ASSUMED.emergencyMonths} months of spending stays in cash; money left over each year goes to ${d.partner ? 'your Roth IRAs' : 'your Roth IRA'} (within the income limits), then the brokerage account.`,
     ],
     [
       'Tax history of what you have',

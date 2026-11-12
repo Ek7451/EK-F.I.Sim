@@ -7,7 +7,7 @@
  * history's volatility, cross-correlation and sequence) unless `bootstrapMeans` is 'historical'.
  */
 import type { MarketHistory, MortalityTable } from '@fisim/data';
-import { NC, type Compiled } from '../compile';
+import { expectedMeans, NC, type Compiled } from '../compile';
 import type { PathInputs } from '../projection';
 import { cholesky, Rng } from './rng';
 
@@ -112,8 +112,8 @@ export function prepare(c: Compiled): Prepared {
 
   const ra = c.data.returnAssumptions;
   const A = c.plan.assumptions;
-  const fixed = A.returns.fixed;
-  const means = [fixed.usStocks, fixed.usBonds, fixed.cash, fixed.intlStocks, fixed.reits];
+  const expected = expectedMeans(c);
+  const means = expected.classes;
   const order = CLASS_NAMES.map((nm) => (ra.classes as string[]).indexOf(nm));
   const sds = CLASS_NAMES.map((nm) => A.returns.stdDev?.[nm] ?? ra.stdDev[nm] ?? 0.15);
   const corr =
@@ -146,8 +146,8 @@ export function prepare(c: Compiled): Prepared {
     mu,
     sigma,
     chol: cholesky(corr),
-    inflLog: Math.log(1 + A.inflation.rate),
-    inflMean: A.inflation.rate,
+    inflLog: Math.log(1 + expected.inflation),
+    inflMean: expected.inflation,
     inflSd: ra.inflationStdDev,
     inflPhi,
     rhoIntl: corr[0][3],
@@ -169,16 +169,15 @@ export interface ReturnMeans {
 }
 
 export function returnMeansUsed(c: Compiled, settings: PathSettings): ReturnMeans {
-  const A = c.plan.assumptions;
-  const f = A.returns.fixed;
+  const e = expectedMeans(c);
   const fromPlan: ReturnMeans = {
     basis: 'assumptions',
-    usStocks: f.usStocks,
-    usBonds: f.usBonds,
-    cash: f.cash,
-    intlStocks: f.intlStocks,
-    reits: f.reits,
-    inflation: A.inflation.rate,
+    usStocks: e.classes[0],
+    usBonds: e.classes[1],
+    cash: e.classes[2],
+    intlStocks: e.classes[3],
+    reits: e.classes[4],
+    inflation: e.inflation,
   };
   if (settings.method !== 'bootstrap' || settings.bootstrapMeans !== 'historical') return fromPlan;
   const p = prepare(c);
@@ -250,7 +249,7 @@ export function generatePath(c: Compiled, settings: PathSettings, seed: number, 
     healthExcess: new Float64Array(years),
   };
   const A = c.plan.assumptions;
-  const fixedInfl = A.inflation.rate;
+  const fixedInfl = p.inflMean;
   // Real log medians for the classes with no long free history (and for the parametric model).
   const muReal = p.mu.map((m) => m - p.inflLog);
   if (settings.method === 'bootstrap') {

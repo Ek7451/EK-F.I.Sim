@@ -149,7 +149,26 @@ export function staticYear(
   return NaN;
 }
 
-const isEarned = (inc: Plan['incomes'][number]): boolean =>
+/**
+ * Share of the year that has passed when a date tied to someone's age arrives: the birthday month and day in the
+ * year they reach that age. Pay that ends at a retirement age is earned for this part of that year. Dates not tied
+ * to an age (a calendar year, a condition) fall at the start of the year, so the share is 0.
+ */
+export function partYearBefore(plan: Pick<Plan, 'people' | 'milestones'>, ref: YearRef | undefined): number {
+  let personId: string | undefined;
+  if (ref?.type === 'age') personId = ref.personId;
+  else if (ref?.type === 'milestone') {
+    const m = plan.milestones.find((x) => x.id === ref.milestoneId);
+    if (m?.when.type === 'age') personId = m.when.personId;
+  }
+  if (!personId) return 0;
+  const p = plan.people.find((x) => x.id === personId) ?? plan.people[0];
+  const month = +p.birthDate.slice(5, 7) || 1;
+  const day = +p.birthDate.slice(8, 10) || 1;
+  return Math.min(1, Math.max(0, (month - 1 + (day - 1) / 31) / 12));
+}
+
+export const isEarned = (inc: Plan['incomes'][number]): boolean =>
   inc.taxCharacter === 'earned' || inc.taxCharacter === 'selfEmployment';
 
 /** True when a Social Security earnings projection depends on a condition milestone (so it needs a pre-pass). */
@@ -240,6 +259,8 @@ export function compilePlan(
         const e = staticYear(plan, inc.end, birthYear + 67, earningsMsYear, msIndex);
         let from = Math.max(startYear, Number.isNaN(s) ? startYear : s);
         let to = Number.isNaN(e) ? birthYear + 67 : e;
+        // Pay ending at an age runs to that birthday, so part of the final year is earned too.
+        let lastPart = Number.isNaN(e) ? 0 : partYearBefore(plan, inc.end);
         // Milestone stop / start effects end or begin the income just as they do in the projection (M1).
         plan.milestones.forEach((m, mi) => {
           const my = earningsMsYear[mi];
@@ -247,14 +268,19 @@ export function compilePlan(
           for (const ef of m.effects) {
             if (ef.type !== 'stop' && ef.type !== 'start') continue;
             if (ef.target !== 'income' || ef.targetId !== inc.id) continue;
-            if (ef.type === 'stop') to = Math.min(to, my);
-            else if (ef.type === 'start') from = Math.max(startYear, Math.min(from, my));
+            if (ef.type === 'stop' && my <= to) {
+              lastPart = partYearBefore(plan, { type: 'milestone', milestoneId: m.id, offset: 0 });
+              to = my;
+            } else if (ef.type === 'start') from = Math.max(startYear, Math.min(from, my));
           }
         });
         const g = inc.growth.basis === 'real' ? (1 + infl) * (1 + inc.growth.rate) - 1 : inc.growth.rate;
         for (let y = from; y < to && y < birthYear + 70; y++) {
           earnings[y] = (earnings[y] ?? 0) + dollars(inc.amount) * Math.pow(1 + g, y - startYear);
         }
+        if (lastPart > 0 && to >= from && to < birthYear + 70)
+          earnings[to] =
+            (earnings[to] ?? 0) + lastPart * dollars(inc.amount) * Math.pow(1 + g, to - startYear);
         if (from === startYear) currentEarned += dollars(inc.amount);
       }
       if (p.socialSecurity.earnings.length === 0 && currentEarned > 0) {
@@ -429,4 +455,61 @@ export function compilePlan(
 /** Default coverage when the user has not entered a timeline: employer while working, marketplace after, Medicare at 65. */
 export function defaultCoverage(hasEarnedIncome: boolean): Coverage['type'] {
   return hasEarnedIncome ? 'employer' : 'aca';
+}
+
+/**
+ * The expected (geometric, nominal) annual return per asset class and the expected inflation the plan uses,
+ * in class order [usStocks, usBonds, cash, intlStocks, reits]. Under "long-run historical averages" the US
+ * classes and inflation are the compound averages of the bundled market history. The deterministic
+ * projection and Monte Carlo both read this, so they centre on the same outlook.
+ */
+export function expectedMeans(c: Pick<Compiled, 'plan' | 'data'>): { classes: number[]; inflation: number } {
+  const A = c.plan.assumptions;
+  const r = A.returns.fixed;
+  if (A.returns.mode !== 'historicalAverage')
+    return { classes: [r.usStocks, r.usBonds, r.cash, r.intlStocks, r.reits], inflation: A.inflation.rate };
+  const m = c.data.market;
+  const geo = (xs: number[]): number => Math.exp(xs.reduce((a, x) => a + Math.log(1 + x), 0) / xs.length) - 1;
+  return {
+    classes: [geo(m.usStocks), geo(m.usBonds), geo(m.cash), r.intlStocks, r.reits],
+    inflation: geo(m.inflation),
+  };
+}
+
+/** Default withdrawal rank by account kind: cash, taxable, tax-deferred, pre-tax, Roth, HSA, then the rest. */
+export function withdrawalRank(kind: Kind, bracketTargeted = false): number {
+  switch (kind) {
+    case Kind.Cash:
+      return 0;
+    case Kind.Taxable:
+      return 1;
+    case Kind.Deferred:
+      return 2;
+    case Kind.Pretax:
+      return bracketTargeted ? -1 : 3;
+    case Kind.Roth:
+      return 4;
+    case Kind.Hsa:
+      return 5;
+    default:
+      return 6;
+  }
+}
+
+/**
+ * The account order a custom withdrawal order resolves to: the accounts the user placed, in their order (removed
+ * accounts dropped), then any accounts added since, in the default order. The engine and the Strategy screen both
+ * use this, so what is shown is what runs.
+ */
+export function resolvedCustomOrder(plan: Pick<Plan, 'accounts' | 'strategies'>): string[] {
+  const ids = new Set(plan.accounts.map((a) => a.id));
+  const placed = plan.strategies.withdrawalOrder.customOrder.filter(
+    (id, i, xs) => ids.has(id) && xs.indexOf(id) === i,
+  );
+  const rest = plan.accounts
+    .map((a, i) => ({ id: a.id, i, r: withdrawalRank(KIND_OF[a.type]) }))
+    .filter((x) => !placed.includes(x.id))
+    .sort((x, z) => x.r - z.r || x.i - z.i)
+    .map((x) => x.id);
+  return [...placed, ...rest];
 }

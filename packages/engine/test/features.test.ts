@@ -31,8 +31,14 @@ describe('milestones and triggers (PLAN-08)', () => {
     expect(retire).toBe(1992 + 60);
     const before = r.records.find((x) => x.year === retire - 1)!;
     const after = r.records.find((x) => x.year === retire)!;
+    const later = r.records.find((x) => x.year === retire + 1)!;
     expect(before.income.wages).toBeGreaterThan(0);
-    expect(after.income.wages).toBe(0);
+    // Born 12 April: pay runs to the 60th birthday, 3.35 months of the retirement year (one year of raises on top).
+    const part = (3 + 11 / 31) / 12;
+    const growth = after.income.wages / (before.income.wages * part);
+    expect(growth).toBeGreaterThan(1);
+    expect(growth).toBeLessThan(1.06);
+    expect(later.income.wages).toBe(0);
     expect(before.coverage[0]).toBe('employer');
     expect(after.coverage[0]).toBe('aca');
     expect(after.milestones).toContain('Retire');

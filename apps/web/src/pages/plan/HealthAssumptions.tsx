@@ -11,6 +11,8 @@ const COVERAGE: { value: Coverage['type']; label: string }[] = [
   { value: 'employer', label: 'My employer plan' }, { value: 'spouseEmployer', label: "Partner's employer plan" }, { value: 'cobra', label: 'COBRA' },
   { value: 'aca', label: 'Marketplace (ACA) plan' }, { value: 'medicaid', label: 'Medicaid' }, { value: 'medicare', label: 'Medicare' }, { value: 'none', label: 'No coverage' },
 ];
+/** Classes the bundled market history covers: history supplies their averages or their ups and downs. */
+const HISTORY_SETS = new Set<string>(['usStocks', 'usBonds', 'cash']);
 const COVER_LABEL: Record<string, string> = { employer: 'Employer', spouseEmployer: "Partner's plan", cobra: 'COBRA', aca: 'Marketplace', medicaid: 'Medicaid', medicare: 'Medicare', none: 'None' };
 
 export function HealthcarePage(): ReactNode {
@@ -87,6 +89,7 @@ export function HealthcarePage(): ReactNode {
                       <Switch label="Uses tobacco (raises marketplace premiums in most states)" checked={h.tobacco} onChange={(v) => update((d) => { d.healthcare.people[i].tobacco = v; })} />
                       <Switch label="Part A is premium-free (40 quarters of work)" checked={h.medicare.partAPremiumFree} onChange={(v) => update((d) => { d.healthcare.people[i].medicare.partAPremiumFree = v; })} />
                       <Switch label="Include dental, vision and hearing costs on Medicare" checked={h.medicare.dentalVisionHearing} onChange={(v) => update((d) => { d.healthcare.people[i].medicare.dentalVisionHearing = v; })} />
+                      <Switch label="Appeal higher Medicare premiums after retiring" checked={h.medicare.irmaaAppeal} onChange={(v) => update((d) => { d.healthcare.people[i].medicare.irmaaAppeal = v; })} />
                       {h.ltc.mode !== 'none' ? <Switch label="Has long-term care insurance" checked={!!h.ltc.insurance} onChange={(v) => update((d) => { d.healthcare.people[i].ltc.insurance = v ? { premiumAnnual: 300000, annualBenefit: 6000000, benefitYears: 3 } : undefined; })} /> : null}
                       {h.ltc.insurance ? (
                         <div className="form-grid">
@@ -132,23 +135,23 @@ export function AssumptionsPage(): ReactNode {
       <Card title="Returns and inflation" data-tour="returns">
         <div className="form-grid">
           <SelectField label="Expected returns" value={A.returns.mode} options={[{ value: 'fixed', label: 'The figures I set below' }, { value: 'historicalAverage', label: 'Long-run historical averages' }]} onChange={(v) => update((d) => { d.assumptions.returns.mode = v; })} data-tour="return-mode" />
-          {ASSET_CLASSES.map((k) => <PercentField key={k} label={`${CLASS_LABELS[k]} return`} hint="Per year, before inflation is taken out." value={A.returns.fixed[k]} onChange={(v) => update((d) => { d.assumptions.returns.fixed[k] = v; })} />)}
-          <PercentField label="Inflation" value={A.inflation.rate} onChange={(v) => update((d) => { d.assumptions.inflation.rate = v; })} data-tour="inflation" />
+          {ASSET_CLASSES.map((k) => <PercentField key={k} label={`${CLASS_LABELS[k]} return`} hint={A.returns.mode === 'historicalAverage' && HISTORY_SETS.has(k) ? 'Not used: history sets this while returns follow long-run averages.' : 'Per year, before inflation is taken out.'} value={A.returns.fixed[k]} onChange={(v) => update((d) => { d.assumptions.returns.fixed[k] = v; })} />)}
+          <PercentField label="Inflation" hint={A.returns.mode === 'historicalAverage' ? 'Not used: history sets this while returns follow long-run averages.' : undefined} value={A.inflation.rate} onChange={(v) => update((d) => { d.assumptions.inflation.rate = v; })} data-tour="inflation" />
           <PercentField label="Healthcare inflation above general inflation" value={A.healthcareInflation.excessOverCpi} onChange={(v) => update((d) => { d.assumptions.healthcareInflation.excessOverCpi = v; })} />
           <PercentField label="Education inflation above general inflation" value={A.inflation.educationExcess} onChange={(v) => update((d) => { d.assumptions.inflation.educationExcess = v; })} />
           <PercentField label="Dividend yield on stocks" value={A.dividendYield} onChange={(v) => update((d) => { d.assumptions.dividendYield = Math.max(0, v); })} />
           <PercentField label="Bond interest yield" value={A.bondYield} onChange={(v) => update((d) => { d.assumptions.bondYield = Math.max(0, v); })} />
         </div>
-        <h3 style={{ marginTop: 20 }}>Volatility for the parametric model (optional)</h3>
+        <h3 style={{ marginTop: 20 }}>Volatility for simulations (optional)</h3>
         <p className="lv-muted lv-small">Leave blank to use the values measured from market history.</p>
         <div className="form-grid" style={{ marginTop: 8 }} data-tour="volatility">
-          {ASSET_CLASSES.map((k) => <PercentField key={k} label={`${CLASS_LABELS[k]} volatility`} value={A.returns.stdDev?.[k] ?? 0} hint="0 = use history" onChange={(v) => update((d) => { const s = { ...(d.assumptions.returns.stdDev ?? {}) }; if (v > 0) s[k] = v; else delete s[k]; d.assumptions.returns.stdDev = Object.keys(s).length ? s : undefined; })} />)}
+          {ASSET_CLASSES.map((k) => <PercentField key={k} label={`${CLASS_LABELS[k]} volatility`} value={A.returns.stdDev?.[k] ?? 0} hint={mc.method === 'bootstrap' && HISTORY_SETS.has(k) ? 'Not used: replayed history brings its own ups and downs.' : '0 = use history'} onChange={(v) => update((d) => { const s = { ...(d.assumptions.returns.stdDev ?? {}) }; if (v > 0) s[k] = v; else delete s[k]; d.assumptions.returns.stdDev = Object.keys(s).length ? s : undefined; })} />)}
         </div>
       </Card>
       <Card title="Simulations" data-tour="mc-settings">
         <div className="form-grid">
           <SelectField label="Method" value={mc.method} options={[{ value: 'bootstrap', label: 'Replay blocks of real history' }, { value: 'parametric', label: 'Random draws around my assumptions' }]} onChange={(v) => update((d) => { d.assumptions.monteCarlo.method = v; })} data-tour="mc-method" />
-          <NumberField label="Number of runs" value={mc.runs} min={100} max={10000} onChange={(v) => update((d) => { d.assumptions.monteCarlo.runs = Math.max(10, v); })} data-tour="mc-runs" />
+          <NumberField label="Number of runs" value={mc.runs} min={100} max={10000} onChange={(v) => update((d) => { d.assumptions.monteCarlo.runs = Math.max(100, Math.min(10000, v)); })} data-tour="mc-runs" />
           <NumberField label="Seed" hint="The same seed always gives the same result." value={mc.seed} onChange={(v) => update((d) => { d.assumptions.monteCarlo.seed = v; })} data-tour="mc-seed" />
           {mc.method === 'bootstrap' ? <SelectField label="Average returns in replayed history" value={mc.bootstrapMeans} options={[{ value: 'assumptions', label: 'Shifted to my expected returns' }, { value: 'historical', label: 'As they happened' }]} onChange={(v) => update((d) => { d.assumptions.monteCarlo.bootstrapMeans = v; })} data-tour="mc-bootstrap-means" /> : null}
           {mc.method === 'bootstrap' ? <NumberField label="Block length (years)" value={mc.blockLength} min={1} max={30} onChange={(v) => update((d) => { d.assumptions.monteCarlo.blockLength = v; })} /> : null}

@@ -122,8 +122,9 @@ export function ProjectionPage(): ReactNode {
   const recs = result.records;
   const sel = recs.find((r) => r.year === year) ?? recs[0];
   const s = result.summary;
-  const nw = explainNetWorth(sel);
-  const cf = explainCashFlow(sel);
+  const unit = m.real ? 'real' : 'nominal';
+  const nw = explainNetWorth(sel, unit);
+  const cf = explainCashFlow(sel, unit);
   // What you own stacks up from zero, what you owe stacks down from it, and the net-worth line is the
   // difference, so the picture adds up to the figure in the table.
   const series: [string, (r: YearRecord) => number][] = [
@@ -160,7 +161,11 @@ export function ProjectionPage(): ReactNode {
       ) : null}
       <Card data-tour="projection-stats">
         <div className="lv-grid">
-          <Stat label="Net worth today" value={formatCompact(s.currentNetWorth)} />
+          <Stat
+            label="Net worth today"
+            value={formatCompact(s.currentNetWorth)}
+            note={`At the start of ${s.startYear}; the chart shows each year's end`}
+          />
           <Stat
             label="Left at the end of the plan"
             value={formatCompact(s.endingNetWorthReal)}
@@ -169,7 +174,7 @@ export function ProjectionPage(): ReactNode {
           <Stat
             label="Financially independent"
             value={s.fiYear ?? 'Not reached'}
-            note="Investments reach 25× yearly spending"
+            note="Investments reach 25× a year's spending, with housing and healthcare"
             data-tour="fi-year"
           />
           <Stat
@@ -233,7 +238,7 @@ export function ProjectionPage(): ReactNode {
                 const shortLine = isShort(r)
                   ? `<div style="color:${c.danger};margin-top:6px;font-weight:600">Spending short by ${formatMoney(m.flow(r, r.shortfall))}</div>`
                   : `<div style="margin-top:6px;color:${c.ink2}">Spending covered</div>`;
-                return `<div style="font-weight:600;margin-bottom:4px">${r.year} · ${agesText(r)}</div><table>${rows}<tr><td style="font-weight:600;padding-top:4px">Net worth</td><td style="text-align:right;font-weight:600;padding:4px 0 0 16px">${formatMoney(m.bal(r, r.netWorth))}</td></tr></table>${shortLine}`;
+                return `<div style="font-weight:600;margin-bottom:4px">End of ${r.year} · ${agesText(r)}</div><table>${rows}<tr><td style="font-weight:600;padding-top:4px">Net worth</td><td style="text-align:right;font-weight:600;padding:4px 0 0 16px">${formatMoney(m.bal(r, r.netWorth))}</td></tr></table>${shortLine}`;
               },
             },
             xAxis: [
@@ -335,7 +340,7 @@ export function ProjectionPage(): ReactNode {
                 title={`net worth in ${sel.year}`}
                 lines={nw.lines}
                 total={nw.result}
-                source="Future dollars for that year"
+                source={m.real ? "Today's dollars, at the end of the year" : `Dollars of ${sel.year}`}
               />
             </div>
             <div className="lv-row" style={{ flexWrap: 'nowrap' }}>
@@ -344,7 +349,7 @@ export function ProjectionPage(): ReactNode {
                 title={`cash flow in ${sel.year}`}
                 lines={cf.lines}
                 total={cf.result}
-                source="Money in less money out; what is left is saved"
+                source={`Money in less money out; what is left is saved. In ${m.real ? "today's dollars" : `dollars of ${sel.year}`}.`}
               />
             </div>
             <Stat
@@ -377,20 +382,29 @@ export function ProjectionPage(): ReactNode {
             Drag to see the projection move. These change the plan; Undo puts them back.
           </p>
           <div className="lv-stack">
-            <Slider
-              label="Stock return"
-              value={plan.assumptions.returns.fixed.usStocks}
-              min={0.02}
-              max={0.12}
-              step={0.0025}
-              format={(v) => formatPct(v, 2)}
-              onChange={(v) =>
-                update((d) => {
-                  d.assumptions.returns.fixed.usStocks = v;
-                  d.assumptions.returns.fixed.intlStocks = v;
-                })
-              }
-            />
+            {plan.assumptions.returns.mode === 'fixed' ? (
+              <Slider
+                label="US stock return"
+                value={plan.assumptions.returns.fixed.usStocks}
+                min={0.02}
+                max={0.12}
+                step={0.0025}
+                format={(v) => formatPct(v, 2)}
+                onChange={(v) =>
+                  update((d) => {
+                    // International stocks move by the same amount, keeping the gap you set between them.
+                    const f = d.assumptions.returns.fixed;
+                    f.intlStocks = Math.max(0, Math.min(0.2, f.intlStocks + (v - f.usStocks)));
+                    f.usStocks = v;
+                  })
+                }
+              />
+            ) : (
+              <p className="lv-muted lv-small" data-tour="what-if-returns-off">
+                Stock returns follow long-run history under Assumptions, so there is no return slider here.
+                Choose &ldquo;The figures I set&rdquo; there to try other returns.
+              </p>
+            )}
             <Slider
               label="Inflation"
               value={plan.assumptions.inflation.rate}
@@ -474,7 +488,7 @@ export function CashFlowPage(): ReactNode {
       ['Other savings', r.contributions.afterTax],
     ] as [string, number][]
   ).filter((x) => x[1] > 0.5);
-  const cf = explainCashFlow(r);
+  const cf = explainCashFlow(r, m.real ? 'real' : 'nominal');
   return (
     <>
       <PageHead
@@ -610,7 +624,7 @@ export function TaxesPage(): ReactNode {
     );
   const recs = result.records;
   const r = recs.find((x) => x.year === year) ?? recs[0];
-  const ex = explainTax(r);
+  const ex = explainTax(r, m.real ? 'real' : 'nominal');
   const parts: [string, (x: YearRecord) => number][] = [
     ['Federal income tax', (x) => Math.max(0, x.taxes.federalIncome)],
     ['Payroll tax', (x) => x.taxes.fica + x.taxes.selfEmployment],
@@ -739,7 +753,7 @@ export function TaxesPage(): ReactNode {
               title={`tax in ${r.year}`}
               lines={ex.lines}
               total={ex.result}
-              source={`Tables: ${r.dataStatus}`}
+              source={`Tables: ${r.dataStatus}. In ${m.unit}.`}
             />
           }
           data-tour="tax-breakdown"
@@ -1223,9 +1237,9 @@ export function EstatePage(): ReactNode {
   const cpi = last.cpiEnd;
   const real = (x: number): number => x / cpi;
   const lines = [
-    { label: 'Estate at the end of the plan', amount: e.value },
-    { label: 'Federal estate tax', amount: -e.estateTax },
-    { label: 'Income tax heirs owe on pre-tax accounts', amount: -e.heirPretaxDrag },
+    { label: 'Estate at the end of the plan', amount: real(e.value) },
+    { label: 'Federal estate tax', amount: -real(e.estateTax) },
+    { label: 'Income tax heirs owe on pre-tax accounts', amount: -real(e.heirPretaxDrag) },
   ];
   return (
     <>
@@ -1249,8 +1263,8 @@ export function EstatePage(): ReactNode {
             <Explain
               title="what heirs receive"
               lines={lines}
-              total={e.netToHeirs}
-              source={`Future dollars in ${last.year}`}
+              total={real(e.netToHeirs)}
+              source={`Today's dollars, valued at the end of ${last.year}`}
             />
           </div>
           <Stat

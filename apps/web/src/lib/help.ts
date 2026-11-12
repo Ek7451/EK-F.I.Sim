@@ -183,7 +183,7 @@ export const HELP: Record<string, string> = {
     'What makes this cost go up over time. Most costs follow general inflation; a fixed payment such as a mortgage stays flat.',
   'Yearly increase': 'Your own yearly increase for this cost.',
   'Essential (cannot be cut in a bad year)':
-    'Marks a cost you cannot trim, such as housing or food. For now this is a label only: flexible spending rules (guardrails) scale all spending alike.',
+    'A cost you cannot trim, such as housing or food. When a flexible spending rule (guardrails, a share of the portfolio, a floor and ceiling) calls for a cut, it comes out of the other expenses and never this one. Raises apply to everything.',
   'Follows the spending phases':
     'When on, this cost goes up or down with the spending phases below (for example less travel after 80).',
   'Spending after one partner dies':
@@ -323,6 +323,8 @@ export const HELP: Record<string, string> = {
     'Shifted to my expected returns: history keeps its ups, downs and sequences, but each investment is moved so its long-run compound return matches the figure you set. The simulations and the single projection then use the same outlook.\n\nAs they happened: replays US history since 1871 with its own averages (about 7% a year above inflation for stocks), which is more generous than most forecasts today.',
   'Yearly improvement in death rates':
     "Life tables describe death rates today. People keep living longer, so rates in future years are likely lower. 0% uses the table as published; about 0.8% a year is close to the Social Security Trustees' middle assumption.",
+  'Appeal higher Medicare premiums after retiring':
+    "Medicare premiums rise with income from two years earlier (IRMAA). After work stops or is cut back you can ask Social Security to use this year's lower income instead (form SSA-44). When on, Longview applies this whenever household pay drops by 10% or more against the lookback year.",
   'Number of runs':
     'How many simulated futures to run. More runs give a steadier answer but take longer. 1,000 is usually enough.',
   Seed: 'The starting point for the random numbers. The same seed always gives the same answer, so a change in the result comes from a change in your plan.',

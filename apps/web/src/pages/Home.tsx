@@ -48,7 +48,7 @@ export function HomePage(): ReactNode {
           <Stat
             label="Financially independent"
             value={s ? (s.fiYear ?? 'Not reached') : '…'}
-            note="Investments reach 25× yearly spending"
+            note="Investments reach 25× a year's spending, with housing and healthcare"
           />
           <Stat label="Saving this year" value={s ? formatPct(s.savingsRate) : '…'} note="Share of income" />
           <Stat

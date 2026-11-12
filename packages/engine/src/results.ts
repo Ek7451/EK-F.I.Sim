@@ -10,7 +10,7 @@ export interface ProjectionSummary {
   endYear: number;
   success: boolean;
   failedYear: number | null;
-  /** Year investable assets first reach 25x living expenses (or the plan's FI milestone). */
+  /** Year investable assets first reach 25x that year's spending, see fiSpending (or the plan's FI milestone). */
   fiYear: number | null;
   retirementYear: number | null;
   endingNetWorthReal: number;
@@ -34,6 +34,14 @@ export interface ProjectionResult {
   solver: PathResult['solver'];
 }
 
+/**
+ * The spending the 25x (4% rule) independence test covers: living costs, housing, debt payments and healthcare.
+ * Taxes and one-off purchases are left out.
+ */
+export function fiSpending(r: YearRecord): number {
+  return r.expenses.living + r.expenses.housing + r.expenses.debtService + r.expenses.healthcare.total;
+}
+
 export function project(plan: Plan, data: EngineData, scenarioId: string | null = null): ProjectionResult {
   const p = applyScenario(plan, scenarioId);
   const c = compilePlan(p, data);
@@ -53,7 +61,8 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
     const real = toReal(r.netWorth, r);
     if (real > peak) peak = real;
     spend += toReal(r.expenses.total, r, 'flow');
-    if (fiYear === null && r.expenses.living > 0 && r.investable >= 25 * r.expenses.living) fiYear = r.year;
+    const fiSpend = fiSpending(r);
+    if (fiYear === null && fiSpend > 0 && r.investable >= 25 * fiSpend) fiYear = r.year;
     taxSum += r.taxes.total;
     grossSum += r.income.total + r.withdrawals.pretax + r.rothConversion;
   }
@@ -94,15 +103,28 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
   };
 }
 
-/** One line of an explanation: a label and a signed amount in nominal dollars. */
+/** One line of an explanation: a label and a signed amount, in the unit the explanation was asked for. */
 export interface ExplainLine {
   label: string;
   amount: number;
 }
 
+/**
+ * Which dollars an explanation is in. Nominal is the money of that year; real is today's dollars, using the
+ * same convention as the rest of the app (flows by that year's price level, year-end balances by the
+ * year-end price level), so the lines add up to the figure shown beside them.
+ */
+export type ExplainUnit = 'nominal' | 'real';
+
+const scaleLines = (lines: ExplainLine[], k: number): ExplainLine[] =>
+  lines.map((l) => ({ label: l.label, amount: l.amount / k }));
+
 /** Break a year's cash flow into the pieces behind it (UX-04 tooltips, RPT-06). */
-export function explainCashFlow(r: YearRecord): { result: number; lines: ExplainLine[] } {
-  const lines: ExplainLine[] = [];
+export function explainCashFlow(
+  r: YearRecord,
+  unit: ExplainUnit = 'nominal',
+): { result: number; lines: ExplainLine[] } {
+  let lines: ExplainLine[] = [];
   const add = (label: string, amount: number): void => {
     if (Math.abs(amount) >= 0.5) lines.push({ label, amount });
   };
@@ -123,24 +145,43 @@ export function explainCashFlow(r: YearRecord): { result: number; lines: Explain
   add('Living expenses', -r.expenses.living);
   add('Housing and debt payments', -(r.expenses.housing + r.expenses.debtService + r.expenses.purchases));
   add('Healthcare', -r.expenses.healthcare.total);
+  if (unit === 'real') lines = scaleLines(lines, r.cpi);
   const result = lines.reduce((s, l) => s + l.amount, 0);
   return { result, lines };
 }
 
-export function explainNetWorth(r: YearRecord): { result: number; lines: ExplainLine[] } {
-  const lines: ExplainLine[] = [
-    { label: 'Investments at start of year', amount: r.check.opening },
-    { label: 'Added', amount: r.check.deposits },
-    { label: 'Withdrawn', amount: -r.check.withdrawals },
-    { label: 'Investment returns', amount: r.returns },
-    { label: 'Fees', amount: -r.fees },
-    { label: 'Property and other assets', amount: r.assets },
-    { label: 'Debts', amount: -r.debts },
-  ].filter((l) => Math.abs(l.amount) >= 0.5);
-  return { result: r.netWorth, lines };
+/**
+ * Year-end net worth from the start-of-year investments. In today's dollars the opening balance is valued at
+ * the start-of-year price level and everything else at the year-end level, so a line for the year's inflation
+ * keeps the sum equal to year-end net worth in today's dollars.
+ */
+export function explainNetWorth(
+  r: YearRecord,
+  unit: ExplainUnit = 'nominal',
+): { result: number; lines: ExplainLine[] } {
+  const k = unit === 'real' ? r.cpiEnd : 1;
+  const raw: ExplainLine[] = [
+    {
+      label: 'Investments at start of year',
+      amount: unit === 'real' ? r.check.opening / r.cpi : r.check.opening,
+    },
+    ...(unit === 'real'
+      ? [{ label: 'Inflation during the year', amount: r.check.opening / r.cpiEnd - r.check.opening / r.cpi }]
+      : []),
+    { label: 'Added', amount: r.check.deposits / k },
+    { label: 'Withdrawn', amount: -r.check.withdrawals / k },
+    { label: 'Investment returns', amount: r.returns / k },
+    { label: 'Fees', amount: -r.fees / k },
+    { label: 'Property and other assets', amount: r.assets / k },
+    { label: 'Debts', amount: -r.debts / k },
+  ];
+  return { result: r.netWorth / k, lines: raw.filter((l) => Math.abs(l.amount) >= 0.5) };
 }
 
-export function explainTax(r: YearRecord): { result: number; lines: ExplainLine[] } {
+export function explainTax(
+  r: YearRecord,
+  unit: ExplainUnit = 'nominal',
+): { result: number; lines: ExplainLine[] } {
   const t = r.taxes;
   const lines: ExplainLine[] = [
     { label: 'Tax at ordinary rates', amount: t.ordinaryTax },
@@ -153,7 +194,9 @@ export function explainTax(r: YearRecord): { result: number; lines: ExplainLine[
     { label: 'Early-withdrawal penalties', amount: t.penalties },
     { label: 'Premium tax credit', amount: -t.ptc },
   ].filter((l) => Math.abs(l.amount) >= 0.5);
-  return { result: t.total, lines };
+  return unit === 'real'
+    ? { result: t.total / r.cpi, lines: scaleLines(lines, r.cpi) }
+    : { result: t.total, lines };
 }
 
 // ------------------------------------------------------------------ methodology (RPT-06)

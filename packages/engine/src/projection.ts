@@ -5,7 +5,18 @@
  * priced at the start-of-year price level, so a $50,000 expense in today's dollars reads back as $50,000).
  */
 import type { FederalTaxParams, FilingStatus, StateTaxParams } from '@fisim/data';
-import { Kind, NC, staticYear, type CAccount, type Compiled } from './compile';
+import {
+  expectedMeans,
+  isEarned,
+  Kind,
+  NC,
+  partYearBefore,
+  resolvedCustomOrder,
+  staticYear,
+  withdrawalRank,
+  type CAccount,
+  type Compiled,
+} from './compile';
 import { pickYear, projectFederal } from './data';
 import {
   acaExpectedOop,
@@ -320,6 +331,10 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
   const incForce = new Int8Array(nI); // 1 = force on, -1 = force off
   const incStarted = new Uint8Array(nI); // pensions: COLA compounds only once payments have begun (M4)
   const incAmt = new Float64Array(nI);
+  // Pay that ends at an age is earned up to that birthday: the share of the final year (0 = ends on 1 January).
+  const incEndPart = plan.incomes.map((inc) => (isEarned(inc) ? partYearBefore(plan, inc.end) : 0));
+  const incStopYear = new Float64Array(nI).fill(NaN);
+  const incStopPart = new Float64Array(nI);
   for (let i = 0; i < nI; i++) incBase[i] = plan.incomes[i].amount / 100;
   const nE = plan.expenses.length;
   const expBase = new Float64Array(nE);
@@ -364,6 +379,9 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
 
   let lossCarry = 0;
   const magiHist = new Float64Array(n);
+  const customOrderIds = resolvedCustomOrder(plan);
+  // Household wages each year, for the IRMAA life-changing-event appeal (work stopped or reduced).
+  const wageHist = new Float64Array(n);
   const statusHist: FilingStatus[] = [];
   let state = plan.people[0].residence.length ? plan.people[0].residence[0].state : 'TX';
   let county: string | undefined = plan.people[0].residence[0]?.countyFips;
@@ -520,7 +538,14 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             const v = e.type === 'start' ? 1 : -1;
             if (e.target === 'income') {
               const i = c.incomeIndex.get(e.targetId);
-              if (i !== undefined) incForce[i] = v;
+              if (i !== undefined) {
+                // A stop at an age-based milestone still pays up to the birthday that year.
+                if (v === -1 && incForce[i] !== -1 && isEarned(plan.incomes[i]) && ms.when.type === 'age') {
+                  incStopYear[i] = y;
+                  incStopPart[i] = partYearBefore(plan, { type: 'milestone', milestoneId: ms.id, offset: 0 });
+                }
+                incForce[i] = v;
+              }
             } else if (e.target === 'expense') {
               const i = c.expenseIndex.get(e.targetId);
               if (i !== undefined) expForce[i] = v;
@@ -755,11 +780,27 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       const inc = plan.incomes[i];
       const o = c.people.findIndex((p) => p.id === inc.ownerId);
       const oi = o < 0 ? primary : o;
-      let active = y >= resolve(inc.start, startYear) && y < resolve(inc.end, Infinity);
-      if (incForce[i] === 1 && y < resolve(inc.end, Infinity)) active = true;
-      if (incForce[i] === -1) active = false;
+      const endY = resolve(inc.end, Infinity);
+      let active = y >= resolve(inc.start, startYear) && y < endY;
+      if (incForce[i] === 1 && y < endY) active = true;
+      // Final, part year of pay that ends at a birthday.
+      let part = 1;
+      if (
+        !active &&
+        y === endY &&
+        incEndPart[i] > 0 &&
+        incForce[i] !== -1 &&
+        y >= resolve(inc.start, startYear)
+      ) {
+        active = true;
+        part = incEndPart[i];
+      }
+      if (incForce[i] === -1) {
+        active = incStopYear[i] === y && incStopPart[i] > 0 && (active || y === endY);
+        if (active) part = Math.min(part, incStopPart[i]);
+      }
       if (active) incStarted[i] = 1;
-      let amt = active ? incBase[i] * incIdx[i] : 0;
+      let amt = active ? incBase[i] * incIdx[i] * part : 0;
       if (active && !alive[oi]) {
         // Pensions pay the survivor percentage; everything else stops with its owner.
         amt = inc.kind === 'pension' && inc.pension && nAlive > 0 ? amt * inc.pension.survivorPct : 0;
@@ -1294,15 +1335,39 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       }
     } else if (rule.type !== 'fixed' && y >= ruleStart && openInvestable <= 0)
       spendMult = rule.type === 'percentOfPortfolio' ? 0 : rule.floor;
+    // A cut never touches essential expenses: the flexible ones absorb it, down to nothing. Raises apply to all.
+    let essentialRecurring = 0;
+    let flexibleRecurring = 0;
+    for (let i = 0; i < nE; i++) {
+      const e = plan.expenses[i];
+      if (e.recurrence.type === 'once') continue;
+      if (e.essential) essentialRecurring += expAmt[i];
+      else flexibleRecurring += expAmt[i];
+    }
+    const flexMult =
+      spendMult >= 1
+        ? spendMult
+        : flexibleRecurring > 0
+          ? Math.max(
+              0,
+              ((essentialRecurring + flexibleRecurring) * spendMult - essentialRecurring) / flexibleRecurring,
+            )
+          : 1;
+    const essentialMult = spendMult >= 1 ? spendMult : 1;
     for (let i = 0; i < nE; i++) {
       if (expAmt[i] === 0) continue;
       const e = plan.expenses[i];
-      const v = expAmt[i] * (e.recurrence.type === 'once' ? 1 : spendMult);
+      const v = expAmt[i] * (e.recurrence.type === 'once' ? 1 : e.essential ? essentialMult : flexMult);
       living += v;
       byCategory[e.category] = (byCategory[e.category] ?? 0) + v;
       if (e.category === 'education') eduExpense += v;
     }
     lastLivingSpend = living;
+    const recurringPlanned = essentialRecurring + flexibleRecurring;
+    const effectiveSpendMult =
+      recurringPlanned > 0
+        ? (essentialRecurring * essentialMult + flexibleRecurring * flexMult) / recurringPlanned
+        : spendMult;
 
     // ---- debts and property costs
     let debtService = 0;
@@ -1363,6 +1428,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let acaMembers = 0;
     let irmaaTierIdx = 0;
     let irmaaDeferred = 0;
+    /** Enrollees appealing IRMAA (SSA-44): their surcharge uses this year's MAGI when it is lower. */
+    const irmaaAppeals: { lookback: number; st: FilingStatus }[] = [];
     /** IRMAA surcharge (Part B above standard + Part D) for one Medicare enrollee; returns the amount added. */
     const addIrmaa = (lookbackMagi: number, st: FilingStatus): number => {
       const ir = irmaaTier(med, kMedCpi, st, lookbackMagi);
@@ -1446,7 +1513,13 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
           const std = med.partB.standardMonthlyPremium * 12 * kMed;
           hMedicare += std;
           hPremiums += std;
+          // Life-changing-event appeal (SSA-44): after work stops or is cut back, Social Security uses the
+          // current year's income instead of the lookback year's. Applied when household pay this year is
+          // at least 10% below pay in the lookback year.
+          const lbWages = t >= 2 ? wageHist[t - 2] : t === 1 ? wageHist[0] : NaN;
+          const appeal = !!m?.irmaaAppeal && lbWages > 0 && wages[0] + wages[1] < 0.9 * lbWages;
           if (Number.isNaN(lookback)) irmaaDeferred++;
+          else if (appeal) irmaaAppeals.push({ lookback, st: t >= 2 ? statusHist[t - 2] : status });
           else addIrmaa(lookback, t >= 2 ? statusHist[t - 2] : status);
           if (m && !m.partAPremiumFree) hPremiums += med.partA.premiumUnder30Quarters * 12 * kMed;
           const df = med.defaults;
@@ -1702,33 +1775,12 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     // withdrawal order for this year
     order.length = 0;
     const strat = S.withdrawalOrder.strategy;
-    const rank = (a: number): number => {
-      switch (accts[a].kind) {
-        case Kind.Cash:
-          return 0;
-        case Kind.Taxable:
-          return 1;
-        case Kind.Deferred:
-          return 2;
-        case Kind.Pretax:
-          return strat === 'bracketTargeted' ? -1 : 3;
-        case Kind.Roth:
-          return 4;
-        case Kind.Hsa:
-          return 5;
-        default:
-          return 6;
-      }
-    };
+    const rank = (a: number): number => withdrawalRank(accts[a].kind, strat === 'bracketTargeted');
     if (strat === 'custom') {
-      for (const id of S.withdrawalOrder.customOrder) {
+      for (const id of customOrderIds) {
         const a = c.accountIndex.get(id);
         if (a !== undefined) order.push(a);
       }
-      const rest: number[] = [];
-      for (let a = 0; a < nA; a++) if (!order.includes(a)) rest.push(a);
-      rest.sort((x, z) => rank(x) - rank(z));
-      order.push(...rest);
     } else {
       for (let a = 0; a < nA; a++) order.push(a);
       order.sort((x, z) => rank(x) - rank(z) || x - z);
@@ -1768,6 +1820,9 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let wHsaPen = 0;
     let wEduPen = 0;
     let wNii = 0; // gains in annuity / I-bond withdrawals: net investment income
+    // Ordinary income from withdrawals by the person who owned the account (for state retirement exclusions).
+    const wOrdBy = [0, 0];
+    const ownerNow = (a: number): number => (alive[owner[a]] ? owner[a] : primary);
 
     const characterize = (): void => {
       wOrd = 0;
@@ -1776,6 +1831,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       wHsaPen = 0;
       wEduPen = 0;
       wNii = 0;
+      wOrdBy[0] = 0;
+      wOrdBy[1] = 0;
       for (let a = 0; a < nA; a++) {
         const amt = wAmt[a];
         if (amt <= 0) continue;
@@ -1787,6 +1844,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             break;
           case Kind.Pretax:
             wOrd += amt;
+            wOrdBy[ownerNow(a)] += amt;
             if (!penaltyFree(a)) wPen += amt;
             break;
           case Kind.Roth: {
@@ -1804,17 +1862,20 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             }
             if (rem > 0) {
               wOrd += rem;
+              wOrdBy[ownerNow(a)] += rem;
               if (!over) wPen += rem;
             }
             break;
           }
           case Kind.Hsa:
             wOrd += amt;
+            wOrdBy[ownerNow(a)] += amt;
             if (ages[owner[a]] < 65) wHsaPen += amt;
             break;
           case Kind.Edu: {
             const e = amt * (1 - basis[a] / Math.max(b, 1e-9));
             wOrd += e;
+            wOrdBy[ownerNow(a)] += e;
             wEduPen += e;
             break;
           }
@@ -1822,6 +1883,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             const gain = Math.max(0, b - basis[a]);
             const g = Math.min(amt, gain);
             wOrd += g;
+            wOrdBy[ownerNow(a)] += g;
             wNii += g;
             if (ac.type === 'annuity' && y < c.people[owner[a]].year59Half) wPen += g;
             break;
@@ -1911,21 +1973,30 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       return rem;
     };
 
-    const stateFor = (fr: FederalTaxResult, extraRetirement: number): number =>
-      stateTax(sp, kState, {
+    // Conversions are split by who holds the pre-tax money they come from.
+    const pretaxBy = [0, 0];
+    for (let a = 0; a < nA; a++) if (accts[a].kind === Kind.Pretax) pretaxBy[ownerNow(a)] += totAvail[a];
+    const pretaxAll = pretaxBy[0] + pretaxBy[1];
+    const convShare0 = pretaxAll > 0 ? pretaxBy[0] / pretaxAll : 1;
+    /** State tax, with this solve's withdrawals and conversions credited to the person they belong to. */
+    const stateFor = (fr: FederalTaxResult, byOwner: number[], conversion: number): number => {
+      const extra0 = byOwner[0] + conversion * convShare0;
+      const extra1 = byOwner[1] + conversion * (1 - convShare0);
+      return stateTax(sp, kState, {
         status,
         federalAgi: fr.agi,
         federalTaxableIncome: fr.taxableIncome,
         federalDeduction: fr.deduction,
         taxableSocialSecurity: fr.taxableSocialSecurity,
-        retirementIncome: [
-          retirementInc[personOfFiler(0)] + extraRetirement * (filerAges.length === 1 ? 1 : 0.5),
-          filerAges.length > 1 ? retirementInc[1] + extraRetirement * 0.5 : 0,
-        ],
+        retirementIncome:
+          filerAges.length > 1
+            ? [retirementInc[0] + extra0, retirementInc[1] + extra1]
+            : [retirementInc[personOfFiler(0)] + extra0 + extra1, 0],
         ages: filerAges,
         longTermGains: Math.max(0, ti.longTermGains),
         dependents: kidsUnder17 + otherDeps,
       });
+    };
 
     let convCapacity = 0;
     const setLedger = (extraOrd: number, convAmt: number, harvest: number, deductible: number): void => {
@@ -2033,7 +2104,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         setLedger(bdOrd, cv, hv, deduct);
         federalTax(fp, k, ti, fed);
         // state
-        eState = stateFor(fed, wOrd + cv);
+        eState = stateFor(fed, wOrdBy, cv);
         // healthcare that depends on MAGI: Medicaid, PTC, cost-sharing reductions
         ePtc = 0;
         eHealthAdj = 0;
@@ -2228,7 +2299,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     if (t === 0) {
       // First year: the plan has no prior-year state tax, so this year's state tax (on the baseline ledger) stands
       // in for the withholding and estimates paid during the year, for the SALT deduction.
-      prevStateTax = stateFor(fedTmp, 0);
+      prevStateTax = stateFor(fedTmp, [0, 0], 0);
       setLedger(0, 0, 0, 0);
       federalTax(fp, k, ti, fedTmp);
     }
@@ -2236,6 +2307,17 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       // First Medicare year with no lookback history: IRMAA from this year's baseline MAGI (M5).
       let extra = 0;
       for (let j = 0; j < irmaaDeferred; j++) extra += addIrmaa(fedTmp.magiIrmaa, status);
+      spendingFixed += extra;
+      cashOutFixed += extra;
+    }
+    if (irmaaAppeals.length) {
+      // Appealed IRMAA: the lower of the lookback MAGI and this year's baseline MAGI estimate.
+      let extra = 0;
+      for (const a of irmaaAppeals)
+        extra += addIrmaa(
+          Math.min(a.lookback, fedTmp.magiIrmaa),
+          fedTmp.magiIrmaa < a.lookback ? status : a.st,
+        );
       spendingFixed += extra;
       cashOutFixed += extra;
     }
@@ -2408,6 +2490,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     lossCarry = fed.lossCarryforwardOut;
     magiHist[t] = fed.magiIrmaa;
     statusHist[t] = status;
+    wageHist[t] = wages[0] + wages[1];
     prevStateTax = eState;
     prevWages = [wages[0], wages[1]];
 
@@ -2595,7 +2678,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         fees: feeDollars,
         saved,
         shortfall,
-        spendingMultiplier: spendMult,
+        spendingMultiplier: effectiveSpendMult,
         check: {
           opening: openTotal,
           deposits: depSum,
@@ -2689,17 +2772,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
 export function fixedPath(c: Compiled, years?: number): PathInputs {
   const n = years ?? c.maxYears;
   const A = c.plan.assumptions;
-  const r = A.returns.fixed;
-  let per = [r.usStocks, r.usBonds, r.cash, r.intlStocks, r.reits];
-  let infl = A.inflation.rate;
-  if (A.returns.mode === 'historicalAverage') {
-    const m = c.data.market;
-    const mean = (xs: number[]): number => xs.reduce((a, b) => a + b, 0) / xs.length;
-    // geometric means so the deterministic path compounds like history did
-    const geo = (xs: number[]): number => Math.exp(mean(xs.map((x) => Math.log(1 + x)))) - 1;
-    per = [geo(m.usStocks), geo(m.usBonds), geo(m.cash), r.intlStocks, r.reits];
-    infl = geo(m.inflation);
-  }
+  const { classes: per, inflation: infl } = expectedMeans(c);
   const returns = new Float64Array(n * NC);
   const inflation = new Float64Array(n).fill(infl);
   const healthExcess = new Float64Array(n).fill(A.healthcareInflation.excessOverCpi);
