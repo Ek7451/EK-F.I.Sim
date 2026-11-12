@@ -592,12 +592,14 @@
       "seed": 20261110,
       "blockLength": 5,
       "inflation": "sampled",
-      "stochasticLongevity": false
+      "stochasticLongevity": false,
+      "bootstrapMeans": "assumptions"
     },
+    "mortalityImprovement": 0,
     "socialSecurityCut": {
       "enabled": false,
-      "fromYear": 2033,
-      "payablePct": 0.77
+      "fromYear": 2034,
+      "payablePct": 0.83
     }
   },
   "scenarios": [],

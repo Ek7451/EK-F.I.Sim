@@ -31,6 +31,11 @@ export interface FederalTaxInput {
   lossCarryforward: number;
   /** Taxable pensions and annuity income. */
   pensions: number;
+  /**
+   * Part of `pensions` and `iraDistributions` that is net investment income for NIIT: the taxable gain in
+   * non-qualified annuity payments and in annuity / I-bond withdrawals. Already counted in income; NIIT only.
+   */
+  annuityGains?: number;
   /** Taxable distributions from pre-tax accounts (incl. RMDs). */
   iraDistributions: number;
   rothConversions: number;
@@ -339,7 +344,8 @@ export function federalTax(
       netLong +
       netShort -
       capLossDeduction +
-      x.rentalNet,
+      x.rentalNet +
+      (x.annuityGains ?? 0),
   );
   const niit = p.niit.rate * Math.max(0, Math.min(nii, agi - p.niit.threshold[s]));
 
@@ -348,7 +354,11 @@ export function federalTax(
   let ctc = 0;
   let actc = 0;
   if (x.childrenUnder17 > 0 || x.otherDependents > 0) {
-    const gross = x.childrenUnder17 * c.perChild + x.otherDependents * c.otherDependent;
+    // The per-child amount and the refundable cap are indexed (rounded down to $100); the $500 credit and the
+    // phase-out thresholds are not.
+    const perChild = k === 1 ? c.perChild : Math.floor((c.perChild * k) / 100) * 100;
+    const refundableMax = k === 1 ? c.refundableMax : Math.floor((c.refundableMax * k) / 100) * 100;
+    const gross = x.childrenUnder17 * perChild + x.otherDependents * c.otherDependent;
     const over = Math.max(0, agi - c.phaseoutStart[s]);
     const reduced = Math.max(0, gross - Math.ceil(over / 1000) * c.phaseoutPer1000);
     ctc = Math.min(reduced, regular + amt);
@@ -357,7 +367,7 @@ export function federalTax(
       0,
       Math.min(
         reduced - ctc,
-        x.childrenUnder17 * c.refundableMax,
+        x.childrenUnder17 * refundableMax,
         Math.max(0, earned - c.refundableEarnedIncomeFloor) * c.refundableRate,
       ),
     );
@@ -420,6 +430,7 @@ export function emptyFederalInput(): FederalTaxInput {
     iraDistributions: 0,
     rothConversions: 0,
     rentalNet: 0,
+    annuityGains: 0,
     otherOrdinary: 0,
     socialSecurity: 0,
     taxExemptInterest: 0,
@@ -431,8 +442,17 @@ export function emptyFederalInput(): FederalTaxInput {
   };
 }
 
-/** Federal estate tax against the exemption (TAX-14). */
-export function estateTax(p: FederalTaxParams, k: number, estate: number, married: boolean): number {
-  const exemption = p.estate.exemption * k * (married ? 2 : 1);
+/**
+ * Federal estate tax against the exemption (TAX-14). `dsue` is a deceased spouse's unused exclusion carried over
+ * by portability (nominal dollars).
+ */
+export function estateTax(
+  p: FederalTaxParams,
+  k: number,
+  estate: number,
+  married: boolean,
+  dsue = 0,
+): number {
+  const exemption = p.estate.exemption * k * (married ? 2 : 1) + dsue;
   return Math.max(0, estate - exemption) * p.estate.rate;
 }

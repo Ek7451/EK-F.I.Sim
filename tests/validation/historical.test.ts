@@ -141,11 +141,14 @@ describe('V-03 FIRECalc / cFIREsim default run ($1M, $40k, 30 years, 75/25, 0.18
 describe('V-09 bootstrap statistics and reproducibility', () => {
   const plan = withdrawalPlan({ portfolio: 1e6, spend: 40000, years: 30, stocks: 0.75 });
   const c = compilePlan(plan, data);
+  // Raw replay: the resampler itself must reproduce the history it draws from. (The default re-centres history on
+  // the plan's expected returns; that mode is checked in the next test.)
   const settings = {
     method: 'bootstrap' as const,
     blockLength: 5,
     inflation: 'sampled' as const,
     stochasticLongevity: false,
+    bootstrapMeans: 'historical' as const,
   };
   it('resampled real stock returns match the source mean and variance within sampling error (p > 0.01)', () => {
     const p = prepare(c);
@@ -177,6 +180,36 @@ describe('V-09 bootstrap statistics and reproducibility', () => {
     const seRuns = Math.sqrt(runMeans.reduce((a, x) => a + (x - grand) ** 2, 0) / (runs - 1) / runs);
     // z-test on independent run means; |z| < 2.576 is p > 0.01.
     expect(Math.abs((grand - hm) / seRuns)).toBeLessThan(2.576);
+    const variance = allSq / count - (all / count) ** 2;
+    expect(Math.abs(variance / hv - 1)).toBeLessThan(0.05);
+  });
+  it('re-centred bootstrap: real log returns centre on the plan expectation and keep the historical spread', () => {
+    const p = prepare(c);
+    const A = plan.assumptions;
+    const target = Math.log((1 + A.returns.fixed.usStocks) / (1 + A.inflation.rate));
+    let hv = 0;
+    for (let i = 0; i < p.n; i++) hv += (p.logReal[0][i] - p.histLogMean[0]) ** 2;
+    hv /= p.n;
+    const runs = 2000;
+    const runMeans: number[] = [];
+    let all = 0;
+    let allSq = 0;
+    let count = 0;
+    for (let r = 0; r < runs; r++) {
+      const path = generatePath(c, { ...settings, bootstrapMeans: 'assumptions' }, 12345, r);
+      let s = 0;
+      for (let t = 0; t < path.years; t++) {
+        const lr = Math.log((1 + path.returns[t * 5]) / (1 + path.inflation[t]));
+        s += lr;
+        all += lr;
+        allSq += lr * lr;
+        count++;
+      }
+      runMeans.push(s / path.years);
+    }
+    const grand = runMeans.reduce((a, x) => a + x, 0) / runs;
+    const seRuns = Math.sqrt(runMeans.reduce((a, x) => a + (x - grand) ** 2, 0) / (runs - 1) / runs);
+    expect(Math.abs((grand - target) / seRuns)).toBeLessThan(2.576);
     const variance = allSq / count - (all / count) ** 2;
     expect(Math.abs(variance / hv - 1)).toBeLessThan(0.05);
   });

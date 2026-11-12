@@ -865,8 +865,7 @@
         "minLength": 1
        },
        "interestDeductible": {
-        "type": "boolean",
-        "default": false
+        "type": "boolean"
        },
        "start": {
         "anyOf": [
@@ -2785,6 +2784,18 @@
       },
       "slcspOverrideAge21Monthly": {
        "type": "integer"
+      },
+      "irmaaPriorMagi": {
+       "type": "object",
+       "properties": {
+        "twoYearsBefore": {
+         "type": "integer"
+        },
+        "oneYearBefore": {
+         "type": "integer"
+        }
+       },
+       "additionalProperties": false
       }
      },
      "additionalProperties": false,
@@ -2964,10 +2975,24 @@
         "stochasticLongevity": {
          "type": "boolean",
          "default": false
+        },
+        "bootstrapMeans": {
+         "type": "string",
+         "enum": [
+          "assumptions",
+          "historical"
+         ],
+         "default": "assumptions"
         }
        },
        "additionalProperties": false,
        "default": {}
+      },
+      "mortalityImprovement": {
+       "type": "number",
+       "minimum": 0,
+       "maximum": 0.03,
+       "default": 0
       },
       "socialSecurityCut": {
        "type": "object",
@@ -2978,13 +3003,13 @@
         },
         "fromYear": {
          "type": "integer",
-         "default": 2033
+         "default": 2034
         },
         "payablePct": {
          "type": "number",
          "minimum": 0,
          "maximum": 1,
-         "default": 0.77
+         "default": 0.83
         }
        },
        "additionalProperties": false,

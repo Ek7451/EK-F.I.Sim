@@ -1,7 +1,8 @@
 /**
  * One projection path (SIM-01), following the annual order of operations in build plan §6.2 and the
- * fixed-point cash-flow / tax solver in §6.3. Everything is nominal dollars; `cpi` in each record
- * converts to plan-start ("today's") dollars.
+ * fixed-point cash-flow / tax solver in §6.3. Everything is nominal dollars. To convert to plan-start ("today's")
+ * dollars use `toReal()`: year-end balances divide by `cpiEnd`, flows during the year divide by `cpi` (flows are
+ * priced at the start-of-year price level, so a $50,000 expense in today's dollars reads back as $50,000).
  */
 import type { FederalTaxParams, FilingStatus, StateTaxParams } from '@fisim/data';
 import { Kind, NC, staticYear, type CAccount, type Compiled } from './compile';
@@ -16,7 +17,13 @@ import {
   tobaccoRatio,
 } from './healthcare';
 import type { Coverage, YearRef } from './schema';
-import { earningsTestWithholding, spousalFactor } from './social-security';
+import {
+  claimFactor,
+  earningsTestWithholding,
+  spousalFactor,
+  survivorBase,
+  survivorFactor,
+} from './social-security';
 import {
   bracketTop,
   emptyFederalInput,
@@ -45,8 +52,10 @@ export interface PathInputs {
 export interface YearRecord {
   year: number;
   t: number;
-  /** Cumulative CPI factor at the start of the year (1 in the first year). */
+  /** Cumulative CPI factor at the start of the year (1 in the first year). Deflates flows (income, spending, tax). */
   cpi: number;
+  /** Cumulative CPI factor at the end of the year (= next year's `cpi`). Deflates year-end balances and net worth. */
+  cpiEnd: number;
   ages: number[];
   alive: boolean[];
   filingStatus: FilingStatus;
@@ -163,7 +172,12 @@ export interface PathResult {
   spending: Float64Array;
   taxes: Float64Array;
   shortfall: Float64Array;
+  /** Start-of-year CPI factor (deflates flows). */
   cpi: Float64Array;
+  /** End-of-year CPI factor (deflates balances). */
+  cpiEnd: Float64Array;
+  /** Actual spending ÷ planned spending (before flexible-rule changes and shortfalls); 1 = as planned. */
+  spendRatio: Float64Array;
   success: boolean;
   failedYear: number | null;
   lifetimeTax: number;
@@ -203,6 +217,19 @@ interface AssetState {
   owned: boolean;
   purchaseYear: number;
   saleYear: number;
+}
+
+/**
+ * Convert a nominal amount from a year record to plan-start ("today's") dollars. Balances and net worth are year-end
+ * figures and deflate by the year-end CPI; flows (income, spending, tax, contributions, withdrawals) deflate by the
+ * start-of-year CPI they were priced at.
+ */
+export function toReal(
+  amount: number,
+  r: Pick<YearRecord, 'cpi' | 'cpiEnd'>,
+  kind: 'balance' | 'flow' = 'balance',
+): number {
+  return amount / (kind === 'balance' ? r.cpiEnd : r.cpi);
 }
 
 const levelPayment = (p: number, annualRate: number, months: number): number => {
@@ -291,6 +318,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
   const incBase = new Float64Array(nI);
   const incIdx = new Float64Array(nI).fill(1);
   const incForce = new Int8Array(nI); // 1 = force on, -1 = force off
+  const incStarted = new Uint8Array(nI); // pensions: COLA compounds only once payments have begun (M4)
   const incAmt = new Float64Array(nI);
   for (let i = 0; i < nI; i++) incBase[i] = plan.incomes[i].amount / 100;
   const nE = plan.expenses.length;
@@ -307,7 +335,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     revolvingPayPct: d.revolvingPayPct,
     linkedAssetId: d.linkedAssetId,
     payment: d.payment > 0 ? d.payment / 100 : levelPayment(d.principal / 100, d.rate, d.termMonths),
-    deductible: d.interestDeductible || d.kind === 'mortgage',
+    deductible: d.interestDeductible ?? d.kind === 'mortgage',
     active: !d.start,
     startYear: d.start ? NaN : startYear,
     refi: [],
@@ -342,12 +370,19 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
   let statusOverride: FilingStatus | null = null;
   let firstDeathYear = Infinity;
   const alive = c.people.map(() => true);
-  const ssClaimedToday = new Float64Array(nP); // annual benefit in today's dollars once in payment
-  const ssSurvivorToday = new Float64Array(nP);
+  // Social Security state; annual amounts in today's dollars.
+  const ssSurvBase = new Float64Array(nP); // the deceased spouse's benefit a survivor benefit is figured from
+  const ssSurvLimit = new Float64Array(nP).fill(Infinity); // widow(er)'s limit when the deceased claimed early
+  const ssSurvToday = new Float64Array(nP); // survivor benefit once started (its age reduction is locked then)
+  const ssWithheldMonths = new Float64Array(nP); // months withheld by the earnings test before FRA
+  const ssOwnMonths = c.people.map((p) => p.ssClaimMonths); // claim age the reduction is figured at (ARF moves it)
+  const ssSpouseMonths = c.people.map((p) => p.ssSpousalStartMonths);
+  const ssArfDone = new Uint8Array(nP);
   let spendMult = 1;
   let gkInitialRate = NaN;
   let prevStateTax = 0;
-  let prevWages = [0, 0];
+  // Prior-year wages for the SECURE 2.0 Roth catch-up rule; year 1 assumes last year's pay matched this year's.
+  let prevWages: number[] | null = null;
   let lastLivingSpend = 0;
   const cobraStart: number[] = c.people.map(() => NaN);
 
@@ -361,6 +396,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     taxes: new Float64Array(n),
     shortfall: new Float64Array(n),
     cpi: new Float64Array(n),
+    cpiEnd: new Float64Array(n),
+    spendRatio: new Float64Array(n).fill(1),
     success: true,
     failedYear: null,
     lifetimeTax: 0,
@@ -434,16 +471,22 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       if (alive[i] && age > deathAge[i]) {
         alive[i] = false;
         firstDeathYear = Math.min(firstDeathYear, y - 1);
-        // Survivor inherits accounts and the larger Social Security benefit.
+        // Survivor inherits accounts and may switch to a survivor benefit on the deceased's own record (H3).
         const sIdx = i === 0 ? 1 : 0;
         if (nP === 2 && alive[sIdx]) {
           for (let a = 0; a < nA; a++) if (owner[a] === i) owner[a] = sIdx;
-          const deceased =
-            ssClaimedToday[i] > 0
-              ? ssClaimedToday[i]
-              : c.people[i].ssPiaAnnualToday *
-                Math.max(1, c.people[i].ssAnnualToday / Math.max(1, c.people[i].ssPiaAnnualToday));
-          ssSurvivorToday[sIdx] = deceased;
+          const d = c.people[i];
+          // Died during year y - 1; credits stop at death (taken as mid-year).
+          const deathMonths = (y - 1 - d.birthYear) * 12 - (d.birthMonth - 1) + 6;
+          const sv = survivorBase(
+            d.ssPiaAnnualToday,
+            d.ssFraMonths,
+            y - 1 >= d.ssClaimYear,
+            ssOwnMonths[i],
+            deathMonths,
+          );
+          ssSurvBase[sIdx] = sv.base;
+          ssSurvLimit[sIdx] = sv.limit;
         }
       }
       if (alive[i]) nAlive++;
@@ -530,11 +573,10 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       if (a >= 0 && a < 17) kidsUnder17++;
       else if (a >= 17 && a < 24) otherDeps++;
     }
-    if (nP === 2 && nAlive === 1) {
-      if (y === firstDeathYear) status = 'mfj';
-      else if (y <= firstDeathYear + 2 && kidsUnder17 + otherDeps > 0) status = 'qss';
-      else status = 'single';
-    }
+    // The couple files jointly in the year of death (both were alive in the loop that year); the survivor then files
+    // as a qualifying surviving spouse for two years with a dependent child, otherwise single.
+    if (nP === 2 && nAlive === 1)
+      status = y <= firstDeathYear + 2 && kidsUnder17 + otherDeps > 0 ? 'qss' : 'single';
     const fedPick = pickYear(data.federal, y);
     const fp: FederalTaxParams = fedPick.dataYear === y ? fedPick.value : projectFederal(fedPick.value, y);
     const k = kFor(fedPick.dataYear, t, cpiIdx, A.inflation.rate);
@@ -716,6 +758,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       let active = y >= resolve(inc.start, startYear) && y < resolve(inc.end, Infinity);
       if (incForce[i] === 1 && y < resolve(inc.end, Infinity)) active = true;
       if (incForce[i] === -1) active = false;
+      if (active) incStarted[i] = 1;
       let amt = active ? incBase[i] * incIdx[i] : 0;
       if (active && !alive[oi]) {
         // Pensions pay the survivor percentage; everything else stops with its owner.
@@ -784,26 +827,60 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     for (let i = 0; i < nP; i++) {
       if (!alive[i]) continue;
       const p = c.people[i];
+      const ageMonthsStart = (y - p.birthYear) * 12 - (p.birthMonth - 1);
+      // Earnings-test credit (M3): from the first year that starts at or past FRA, the reduction is refigured as if
+      // benefits had started later by the months that were withheld.
+      if (!ssArfDone[i] && ageMonthsStart >= p.ssFraMonths) {
+        ssArfDone[i] = 1;
+        if (ssWithheldMonths[i] > 0) {
+          ssOwnMonths[i] = Math.min(p.ssFraMonths, ssOwnMonths[i] + ssWithheldMonths[i]);
+          ssSpouseMonths[i] = Math.max(
+            ssSpouseMonths[i],
+            Math.min(p.ssFraMonths, ssSpouseMonths[i] + ssWithheldMonths[i]),
+          );
+        }
+      }
       let b = 0;
-      if (y >= p.ssClaimYear && p.ssAnnualToday >= 0) {
-        let own = p.ssAnnualToday;
-        // Spousal top-up once both have claimed.
+      let paidMonths = 12;
+      let onSurvivor = false;
+      if (y >= p.ssClaimYear) {
+        let own = p.ssPiaAnnualToday * claimFactor(ssOwnMonths[i], p.ssFraMonths);
+        // Spousal top-up once both have claimed, reduced for the age when it starts (M2).
         if (nP === 2) {
           const sI = i === 0 ? 1 : 0;
           const sp2 = c.people[sI];
           if (alive[sI] && y >= sp2.ssClaimYear) {
             const excess = 0.5 * sp2.ssPiaAnnualToday - p.ssPiaAnnualToday;
-            if (excess > 0) own += excess * spousalFactor(p.ssClaimMonths, p.ssFraMonths);
+            if (excess > 0) own += excess * spousalFactor(ssSpouseMonths[i], p.ssFraMonths);
           }
         }
-        ssClaimedToday[i] = own;
-        b = own * (y === p.ssClaimYear ? p.ssFirstYearFraction : 1);
+        if (y === p.ssClaimYear) paidMonths = 12 * p.ssFirstYearFraction;
+        b = (own * paidMonths) / 12;
       }
-      if (ssSurvivorToday[i] > 0 && ages[i] >= 60) b = Math.max(b, ssSurvivorToday[i]);
+      // Survivor benefit (H3): starts at the later of the death and min(own claim age, survivor FRA), never before 60,
+      // reduced for the survivor's age then and capped by the widow(er)'s limit.
+      if (ssSurvBase[i] > 0) {
+        const target = Math.max(720, Math.min(p.ssClaimMonths, p.ssSurvivorFraMonths));
+        const birthAbs = p.birthYear * 12 + (p.birthMonth - 1);
+        const startYearS = Math.floor((birthAbs + target) / 12);
+        if (y >= startYearS) {
+          if (ssSurvToday[i] === 0)
+            ssSurvToday[i] = Math.min(
+              ssSurvBase[i] * survivorFactor(Math.max(target, ageMonthsStart), p.ssSurvivorFraMonths),
+              ssSurvLimit[i],
+            );
+          const months = y === startYearS && ageMonthsStart < target ? 12 - ((birthAbs + target) % 12) : 12;
+          const surv = (ssSurvToday[i] * months) / 12;
+          if (surv > b) {
+            b = surv;
+            paidMonths = months;
+            onSurvivor = true;
+          }
+        }
+      }
       b *= cpi * cut;
       if (b > 0 && earned[i] > 0) {
-        const ageMonthsStart = (y - p.birthYear) * 12 - (p.birthMonth - 1);
-        b -= earningsTestWithholding(
+        const w = earningsTestWithholding(
           b,
           earned[i],
           ageMonthsStart,
@@ -811,6 +888,11 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
           ssPick.value.earningsTest.underFra * kSs,
           ssPick.value.earningsTest.yearOfFra * kSs,
         );
+        if (w > 0) {
+          // Months withheld from the person's own benefit are credited back to it at FRA.
+          if (!onSurvivor) ssWithheldMonths[i] += Math.min(paidMonths, (w / b) * paidMonths);
+          b -= w;
+        }
       }
       ssByPerson[i] = b;
       ssTotal += b;
@@ -827,15 +909,18 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       const fy = accts[a].fixedYield;
       let int: number;
       let div = 0;
+      let reitDiv = 0;
       if (fy) int = bal(a) * Math.max(0, fy.real ? fy.rate + infl : fy.rate);
       else {
         int = hold[o + 1] * A.bondYield + hold[o + 2] * Math.max(0, path.returns[t * NC + 2]);
-        div = (hold[o] + hold[o + 3]) * A.dividendYield + hold[o + 4] * A.dividendYield * 2;
+        div = (hold[o] + hold[o + 3]) * A.dividendYield;
+        // REIT distributions are mostly non-qualified (ordinary) dividends.
+        reitDiv = hold[o + 4] * A.dividendYield * 2;
       }
       interest += int;
       qDiv += div * A.qualifiedDividendPct;
-      oDiv += div * (1 - A.qualifiedDividendPct);
-      if (kd === Kind.Taxable) basis[a] += int + div;
+      oDiv += div * (1 - A.qualifiedDividendPct) + reitDiv;
+      if (kd === Kind.Taxable) basis[a] += int + div + reitDiv;
     }
 
     // ---- required distributions (RMDs, inherited IRAs, 72(t))
@@ -954,6 +1039,17 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let adjustments = 0; // above-the-line (SEP / solo employer / direct HSA)
     const pretaxFromWagesBy = [0, 0];
     const hsaPayrollBy = [0, 0];
+    const sec125By = [0, 0]; // pre-tax employer health premiums (exempt from income tax and FICA)
+    const priorWages = prevWages ?? [wages[0], wages[1]];
+    // Self-employment plan compensation: net profit less the deductible half of SE tax.
+    const seComp = (i: number): number => {
+      const net = Math.max(0, seInc[i]) * fp.fica.seNetEarningsFactor;
+      const ssRoom = Math.max(0, fp.fica.socialSecurityWageBase * k - wages[i]);
+      const seTax = Math.min(net, ssRoom) * fp.fica.socialSecurityRate * 2 + net * fp.fica.medicareRate * 2;
+      return Math.min(Math.max(0, seInc[i] - seTax / 2), lim.compensationCap * kLim);
+    };
+    // Employer contribution rate for the self-employed: 25% of compensation net of the contribution itself = 20%.
+    const seRate = lim.sep.pctOfCompensation / (1 + lim.sep.pctOfCompensation);
     const deferralUsed = [0, 0];
     const deferral457Used = [0, 0];
     const hsaContributed = [0, 0];
@@ -1030,12 +1126,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         is457 ||
         isSimple;
       if (ac.type === 'sepIra') {
-        const base = Math.max(0, seInc[oi] * 0.9235 * (1 - 0.0765)); // net SE earnings after the deductible half of SE tax (approx.)
-        const amt = Math.min(
-          lim.sep.limit * kLim,
-          lim.sep.pctOfCompensation * base * 0.8,
-          cfg.maxOut ? Infinity : wantBase || Infinity,
-        );
+        const amt = Math.min(lim.sep.limit * kLim, seRate * seComp(oi), cfg.maxOut ? Infinity : wantBase);
         if (amt > 0) {
           deposit(a, amt);
           cPretax += amt;
@@ -1053,7 +1144,10 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       let emp = Math.min(room, cfg.maxOut ? room : wantBase, salary);
       // SECURE 2.0: catch-up dollars must be Roth for high earners; without a Roth plan account they are not allowed.
       const rothOnlyCatchUp =
-        cu > 0 && prevWages[oi] > lim.rothCatchUpWageThreshold * kLim && ac.kind === Kind.Pretax && !isSimple;
+        cu > 0 &&
+        priorWages[oi] > lim.rothCatchUpWageThreshold * kLim &&
+        ac.kind === Kind.Pretax &&
+        !isSimple;
       let catchUpToRoth = 0;
       if (rothOnlyCatchUp && used[oi] + emp > baseLimit) {
         const cuPart = used[oi] + emp - Math.max(baseLimit, used[oi]);
@@ -1095,7 +1189,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         prevTier = tier.upToPctOfSalary;
       }
       match += cfg.employerFixedPct * comp;
-      if (ac.type === 'solo401k') match = Math.min(match, 0.2 * seInc[oi] * 0.9235);
+      if (ac.type === 'solo401k') match = Math.min(match, seRate * seComp(oi));
       const additionsRoom = Math.max(0, lim.annualAdditions * kLim - Math.min(emp, baseLimit));
       match = Math.min(match, additionsRoom);
       if (match > 0) {
@@ -1268,6 +1362,17 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let acaPremium = 0;
     let acaMembers = 0;
     let irmaaTierIdx = 0;
+    let irmaaDeferred = 0;
+    /** IRMAA surcharge (Part B above standard + Part D) for one Medicare enrollee; returns the amount added. */
+    const addIrmaa = (lookbackMagi: number, st: FilingStatus): number => {
+      const ir = irmaaTier(med, kMedCpi, st, lookbackMagi);
+      irmaaTierIdx = Math.max(irmaaTierIdx, ir.tier);
+      const std = med.partB.standardMonthlyPremium * 12 * kMed;
+      const extra = ir.row.partBMonthly * 12 * kMed - std + ir.row.partDSurchargeMonthly * 12 * kMed;
+      hIrmaa += extra;
+      hPremiums += extra;
+      return extra;
+    };
     const acaOopInputs: { metal: Coverage['metal']; util: 'low' | 'typical' | 'high'; frac: number }[] = [];
     if (hc.enabled) {
       const bench = benchmarkAge21(
@@ -1308,7 +1413,11 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
                 : cs.employerPremium.employeeShareSingle * kCs;
           hPremiums += prem;
           const payer = tp === 'employer' ? i : i === 0 ? 1 : 0;
-          if (wages[payer] > 0) pretaxFromWagesBy[payer] += Math.min(prem, wages[payer]);
+          if (wages[payer] > 0) {
+            // Section 125: payroll premiums come out before income tax and before FICA.
+            pretaxFromWagesBy[payer] += Math.min(prem, wages[payer]);
+            sec125By[payer] += Math.min(prem, wages[payer]);
+          }
           hOop += cs.utilization[util].pctOfOopMax * cs.tiers.gold.oopMax * kCs;
         } else if (tp === 'cobra') {
           const full =
@@ -1321,20 +1430,24 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         } else if (tp === 'aca') addAca(1, en?.metal ?? 'silver');
         else if (tp === 'medicare') {
           const m = hp?.medicare;
-          const lookback = t >= 2 ? magiHist[t - 2] : t === 1 ? magiHist[0] : NaN;
-          const ir = irmaaTier(
-            med,
-            kMedCpi,
-            t >= 2 ? statusHist[t - 2] : status,
-            Number.isNaN(lookback) ? 0 : lookback,
-          );
-          irmaaTierIdx = Math.max(irmaaTierIdx, ir.tier);
+          // IRMAA looks back two years (M5). Before the plan has that history it uses the MAGI entered for the
+          // years before the start, or else this year's own MAGI estimate (figured after the baseline tax pass).
+          const prior = hc.irmaaPriorMagi;
+          const lookback =
+            t >= 2
+              ? magiHist[t - 2]
+              : t === 1
+                ? prior?.oneYearBefore !== undefined
+                  ? prior.oneYearBefore / 100
+                  : magiHist[0]
+                : prior?.twoYearsBefore !== undefined
+                  ? prior.twoYearsBefore / 100
+                  : NaN;
           const std = med.partB.standardMonthlyPremium * 12 * kMed;
-          const partB = ir.row.partBMonthly * 12 * kMed;
-          const dSur = ir.row.partDSurchargeMonthly * 12 * kMed;
           hMedicare += std;
-          hIrmaa += partB - std + dSur;
-          hPremiums += std + (partB - std) + dSur;
+          hPremiums += std;
+          if (Number.isNaN(lookback)) irmaaDeferred++;
+          else addIrmaa(lookback, t >= 2 ? statusHist[t - 2] : status);
           if (m && !m.partAPremiumFree) hPremiums += med.partA.premiumUnder30Quarters * 12 * kMed;
           const df = med.defaults;
           const yearsOver65 = Math.max(0, ages[i] - 65);
@@ -1380,6 +1493,63 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             hPremiums += (ltc.insurance.premiumAnnual / 100) * cpi;
         }
       }
+      // Dependent children under 26 (M8): on the employer family plan while a parent has employer coverage, on the
+      // family COBRA plan while it lasts, otherwise on the marketplace with the household. Marketplace family
+      // premiums count at most the three oldest children under 21.
+      const kidAges: number[] = [];
+      for (const dep of plan.household.dependents) {
+        const a = y - dep.birthYear;
+        if (a >= 0 && a < 26) kidAges.push(a);
+      }
+      if (kidAges.length > 0) {
+        let emp = -1;
+        let cobra = -1;
+        let acaAdult = -1;
+        for (let i = 0; i < nP; i++) {
+          if (!alive[i]) continue;
+          if (emp < 0 && (covType[i] === 'employer' || covType[i] === 'spouseEmployer')) emp = i;
+          if (cobra < 0 && covType[i] === 'cobra') cobra = i;
+          if (acaAdult < 0 && covType[i] === 'aca') acaAdult = i;
+        }
+        let kidAca = 1;
+        if (emp >= 0) {
+          kidAca = 0;
+          const familyCharged =
+            covType.some((tp, i) => alive[i] && tp === 'spouseEmployer') ||
+            covEntry[emp]?.premiumAnnual !== undefined;
+          if (!familyCharged) {
+            const add =
+              (cs.employerPremium.employeeShareFamily - cs.employerPremium.employeeShareSingle) * kCs;
+            hPremiums += add;
+            const payer = covType[emp] === 'employer' ? emp : emp === 0 ? 1 : 0;
+            if (wages[payer] > 0) {
+              pretaxFromWagesBy[payer] += Math.min(add, wages[payer]);
+              sec125By[payer] += Math.min(add, wages[payer]);
+            }
+          }
+        } else if (cobra >= 0) {
+          const fr = covFrac[cobra];
+          kidAca = 1 - fr;
+          if (covEntry[cobra]?.premiumAnnual === undefined)
+            hPremiums += (cs.employerPremium.family - cs.employerPremium.single) * kCs * 1.02 * fr;
+        }
+        if (kidAca > 0) {
+          const metal: Coverage['metal'] = acaAdult >= 0 ? (covEntry[acaAdult]?.metal ?? 'silver') : 'silver';
+          kidAges.sort((a, b) => b - a);
+          let under21 = 0;
+          for (const a of kidAges) {
+            const charged = a >= 21 || ++under21 <= 3;
+            if (charged) {
+              const b = benchMonthly * 12 * ageRatingFactor(data.ageCurve, state, a) * kidAca;
+              acaSlcsp += b;
+              acaPremium += b * cs.tiers[metal].premiumRatioToSilver;
+            }
+            anyAca = true;
+            acaMembers++;
+            acaOopInputs.push({ metal, util: 'low', frac: kidAca });
+          }
+        }
+      }
       if (anyAca && bench.flagged && t === 0)
         yearWarnings.push(
           `ACA benchmark premium uses ${bench.source}; enter your own SLCSP for a precise subsidy.`,
@@ -1397,8 +1567,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     ti.otherDependents = otherDeps;
     ti.wages[0] = wages[0];
     ti.wages[1] = wages[1];
-    ti.ficaWages[0] = wages[0] - hsaPayrollBy[0];
-    ti.ficaWages[1] = wages[1] - hsaPayrollBy[1];
+    ti.ficaWages[0] = Math.max(0, wages[0] - hsaPayrollBy[0] - sec125By[0]);
+    ti.ficaWages[1] = Math.max(0, wages[1] - hsaPayrollBy[1] - sec125By[1]);
     ti.pretaxFromWages = pretaxFromWagesBy[0] + pretaxFromWagesBy[1];
     ti.selfEmployment[0] = seInc[0];
     ti.selfEmployment[1] = seInc[1];
@@ -1525,9 +1695,9 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       assetSales +
       loanProceeds +
       reqOrdinary;
-    const spendingFixed =
+    let spendingFixed =
       living - eduPaid + debtService + housing + purchases + refiCosts + hPremiums + hOop + hLtc - hsaPaid;
-    const cashOutFixed = spendingFixed + payrollDeferrals + directContribCash;
+    let cashOutFixed = spendingFixed + payrollDeferrals + directContribCash;
 
     // withdrawal order for this year
     order.length = 0;
@@ -1586,6 +1756,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let eFplRatio = 0;
     let ePenBase = 0;
     let eDeduct = 0;
+    let eIraDeduct = 0; // deductible traditional-IRA part of eDeduct (added back for IRA / Roth MAGI)
     let eBackdoorOrd = 0;
     let eMedicaid = false;
     let eAcaOop = 0;
@@ -1596,6 +1767,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let wPen = 0;
     let wHsaPen = 0;
     let wEduPen = 0;
+    let wNii = 0; // gains in annuity / I-bond withdrawals: net investment income
 
     const characterize = (): void => {
       wOrd = 0;
@@ -1603,6 +1775,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       wPen = 0;
       wHsaPen = 0;
       wEduPen = 0;
+      wNii = 0;
       for (let a = 0; a < nA; a++) {
         const amt = wAmt[a];
         if (amt <= 0) continue;
@@ -1649,6 +1822,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             const gain = Math.max(0, b - basis[a]);
             const g = Math.min(amt, gain);
             wOrd += g;
+            wNii += g;
             if (ac.type === 'annuity' && y < c.people[owner[a]].year59Half) wPen += g;
             break;
           }
@@ -1737,6 +1911,22 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       return rem;
     };
 
+    const stateFor = (fr: FederalTaxResult, extraRetirement: number): number =>
+      stateTax(sp, kState, {
+        status,
+        federalAgi: fr.agi,
+        federalTaxableIncome: fr.taxableIncome,
+        federalDeduction: fr.deduction,
+        taxableSocialSecurity: fr.taxableSocialSecurity,
+        retirementIncome: [
+          retirementInc[personOfFiler(0)] + extraRetirement * (filerAges.length === 1 ? 1 : 0.5),
+          filerAges.length > 1 ? retirementInc[1] + extraRetirement * 0.5 : 0,
+        ],
+        ages: filerAges,
+        longTermGains: Math.max(0, ti.longTermGains),
+        dependents: kidsUnder17 + otherDeps,
+      });
+
     let convCapacity = 0;
     const setLedger = (extraOrd: number, convAmt: number, harvest: number, deductible: number): void => {
       ti.longTermGains = baseLtcg + wLtcg + harvest;
@@ -1745,6 +1935,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       ti.otherOrdinary = baseOrdinary + extraOrd;
       ti.adjustments = adjustments + deductible;
       ti.itemized.stateLocalTax = prevStateTax + propertyTax;
+      ti.annuityGains = annuityTaxable + wNii;
       ti.earlyWithdrawalPenaltyBase = wPen;
       ti.hsaPenaltyBase = wHsaPen;
       ti.edu529PenaltyBase = wEduPen;
@@ -1775,6 +1966,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       let cv = 0;
       let hv = 0;
       let deduct = withWaterfall ? eDeduct : 0;
+      let iraD = withWaterfall ? eIraDeduct : 0;
       let bdOrd = withWaterfall ? eBackdoorOrd : 0;
       // --- conversions (TAX-07) solved inside the loop
       if (convCapacity > 0 && (convActive || magiFloor > 0)) {
@@ -1841,20 +2033,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         setLedger(bdOrd, cv, hv, deduct);
         federalTax(fp, k, ti, fed);
         // state
-        eState = stateTax(sp, kState, {
-          status,
-          federalAgi: fed.agi,
-          federalTaxableIncome: fed.taxableIncome,
-          federalDeduction: fed.deduction,
-          taxableSocialSecurity: fed.taxableSocialSecurity,
-          retirementIncome: [
-            retirementInc[personOfFiler(0)] + (wOrd + cv) * (filerAges.length === 1 ? 1 : 0.5),
-            filerAges.length > 1 ? retirementInc[1] + (wOrd + cv) * 0.5 : 0,
-          ],
-          ages: filerAges,
-          longTermGains: Math.max(0, ti.longTermGains),
-          dependents: kidsUnder17 + otherDeps,
-        });
+        eState = stateFor(fed, wOrd + cv);
         // healthcare that depends on MAGI: Medicaid, PTC, cost-sharing reductions
         ePtc = 0;
         eHealthAdj = 0;
@@ -1873,14 +2052,16 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         net = cashInFixed + (G - eUnmet) - cashOutFixed - eHealthAdj + ePtc - fed.total - eState;
         if (!withWaterfall || net <= 1) break;
         // deductible contributions in the waterfall feed back into tax
-        const dry = waterfall(net, false, fed.magiAca);
+        const dry = waterfall(net, false, { agi: fed.agi, conv: cv, iraDeduct: iraD });
         if (Math.abs(dry.deductible - deduct) < 1 && Math.abs(dry.backdoorOrdinary - bdOrd) < 1) break;
         deduct = dry.deductible;
+        iraD = dry.iraDeductible;
         bdOrd = dry.backdoorOrdinary;
       }
       eConv = cv;
       eHarvest = hv;
       eDeduct = deduct;
+      eIraDeduct = iraD;
       eBackdoorOrd = bdOrd;
       ePenBase = wPen;
       return net;
@@ -1891,10 +2072,15 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     const waterfall = (
       surplus: number,
       commit: boolean,
-      magi: number,
-    ): { deductible: number; backdoorOrdinary: number; saved: number } => {
+      m: { agi: number; conv: number; iraDeduct: number },
+    ): { deductible: number; iraDeductible: number; backdoorOrdinary: number; saved: number } => {
+      // IRA deduction and Roth IRA eligibility use AGI with the IRA deduction added back; Roth MAGI also leaves out
+      // Roth conversion income (Pub. 590-A worksheets). Untaxed Social Security does not count.
+      const magiTrad = m.agi + m.iraDeduct;
+      const magiRoth = magiTrad - m.conv;
       let rem = surplus;
       let deductible = 0;
+      let iraDeductible = 0;
       let backdoorOrd = 0;
       let saved = 0;
       const iraUse = [iraUsed[0], iraUsed[1]];
@@ -1946,7 +2132,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
           if (ac.type === 'rothIra' || ac.type === 'tradIra') {
             const limit = Math.max(
               0,
-              Math.min(lim.ira.limit * kLim + (ages[oi] >= 50 ? lim.ira.catchUp50 : 0), earnedHousehold) -
+              Math.min((lim.ira.limit + (ages[oi] >= 50 ? lim.ira.catchUp50 : 0)) * kLim, earnedHousehold) -
                 iraUse[oi],
             );
             amt = Math.min(rem, cap, limit);
@@ -1960,7 +2146,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
                     : lim.rothIraPhaseout.single;
               const lo = range[0] * kLim;
               const hi = range[1] * kLim;
-              const allowed = magi <= lo ? amt : magi >= hi ? 0 : amt * (1 - (magi - lo) / (hi - lo));
+              const allowed =
+                magiRoth <= lo ? amt : magiRoth >= hi ? 0 : amt * (1 - (magiRoth - lo) / (hi - lo));
               if (allowed < amt) {
                 if (S.backdoorRoth) {
                   // Backdoor: non-deductible traditional contribution converted at once; pro-rata rule on existing pre-tax IRA money.
@@ -1993,12 +2180,13 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
               const hi = range[1] * kLim;
               const dedShare = !anyCovered
                 ? 1
-                : magi <= lo
+                : magiTrad <= lo
                   ? 1
-                  : magi >= hi
+                  : magiTrad >= hi
                     ? 0
-                    : 1 - (magi - lo) / (hi - lo);
+                    : 1 - (magiTrad - lo) / (hi - lo);
               deductible += amt * dedShare;
+              iraDeductible += amt * dedShare;
               iraUse[oi] += amt;
               put(a, amt);
             }
@@ -2022,7 +2210,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         iraUsed[0] = iraUse[0];
         iraUsed[1] = iraUse[1];
       }
-      return { deductible, backdoorOrdinary: backdoorOrd, saved };
+      return { deductible, iraDeductible, backdoorOrdinary: backdoorOrd, saved };
     };
 
     // baseline (no discretionary withdrawals) to size the bracket / MAGI caps
@@ -2033,9 +2221,24 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     wHsaPen = 0;
     wEduPen = 0;
     eDeduct = 0;
+    eIraDeduct = 0;
     eBackdoorOrd = 0;
     setLedger(0, 0, 0, 0);
     federalTax(fp, k, ti, fedTmp);
+    if (t === 0) {
+      // First year: the plan has no prior-year state tax, so this year's state tax (on the baseline ledger) stands
+      // in for the withholding and estimates paid during the year, for the SALT deduction.
+      prevStateTax = stateFor(fedTmp, 0);
+      setLedger(0, 0, 0, 0);
+      federalTax(fp, k, ti, fedTmp);
+    }
+    if (irmaaDeferred > 0) {
+      // First Medicare year with no lookback history: IRMAA from this year's baseline MAGI (M5).
+      let extra = 0;
+      for (let j = 0; j < irmaaDeferred; j++) extra += addIrmaa(fedTmp.magiIrmaa, status);
+      spendingFixed += extra;
+      cashOutFixed += extra;
+    }
     if (strat === 'bracketTargeted') {
       const top = bracketTop(fp.ordinaryBrackets[ts], S.withdrawalOrder.bracketRate, k);
       pretaxCap = Math.max(0, top - fedTmp.ordinaryTaxable);
@@ -2195,7 +2398,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     // ---- 7. surplus
     let saved = 0;
     extraDebtPaid = 0;
-    if (f > 0.005) saved = waterfall(f, true, fed.magiAca).saved;
+    if (f > 0.005)
+      saved = waterfall(f, true, { agi: fed.agi, conv: ti.rothConversions, iraDeduct: eIraDeduct }).saved;
     iraUsedBy[0] = 0;
     iraUsedBy[1] = 0;
 
@@ -2256,6 +2460,12 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     out.taxes[t] = taxTotal;
     out.shortfall[t] = shortfall;
     out.cpi[t] = cpi;
+    out.cpiEnd[t] = cpi * (1 + infl);
+    {
+      // Planned spending: this year's spending with no flexible-rule change and no shortfall.
+      const planned = spendingTotal + shortfall + (plannedLiving - living);
+      out.spendRatio[t] = planned > 0.5 ? Math.max(0, spendingTotal) / planned : 1;
+    }
     out.lifetimeTax += taxTotal / cpi;
     if (shortfall > 1 && out.success) {
       out.success = false;
@@ -2290,6 +2500,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         year: y,
         t,
         cpi,
+        cpiEnd: cpi * (1 + infl),
         ages,
         alive: alive.slice(),
         filingStatus: status,
@@ -2415,10 +2626,17 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     health *= 1 + infl + path.healthExcess[t];
     edu *= 1 + infl + A.inflation.educationExcess;
     for (let i = 0; i < nI; i++) {
-      const g = plan.incomes[i].growth;
       const inc = plan.incomes[i];
-      const gr = inc.kind === 'pension' && inc.pension ? inc.pension.cola : g;
-      incIdx[i] *= gr.basis === 'real' ? (1 + infl) * (1 + gr.rate) : 1 + gr.rate;
+      if (inc.kind === 'pension' && inc.pension) {
+        // The amount is the first-year benefit (see IncomeZ): before payments start, a real-COLA pension is only
+        // carried forward by inflation and a nominal-COLA pension stays put; the COLA applies from the start.
+        const gr = inc.pension.cola;
+        if (incStarted[i]) incIdx[i] *= gr.basis === 'real' ? (1 + infl) * (1 + gr.rate) : 1 + gr.rate;
+        else if (gr.basis === 'real') incIdx[i] *= 1 + infl;
+        continue;
+      }
+      const g = inc.growth;
+      incIdx[i] *= g.basis === 'real' ? (1 + infl) * (1 + g.rate) : 1 + g.rate;
     }
     cpiIdx[t + 1] = cpi;
     healthIdx[t + 1] = health;
@@ -2438,7 +2656,21 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
   for (const as of assets) if (as.owned) stepUp += Math.max(0, as.value - as.basis);
   const fedLast = pickYear(data.federal, startYear + last);
   const kLast = cpi / (cpiIdx[Math.max(0, Math.min(out.n, fedLast.dataYear - startYear))] || 1);
-  const eTax = estateTax(fedLast.value, kLast, Math.max(0, estateValue), false);
+  // Portability (TAX-14): a surviving spouse adds the first spouse's unused exemption (DSUE), fixed at the
+  // exemption in the year of the first death. Everything is assumed to pass to the spouse at the first death.
+  let dsue = 0;
+  if (nP === 2) {
+    const married = (st: FilingStatus | undefined): boolean => st === 'mfj' || st === 'mfs' || st === 'qss';
+    const tD = firstDeathYear - startYear;
+    if (Number.isFinite(firstDeathYear) && tD >= 0 && tD < statusHist.length) {
+      if (married(statusHist[tD])) {
+        const fd = pickYear(data.federal, firstDeathYear);
+        dsue = fd.value.estate.exemption * kFor(fd.dataYear, tD, cpiIdx, A.inflation.rate);
+      }
+    } else if (!Number.isFinite(firstDeathYear) && married(statusHist[last]))
+      dsue = fedLast.value.estate.exemption * kLast;
+  }
+  const eTax = estateTax(fedLast.value, kLast, Math.max(0, estateValue), false, dsue);
   const drag = pretaxLeft * S.estate.heirMarginalRate;
   out.estate = {
     value: estateValue,

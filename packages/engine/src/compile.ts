@@ -6,6 +6,8 @@ import type { Account, AccountType, Allocation, Coverage, Plan, YearRef } from '
 import { ASSET_CLASSES } from './schema';
 import type { EngineData } from './data';
 import { applyColas, claimFactor, computePia, fraMonths, awiFor } from './social-security';
+// Circular by design: the M1 pre-pass runs one deterministic projection. Only used inside compilePlan at call time.
+import { fixedPath, runPath } from './projection';
 
 export const NC = ASSET_CLASSES.length;
 export const enum Kind {
@@ -79,6 +81,10 @@ export interface CPerson {
   ssFirstYearFraction: number;
   ssClaimMonths: number;
   ssFraMonths: number;
+  /** Full retirement age for survivor benefits (the retirement FRA table shifted two birth years). */
+  ssSurvivorFraMonths: number;
+  /** Age in months when a spousal benefit can start: the later of this person's and the spouse's filing. */
+  ssSpousalStartMonths: number;
   ssEstimated: boolean;
   rmdStartAge: number;
 }
@@ -143,11 +149,46 @@ export function staticYear(
   return NaN;
 }
 
+const isEarned = (inc: Plan['incomes'][number]): boolean =>
+  inc.taxCharacter === 'earned' || inc.taxCharacter === 'selfEmployment';
+
+/** True when a Social Security earnings projection depends on a condition milestone (so it needs a pre-pass). */
+function earningsNeedConditionYears(plan: Plan): boolean {
+  if (!plan.people.some((p) => p.socialSecurity.mode === 'earnings')) return false;
+  const cond = new Set(plan.milestones.filter((m) => m.when.type === 'condition').map((m) => m.id));
+  if (cond.size === 0) return false;
+  const refsCond = (r: YearRef | undefined): boolean => r?.type === 'milestone' && cond.has(r.milestoneId);
+  for (const inc of plan.incomes) {
+    if (!isEarned(inc)) continue;
+    if (refsCond(inc.start) || refsCond(inc.end)) return true;
+    for (const m of plan.milestones)
+      if (
+        cond.has(m.id) &&
+        m.effects.some(
+          (e) => (e.type === 'stop' || e.type === 'start') && e.target === 'income' && e.targetId === inc.id,
+        )
+      )
+        return true;
+  }
+  return false;
+}
+
 export function compilePlan(
   plan: Plan,
   data: EngineData,
-  opts: { stochasticLongevity?: boolean } = {},
+  opts: {
+    stochasticLongevity?: boolean;
+    /** Years condition milestones fired in a deterministic pre-pass (used for the Social Security earnings record). */
+    conditionYears?: Record<string, number>;
+  } = {},
 ): Compiled {
+  // M1: when an earned income ends (or a milestone stops it) on a condition milestone, run the deterministic
+  // projection once to find when it fires, then compile again with that year.
+  if (!opts.conditionYears && earningsNeedConditionYears(plan)) {
+    const first = compilePlan(plan, data, { ...opts, conditionYears: {} });
+    const res = runPath(first, fixedPath(first));
+    return compilePlan(plan, data, { ...opts, conditionYears: res.milestoneYears });
+  }
   const warnings: string[] = [];
   const startYear = plan.settings.startYear;
   const infl = plan.assumptions.inflation.rate;
@@ -164,11 +205,18 @@ export function compilePlan(
     }
     return NaN;
   });
+  // Milestone years for the earnings projection: static years plus any condition years from the pre-pass.
+  const earningsMsYear = plan.milestones.map((m, i) => opts.conditionYears?.[m.id] ?? milestoneYear[i]);
 
   const personIdx = (id: string): number => {
     const i = plan.people.findIndex((p) => p.id === id);
     return i < 0 ? 0 : i;
   };
+  const claimAbsMonth = (p: Plan['people'][number]): number =>
+    +p.birthDate.slice(0, 4) * 12 +
+    (+p.birthDate.slice(5, 7) - 1) +
+    p.socialSecurity.claimAge.years * 12 +
+    p.socialSecurity.claimAge.months;
 
   // ------------------------------------------------------------ people + Social Security
   const people: CPerson[] = plan.people.map((p, pi) => {
@@ -187,11 +235,22 @@ export function compilePlan(
       let currentEarned = 0;
       for (const inc of plan.incomes) {
         if (personIdx(inc.ownerId) !== pi) continue;
-        if (inc.taxCharacter !== 'earned' && inc.taxCharacter !== 'selfEmployment') continue;
-        const s = staticYear(plan, inc.start, startYear);
-        const e = staticYear(plan, inc.end, birthYear + 67);
-        const from = Math.max(startYear, Number.isNaN(s) ? startYear : s);
-        const to = Number.isNaN(e) ? birthYear + 67 : e;
+        if (!isEarned(inc)) continue;
+        const s = staticYear(plan, inc.start, startYear, earningsMsYear, msIndex);
+        const e = staticYear(plan, inc.end, birthYear + 67, earningsMsYear, msIndex);
+        let from = Math.max(startYear, Number.isNaN(s) ? startYear : s);
+        let to = Number.isNaN(e) ? birthYear + 67 : e;
+        // Milestone stop / start effects end or begin the income just as they do in the projection (M1).
+        plan.milestones.forEach((m, mi) => {
+          const my = earningsMsYear[mi];
+          if (Number.isNaN(my)) return;
+          for (const ef of m.effects) {
+            if (ef.type !== 'stop' && ef.type !== 'start') continue;
+            if (ef.target !== 'income' || ef.targetId !== inc.id) continue;
+            if (ef.type === 'stop') to = Math.min(to, my);
+            else if (ef.type === 'start') from = Math.max(startYear, Math.min(from, my));
+          }
+        });
         const g = inc.growth.basis === 'real' ? (1 + infl) * (1 + inc.growth.rate) - 1 : inc.growth.rate;
         for (let y = from; y < to && y < birthYear + 70; y++) {
           earnings[y] = (earnings[y] ?? 0) + dollars(inc.amount) * Math.pow(1 + g, y - startYear);
@@ -219,9 +278,14 @@ export function compilePlan(
       piaAnnualToday = monthly * 12;
     }
     const factor = claimFactor(claimMonths, fra);
-    const claimAbsMonth = birthYear * 12 + (birthMonth - 1) + claimMonths;
+    const ownClaimAbs = claimAbsMonth(p);
+    const spouse = plan.people.length === 2 ? plan.people[pi === 0 ? 1 : 0] : undefined;
+    const spousalStartMonths = Math.max(
+      claimMonths,
+      spouse ? claimAbsMonth(spouse) - (birthYear * 12 + (birthMonth - 1)) : claimMonths,
+    );
     // Benefits are paid the month after entitlement.
-    const firstPaidMonth = claimAbsMonth + 1;
+    const firstPaidMonth = ownClaimAbs + 1;
     const ssClaimYear = Math.floor(firstPaidMonth / 12);
     const ssFirstYearFraction = (12 - (firstPaidMonth % 12)) / 12;
     const half = birthMonth <= 6 ? birthYear + 59 : birthYear + 60;
@@ -247,6 +311,8 @@ export function compilePlan(
       ssFirstYearFraction,
       ssClaimMonths: claimMonths,
       ssFraMonths: fra,
+      ssSurvivorFraMonths: fraMonths(data.ssSeries, birthYear - 2),
+      ssSpousalStartMonths: spousalStartMonths,
       ssEstimated: estimated,
       rmdStartAge: rmdAge,
     };
