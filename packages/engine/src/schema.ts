@@ -412,7 +412,15 @@ export const StrategiesZ = z.object({
   /** HSA: 'spend' pays medical out-of-pocket from the HSA; 'save' leaves it invested. */
   hsaUse: z.enum(['spend', 'save']).default('spend'),
   /** STRAT-03: marginal rate heirs are assumed to pay on inherited pre-tax accounts. */
-  estate: z.object({ heirMarginalRate: z.number().min(0).max(1).default(0.24) }).default({}),
+  estate: z
+    .object({
+      heirMarginalRate: z.number().min(0).max(1).default(0.24),
+      /** Net worth to leave at the end of the plan, in today's dollars (cents). 0 = no goal. */
+      legacyGoal: cents.min(0).default(0),
+      /** When on, a simulation counts as a success only if spending is covered every year AND the goal is met. */
+      legacyGoalForSuccess: z.boolean().default(false),
+    })
+    .default({}),
 });
 export type Strategies = z.infer<typeof StrategiesZ>;
 

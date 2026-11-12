@@ -27,6 +27,9 @@ export const HELP: Record<string, string> = {
   'Year they were born': '@see Year you were born',
   'Year you were born':
     'Your age drives retirement-account rules (penalty-free withdrawals from 59½, required distributions from 73 or 75), Social Security claiming ages and Medicare at 65.',
+  'Month they were born': '@see Month you were born',
+  'Month you were born':
+    'Pay that ends at a retirement age runs up to that birthday, so part of that year is still earned. The month also sets when you reach 59½ and when Social Security can start.',
   'Sex (for life tables)':
     'Used only to pick the Social Security life table when lifespans vary in simulations, and to show the odds of reaching your plan-until age. Women live longer than men on average.',
   'State you live in':
@@ -325,6 +328,10 @@ export const HELP: Record<string, string> = {
     "Life tables describe death rates today. People keep living longer, so rates in future years are likely lower. 0% uses the table as published; about 0.8% a year is close to the Social Security Trustees' middle assumption.",
   'Appeal higher Medicare premiums after retiring':
     "Medicare premiums rise with income from two years earlier (IRMAA). After work stops or is cut back you can ask Social Security to use this year's lower income instead (form SSA-44). When on, Longview applies this whenever household pay drops by 10% or more against the lookback year.",
+  "Leave at least (today's dollars)":
+    "Net worth you want left at the end of the plan, for heirs or a cushion, in today's dollars. 0 means no goal. The projection shows whether the expected path meets it, and Chance of success shows how many simulations do.",
+  'Count the goal in the chance of success':
+    'When on, a simulation only counts as a success if spending is covered every year and it also ends with at least this much. When off, the goal is reported separately.',
   'Number of runs':
     'How many simulated futures to run. More runs give a steadier answer but take longer. 1,000 is usually enough.',
   Seed: 'The starting point for the random numbers. The same seed always gives the same answer, so a change in the result comes from a change in your plan.',

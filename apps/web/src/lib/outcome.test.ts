@@ -39,6 +39,7 @@ type Draft = Parameters<typeof buildPlan>[0];
 const person = (o: Partial<Draft['people'][0]> = {}): Draft['people'][0] => ({
   name: 'Sam',
   birthYear: 1986,
+  birthMonth: 6,
   sex: 'female',
   planUntil: 95,
   salary: 100000,

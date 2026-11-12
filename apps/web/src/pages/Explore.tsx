@@ -169,7 +169,11 @@ export function ProjectionPage(): ReactNode {
           <Stat
             label="Left at the end of the plan"
             value={formatCompact(s.endingNetWorthReal)}
-            note={`Net worth in ${s.endYear} (${endAges}), today's dollars`}
+            note={
+              s.legacyGoalReal > 0
+                ? `Net worth in ${s.endYear} (${endAges}), today's dollars. ${s.legacyGoalMet ? 'Meets' : 'Short of'} your ${formatCompact(s.legacyGoalReal)} goal`
+                : `Net worth in ${s.endYear} (${endAges}), today's dollars`
+            }
           />
           <Stat
             label="Financially independent"
@@ -638,7 +642,19 @@ export function TaxesPage(): ReactNode {
         group="explore"
         title="Taxes"
         intro={`Estimated federal, payroll and state tax each year, in ${m.unit}. For planning only; this is not a tax return.`}
-        actions={<ProjectedBadge result={result} />}
+        actions={
+          <span className="lv-row">
+            {recs.some((x) => x.taxes.state > 0.5) ? (
+              <span
+                title="State tax uses each state's brackets, deductions and main retirement exclusions, but not every credit or local tax. Treat it as a rough estimate."
+                data-tour="state-tax-estimate"
+              >
+                <Badge tone="warn">State tax is a rough estimate</Badge>
+              </span>
+            ) : null}
+            <ProjectedBadge result={result} />
+          </span>
+        }
       />
       <RecomputeError error={error} />
       <Card data-tour="tax-stats">
@@ -861,11 +877,19 @@ export function SuccessPage(): ReactNode {
               value={summary ? formatPct(summary.successRate) : '…'}
               note={
                 summary
-                  ? `${summary.runs.toLocaleString()} of ${mc.runs.toLocaleString()} runs · seed ${mc.seed}`
+                  ? `${summary.runs.toLocaleString()} of ${mc.runs.toLocaleString()} runs · seed ${mc.seed}${summary.legacyGoal?.countsForSuccess ? ' · includes your ending goal' : ''}`
                   : 'Starting…'
               }
               data-tour="success-rate"
             />
+            {summary?.legacyGoal ? (
+              <Stat
+                label={`Leave at least ${formatCompact(summary.legacyGoal.goal)}`}
+                value={formatPct(summary.legacyGoal.metRate)}
+                note={`of runs end with that much or more. Spending covered every year in ${formatPct(summary.fundedRate)}`}
+                data-tour="legacy-goal-rate"
+              />
+            ) : null}
             <Stat
               label="Median ending wealth"
               value={summary ? formatCompact(summary.endingPercentiles.p50) : '…'}
@@ -1185,7 +1209,9 @@ export function HistoryPage(): ReactNode {
             <p className="lv-muted lv-small">
               Each line is one start year, in today's dollars. Red lines ran short. The thick line is the
               hardest start year. International stocks and REITs follow US stocks here because they have no
-              long public history.
+              long public history. Bonds are 10-year Treasuries, which lost more in the 1970s than the
+              intermediate bonds used in the Bengen and Trinity studies, so a 4% plan here can look a few
+              points worse than those studies report.
             </p>
           </Card>
           <Card title="The ten hardest start years" data-tour="worst-table">

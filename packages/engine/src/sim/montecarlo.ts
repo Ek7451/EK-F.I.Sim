@@ -18,6 +18,8 @@ export interface McChunk {
   endingReal: Float64Array;
   /** Net estate to heirs in today's dollars at the end of the run. */
   estateReal: Float64Array;
+  /** Net worth at the end of the run (everything owned less debts), today's dollars. */
+  netWorthEndReal: Float64Array;
   lifetimeTaxReal: Float64Array;
   lastYearIndex: Int32Array;
   /** Years in which spending fell below plan (a flexible rule cut it, or a shortfall). */
@@ -34,7 +36,12 @@ export interface McSummary {
   meansUsed: ReturnMeans;
   startYear: number;
   years: number[];
+  /** Share of runs counted a success: spending covered every year, and the legacy goal when it counts. */
   successRate: number;
+  /** Share of runs with spending covered every year (the success rate when no goal counts). */
+  fundedRate: number;
+  /** The ending net-worth goal (today's dollars) and the share of runs that meet it; null when none is set. */
+  legacyGoal: { goal: number; metRate: number; countsForSuccess: boolean } | null;
   /**
    * Percentile bands of investable assets in today's dollars, by year. With stochastic longevity, a year's bands use
    * only the runs still going that year (see `activeShare`).
@@ -98,6 +105,7 @@ export function runMonteCarloChunk(
     failYear: new Int32Array(count).fill(-1),
     endingReal: new Float64Array(count),
     estateReal: new Float64Array(count),
+    netWorthEndReal: new Float64Array(count),
     lifetimeTaxReal: new Float64Array(count),
     lastYearIndex: new Int32Array(count),
     cutYears: new Int32Array(count),
@@ -124,6 +132,7 @@ export function runMonteCarloChunk(
     const last = Math.max(0, res.n - 1);
     chunk.endingReal[r] = chunk.investable[o + last];
     chunk.estateReal[r] = res.estate.netToHeirs / (res.cpiEnd[last] || 1);
+    chunk.netWorthEndReal[r] = res.estate.value / (res.cpiEnd[last] || 1);
     chunk.lifetimeTaxReal[r] = res.lifetimeTax;
     chunk.lastYearIndex[r] = last;
     chunk.cutYears[r] = cuts;
@@ -198,6 +207,10 @@ export function summarizeMonteCarlo(
   activeShare.length = usedYears;
   let ok = 0;
   let withCuts = 0;
+  const est = c.plan.strategies.estate;
+  const goal = est.legacyGoal / 100;
+  let goalOk = 0;
+  let bothOk = 0;
   const fail = new Map<number, number>();
   const ending: number[] = [];
   const estate: number[] = [];
@@ -209,6 +222,9 @@ export function summarizeMonteCarlo(
     const cnt = ch.to - ch.from;
     for (let r = 0; r < cnt; r++) {
       if (ch.success[r]) ok++;
+      const met = ch.netWorthEndReal[r] >= goal - 0.5;
+      if (met) goalOk++;
+      if (ch.success[r] && met) bothOk++;
       else fail.set(ch.failYear[r], (fail.get(ch.failYear[r]) ?? 0) + 1);
       ending.push(ch.endingReal[r]);
       estate.push(ch.estateReal[r]);
@@ -243,7 +259,12 @@ export function summarizeMonteCarlo(
     }),
     startYear: c.startYear,
     years: Array.from({ length: usedYears }, (_, i) => c.startYear + i),
-    successRate: runs ? ok / runs : 0,
+    successRate: runs ? (goal > 0 && est.legacyGoalForSuccess ? bothOk : ok) / runs : 0,
+    fundedRate: runs ? ok / runs : 0,
+    legacyGoal:
+      goal > 0
+        ? { goal, metRate: runs ? goalOk / runs : 0, countsForSuccess: est.legacyGoalForSuccess }
+        : null,
     bands,
     activeShare,
     solventShare,

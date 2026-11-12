@@ -160,7 +160,9 @@ export function StrategyPage(): ReactNode {
           <SelectField label="Rebalance accounts" value={S.rebalance.mode} options={[{ value: 'annual', label: 'Every year' }, { value: 'threshold', label: 'Only when the mix drifts' }, { value: 'none', label: 'Never' }]} onChange={(v) => update((d) => { d.strategies.rebalance.mode = v; })} />
           {S.rebalance.mode === 'threshold' ? <PercentField label="Drift that triggers it" digits={0} value={S.rebalance.band} onChange={(v) => update((d) => { d.strategies.rebalance.band = Math.max(0, Math.min(1, v)); })} /> : null}
           <PercentField label="Tax rate heirs pay on inherited pre-tax accounts" digits={0} value={S.estate.heirMarginalRate} onChange={(v) => update((d) => { d.strategies.estate.heirMarginalRate = Math.max(0, Math.min(1, v)); })} data-tour="heir-rate" />
+          <MoneyField label="Leave at least (today's dollars)" cents={S.estate.legacyGoal} onChange={(v) => update((d) => { d.strategies.estate.legacyGoal = Math.max(0, v); })} data-tour="legacy-goal" />
         </div>
+        {S.estate.legacyGoal > 0 ? <div style={{ marginTop: 12 }}><Switch label="Count the goal in the chance of success" checked={S.estate.legacyGoalForSuccess} onChange={(v) => update((d) => { d.strategies.estate.legacyGoalForSuccess = v; })} /></div> : null}
       </Card>
     </>
   );

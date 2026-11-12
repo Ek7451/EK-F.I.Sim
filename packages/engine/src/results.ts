@@ -20,6 +20,9 @@ export interface ProjectionSummary {
   currentNetWorth: number;
   savingsRate: number;
   averageEffectiveTaxRate: number;
+  /** Ending net-worth goal in today's dollars (0 = none), and whether the expected path meets it. */
+  legacyGoalReal: number;
+  legacyGoalMet: boolean;
 }
 
 export interface ProjectionResult {
@@ -95,6 +98,9 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
       currentNetWorth: first ? first.check.opening + first.assets - first.debts : 0,
       savingsRate: first && first.income.total > 0 ? Math.max(0, saved0) / first.income.total : 0,
       averageEffectiveTaxRate: grossSum > 0 ? taxSum / grossSum : 0,
+      legacyGoalReal: plan.strategies.estate.legacyGoal / 100,
+      legacyGoalMet:
+        (last ? toReal(last.netWorth, last) : 0) >= plan.strategies.estate.legacyGoal / 100 - 0.5,
     },
     estate: res.estate,
     milestoneYears: res.milestoneYears,

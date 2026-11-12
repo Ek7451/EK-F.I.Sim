@@ -35,9 +35,26 @@ const ASSUMED = {
   coreShare: 0.85,
 } as const;
 
+const MONTHS = [
+  'January',
+  'February',
+  'March',
+  'April',
+  'May',
+  'June',
+  'July',
+  'August',
+  'September',
+  'October',
+  'November',
+  'December',
+];
+
 interface PersonDraft {
   name: string;
   birthYear: number;
+  /** 1 to 12. Pay ending at a retirement age runs to this birthday, and 59½ and 65 fall in this month. */
+  birthMonth: number;
   sex: '' | 'female' | 'male';
   planUntil: number;
   salary: number;
@@ -101,7 +118,7 @@ export function buildPlan(d: Draft, year: number): PlanInput {
   const people: PlanInput['people'] = ppl.map((p, i) => ({
     id: pid(i),
     name: displayName(p, i),
-    birthDate: `${p.birthYear}-06-15`,
+    birthDate: `${p.birthYear}-${String(p.birthMonth).padStart(2, '0')}-15`,
     sex: p.sex || undefined,
     longevity: { mode: 'fixed', age: p.planUntil },
     residence: [{ state: d.state, fromYear: year }],
@@ -266,6 +283,7 @@ function newPerson(year: number, partner: boolean): PersonDraft {
   return {
     name: '',
     birthYear: year - 35,
+    birthMonth: 6,
     sex: '',
     planUntil: 95,
     salary: partner ? 60000 : 80000,
@@ -415,6 +433,12 @@ export function StartPage(): ReactNode {
                     min={1930}
                     max={year - 16}
                     onChange={(v) => upP(i, { birthYear: v })}
+                  />
+                  <SelectField
+                    label={i === 0 ? 'Month you were born' : 'Month they were born'}
+                    value={String(p.birthMonth)}
+                    options={MONTHS.map((m, k) => ({ value: String(k + 1), label: m }))}
+                    onChange={(v) => upP(i, { birthMonth: +v })}
                   />
                   <SelectField
                     label="Sex (for life tables)"
