@@ -209,3 +209,22 @@ describe('ending net-worth goal (3c.4)', () => {
     expect(s.successRate).toBe(s.fundedRate);
   });
 });
+
+describe('income tax character defaults by kind', () => {
+  it('pay is earned and everything else is ordinary income when the plan does not say', () => {
+    const inc = (kind: string): Over => ({ id: kind, ownerId: 'p1', name: kind, kind, amount: D(1000) });
+    const plan = mk({
+      people: [person('p1', '1970-01-01')],
+      incomes: ['wages', 'bonus', 'selfEmployment', 'pension', 'annuity', 'rental', 'other'].map(inc),
+    });
+    expect(plan.incomes.map((i) => i.taxCharacter)).toEqual([
+      'earned',
+      'earned',
+      'selfEmployment',
+      'ordinary',
+      'ordinary',
+      'ordinary',
+      'ordinary',
+    ]);
+  });
+});

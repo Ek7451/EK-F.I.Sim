@@ -214,34 +214,46 @@ export const DebtZ = z.object({
 });
 export type Debt = z.infer<typeof DebtZ>;
 
-export const IncomeZ = z.object({
-  id,
-  ownerId: id,
-  name: z.string(),
-  kind: z.enum(['wages', 'bonus', 'selfEmployment', 'rental', 'pension', 'annuity', 'other']),
-  /**
-   * Annual amount in today's (plan-start) dollars, grown by `growth` from the plan start. Pensions differ: the amount
-   * is the annual benefit in its first year of payment. With a nominal COLA it is that year's nominal amount; with a
-   * real COLA it is in today's dollars and is carried to the start year by inflation. The COLA compounds from the
-   * year the pension starts.
-   */
-  amount: cents,
-  growth: GrowthZ.default({ rate: 0 }),
-  start: YearRefZ.optional(),
-  end: YearRefZ.optional(),
-  taxCharacter: z
-    .enum(['earned', 'selfEmployment', 'ordinary', 'qualifiedDividend', 'capitalGain', 'taxFree'])
-    .default('earned'),
-  pension: z
-    .object({
-      cola: GrowthZ.default({ rate: 0, basis: 'nominal' }),
-      survivorPct: z.number().min(0).max(1).default(0.5),
-    })
-    .optional(),
-  /** Fraction of each annuity payment that is return of basis (not taxed). */
-  annuityExclusionRatio: z.number().min(0).max(1).default(0),
-  linkedAssetId: id.optional(),
-});
+/** Tax character an income has when the plan does not say: pay is earned, everything else ordinary income. */
+const DEFAULT_TAX_CHARACTER: Record<string, string> = {
+  wages: 'earned',
+  bonus: 'earned',
+  selfEmployment: 'selfEmployment',
+};
+export const IncomeZ = z.preprocess(
+  (v) =>
+    v && typeof v === 'object' && (v as { taxCharacter?: unknown }).taxCharacter === undefined
+      ? { ...v, taxCharacter: DEFAULT_TAX_CHARACTER[String((v as { kind?: unknown }).kind)] ?? 'ordinary' }
+      : v,
+  z.object({
+    id,
+    ownerId: id,
+    name: z.string(),
+    kind: z.enum(['wages', 'bonus', 'selfEmployment', 'rental', 'pension', 'annuity', 'other']),
+    /**
+     * Annual amount in today's (plan-start) dollars, grown by `growth` from the plan start. Pensions differ: the amount
+     * is the annual benefit in its first year of payment. With a nominal COLA it is that year's nominal amount; with a
+     * real COLA it is in today's dollars and is carried to the start year by inflation. The COLA compounds from the
+     * year the pension starts.
+     */
+    amount: cents,
+    growth: GrowthZ.default({ rate: 0 }),
+    start: YearRefZ.optional(),
+    end: YearRefZ.optional(),
+    taxCharacter: z
+      .enum(['earned', 'selfEmployment', 'ordinary', 'qualifiedDividend', 'capitalGain', 'taxFree'])
+      .default('earned'),
+    pension: z
+      .object({
+        cola: GrowthZ.default({ rate: 0, basis: 'nominal' }),
+        survivorPct: z.number().min(0).max(1).default(0.5),
+      })
+      .optional(),
+    /** Fraction of each annuity payment that is return of basis (not taxed). */
+    annuityExclusionRatio: z.number().min(0).max(1).default(0),
+    linkedAssetId: id.optional(),
+  }),
+);
 export type Income = z.infer<typeof IncomeZ>;
 
 export const ExpenseZ = z.object({

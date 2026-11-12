@@ -3,7 +3,7 @@
  * Every expectation is worked out by hand from the inputs and the bundled 2026/2027 data files; the comments show
  * the arithmetic. Plans use flat (zero) returns and no inflation wherever that makes the numbers exact.
  *
- * Tests marked `it.fails` document behaviour that looks like an engine bug; each says what is expected and why.
+ * Tests commented "Regression" pin engine bugs found by this file and since fixed.
  */
 import { loadEngineData } from '@fisim/data/src/node';
 import { describe, expect, it } from 'vitest';
@@ -122,12 +122,10 @@ describe('PLAN-02 inherited IRA, annuity and I-bond accounts', () => {
     expect(rec(r, 2026).withdrawals.rmd).toBeCloseTo(2762.43, 2);
   });
 
-  // Suspected bug (packages/engine/src/tax/rmd.ts:37 `inheritedRmd`, called from projection.ts ~990 with prevEnd):
-  // the year-10 clean-out withdraws
-  // the PRIOR year-end balance. With mid- or end-of-year timing the account still earns that year's return on it,
-  // so a residual is left after the 10-year deadline and only comes out in year 11. Here the 2030 opening balance
-  // 146,410 earns 10% while the withdrawal earns half a year: 146,410 x (1.10 - sqrt(1.10)) = 7,494.90 is left. The law requires the account to be empty by 31 December of the 10th year.
-  it.fails('10-year rule leaves nothing in the account after the deadline year (mid-year timing)', () => {
+  // Regression: the year-10 clean-out withdrew the prior year-end balance, and with mid- or end-of-year timing the
+  // account still earned that year's return, leaving 146,410 x (1.10 - sqrt(1.10)) = 7,494.90 past the deadline. The
+  // clean-out is now taken at the start of the year, so the account is empty by 31 December of year 10.
+  it('10-year rule leaves nothing in the account after the deadline year (mid-year timing)', () => {
     const r = run(inherited({ yearOfDeath: 2020, started: false, timing: 'mid', ret: 0.1 }));
     expect(rec(r, 2030).balances.inh ?? 0).toBeLessThan(1);
   });
@@ -810,10 +808,9 @@ describe('TAX-08 0% gain harvesting and loss harvesting with carryforward', () =
     const r = run(harvestPlan(40000, false));
     expect(r.every((x) => x.gainsHarvested === 0)).toBe(true);
   });
-  // Suspected bug (packages/engine/src/projection.ts ~2087, `let room = top0 - fedTmp.taxableIncome`): harvest room is (0% bracket top - taxable income),
-  // and taxable income is floored at zero, so any unused standard deduction is ignored. With no other income the
-  // engine harvests 49,450, but 49,450 + 16,100 = 65,550 of gain can be realized before any of it is taxed.
-  it.fails('with no other income, also uses the unused standard deduction (harvests 65,550)', () => {
+  // Regression: taxable income is floored at zero, and the harvest room used to ignore any unused standard
+  // deduction. With no other income 49,450 + 16,100 = 65,550 of gain can be realized before any of it is taxed.
+  it('with no other income, also uses the unused standard deduction (harvests 65,550)', () => {
     const y = run(harvestPlan(0))[0];
     expect(y.gainsHarvested).toBeCloseTo(65550, 0);
   });
@@ -866,10 +863,9 @@ describe('TAX-08 0% gain harvesting and loss harvesting with carryforward', () =
     expect(rec(r, 2028).lossesHarvested).toBe(0);
   });
 
-  // Suspected bug (packages/engine/src/compile.ts ~368, in `mk`): the compiler clamps a taxable account's basis to its
-  // balance (Math.min(bal, costBasis)), so a cost basis entered above the balance (an unrealized loss) is discarded
-  // and can never be harvested or deducted. Here a 50,000 position bought for 80,000 should harvest a 30,000 loss.
-  it.fails('keeps an entered cost basis above the balance so the loss can be harvested', () => {
+  // Regression: the compiler used to clamp a taxable account's basis to its balance, discarding an unrealized loss.
+  // Here a 50,000 position bought for 80,000 harvests a 30,000 loss.
+  it('keeps an entered cost basis above the balance so the loss can be harvested', () => {
     const y = run(
       mk({
         people: [person('p1', '1976-03-01')],
@@ -964,18 +960,13 @@ describe('HC-07 marketplace out-of-pocket: OOP maximum, utilization and cost-sha
     expect(csr.taxes.fplRatio).toBeLessThanOrEqual(2);
     expect(csr.expenses.healthcare.outOfPocket).toBeCloseTo(964.17, 2);
   });
-  // Suspected bug (packages/engine/src/healthcare.ts:80, `acaExpectedOop`): the CSR table has no lower bound, so a household below
-  // 100% FPL in a non-expansion state (the coverage gap: no premium credit, full-price premium) still gets the 94%
-  // CSR silver variant. CSRs need premium-credit eligibility (100%-250% FPL), so out-of-pocket should be the plain
-  // silver 2,225 for typical use. With no income the engine charges 445.
-  it.fails(
-    'no cost-sharing reduction in the coverage gap below 100% FPL (Texas, no Medicaid expansion)',
-    () => {
-      const y = aca(0, 'typical');
-      expect(y.taxes.ptc).toBe(0);
-      expect(y.expenses.healthcare.outOfPocket).toBeCloseTo(2225, 4);
-    },
-  );
+  // Regression: CSRs need premium-credit eligibility (100%-250% FPL). Below 100% FPL in a non-expansion state (the
+  // coverage gap: no credit, full-price premium) the plain silver plan applies: 2,225 for typical use, not 445.
+  it('no cost-sharing reduction in the coverage gap below 100% FPL (Texas, no Medicaid expansion)', () => {
+    const y = aca(0, 'typical');
+    expect(y.taxes.ptc).toBe(0);
+    expect(y.expenses.healthcare.outOfPocket).toBeCloseTo(2225, 4);
+  });
 });
 
 // ------------------------------------------------------------------------------------------------ HC-08
@@ -1061,16 +1052,22 @@ describe('HC-08 HSA contributions, Medicare cut-off and withdrawals', () => {
     expect(rec(r, 2027).balances.hsa).toBeCloseTo(5400, 6);
     expect(rec(r, 2030).balances.hsa).toBeCloseTo(5400, 6);
   });
-  // Suspected gap (packages/engine/src/projection.ts ~1098, `hsaLimitFor`): there is no Medicare look-back.
-  // Someone who works past 65 on an employer HDHP and enrolls in Medicare after retiring gets Part A backdated up to
-  // six months, so the HSA limit for the last working year should be cut to the months before that (here 6/12 of
-  // 5,400 = 2,700 for a person retiring at the end of 2026 and enrolling in January 2027). The engine allows 5,400.
-  it.fails('applies the six-month Medicare look-back in the last year before enrolling', () => {
+  // Medicare look-back: someone who works past 65 on an employer HDHP and enrolls in Medicare after retiring gets
+  // Part A backdated up to six months, so the HSA limit for the last working year is cut to the months before that:
+  // 6/12 of 5,400 = 2,700 for a person retiring at the end of 2026 and enrolling in January 2027.
+  it('applies the six-month Medicare look-back in the last year before enrolling', () => {
     const p = worker('1960-01-15', {});
     p.incomes[0].end = { type: 'year', year: 2027 };
     const r = run(p);
     expect(rec(r, 2027).coverage[0]).toBe('medicare');
     expect(rec(r, 2026).contributions.hsa).toBeCloseTo(2700, 0);
+    // Still working (and so not enrolling) next year: the full 4,400 + 1,000 = 5,400.
+    expect(rec(run(worker('1960-01-15')), 2026).contributions.hsa).toBeCloseTo(5400, 6);
+    // Turning 65 in October of the last working year: Part A cannot be backdated before October, so
+    // January-September (9 months) count: 9/12 x 5,400 = 4,050.
+    const oct = worker('1961-10-15');
+    oct.incomes[0].end = { type: 'year', year: 2027 };
+    expect(rec(run(oct), 2026).contributions.hsa).toBeCloseTo(4050, 6);
   });
 
   const spender = (hsaUse: 'spend' | 'save'): YearRecord =>
@@ -1119,11 +1116,10 @@ describe('HC-08 HSA contributions, Medicare cut-off and withdrawals', () => {
     expect(young.withdrawals.hsa).toBeCloseTo(12500, 1);
     expect(young.taxes.penalties).toBeCloseTo(2500, 1);
   });
-  // Suspected bug (packages/engine/src/projection.ts ~1700, `medicalOopKnown = hOop + hLtc`): in 'spend' mode the HSA pays only the out-of-pocket
-  // known before the tax solve (employer, COBRA, Medicare and long-term care). Marketplace out-of-pocket is figured
-  // inside the solve (eAcaOop) and is never paid from the HSA, so an ACA enrollee's medical bills come from other
-  // money. Here silver, typical use at about 3x FPL is 2,225 that the HSA should cover.
-  it.fails('pays marketplace out-of-pocket costs from the HSA in spend mode', () => {
+  // Regression: in spend mode the HSA used to pay only the out-of-pocket known before the tax solve (employer, COBRA,
+  // Medicare, long-term care). Marketplace out-of-pocket is figured inside the solve and now comes from the HSA too:
+  // silver, typical use at about 3x FPL is 2,225.
+  it('pays marketplace out-of-pocket costs from the HSA in spend mode', () => {
     const y = run(
       mk({
         people: [person('p1', '1976-03-01')],
@@ -1152,6 +1148,10 @@ describe('HC-08 HSA contributions, Medicare cut-off and withdrawals', () => {
     )[0];
     expect(y.expenses.healthcare.outOfPocket).toBeCloseTo(2225, 0);
     expect(y.expenses.healthcare.hsaPaid).toBeCloseTo(2225, 0);
+    expect(y.balances.hsa).toBeCloseTo(20000 - 2225, 0);
+    // Qualified: no tax and no penalty on it (AGI is the 47,000 of other income).
+    expect(y.taxes.agi).toBeCloseTo(47000, 0);
+    expect(y.taxes.penalties).toBe(0);
   });
 });
 
@@ -1166,23 +1166,23 @@ describe('HC-10 long-term care: expected-cost mode and insurance', () => {
         assumptions: flat(),
       }),
     );
-  // Assisted living 74,400 a year (CareScout 2025 national median), grown by healthcare inflation (2.5% + 2%):
-  // health index 1 in 2026, 1.045 in 2027, 1.045^2 in 2028.
+  // Assisted living 74,400 a year (CareScout 2025 national median, in 2025 dollars), grown by healthcare inflation
+  // (2.5% + 2%) from 2025: x 1.045 in 2026, 1.045^2 in 2027, 1.045^3 in 2028.
   it('adds the care cost for exactly the stated years from the onset age', () => {
     // Born 1946: onset at 81 = 2027, two years -> 2027 and 2028.
     const r = ltcPlan({ careType: 'assistedLiving', onsetAge: 81, years: 2 });
     expect(rec(r, 2026).expenses.healthcare.ltc).toBe(0);
-    expect(rec(r, 2027).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045, 4); // 77,748
-    expect(rec(r, 2028).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 2, 4); // 81,246.66
+    expect(rec(r, 2027).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 2, 4); // 81,246.66
+    expect(rec(r, 2028).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 3, 4); // 84,902.76
     expect(rec(r, 2029).expenses.healthcare.ltc).toBe(0);
     // A fractional duration charges the last part-year pro rata: 2.5 years -> half of 2029.
     const half = ltcPlan({ careType: 'assistedLiving', onsetAge: 81, years: 2.5 });
-    expect(rec(half, 2029).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 3 * 0.5, 4);
+    expect(rec(half, 2029).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 4 * 0.5, 4);
     expect(rec(half, 2030).expenses.healthcare.ltc).toBe(0);
   });
   it('uses the cost of the chosen care type', () => {
     const r = ltcPlan({ careType: 'nursingHomePrivate', onsetAge: 80, years: 1 });
-    expect(rec(r, 2026).expenses.healthcare.ltc).toBeCloseTo(129575, 4);
+    expect(rec(r, 2026).expenses.healthcare.ltc).toBeCloseTo(129575 * 1.045, 4); // 135,405.88
   });
   it('insurance pays its benefit for its benefit years, and its premium is due until care starts', () => {
     // Premium 3,000 a year (CPI-indexed; CPI 1 in 2026), benefit 50,000 a year for one year.
@@ -1196,17 +1196,15 @@ describe('HC-10 long-term care: expected-cost mode and insurance', () => {
     expect(
       rec(ins, 2026).expenses.healthcare.premiums - rec(none, 2026).expenses.healthcare.premiums,
     ).toBeCloseTo(3000, 4);
-    expect(rec(ins, 2027).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 - 50000, 4); // 27,748
-    expect(rec(ins, 2028).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 2, 4); // benefit used up
+    expect(rec(ins, 2027).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 2 - 50000, 4); // 31,246.66
+    expect(rec(ins, 2028).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045 ** 3, 4); // benefit used up
     expect(rec(ins, 2027).expenses.healthcare.premiums).toBeCloseTo(
       rec(none, 2027).expenses.healthcare.premiums,
       4,
     );
   });
-  // Suspected bug (packages/engine/src/projection.ts ~1556, the LTC `cost` line): the LTC cost table is in 2025 dollars (CareScout 2025),
-  // but it is used as-is in the 2026 start year; other data files are carried to the plan year with kFor(). A 2026
-  // onset should cost 74,400 x 1.045 (one year of healthcare inflation), not 74,400.
-  it.fails('carries the 2025 cost table forward to the plan start year', () => {
+  // Regression: the 2025 cost table used to be applied as-is in the 2026 start year.
+  it('carries the 2025 cost table forward to the plan start year', () => {
     const r = ltcPlan({ careType: 'assistedLiving', onsetAge: 80, years: 1 });
     expect(rec(r, 2026).expenses.healthcare.ltc).toBeCloseTo(74400 * 1.045, 0);
   });

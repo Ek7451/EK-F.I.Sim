@@ -363,10 +363,14 @@ export function compilePlan(
       owner: personIdx(a.ownerId),
       joint: a.ownerId === 'joint',
       balance: bal,
+      // A taxable account keeps a basis above its balance (an unrealized loss that can be harvested or realized).
+      // 529s, annuities and I-bonds stay capped at the balance: their withdrawal rules only model gains.
       basis:
-        kind === Kind.Taxable || kind === Kind.Deferred || kind === Kind.Edu
-          ? Math.min(bal, dollars(a.costBasis ?? a.balance))
-          : 0,
+        kind === Kind.Taxable
+          ? Math.max(0, dollars(a.costBasis ?? a.balance))
+          : kind === Kind.Deferred || kind === Kind.Edu
+            ? Math.min(bal, dollars(a.costBasis ?? a.balance))
+            : 0,
       rothContrib: kind === Kind.Roth ? Math.min(bal, dollars(a.rothBasis?.contributions ?? a.balance)) : 0,
       rothLots:
         kind === Kind.Roth

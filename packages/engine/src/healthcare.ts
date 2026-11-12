@@ -66,17 +66,22 @@ export function benchmarkAge21(
   return { monthly: file.stateAverageAge21, flagged: true, source: `${file.state} state average` };
 }
 
-/** Expected out-of-pocket cost for one person on a marketplace plan, including CSR on silver at <= 250% FPL (HC-07). */
+/**
+ * Expected out-of-pocket cost for one person on a marketplace plan, including CSR on silver at <= 250% FPL (HC-07).
+ * CSRs need premium-credit eligibility, so none apply below `minFpl` (100% FPL: the coverage gap in states that did
+ * not expand Medicaid).
+ */
 export function acaExpectedOop(
   cs: AcaCostSharingParams,
   metal: keyof AcaCostSharingParams['tiers'],
   utilization: 'low' | 'typical' | 'high',
   fplRatio: number,
+  minFpl = 1,
 ): number {
   let oopMax = cs.tiers[metal].oopMax;
   let av = cs.tiers[metal].actuarialValue;
   const baseAv = av;
-  if (metal === 'silver') {
+  if (metal === 'silver' && fplRatio >= minFpl) {
     for (const v of cs.csr) {
       if (fplRatio <= v.fplTo) {
         oopMax = v.oopMax;

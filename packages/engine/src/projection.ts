@@ -281,6 +281,9 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
   const seppAnnual = new Float64Array(nA);
   const seppEnd = new Int32Array(nA);
   const seppStart = new Int32Array(nA).fill(-1);
+  // Inherited IRAs emptied by the 10-year rule this year: the clean-out is taken at the start of the year so the
+  // account cannot earn a residual after the deadline (whatever the plan's flow-timing convention).
+  const cleanOut = new Uint8Array(nA);
   for (let a = 0; a < nA; a++) {
     const ac = accts[a];
     for (let k = 0; k < NC; k++) hold[a * NC + k] = ac.balance * ac.weights[k];
@@ -479,6 +482,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     const fired: string[] = [];
     dep.fill(0);
     wd.fill(0);
+    cleanOut.fill(0);
 
     // ---------------------------------------------------------- 1. clock, deaths, milestones
     const ages: number[] = [];
@@ -1002,6 +1006,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         );
         req = Math.max(req, Math.min(b, r));
         rmdTotal += Math.min(b, r);
+        if (since >= 10 && b > 0 && req >= b - 0.005) cleanOut[a] = 1;
       } else if (alive[owner[a]]) {
         const r = Math.min(b, ownerRmd(data.rmd, p.birthYear, ages[owner[a]], prevEnd[a]));
         if (r > req) {
@@ -1101,6 +1106,37 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       if (age >= 50) return (simple ? lim.simple.catchUp50 : lim.catchUp50) * kLim;
       return 0;
     };
+    // Medicare look-back (HC-08): someone past 65 who keeps employer coverage and enrolls in Medicare next year (the
+    // job ends) gets Part A backdated up to six months, but not before the month they turn 65. HSA eligibility ends
+    // when Part A starts, so this year's limit is cut to the months before the backdated start. Only statically known
+    // end years count (income end dates and year / age milestones); a condition milestone cannot be foreseen.
+    const earnsNextYear = (j: number): boolean => {
+      const ny = y + 1;
+      for (let ii = 0; ii < nI; ii++) {
+        const inc = plan.incomes[ii];
+        if (inc.taxCharacter !== 'earned' && inc.taxCharacter !== 'selfEmployment') continue;
+        const o = c.people.findIndex((p) => p.id === inc.ownerId);
+        if ((o < 0 ? primary : o) !== j || incForce[ii] === -1) continue;
+        const endY = resolve(inc.end, Infinity);
+        let on = (incForce[ii] === 1 || ny >= resolve(inc.start, startYear)) && ny < endY;
+        for (let m = 0; on && m < plan.milestones.length; m++)
+          if (milestoneYear[m] === ny)
+            for (const e of plan.milestones[m].effects)
+              if (e.type === 'stop' && e.target === 'income' && e.targetId === inc.id) on = false;
+        if (on) return true;
+      }
+      return false;
+    };
+    const hsaMonthsFrac = (i: number): number => {
+      const tp = covType[i];
+      if (ages[i] < 65 || (tp !== 'employer' && tp !== 'spouseEmployer')) return 1;
+      const p = c.people[i];
+      const medicareYear = p.birthYear + 65 + (p.birthMonth > 6 ? 1 : 0);
+      if (y + 1 < medicareYear) return 1;
+      if (earnsNextYear(tp === 'employer' ? i : i === 0 ? 1 : 0)) return 1;
+      const firstPartAMonth = ages[i] === 65 ? Math.max(7, p.birthMonth) : 7; // 1-based month in this year
+      return (firstPartAMonth - 1) / 12;
+    };
     const hsaLimitFor = (i: number): number => {
       const tp = covType[i];
       const en = covEntry[i];
@@ -1119,7 +1155,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         kidsUnder17 + otherDeps > 0;
       // The family limit is shared; give it to the first eligible spouse and the catch-up to each.
       const baseLim = family ? (i === primary || hsaLimitShared === 0 ? lim.hsa.family : 0) : lim.hsa.self;
-      return baseLim * kLim + (ages[i] >= 55 ? lim.hsa.catchUp55 : 0);
+      return (baseLim * kLim + (ages[i] >= 55 ? lim.hsa.catchUp55 : 0)) * hsaMonthsFrac(i);
     };
     let hsaLimitShared = 0;
     for (let a = 0; a < nA; a++) {
@@ -1558,7 +1594,14 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
           const yearsIn = ev ? ages[i] - ev.onsetAge : -1;
           if (ev && yearsIn >= 0 && yearsIn < ev.years) {
             const fr = Math.min(1, ev.years - yearsIn);
-            let cost = data.ltc.annualCost[ltc.careType] * (data.ltc.stateFactor[state] ?? 1) * health * fr;
+            // The cost table is in its survey year's dollars: carry it to this year with healthcare inflation.
+            const kLtc = kFor(
+              data.ltc.year,
+              t,
+              healthIdx,
+              A.inflation.rate + A.healthcareInflation.excessOverCpi,
+            );
+            let cost = data.ltc.annualCost[ltc.careType] * (data.ltc.stateFactor[state] ?? 1) * kLtc * fr;
             if (ltc.insurance && yearsIn < ltc.insurance.benefitYears)
               cost = Math.max(0, cost - (ltc.insurance.annualBenefit / 100) * fr);
             hLtc += cost;
@@ -1812,6 +1855,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     let eBackdoorOrd = 0;
     let eMedicaid = false;
     let eAcaOop = 0;
+    let eHsaAca = 0; // marketplace out-of-pocket paid from the HSA (spend mode)
     let pretaxCap = Infinity;
     let magiRoom = Infinity;
     let wOrd = 0;
@@ -2090,9 +2134,14 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         federalTax(fp, k, ti, fedTmp);
         const top0 = bracketTop(fp.capitalGainsBrackets[ts], 0, k);
         let room = top0 - fedTmp.taxableIncome;
+        // Taxable income is floored at zero: gains first fill any deduction the other income leaves unused.
+        if (fedTmp.taxableIncome <= 0)
+          room += Math.max(0, fedTmp.deduction + fedTmp.qbiDeduction - fedTmp.agi);
         if (magiCap !== Infinity) room = Math.min(room, magiCap - fedTmp.magiAca);
         hv = Math.max(0, Math.min(harvestable - Math.max(0, wLtcg), room));
-        if (hv > 0 && ssTotal > 0) {
+        // Re-check against the bracket top: harvested gains can make more Social Security taxable or shrink
+        // AGI-dependent deductions (senior deduction, SALT), so trim any overshoot.
+        if (hv > 0) {
           setLedger(bdOrd, cv, hv, deduct);
           federalTax(fp, k, ti, fedTmp);
           const over = fedTmp.taxableIncome - top0;
@@ -2110,17 +2159,26 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         eHealthAdj = 0;
         eMedicaid = false;
         eAcaOop = 0;
+        eHsaAca = 0;
         eFplRatio = fplBase > 0 ? fed.magiAca / fplBase : 0;
         if (acaMembers > 0) {
           if (medicaidExpansion && eFplRatio < data.acaStateRules.medicaidFplThreshold) eMedicaid = true;
           else {
             ePtc = premiumTaxCredit(apPick, acaSlcsp, acaPremium, fed.magiAca, fplBase);
             for (const o of acaOopInputs)
-              eAcaOop += acaExpectedOop(cs, o.metal, o.util, eFplRatio) * kCs * o.frac;
+              eAcaOop += acaExpectedOop(cs, o.metal, o.util, eFplRatio, apPick.minFpl) * kCs * o.frac;
             eHealthAdj = acaPremium + eAcaOop;
+            // Marketplace out-of-pocket depends on MAGI (CSR), so it is only known here; in spend mode the HSA pays it
+            // too (qualified, untaxed), from what is left after the costs paid before the solve and any withdrawals.
+            if (S.hsaUse === 'spend' && eAcaOop > 0) {
+              let room = 0;
+              for (let a = 0; a < nA; a++)
+                if (accts[a].kind === Kind.Hsa) room += Math.max(0, totAvail[a] - wAmt[a]);
+              eHsaAca = Math.min(eAcaOop, room);
+            }
           }
         }
-        net = cashInFixed + (G - eUnmet) - cashOutFixed - eHealthAdj + ePtc - fed.total - eState;
+        net = cashInFixed + (G - eUnmet) - cashOutFixed - eHealthAdj + eHsaAca + ePtc - fed.total - eState;
         if (!withWaterfall || net <= 1) break;
         // deductible contributions in the waterfall feed back into tax
         const dry = waterfall(net, false, { agi: fed.agi, conv: cv, iraDeduct: iraD });
@@ -2443,6 +2501,17 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       }
       withdraw(a, amt);
     }
+    // ---- commit HSA payment of marketplace out-of-pocket
+    let hsaAcaPaid = 0;
+    for (let a = 0; a < nA && hsaAcaPaid < eHsaAca - 0.005; a++) {
+      if (accts[a].kind !== Kind.Hsa) continue;
+      const take = Math.min(bal(a), eHsaAca - hsaAcaPaid);
+      if (take <= 0) continue;
+      withdraw(a, take);
+      hsaAcaPaid += take;
+      if (detail) byAccount[accts[a].id] = (byAccount[accts[a].id] ?? 0) + take;
+    }
+    hsaQualified += hsaAcaPaid;
     // ---- commit conversion
     if (eConv > 0) {
       let rem = eConv;
@@ -2509,7 +2578,8 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         const cur = hold[o + kk];
         const flow = cur - op;
         const g = 1 + r;
-        let end = op * g + flow * (fx === 1 ? g : fx === 0 ? 1 : Math.sqrt(Math.max(0, g)));
+        const fxA = cleanOut[a] ? 1 : fx;
+        let end = op * g + flow * (fxA === 1 ? g : fxA === 0 ? 1 : Math.sqrt(Math.max(0, g)));
         if (end < 0) end = 0;
         before += cur;
         after += end;
@@ -2641,7 +2711,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             irmaa: hIrmaa,
             ltc: hLtc,
             total: healthTotal,
-            hsaPaid,
+            hsaPaid: hsaPaid + hsaAcaPaid,
           },
           total: spendingTotal,
         },
