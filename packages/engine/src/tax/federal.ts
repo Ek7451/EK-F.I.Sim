@@ -271,9 +271,11 @@ export function federalTax(
   const standard = p.standardDeduction[s] * k + n65 * addl;
   const sd = p.salt;
   const half = s === 'mfs' ? 0.5 : 1;
+  // A separate filer's cap is the joint cap reduced and then halved (IRC 164(b)(6)-(7), Schedule A line 5e
+  // worksheet): on the halved cap and threshold that is half the phase-down rate.
   const saltCap = Math.max(
     sd.floor * half,
-    sd.cap * half - Math.max(0, agi - sd.phaseDownStart * half) * sd.phaseDownRate,
+    sd.cap * half - Math.max(0, agi - sd.phaseDownStart * half) * sd.phaseDownRate * half,
   );
   const saltAllowed = Math.min(x.itemized.stateLocalTax, saltCap);
   // OBBBA (2026+): itemized charitable gifts count only above 0.5% of AGI; non-itemizers may deduct up to $1,000 ($2,000 joint).
@@ -320,7 +322,14 @@ export function federalTax(
 
   // ---- AMT estimate (TAX-12): add back the standard deduction or SALT; preferential income keeps its rates.
   const a = p.amt;
-  const amti = agi - qbi - (itemizing ? itemizedTotal - saltAllowed : 0);
+  let amti = agi - qbi - (itemizing ? itemizedTotal - saltAllowed : 0);
+  // IRC 55(d)(2), last sentence (Form 6251 line 4): a separate filer adds to AMTI the lesser of the phase-out rate
+  // times the excess over the point where the exemption is fully phased out, or the exemption itself.
+  if (s === 'mfs' && a.phaseoutRate > 0) {
+    const em = a.exemption[s] * k;
+    const end = a.phaseoutStart[s] * k + em / a.phaseoutRate;
+    amti += Math.min(em, a.phaseoutRate * Math.max(0, amti - end));
+  }
   // The 0%/15%/20% breakpoints for gains under AMT are measured from regular ordinary taxable income (Form 6251, Part III).
   const exemption = Math.max(
     0,

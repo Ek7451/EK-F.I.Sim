@@ -749,7 +749,10 @@ def policy_snapshot(pol) -> dict:
             "rate1": v("AMT_rt1"),
             "rate2": _num(float(v("AMT_rt1")) + float(v("AMT_rt2_addon"))),
             "rate2Threshold": s("AMT_brk1"),
-            "mfsExemptionZeroAboveAmti": v("AMT_em_pe"),
+            # taxcalc 6.9.0 dropped the AMT_em_pe parameter; the end of the MFS phase-out is now computed
+            # as AMT_em_ps + AMT_em / AMT_prt (calcfunctions.AMT, MFS special rule).
+            "mfsExemptionZeroAboveAmti": _num(
+                float(s("AMT_em_ps")["mfs"]) + float(s("AMT_em")["mfs"]) / float(v("AMT_prt"))),
         },
         "niit": {"rate": v("NIIT_rt"), "threshold": s("NIIT_thd")},
         "socialSecurityBenefits": {
@@ -798,7 +801,7 @@ OUT_VARS = [
     "iitax", "payrolltax", "ptax_was", "ptax_er_p", "ptax_er_s", "setax",
     "ptax_amc", "c05800", "c07100", "c09200", "othertaxes", "refund",
     "c62100", "c18300", "c19200", "c19700", "c21060", "c03260", "c02900",
-    "earned", "ymod", "c01000", "dwks43", "c05200", "combined",
+    "earned", "ymod", "c01000", "c05200", "combined",
 ]
 
 

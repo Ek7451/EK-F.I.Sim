@@ -10,14 +10,14 @@ the inputs plus expected outputs are saved as JSON:
 | `tests/validation/fixtures/taxcalc-2026.json` | 294 households, tax year 2026 (enacted/published parameters)                 |
 | `tests/validation/fixtures/taxcalc-2027.json` | the same 294 households, tax year 2027 (**projected** parameters, see below) |
 | `generate_fixtures.py`                        | builds the households, runs taxcalc, writes the JSON                         |
-| `requirements.txt`                            | exact pinned versions (`taxcalc==6.8.5`, Python 3.12)                        |
+| `requirements.txt`                            | exact pinned versions (`taxcalc==6.9.0`, Python 3.13)                        |
 
 Python is only needed to regenerate. The TypeScript test just reads the JSON,
 which is committed.
 
 ## Oracle version and OBBBA
 
-`taxcalc` **6.8.5** (newest release on PyPI on 2026-11-10). Its current-law
+`taxcalc` **6.9.0** (newest release on PyPI on 2026-11-12; it needs Python 3.13). Its current-law
 baseline **does include OBBBA** (P.L. 119-21) and the published 2026
 inflation adjustments; `Policy.LAST_KNOWN_YEAR` is 2026. The 2026 values it
 uses (also stored in `meta.policy` of the fixture file):
@@ -56,6 +56,20 @@ charity floor 0.5% of AGI; itemized-deduction limitation 2/37 (taxcalc uses
 bracket start; QBI minimum deduction 400 when QBI is at least 1,000; EITC
 maximum 664 / 4,427 / 7,316 / 8,231 for 0 / 1 / 2 / 3+ children.
 
+### Changes from 6.8.5
+
+Moving the oracle from 6.8.5 to 6.9.0 changed 2 of the 294 households in each year, both married filing
+separately, and the TypeScript engine was updated to match:
+
+- **SALT cap phase-down:** a separate filer's cap is now the joint cap reduced by 30% of the excess and then
+  halved, as on the Schedule A line 5e worksheet. On the halved cap and threshold that is a 15% rate.
+- **AMT for separate filers:** IRC 55(d)(2) last sentence. AMTI is increased by the lesser of the phase-out rate
+  times the excess over the point where the MFS exemption is fully phased out, or the MFS exemption. 6.9.0 also
+  dropped the `AMT_em_pe` parameter; `meta.policy.amt.mfsExemptionZeroAboveAmti` is now computed as
+  `AMT_em_ps + AMT_em / AMT_prt`, as taxcalc does.
+
+The `dwks43` output variable is no longer exposed and is no longer requested (it was never used).
+
 ### 2027 parameters are projections
 
 taxcalc's parameters extend to 2036, but values after 2026 are taxcalc's own
@@ -73,7 +87,7 @@ phase-out thresholds) are the same in both years.
 Windows (PowerShell or Git Bash), from the repo root:
 
 ```
-py -3.12 -m venv tests/validation/taxcalc/.venv
+py -3.13 -m venv tests/validation/taxcalc/.venv
 tests/validation/taxcalc/.venv/Scripts/python -m pip install --upgrade pip
 tests/validation/taxcalc/.venv/Scripts/python -m pip install -r tests/validation/taxcalc/requirements.txt
 tests/validation/taxcalc/.venv/Scripts/python tests/validation/taxcalc/generate_fixtures.py
@@ -82,7 +96,7 @@ tests/validation/taxcalc/.venv/Scripts/python tests/validation/taxcalc/generate_
 Linux CI:
 
 ```
-python3.12 -m venv tests/validation/taxcalc/.venv
+python3.13 -m venv tests/validation/taxcalc/.venv
 tests/validation/taxcalc/.venv/bin/python -m pip install --upgrade pip
 tests/validation/taxcalc/.venv/bin/python -m pip install -r tests/validation/taxcalc/requirements.txt
 tests/validation/taxcalc/.venv/bin/python tests/validation/taxcalc/generate_fixtures.py

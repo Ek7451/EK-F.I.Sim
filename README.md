@@ -40,7 +40,7 @@ Scope, feature IDs and non-goals are in plan §1 and §4.
 ## Quick start
 
 Requirements: **Node 22 or newer** and **pnpm 10** (the exact version is pinned in `package.json` under
-`packageManager`; `corepack enable` will pick it up). Python 3.12 is needed only to regenerate the
+`packageManager`; `corepack enable` will pick it up). Python 3.13 is needed only to regenerate the
 Tax-Calculator test fixtures.
 
 ```sh
