@@ -47,7 +47,7 @@ The v1.0 gate is **not met**. The open items are listed under "Release gate" bel
 | Security review                                           | Runbook written (`runbooks/security-review.md`); the review itself has **not** been carried out.                    |
 | Sync deployed and restore drill run                       | **Not done.** Nothing has been deployed. The sync Worker and client have only been tested separately.               |
 | Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                       |
-| CI green                                                  | The workflows in `.github/workflows/` have never run: nothing has been committed or pushed.                         |
+| CI green                                                  | CI runs on pull requests. Playwright and Lighthouse are run locally, not in CI.                                     |
 
 ## Known limitations of the model
 
@@ -156,7 +156,7 @@ pnpm bench
 pnpm build
 pnpm --filter @fisim/e2e exec playwright install chromium
 pnpm e2e
-pnpm dlx @lhci/cli@0.16.0 autorun --config=lighthouserc.json
+pnpm lighthouse
 ```
 
 The Tax-Calculator fixtures are regenerated with `tests/validation/taxcalc/generate_fixtures.py` (see its

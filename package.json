@@ -19,7 +19,8 @@
     "test:validation": "vitest run --project validation",
     "validate:data": "tsx packages/data/scripts/validate.ts",
     "bench": "tsx packages/engine/bench/bench.ts",
-    "e2e": "pnpm --filter @fisim/e2e test"
+    "e2e": "pnpm --filter @fisim/e2e test",
+    "lighthouse": "pnpm dlx @lhci/cli@0.16.0 autorun --config=lighthouserc.json"
   },
   "devDependencies": {
     "@changesets/cli": "^3.0.3",

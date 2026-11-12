@@ -84,8 +84,9 @@ new patch version.
 
 ## 3. Pre-release checks
 
-- [ ] CI is green on the commit to be released, including Playwright, tours, axe, Lighthouse and the engine
-      benchmark.
+- [ ] CI is green on the commit to be released, including the engine benchmark.
+- [ ] On that commit, `pnpm build && pnpm e2e` (Playwright: flows, tours, axe) and `pnpm lighthouse` pass
+      locally. They are not part of CI.
 - [ ] If the plan `schemaVersion` changed: a migration exists, fixtures for the old version are in
       `packages/engine/test/fixtures/plans/vN/`, and the PWA update-flow test (section 5) has been run.
 - [ ] If `workers/sync/migrations` changed: the migration is additive and was applied to the `preview`

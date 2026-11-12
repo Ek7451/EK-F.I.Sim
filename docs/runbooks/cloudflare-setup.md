@@ -181,8 +181,8 @@ Do not use "Everyone" or an email-domain rule. There is no second policy.
 - [ ] After signing in with an allowed email, the app loads and sync works.
 - [ ] Signing in with a different email is refused.
 
-Playwright and Lighthouse in CI run against a locally served build, not the deployed preview, so CI needs
-no Access service token.
+Playwright and Lighthouse run locally against a locally served build, not the deployed preview (they are not
+part of CI), so CI needs no Access service token.
 
 ## 6. API token for GitHub Actions
 
