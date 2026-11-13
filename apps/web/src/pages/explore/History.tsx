@@ -219,7 +219,7 @@ export function HistoryPage(): ReactNode {
           </Card>
           <div className="hx-main">
             <div className="hx-side">
-              <Card title="Pick a start year">
+              <Card title="Pick a start year" data-tour="history-map">
                 <p className="lv-small lv-muted">
                   Each square is your plan started in that year and run through the {result.horizon} years
                   that really followed. A stronger colour means more left at the end.

@@ -724,22 +724,6 @@
     display: none;
   }
 }
-.token-gallery {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-  gap: 16px;
-  margin: 16px 0;
-}
-.token-gallery > div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.token-gallery span {
-  width: 24px;
-  height: 24px;
-  border-radius: 6px;
-}
 .span-track {
   position: relative;
   height: 6px;
@@ -1110,49 +1094,6 @@
   }
 }
 
-/* Tour spotlight and step card (UX-10) */
-.tour-spot {
-  position: fixed;
-  z-index: 90;
-  border-radius: 10px;
-  box-shadow:
-    0 0 0 3px var(--dawn-amber),
-    0 0 24px 4px rgba(255, 176, 46, 0.45),
-    0 0 0 9999px rgba(8, 8, 30, 0.62);
-  pointer-events: none;
-  transition: all var(--motion-base) var(--ease);
-}
-.tour-card {
-  z-index: 95;
-  background: var(--surface);
-  color: var(--ink);
-  border: 1px solid var(--primary-line);
-  border-radius: var(--radius-3);
-  box-shadow: var(--shadow-3);
-  padding: var(--space-4);
-  width: min(360px, calc(100vw - 24px));
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-.tour-card[data-sheet='true'] {
-  position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  border-radius: var(--radius-3) var(--radius-3) 0 0;
-  padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom));
-}
-.tour-card h2 {
-  font-size: var(--text-md);
-  font-family: var(--font-ui);
-}
-.tour-card p {
-  font-size: var(--text-sm);
-  color: var(--ink-2);
-}
-
 @media print {
   .rail,
   .topbar,
@@ -1173,88 +1114,6 @@
     box-shadow: none;
     break-inside: avoid;
   }
-}
-
-/* One-time tour suggestion (UX-10). It steps up out of the way while the draft bar holds the bottom edge. */
-body:has(.draft-bar) .tour-prompt {
-  bottom: 132px;
-}
-.tour-prompt {
-  position: fixed;
-  right: var(--space-4);
-  bottom: var(--space-4);
-  z-index: 60;
-  max-width: min(440px, calc(100vw - 32px));
-  background: var(--surface);
-  border: 1px solid var(--primary-line);
-  border-radius: var(--radius-3);
-  box-shadow: var(--shadow-3);
-  padding: var(--space-3) var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  font-size: var(--text-sm);
-}
-@media (max-width: 900px) {
-  .tour-prompt {
-    left: var(--space-3);
-    right: var(--space-3);
-    bottom: calc(72px + env(safe-area-inset-bottom));
-  }
-}
-@media print {
-  .tour-prompt,
-  .tour-spot,
-  .tour-card {
-    display: none !important;
-  }
-}
-
-/* Help and settings */
-.tour-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: var(--space-4);
-}
-.tour-tile {
-  border: 1px solid var(--line);
-  border-radius: var(--radius-3);
-  padding: var(--space-4);
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-2);
-  background: var(--surface);
-  box-shadow: var(--shadow-1);
-  transition:
-    transform var(--motion-fast) var(--ease),
-    box-shadow var(--motion-base) var(--ease),
-    border-color var(--motion-fast) var(--ease);
-}
-.tour-tile:hover {
-  transform: translateY(-2px);
-  border-color: var(--primary-line);
-  box-shadow: var(--shadow-hover);
-}
-.tour-tile h3 {
-  font-size: var(--text-md);
-}
-.method {
-  border-top: 1px solid var(--line);
-  padding: var(--space-4) 0;
-  scroll-margin-top: 72px;
-}
-.method:first-child {
-  border-top: 0;
-  padding-top: 0;
-}
-.method code {
-  display: block;
-  background: var(--surface-2);
-  border-radius: var(--radius-2);
-  padding: var(--space-2) var(--space-3);
-  margin: var(--space-2) 0;
-  font-size: var(--text-sm);
-  white-space: pre-wrap;
 }
 
 /* ------------------------------------------------------------------ projection ledger and notes */

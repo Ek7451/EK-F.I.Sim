@@ -1,6 +1,6 @@
 import { DATA_RELEASE, type DatasetInfo } from '@fisim/data';
 import { methodology, type MethodEntry } from '@fisim/engine';
-import { Badge, Button, Card, Dialog, Notice, SelectField, TextField } from '@fisim/ui';
+import { Badge, Button, Card, Dialog, Icon, Notice, Segmented, SelectField, TextField } from '@fisim/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { exportBackup, download, readBackup } from '../lib/files';
@@ -22,6 +22,7 @@ import { TOURS, tourById } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
 import type { TourDef } from '../tours/types';
 import { CloudAccountCard } from './CloudAccountCard';
+import './help-settings.css';
 import { publicCloud, useCloudAccount } from '../lib/cloud-account';
 
 const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
@@ -44,30 +45,33 @@ export function ToursPage(): ReactNode {
       .filter((id) => !progress[id]?.completed)
       .map((id) => tourById(id)?.title ?? id);
     return (
-      <article key={t.id} className="tour-tile" data-tour="tour-tile" data-tour-id={t.id}>
-        <div className="lv-spread">
-          <span className="lv-muted lv-small">
-            {t.id} · about {t.minutes} min · {t.steps.length} steps
-          </span>
-          {p?.completed ? (
-            <Badge tone="ok">Completed</Badge>
-          ) : started ? (
-            <Badge tone="warn">
-              Step {p.step + 1} of {t.steps.length}
-            </Badge>
-          ) : (
-            <Badge>Not started</Badge>
-          )}
+      <article
+        key={t.id}
+        className="hs-tour"
+        data-tour="tour-tile"
+        data-tour-id={t.id}
+        data-state={p?.completed ? 'done' : started ? 'started' : 'new'}
+        title={[t.summary, missing.length ? `Easier after: ${missing.join(', ')}.` : '']
+          .filter(Boolean)
+          .join(' ')}
+      >
+        <span className="hs-tour-mark" aria-hidden="true">
+          {p?.completed ? <Icon name="check" size={14} /> : t.id.replace(/^\D+/, '')}
+        </span>
+        <div className="hs-tour-text">
+          <h3>
+            {t.title}
+            <span className="hs-tour-meta">
+              {t.minutes} min · {t.steps.length} steps
+              {p?.completed ? ' · completed' : started ? ` · step ${p.step + 1} of ${t.steps.length}` : ''}
+            </span>
+          </h3>
+          <p>{t.summary}</p>
         </div>
-        <h3>{t.title}</h3>
-        <p className="lv-small lv-muted" style={{ flex: 1 }}>
-          {t.summary}
-        </p>
-        {missing.length ? <p className="lv-small lv-muted">Easier after: {missing.join(', ')}.</p> : null}
-        <div className="lv-row">
+        <div className="hs-tour-actions">
           <Button
             size="sm"
-            variant="primary"
+            variant={p?.completed ? 'default' : 'primary'}
             onClick={() => tour.start(t.id, { restart: !started })}
             aria-label={`${p?.completed ? 'Replay' : started ? 'Resume' : 'Start'} the tour: ${t.title}`}
           >
@@ -76,11 +80,11 @@ export function ToursPage(): ReactNode {
           {hasPlan ? (
             <Button
               size="sm"
+              variant="ghost"
+              icon="user"
               onClick={() => tour.start(t.id, { ownPlan: true, restart: true })}
-              aria-label={`On my plan: run the tour ${t.title} with changes switched off`}
-            >
-              On my plan
-            </Button>
+              label={`On my plan: run the tour ${t.title} with changes switched off`}
+            />
           ) : null}
         </div>
       </article>
@@ -90,40 +94,43 @@ export function ToursPage(): ReactNode {
     <>
       <PageHead
         title="Guided tours"
-        intro="Short walkthroughs that explain each part of the app. A tour runs on a sample plan in a sandbox, so nothing you do in it changes your own plans. Choose On my plan to see your own numbers with changes switched off."
+        intro="Short walkthroughs of each part of the app. A tour runs on a sample plan, so nothing in it changes your own plans."
       />
-      <Card data-tour="tours-progress">
-        <div className="lv-spread">
+      <section className="hs-band lv-night" data-tour="tours-progress">
+        <div className="hs-band-main">
           <strong>
             {count} of {TOURS.length} tours completed
           </strong>
-          <span className="lv-row">
-            {basic.every(done) ? <Badge tone="ok">Basics complete</Badge> : null}
-            {advanced.every(done) ? <Badge tone="ok">Advanced complete</Badge> : null}
-          </span>
+          <div
+            className="lv-progress"
+            role="progressbar"
+            aria-label="Tours completed"
+            aria-valuemin={0}
+            aria-valuemax={TOURS.length}
+            aria-valuenow={count}
+          >
+            <div style={{ width: `${(count / TOURS.length) * 100}%` }} />
+          </div>
         </div>
-        <div
-          className="lv-progress"
-          role="progressbar"
-          aria-label="Tours completed"
-          aria-valuemin={0}
-          aria-valuemax={TOURS.length}
-          aria-valuenow={count}
-          style={{ marginTop: 12 }}
-        >
-          <div style={{ width: `${(count / TOURS.length) * 100}%` }} />
-        </div>
-        <p className="lv-small lv-muted" style={{ marginTop: 12 }}>
-          During a tour: Next and Back move between steps, the right and left arrow keys do the same, and Esc
-          leaves. Your place is saved.
+        <span className="lv-row">
+          {basic.every(done) ? <Badge tone="ok">Basics complete</Badge> : null}
+          {advanced.every(done) ? <Badge tone="ok">Advanced complete</Badge> : null}
+        </span>
+        <p className="hs-band-note">
+          Next and Back (or the arrow keys) move between steps; Esc leaves and your place is saved. The person
+          button runs a tour on your own plan, with changes switched off.
         </p>
-      </Card>
-      <Card title="Basic series" data-tour="tours-catalog">
-        <div className="tour-grid">{basic.map(tile)}</div>
-      </Card>
-      <Card title="Advanced series">
-        <div className="tour-grid">{advanced.map(tile)}</div>
-      </Card>
+      </section>
+      <div className="hs-tours" data-tour="tours-catalog">
+        <Card title={`Basics · ${basic.length} tours`}>
+          <div className="hs-tour-list">{basic.map(tile)}</div>
+        </Card>
+        <Card title={`Going further · ${advanced.length} tours`}>
+          <div className="hs-tour-list" data-cols="2">
+            {advanced.map(tile)}
+          </div>
+        </Card>
+      </div>
     </>
   );
 }
@@ -133,6 +140,7 @@ export function ToursPage(): ReactNode {
 export function MethodsPage(): ReactNode {
   const [entries, setEntries] = useState<MethodEntry[] | null>(null);
   const [datasets, setDatasets] = useState<DatasetInfo[]>([]);
+  const [query, setQuery] = useState('');
   const loc = useLocation();
   useEffect(() => {
     let live = true;
@@ -148,84 +156,120 @@ export function MethodsPage(): ReactNode {
   useEffect(() => {
     if (!entries || !loc.hash) return;
     const el = document.getElementById(loc.hash.slice(1));
+    // A link to one method opens it and lands on its title.
+    if (el instanceof HTMLDetailsElement) el.open = true;
     el?.scrollIntoView({ block: 'start' });
-    el?.focus({ preventScroll: true });
+    el?.querySelector<HTMLElement>('summary')?.focus({ preventScroll: true });
   }, [entries, loc.hash]);
   const projected = datasets.filter((d) => d.header.status !== 'enacted').length;
+  const q = query.trim().toLowerCase();
+  const shown = (entries ?? []).filter(
+    (m) => !q || `${m.title} ${m.summary} ${m.formula}`.toLowerCase().includes(q),
+  );
   return (
     <>
       <PageHead
         title="How this is calculated"
         intro="Each method the app uses, in plain words, with its formula and the published source of its figures. Every result is an estimate built from these methods and your inputs."
       />
-      <Card title="Enacted and projected figures" data-tour="data-status">
-        <p>
+      <section className="hs-band lv-night" data-tour="data-status">
+        <div className="hs-band-main">
+          <strong>Data release {DATA_RELEASE}</strong>
+          <span className="hs-band-sub">
+            {datasets.length} datasets, {projected} of them projected or estimated
+          </span>
+        </div>
+        <p className="hs-band-note">
           <Badge tone="ok">Enacted</Badge> figures come from published law and official tables.{' '}
           <Badge tone="warn">Projected</Badge> figures are the latest enacted values raised with inflation,
-          used for years that have not been published. Results that rely on projected figures are marked on
-          the screens that show them.
+          for years not yet published. Screens that rely on them say so.
         </p>
-        <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
-          Data release {DATA_RELEASE}: {datasets.length} datasets, {projected} of them projected or estimated.
-        </p>
-      </Card>
-      <Card title="Methods" data-tour="methods-list">
-        {!entries ? (
-          <p className="lv-muted">Loading…</p>
-        ) : (
-          entries.map((m, i) => (
-            <section
-              key={m.id}
-              id={m.id}
-              className="method"
-              tabIndex={-1}
-              data-tour={i === 2 ? 'method-entry' : undefined}
-            >
-              <h3>{m.title}</h3>
-              <p style={{ marginTop: 4 }}>{m.summary}</p>
-              <code>{m.formula}</code>
-              {m.sources.map((s) => (
-                <p key={s.label} className="lv-small lv-muted">
-                  {s.label}: {s.header.publisher}, retrieved {s.header.retrieved}.{' '}
-                  <Badge tone={s.header.status === 'enacted' ? 'ok' : 'warn'}>{s.header.status}</Badge>{' '}
-                  {s.header.lawRefs.length ? `Based on ${s.header.lawRefs.slice(0, 3).join('; ')}.` : ''}
-                </p>
+      </section>
+      <div className="hs-methods">
+        <Card
+          title={entries ? `Methods · ${shown.length}${q ? ` of ${entries.length}` : ''}` : 'Methods'}
+          actions={
+            <input
+              className="lv-input hs-search"
+              type="search"
+              placeholder="Find a method"
+              aria-label="Find a method"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+            />
+          }
+          data-tour="methods-list"
+        >
+          {!entries ? (
+            <p className="lv-muted">Loading…</p>
+          ) : (
+            <div className="hs-method-list">
+              {shown.map((m) => (
+                <details
+                  key={m.id}
+                  id={m.id}
+                  className="hs-method"
+                  data-tour={entries.indexOf(m) === 2 ? 'method-entry' : undefined}
+                >
+                  <summary>
+                    <strong>{m.title}</strong>
+                    <span>{m.summary}</span>
+                  </summary>
+                  <div className="hs-method-body">
+                    <p>{m.summary}</p>
+                    <code>{m.formula}</code>
+                    {m.sources.map((s) => (
+                      <p key={s.label} className="lv-small lv-muted">
+                        {s.label}: {s.header.publisher}, retrieved {s.header.retrieved}.{' '}
+                        <Badge tone={s.header.status === 'enacted' ? 'ok' : 'warn'}>{s.header.status}</Badge>{' '}
+                        {s.header.lawRefs.length
+                          ? `Based on ${s.header.lawRefs.slice(0, 3).join('; ')}.`
+                          : ''}
+                      </p>
+                    ))}
+                    <p className="lv-small lv-muted">Features: {m.featureIds.join(', ')}</p>
+                  </div>
+                </details>
               ))}
-              <p className="lv-small lv-muted">Features: {m.featureIds.join(', ')}</p>
-            </section>
-          ))
-        )}
-      </Card>
-      <Card title="Datasets in this release" data-tour="data-sources">
-        <div className="lv-table-wrap" tabIndex={0} role="region" aria-label="Datasets in this release">
-          <table className="lv-table">
-            <thead>
-              <tr>
-                <th scope="col">Dataset</th>
-                <th scope="col">Publisher</th>
-                <th scope="col">Retrieved</th>
-                <th scope="col">Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {datasets.map((d) => (
-                <tr key={d.path}>
-                  <th scope="row" style={{ fontWeight: 400 }}>
-                    {d.path.replace(/\.json$/, '')}
-                  </th>
-                  <td>{d.header.publisher}</td>
-                  <td className="lv-num">{d.header.retrieved}</td>
-                  <td>{d.header.status}</td>
+              {shown.length === 0 ? <p className="lv-muted">No method matches that.</p> : null}
+            </div>
+          )}
+        </Card>
+        <Card title={`Datasets · ${datasets.length}`} data-tour="data-sources">
+          <div
+            className="lv-table-wrap hs-datasets"
+            tabIndex={0}
+            role="region"
+            aria-label="Datasets in this release"
+          >
+            <table className="lv-table">
+              <thead>
+                <tr>
+                  <th scope="col">Dataset</th>
+                  <th scope="col">Publisher</th>
+                  <th scope="col">Retrieved</th>
+                  <th scope="col">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
-          Marketplace benchmark premiums by county are loaded only for the states in your plan and are not
-          listed here.
-        </p>
-      </Card>
+              </thead>
+              <tbody>
+                {datasets.map((d) => (
+                  <tr key={d.path}>
+                    <th scope="row" style={{ fontWeight: 400 }}>
+                      {d.path.replace(/\.json$/, '')}
+                    </th>
+                    <td>{d.header.publisher}</td>
+                    <td className="lv-num">{d.header.retrieved}</td>
+                    <td>{d.header.status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
+            Marketplace premiums by county load only for the states in your plan and are not listed here.
+          </p>
+        </Card>
+      </div>
     </>
   );
 }
@@ -259,7 +303,7 @@ function PlansCard(): ReactNode {
       title="Plans"
       data-tour="settings-plans"
       actions={
-        <Link className="lv-btn" data-size="sm" to="/start">
+        <Link className="lv-btn" data-size="sm" data-variant="primary" to="/start">
           New plan
         </Link>
       }
@@ -279,23 +323,23 @@ function PlansCard(): ReactNode {
             ) : null}
             <Button
               size="sm"
+              variant="ghost"
+              icon="edit"
               disabled={sandbox}
+              label={`Rename ${p.name}`}
               onClick={() => setRenaming({ id: p.id, name: p.name })}
-              aria-label={`Rename ${p.name}`}
-            >
-              Rename
-            </Button>
+            />
             <Button
               size="sm"
+              variant="ghost"
+              icon="copy"
               disabled={sandbox}
               data-tour="duplicate-plan"
+              label={`Duplicate ${p.name}`}
               onClick={() =>
                 void duplicatePlan(p.id).then(() => notify(`Copied ${p.name}. The copy is now open.`, 'ok'))
               }
-              aria-label={`Duplicate ${p.name}`}
-            >
-              Duplicate
-            </Button>
+            />
             <Button
               size="sm"
               variant="ghost"
@@ -417,58 +461,59 @@ function BackupCard(): ReactNode {
     setBusy(false);
   };
   return (
-    <Card title="Backup" data-tour="settings-backup">
+    <Card
+      title="Backup"
+      data-tour="settings-backup"
+      actions={<span className="lv-small lv-muted">Last backup: {when(last)}</span>}
+    >
       <p className="lv-muted lv-small">
-        Plans live in this browser's storage, which can be cleared. Keep an encrypted backup file somewhere
-        safe. Last backup: {when(last)}.
+        Plans live in this browser, which can clear its storage. Keep an encrypted backup file somewhere safe.
       </p>
       {error ? (
-        <div style={{ marginTop: 12 }}>
+        <div style={{ marginTop: 8 }}>
           <Notice tone="danger">{error}</Notice>
         </div>
       ) : null}
-      <h3 style={{ marginTop: 16 }}>Export all plans</h3>
-      <div className="form-grid" style={{ marginTop: 8 }} data-tour="export-backup">
-        <Pass
-          label="Backup passphrase"
-          hint="At least 10 characters. There is no way to recover a forgotten passphrase."
-          value={pass}
-          onChange={setPass}
-        />
-        <Pass label="Passphrase again" value={again} onChange={setAgain} />
-      </div>
-      {weak ? (
-        <p className="lv-small" style={{ color: 'var(--danger)', marginTop: 4 }}>
-          Use at least 10 characters.
-        </p>
-      ) : null}
-      <div style={{ marginTop: 12 }}>
-        <Button
-          icon="download"
-          disabled={busy || list.length === 0 || pass.length < 10 || pass !== again}
-          onClick={() => void doExport()}
-        >
-          Download encrypted backup
-        </Button>
-      </div>
-      <h3 style={{ marginTop: 24 }}>Import a backup</h3>
-      <div className="form-grid" style={{ marginTop: 8 }} data-tour="import-backup">
-        <div className="lv-field">
-          <label htmlFor="backup-file">Backup file</label>
-          <input
-            id="backup-file"
-            ref={file}
-            className="lv-input"
-            type="file"
-            accept=".longview,application/json"
-          />
-        </div>
-        <Pass label="Its passphrase" value={inPass} onChange={setInPass} />
-      </div>
-      <div style={{ marginTop: 12 }}>
-        <Button icon="upload" disabled={busy || !inPass} onClick={() => void doImport()}>
-          Import
-        </Button>
+      <div className="hs-split">
+        <section data-tour="export-backup">
+          <h3>Export all plans</h3>
+          <div className="form-grid">
+            <Pass
+              label="Backup passphrase"
+              hint="At least 10 characters. A forgotten passphrase cannot be recovered."
+              value={pass}
+              onChange={setPass}
+            />
+            <Pass label="Passphrase again" value={again} onChange={setAgain} />
+          </div>
+          {weak ? <p className="field-error">Use at least 10 characters.</p> : null}
+          <Button
+            icon="download"
+            disabled={busy || list.length === 0 || pass.length < 10 || pass !== again}
+            onClick={() => void doExport()}
+          >
+            Download encrypted backup
+          </Button>
+        </section>
+        <section data-tour="import-backup">
+          <h3>Import a backup</h3>
+          <div className="form-grid">
+            <div className="lv-field">
+              <label htmlFor="backup-file">Backup file</label>
+              <input
+                id="backup-file"
+                ref={file}
+                className="lv-input"
+                type="file"
+                accept=".longview,application/json"
+              />
+            </div>
+            <Pass label="Its passphrase" value={inPass} onChange={setInPass} />
+          </div>
+          <Button icon="upload" disabled={busy || !inPass} onClick={() => void doImport()}>
+            Import
+          </Button>
+        </section>
       </div>
     </Card>
   );
@@ -519,13 +564,13 @@ function SyncCard(): ReactNode {
   return (
     <Card title={publicCloud ? 'Encrypted cloud vault' : 'Sync between devices'} data-tour="settings-sync">
       <p className="lv-muted lv-small">
-        Optional. Plans are encrypted on this device before upload, so the sync service only ever holds
-        scrambled data.{' '}
+        Optional. Plans are encrypted on this device before upload, so the service only ever holds scrambled
+        data.{' '}
         {publicCloud
-          ? 'Create a vault once, then unlock it on each device. Its passphrase and recovery key are separate from your account password and account recovery code. Keep both recovery credentials somewhere safe.'
+          ? 'Create a vault once, then unlock it on each device. Its passphrase and recovery key are separate from your account password and recovery code; keep both somewhere safe.'
           : 'You need your own sync service address; see the setup guide in the project’s docs folder.'}
       </p>
-      <div className="lv-row" style={{ marginTop: 12 }} data-tour="sync-status" role="status">
+      <div className="lv-row" style={{ marginTop: 8 }} data-tour="sync-status" role="status">
         <Badge
           tone={
             sync.status === 'idle'
@@ -578,7 +623,7 @@ function SyncCard(): ReactNode {
         </div>
       ))}
       {!publicCloud ? (
-        <div style={{ marginTop: 16, maxWidth: 520 }}>
+        <div style={{ marginTop: 10, maxWidth: 520 }}>
           <TextField
             label="Sync service address"
             hint="For example https://longview-sync.your-name.workers.dev"
@@ -636,22 +681,16 @@ function SyncCard(): ReactNode {
         </div>
       ) : (
         <div className="lv-stack" style={{ marginTop: 16 }}>
-          <div style={{ maxWidth: 360 }}>
-            <SelectField
-              label="What do you want to do?"
-              value={mode}
-              onChange={setMode}
-              options={[
-                {
-                  value: 'connect',
-                  label:
-                    sync.status === 'locked' ? 'Unlock with my passphrase' : 'Connect this device to my sync',
-                },
-                { value: 'setup', label: 'Set up sync for the first time' },
-                { value: 'recover', label: 'I forgot my passphrase' },
-              ]}
-            />
-          </div>
+          <Segmented
+            label="What do you want to do?"
+            value={mode}
+            onChange={setMode}
+            options={[
+              { value: 'connect', label: sync.status === 'locked' ? 'Unlock' : 'Connect this device' },
+              { value: 'setup', label: 'Set up for the first time' },
+              { value: 'recover', label: 'Forgot passphrase' },
+            ]}
+          />
           {mode === 'recover' ? (
             <TextField
               label="Recovery key"
@@ -760,7 +799,8 @@ function SyncCard(): ReactNode {
 }
 
 function DeviceCard(): ReactNode {
-  const { notify } = useStore.getState();
+  const theme = useStore((st) => st.settings.theme);
+  const { notify, setSettings } = useStore.getState();
   const [persisted, setPersisted] = useState<boolean | null>(null);
   const [usage, setUsage] = useState('');
   useEffect(() => {
@@ -771,22 +811,41 @@ function DeviceCard(): ReactNode {
   }, []);
   return (
     <Card title="This device" data-tour="settings-data">
-      <dl className="lv-explain" style={{ maxWidth: 520 }}>
-        <dt>App version</dt>
-        <dd style={{ textAlign: 'right' }}>{__APP_VERSION__}</dd>
-        <dt>Data release</dt>
-        <dd style={{ textAlign: 'right' }}>{DATA_RELEASE}</dd>
-        <dt>Storage</dt>
-        <dd style={{ textAlign: 'right' }}>
-          {persisted
-            ? 'Protected from automatic clearing'
-            : 'May be cleared by the browser when space is short'}
-          {usage ? ` · ${usage}` : ''}
-        </dd>
-      </dl>
-      <div className="lv-row" style={{ marginTop: 12 }}>
+      <div className="hs-device">
+        <div data-tour="settings-theme">
+          <SelectField<Theme>
+            label="Theme"
+            value={theme}
+            onChange={(v) => setSettings({ theme: v })}
+            options={[
+              { value: 'system', label: 'Match my device' },
+              { value: 'light', label: 'Light' },
+              { value: 'dark', label: 'Dark' },
+            ]}
+          />
+        </div>
+        <dl className="lv-facts">
+          <div>
+            <dt>App version</dt>
+            <dd>{__APP_VERSION__}</dd>
+          </div>
+          <div>
+            <dt>Data release</dt>
+            <dd>{DATA_RELEASE}</dd>
+          </div>
+          <div>
+            <dt>Storage</dt>
+            <dd>
+              {usage ? `${usage} · ` : ''}
+              {persisted ? 'protected' : 'the browser may clear it'}
+            </dd>
+          </div>
+        </dl>
+      </div>
+      <div className="lv-row" style={{ marginTop: 10 }}>
         {persisted === false ? (
           <Button
+            size="sm"
             onClick={() =>
               void navigator.storage.persist().then((ok) => {
                 setPersisted(ok);
@@ -799,11 +858,13 @@ function DeviceCard(): ReactNode {
               })
             }
           >
-            Ask the browser to protect storage
+            Protect storage
           </Button>
         ) : null}
         <Button
+          size="sm"
           data-tour="error-log"
+          title="Stays on this device and holds no plan data. Download it only to report a problem."
           onClick={() =>
             void errorLog().then((log) =>
               download(
@@ -820,78 +881,32 @@ function DeviceCard(): ReactNode {
         >
           Download error log
         </Button>
-        <Link className="lv-btn" to="/help/methods">
+        <Link className="lv-btn" data-size="sm" to="/help/methods">
           Data sources
         </Link>
       </div>
-      <p className="lv-small lv-muted" style={{ marginTop: 12 }}>
-        The error log stays on this device and holds no plan data. Nothing is sent anywhere; download it only
-        if you want to report a problem.
+      <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
+        The error log stays on this device and holds no plan data. Nothing is sent anywhere.
       </p>
     </Card>
   );
 }
 
 export function SettingsPage(): ReactNode {
-  const theme = useStore((s) => s.settings.theme);
-  const { setSettings } = useStore.getState();
   return (
     <>
-      <PageHead title="Settings" intro="Appearance, your plans, backups, sync and this device." />
-      <Card title="Appearance" data-tour="settings-theme">
-        <div style={{ maxWidth: 320 }}>
-          <SelectField<Theme>
-            label="Theme"
-            value={theme}
-            onChange={(v) => setSettings({ theme: v })}
-            options={[
-              { value: 'system', label: 'Match my device' },
-              { value: 'light', label: 'Light' },
-              { value: 'dark', label: 'Dark' },
-            ]}
-          />
+      <PageHead title="Settings" intro="Your plans, backups, cloud saving and this device." />
+      <div className="hs-settings">
+        <div className="hs-col">
+          <PlansCard />
+          <BackupCard />
         </div>
-      </Card>
-      <PlansCard />
-      <Card title="Appearance preview">
-        <details>
-          <summary>Financial colors and interface states</summary>
-          <p className="lv-muted lv-small">
-            Names, line styles and structured data accompany these colors in charts.
-          </p>
-          <div className="token-gallery">
-            {[
-              'cash',
-              'taxable',
-              'pretax',
-              'roth',
-              'hsa',
-              'property',
-              'debts',
-              'income',
-              'expense',
-              'tax',
-              'baseline',
-              'draft',
-            ].map((name) => (
-              <div key={name}>
-                <span style={{ background: `var(--financial-${name})` }} />
-                <strong>{name}</strong>
-              </div>
-            ))}
-          </div>
-          <div className="lv-row">
-            <Button variant="primary">Primary action</Button>
-            <Button>Secondary</Button>
-            <Button disabled>Unavailable</Button>
-          </div>
-          <p role="status">Status messages remain readable in either theme.</p>
-        </details>
-      </Card>
-      <BackupCard />
-      <CloudAccountCard />
-      <SyncCard />
-      <DeviceCard />
+        <div className="hs-col">
+          <DeviceCard />
+          <CloudAccountCard />
+          <SyncCard />
+        </div>
+      </div>
     </>
   );
 }

@@ -1,0 +1,92 @@
+/* The new-plan wizard: a short banner, the steps named in a row, and each step's fields in view without scrolling. */
+.start-hero {
+  min-height: 124px;
+  padding: 18px 24px;
+  border-radius: var(--radius-4);
+}
+.start-hero .page-title > h1 {
+  font-size: clamp(1.625rem, 1rem + 1.8vw, 2.375rem);
+}
+.start-hero .page-head p {
+  font-size: var(--text-md);
+}
+.start-hero .horizon-art {
+  width: min(48%, 440px);
+}
+
+/* Where you are in the five steps. Decorative: the progress bar above carries the same fact for assistive tech. */
+.wizard-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.wizard-steps > li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px 3px 4px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  font: 550 var(--text-xs) var(--font-ui);
+  color: var(--ink-3);
+  background: var(--surface);
+}
+.wizard-steps > li > b {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  background: var(--surface-2);
+}
+.wizard-steps > li[data-state='done'] {
+  color: var(--ink-2);
+}
+.wizard-steps > li[data-state='done'] > b {
+  color: #fff;
+  background: linear-gradient(135deg, var(--dawn-indigo), var(--dawn-violet));
+}
+.wizard-steps > li[data-state='now'] {
+  color: var(--ink);
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+}
+.wizard-steps > li[data-state='now'] > b {
+  color: var(--on-primary);
+  background: linear-gradient(120deg, var(--primary), var(--primary-2));
+  box-shadow: 0 2px 10px var(--glow);
+}
+.wizard-heading {
+  margin: 12px 0 10px;
+}
+.wizard-person {
+  padding: 6px 14px 12px;
+}
+.wizard-nav {
+  margin-top: 14px;
+}
+.wizard-assumptions > div {
+  padding: 5px 0;
+}
+@media (max-width: 700px) {
+  .start-hero {
+    min-height: 108px;
+    padding: 14px 16px;
+  }
+  /* On a phone the row of names would wrap to three lines: the numbers alone say enough. */
+  .wizard-steps > li > span {
+    display: none;
+  }
+  .wizard-steps > li {
+    padding: 3px 4px;
+  }
+  .wizard-steps > li[data-state='now'] > span {
+    display: inline;
+    padding-right: 8px;
+  }
+}

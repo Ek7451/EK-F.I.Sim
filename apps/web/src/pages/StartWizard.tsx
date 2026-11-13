@@ -22,6 +22,7 @@ import { HorizonArt, PageHead } from '../shell/Shell';
 import { useStore } from '../state/store';
 import { useTour } from '../tours/TourEngine';
 import { loadEngine } from '../engine/load';
+import './wizard.css';
 
 const D = (n: number): number => Math.round(n * 100);
 
@@ -459,6 +460,14 @@ export function StartPage(): ReactNode {
         >
           <div style={{ width: `${((step + 1) / 6) * 100}%` }} />
         </div>
+        <ol className="wizard-steps" aria-hidden="true">
+          {[...titles, 'Review'].map((t, i) => (
+            <li key={t} data-state={i < step ? 'done' : i === step ? 'now' : 'next'}>
+              <b>{i + 1}</b>
+              <span>{t}</span>
+            </li>
+          ))}
+        </ol>
         <h2 ref={heading} tabIndex={-1} className="wizard-heading">
           {step < 5 ? `Step ${step + 1} of 5: ${titles[step]}` : 'Check what we assumed'}
         </h2>

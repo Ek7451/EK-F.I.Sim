@@ -3,8 +3,9 @@
  * card (popover on wide screens, sheet on phones), keyboard support and saved progress. A tour runs in a sandbox on a
  * sample plan, or in observe-only mode on the user's own plan with changes switched off.
  */
+import './tour.css';
 import { loadEngine } from '../engine/load';
-import { Button, formatCompact, formatPct } from '@fisim/ui';
+import { Button, Icon, formatCompact, formatPct } from '@fisim/ui';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react';
 import {
   createContext,
@@ -45,7 +46,11 @@ interface Active {
 
 const visible = (el: Element): boolean => {
   const r = el.getBoundingClientRect();
-  return r.width > 0 && r.height > 0;
+  if (r.width <= 0 || r.height <= 0) return false;
+  // What is inside a closed <details> can still report a size in some browsers; it is not on screen.
+  for (let d = el.parentElement?.closest('details'); d; d = d.parentElement?.closest('details'))
+    if (!d.open && !d.querySelector(':scope > summary')?.contains(el)) return false;
+  return true;
 };
 /** First visible element for a `a|b` anchor list. */
 export function findTarget(target: string | undefined): HTMLElement | null {
@@ -209,6 +214,8 @@ function TourLayer({
     const look = (): boolean => {
       const found = findTarget(step.target);
       if (!found) return false;
+      // A folded section that is itself the target opens, so the step can point at what it describes.
+      if (found instanceof HTMLDetailsElement && !found.open) found.open = true;
       found.scrollIntoView({ block: 'center', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
       setEl(found);
       return true;
@@ -314,14 +321,14 @@ function TourLayer({
         width: rect.width + pad * 2,
         height: rect.height + pad * 2,
       }
-    : { left: '50%', top: '50%', width: 0, height: 0, boxShadow: '0 0 0 9999px rgba(16, 26, 38, 0.55)' };
+    : {};
 
   return (
     <>
-      <div className="tour-spot" style={spot} aria-hidden="true" />
+      <div className="tour-spot" style={spot} data-empty={!rect} aria-hidden="true" />
       <div
         ref={setCard}
-        className="tour-card"
+        className="tour-card lv-night"
         data-sheet={phone}
         style={style}
         role="dialog"
@@ -330,36 +337,54 @@ function TourLayer({
         aria-describedby="tour-body"
         data-testid="tour-card"
       >
-        <div className="lv-spread">
-          <span className="lv-muted lv-small" data-testid="tour-progress">
+        <div className="tour-head">
+          <span className="tour-kicker" data-testid="tour-progress">
             {tour.title} · step {index + 1} of {tour.steps.length}
           </span>
-          <Button size="sm" variant="ghost" icon="close" label="Leave the tour" onClick={stop} />
+          <button
+            type="button"
+            className="tour-close"
+            aria-label="Leave the tour"
+            title="Leave the tour (Esc)"
+            onClick={stop}
+          >
+            <Icon name="close" size={15} />
+          </button>
         </div>
         <h2 id="tour-title" ref={heading} tabIndex={-1}>
           {step.title}
         </h2>
         <p id="tour-body">{body}</p>
         {step.action ? (
-          <p className="lv-small" style={{ color: acted ? 'var(--primary)' : undefined, fontWeight: 600 }}>
+          <p className="tour-try" data-done={acted}>
+            <Icon name={acted ? 'check' : 'sparkle'} size={14} />
             {acted ? 'Done. Press Next when you are ready.' : step.action.prompt}
           </p>
         ) : null}
         {step.explain ? (
-          <Link className="lv-small" to={`/help/methods#${step.explain}`} onClick={stop}>
+          <Link className="tour-link" to={`/help/methods#${step.explain}`} onClick={stop}>
             How this is calculated
           </Link>
         ) : null}
-        <div className="lv-progress" aria-hidden="true">
-          <div style={{ width: `${((index + 1) / tour.steps.length) * 100}%` }} />
+        <div className="tour-pips" aria-hidden="true">
+          {tour.steps.map((_, i) => (
+            <i key={i} data-on={i < index} data-now={i === index} />
+          ))}
         </div>
-        <div className="lv-spread">
-          <Button size="sm" disabled={index === 0} onClick={() => go(-1)}>
-            Back
-          </Button>
-          <Button size="sm" variant="primary" onClick={() => go(1)} data-testid="tour-next">
-            {last ? 'Finish' : 'Next'}
-          </Button>
+        <div className="tour-foot">
+          <span className="tour-keys" aria-hidden="true">
+            <kbd>←</kbd> <kbd>→</kbd> move · <kbd>Esc</kbd> leave
+          </span>
+          <span className="tour-nav">
+            {index > 0 ? (
+              <Button size="sm" variant="ghost" onClick={() => go(-1)}>
+                Back
+              </Button>
+            ) : null}
+            <Button size="sm" variant="primary" onClick={() => go(1)} data-testid="tour-next">
+              {last ? 'Finish' : 'Next'}
+            </Button>
+          </span>
         </div>
       </div>
       <div
@@ -389,31 +414,31 @@ function TourPrompt({ start }: { start: (id: string) => void }): ReactNode {
   const dismiss = (): void =>
     useStore.getState().setSettings({ promptsDismissed: [...settings.promptsDismissed, tour.id] });
   return (
-    <aside className="tour-prompt" aria-label="Tour suggestion" data-testid="tour-prompt">
-      <span>
-        <strong>New here?</strong> Take the {tour.minutes}-minute tour: {tour.title}.
+    <aside className="tour-prompt lv-night" aria-label="Tour suggestion" data-testid="tour-prompt">
+      <Icon name="sparkle" size={15} />
+      <span className="tour-prompt-text">
+        New here? <strong>{tour.title}</strong>, a {tour.minutes}-minute tour.
       </span>
-      <span className="lv-row">
-        <Button
-          size="sm"
-          variant="primary"
-          onClick={() => {
-            dismiss();
-            start(tour.id);
-          }}
-        >
-          Take the tour
-        </Button>
-        <Button
-          size="sm"
-          onClick={() => {
-            quiet = true;
-            dismiss();
-          }}
-        >
-          Not now
-        </Button>
-      </span>
+      <Button
+        size="sm"
+        variant="primary"
+        onClick={() => {
+          dismiss();
+          start(tour.id);
+        }}
+      >
+        Take the tour
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        icon="close"
+        label="Not now"
+        onClick={() => {
+          quiet = true;
+          dismiss();
+        }}
+      />
     </aside>
   );
 }

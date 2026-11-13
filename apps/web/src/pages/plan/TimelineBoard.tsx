@@ -371,7 +371,7 @@ export function TimelineBoard({
     <section className="tl-board" aria-label="Plan timeline" style={{ ['--tl-n' as string]: plan.people.length }}>
       <div className="tl-scroll">
         <div className="tl-inner">
-          <div className="tl-life lv-night">
+          <div className="tl-life lv-night" data-tour="life-line">
             <div className="tl-row">
               <div className="tl-label tl-life-label">
                 <h2>Life line</h2>
@@ -523,7 +523,7 @@ export function TimelineBoard({
             </div>
           </div>
 
-          <div className="tl-lanes" data-focus={!!selected}>
+          <div className="tl-lanes" data-focus={!!selected} data-tour="timeline-lanes">
             <div className="tl-lanes-inner">
               <div className="tl-grid" aria-hidden="true">
                 {ticks.map((y) => (
