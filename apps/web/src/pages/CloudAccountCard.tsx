@@ -1,17 +1,20 @@
 import { Button, Card, Dialog, Notice, SelectField, TextField } from '@fisim/ui';
-import { useState, type ReactNode } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   accountRequest,
   publicCloud,
   refreshAccount,
+  signOutAccount,
   useCloudAccount,
   type CloudUser,
 } from '../lib/cloud-account';
-import { bindCloudAccount, stopCloudSync } from '../lib/sync';
+import { bindCloudAccount } from '../lib/sync';
 import { download } from '../lib/files';
 
 export function CloudAccountCard(): ReactNode {
   const account = useCloudAccount();
+  const location = useLocation();
   const [mode, setMode] = useState<'signin' | 'register' | 'recover'>('signin');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -21,6 +24,13 @@ export function CloudAccountCard(): ReactNode {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  useEffect(() => {
+    if (location.hash !== '#cloud-account' || account.loading || account.user) return;
+    setMode('signin');
+    const card = document.getElementById('cloud-account');
+    card?.scrollIntoView({ block: 'start' });
+    card?.querySelector<HTMLInputElement>('input')?.focus({ preventScroll: true });
+  }, [location.key, location.hash, account.loading, account.user]);
   if (!publicCloud) return null;
   async function run(action: () => Promise<void>): Promise<void> {
     setBusy(true);
@@ -75,7 +85,7 @@ export function CloudAccountCard(): ReactNode {
     }
   }
   return (
-    <Card title="Local or cloud saving" data-tour="cloud-account">
+    <Card id="cloud-account" title="Local or cloud saving" data-tour="cloud-account">
       <p className="lv-muted lv-small">
         Your plans save in this browser without an account. Create a free account to save encrypted copies in
         the cloud and open them on other devices. Cloud storage includes 20 plans, up to 2 MiB total (256 KiB
@@ -95,16 +105,7 @@ export function CloudAccountCard(): ReactNode {
             use a private browser window and close it when finished.
           </p>
           <div>
-            <Button
-              disabled={busy}
-              onClick={() =>
-                void run(async () => {
-                  await stopCloudSync();
-                  await accountRequest('auth/sign-out', {});
-                  await refreshAccount();
-                })
-              }
-            >
+            <Button disabled={busy} onClick={() => void run(signOutAccount)}>
               Sign out
             </Button>
           </div>

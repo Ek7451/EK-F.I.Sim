@@ -43,3 +43,17 @@ export async function refreshAccount(): Promise<CloudUser | null> {
     return null;
   }
 }
+
+let signingOut: Promise<void> | null = null;
+export function signOutAccount(): Promise<void> {
+  if (signingOut) return signingOut;
+  signingOut = (async () => {
+    const { stopCloudSync } = await import('./sync');
+    await stopCloudSync();
+    await accountRequest('auth/sign-out', {});
+    useCloudAccount.setState({ user: null, loading: false, error: '' });
+  })().finally(() => {
+    signingOut = null;
+  });
+  return signingOut;
+}

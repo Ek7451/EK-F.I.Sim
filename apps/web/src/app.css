@@ -166,6 +166,23 @@
 .topbar .spacer {
   flex: 1;
 }
+.header-tools {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#cloud-account {
+  scroll-margin-top: calc(var(--topbar-h) + 16px);
+}
+.account-toggle {
+  flex-shrink: 0;
+}
+@media (max-width: 900px) {
+  .topbar .account-toggle,
+  .topbar .only-phone .lv-btn {
+    min-height: 44px;
+  }
+}
 .plan-switch {
   display: inline-flex;
   align-items: center;
