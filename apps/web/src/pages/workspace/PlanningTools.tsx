@@ -73,10 +73,11 @@ function PrecisionField({
 }): ReactNode {
   const id = useId();
   const resetId = useDraft((s) => s.resetId);
-  const [text, setText] = useState(String(value));
+  const show = (v: number): string => (Number.isInteger(v) ? String(v) : String(+v.toFixed(2)));
+  const [text, setText] = useState(show(value));
   const [error, setError] = useState('');
   useEffect(() => {
-    setText(String(value));
+    setText(show(value));
     setError('');
     useDraft.getState().setInvalid(id, false);
   }, [value, id, resetId]);
@@ -142,38 +143,40 @@ export function DraftActions({
   const signed = (v: number): string => `${v >= 0 ? '+' : '−'}${formatMoney(Math.abs(v))}`;
   return (
     <section className="draft-bar" aria-label="Draft changes" data-tour="draft-actions">
-      <div>
-        <Badge tone="warn">Unsaved draft</Badge> <strong>What changed</strong>
+      <div className="draft-what">
+        <p className="draft-headline">
+          <Badge tone="warn">Unsaved draft</Badge> <strong>What changed</strong>{' '}
+          <span>
+            {changed.length
+              ? changed
+                  .map((m) => {
+                    const old = base.milestones.find((b) => b.id === m.id);
+                    if (!old) return `Added ${m.name}`;
+                    return `${m.name}: ${old.when.type === 'age' ? `age ${old.when.age}` : old.when.type === 'year' ? old.when.year : 'condition'} → ${m.when.type === 'age' ? `age ${m.when.age}` : m.when.type === 'year' ? m.when.year : 'condition'}`;
+                  })
+                  .join('; ')
+              : t.label}
+            .
+          </span>
+        </p>
+        <p role="status" className="draft-effect">
+          {conflict
+            ? 'The saved plan changed. Discard this draft and start again.'
+            : stale
+              ? 'Updating draft outcomes…'
+              : delta === null || tax === null
+                ? 'Loading baseline…'
+                : `Ending wealth ${signed(delta)} · lifetime taxes ${signed(tax)} vs saved plan, in today's dollars.`}
+        </p>
+        <details>
+          <summary>All changed inputs</summary>
+          <ul>
+            {scenarioChanges(t.base, t.plan).map((patch, i) => (
+              <li key={i}>{describeChange(t.base, patch)}</li>
+            ))}
+          </ul>
+        </details>
       </div>
-      <p>
-        {changed.length
-          ? changed
-              .map((m) => {
-                const old = base.milestones.find((b) => b.id === m.id);
-                if (!old) return `Added ${m.name}`;
-                return `${m.name}: ${old.when.type === 'age' ? `age ${old.when.age}` : old.when.type === 'year' ? old.when.year : 'condition'} → ${m.when.type === 'age' ? `age ${m.when.age}` : m.when.type === 'year' ? m.when.year : 'condition'}`;
-              })
-              .join('; ')
-          : t.label}
-        .
-      </p>
-      <details>
-        <summary>All changed inputs</summary>
-        <ul>
-          {scenarioChanges(t.base, t.plan).map((patch, i) => (
-            <li key={i}>{describeChange(t.base, patch)}</li>
-          ))}
-        </ul>
-      </details>
-      <p role="status">
-        {conflict
-          ? 'The saved plan changed. Discard this draft and start again.'
-          : stale
-            ? 'Updating draft outcomes…'
-            : delta === null || tax === null
-              ? 'Loading baseline…'
-              : `Ending wealth ${signed(delta)} · lifetime taxes ${signed(tax)} vs saved plan, in today's dollars.`}
-      </p>
       <TextField label="Scenario name" value={name} onChange={setName} />
       <div className="draft-actions">
         <Button
@@ -351,7 +354,7 @@ export function PlanningEditor({
               onChange={(v) =>
                 edit('Expected stock returns changed', (d) => {
                   const f = d.assumptions.returns.fixed;
-                  f.intlStocks += v - f.usStocks;
+                  f.intlStocks = +(f.intlStocks + v - f.usStocks).toFixed(6);
                   f.usStocks = v;
                 })
               }
@@ -451,11 +454,11 @@ export function EventTimeline({
     .map((m) => ({ m, year: milestoneYear(plan, m, result) }))
     .filter((x) => x.year !== null && x.year >= start && x.year <= end);
   const lanes: number[] = [];
-  const labelWidth = Math.min(160, trackWidth * 0.48);
+  const labelWidth = Math.min(190, trackWidth * 0.48);
   const labelPct = (labelWidth / Math.max(1, trackWidth)) * 100;
   const laneHeight = Math.max(
-    54,
-    ...events.map(({ m }) => Math.ceil((m.name.length * 7) / Math.max(40, labelWidth - 16)) * 16 + 32),
+    44,
+    ...events.map(({ m }) => Math.ceil((m.name.length * 7) / Math.max(40, labelWidth - 16)) * 15 + 28),
   );
   const positioned = events
     .sort((a, b) => a.year! - b.year!)
@@ -476,7 +479,7 @@ export function EventTimeline({
       <div
         ref={track}
         className="event-track"
-        style={{ height: Math.max(82, lanes.length * laneHeight + 30) }}
+        style={{ height: Math.max(62, lanes.length * laneHeight + 22) }}
       >
         <span className="event-start">{Math.round(start)}</span>
         <span className="event-end">{Math.round(end)}</span>
@@ -488,7 +491,7 @@ export function EventTimeline({
             data-tour="timeline-pin"
             data-derived={m.when.type === 'condition'}
             aria-pressed={selected === m.id}
-            style={{ left: `${left}%`, top: lane * laneHeight + 24, width: labelWidth }}
+            style={{ left: `${left}%`, top: lane * laneHeight + 18, width: labelWidth }}
             aria-label={`${m.name} ${year} · ${plan.people.map((p) => Math.max(0, year! - Number(p.birthDate.slice(0, 4)))).join(' / ')} years old${m.when.type === 'condition' ? ', condition based' : ', arrow keys move one year'}`}
             onClick={() => onSelect(m.id)}
             onKeyDown={(e) => {

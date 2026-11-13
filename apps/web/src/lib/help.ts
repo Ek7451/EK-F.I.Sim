@@ -39,7 +39,7 @@ export const HELP: Record<string, string> = {
   'State you live in':
     'Sets state income tax and the health-insurance prices used before Medicare. If you plan to move, add the move later under Household.',
   'Plan with a partner':
-    'Turn on to plan for two people. Each person gets their own pay, retirement accounts, Social Security and retirement age; spending, cash and the brokerage account are shared. Partners are planned as a married couple filing jointly.',
+    'Turn on to plan for two people. Each person gets their own pay, brokerage account, health savings account, retirement accounts, Social Security and retirement age; spending and cash are shared. Partners are planned as a married couple filing jointly.',
   'Plan until age':
     'The age to plan for, not a prediction. Money has to last if you live long, so many planners use 90 to 95. The odds shown under the field come from the Social Security 2023 life tables, which leave out future gains in lifespan, so the real odds are probably a little higher.\n\nYou can also let lifespans vary at random in the Chance of success simulations (under Assumptions).',
   'Yearly pay before tax':
@@ -54,8 +54,15 @@ export const HELP: Record<string, string> = {
     'The match stops at this share of your pay. With "50% up to 6%", putting in 6% of pay earns 3% from your employer; putting in more earns no extra match.',
   'Cash and savings':
     'Checking, savings, high-yield savings and money-market accounts. Part of this is kept as an emergency fund (six months of spending by default).',
+  'Brokerage (taxable)': '@see Brokerage (taxable investments)',
   'Brokerage (taxable investments)':
-    'Investment accounts that are not retirement accounts: stocks, funds and bonds you hold in an ordinary brokerage account. Gains are taxed when you sell, dividends each year.',
+    "Investment accounts that are not retirement accounts: stocks, funds and bonds you hold in an ordinary brokerage account. Gains are taxed when you sell, dividends each year. With a partner, enter what is in each person's own name; put a joint account under whichever of you manages it (you can mark it joint later under What you have).",
+  'HSA balance':
+    "What is in this person's health savings account today. An HSA belongs to one person, so each partner has their own. It grows tax-free and pays medical costs tax-free.",
+  'HSA added per year': '@see HSA contribution per year',
+  'HSA contribution per year':
+    "What goes into this person's HSA from pay each year, including anything the employer adds. It needs a high-deductible health plan, and stops when their pay stops. Enter 0 if they do not contribute. Longview keeps it within the yearly HSA limit and puts this person on a high-deductible plan while they work.",
+  'Pre-tax (401(k), IRA)': '@see Pre-tax retirement (401(k), IRA)',
   'Pre-tax retirement (401(k), IRA)':
     'The total in traditional (pre-tax) retirement accounts: 401(k), 403(b), 457(b), traditional IRA, SEP and SIMPLE IRA. Withdrawals are taxed as income.',
   'Roth accounts':
@@ -204,6 +211,7 @@ export const HELP: Record<string, string> = {
     "Whether this milestone is set for a year, for someone's age, or for when a condition becomes true (such as reaching financial independence).",
   Condition:
     'Reach this milestone when something becomes true rather than at a set date. "Investments cover spending" means your investments reach the multiple of yearly spending set below.',
+  'Years of spending': '@see Years of spending saved',
   'Years of spending saved':
     'Financial independence here means investments reach this many years of spending. 25 years matches the "4% rule".',
   Amount: "In today's dollars.",

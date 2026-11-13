@@ -1,0 +1,322 @@
+/* Guided tours (UX-10): the spotlight, the step card and the one-time offer. The card and the offer are small
+   pieces of the night instrument, so a tour reads as the app talking, not a dialog laid over it. */
+
+/* ------------------------------------------------------------------ spotlight */
+.tour-spot {
+  position: fixed;
+  z-index: 90;
+  border-radius: 14px;
+  /* The scrim is the spotlight's own shadow, so the lit area is always exactly the target. */
+  box-shadow: 0 0 0 9999px rgba(6, 8, 24, 0.62);
+  pointer-events: none;
+  transition:
+    left var(--motion-base) var(--ease),
+    top var(--motion-base) var(--ease),
+    width var(--motion-base) var(--ease),
+    height var(--motion-base) var(--ease);
+}
+/* A ring of first light around the target: the dawn spectrum as a hairline, with a soft bloom behind it. */
+.tour-spot::before,
+.tour-spot::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  pointer-events: none;
+}
+.tour-spot::before {
+  padding: 2px;
+  background: var(--grad-dawn);
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.tour-spot::after {
+  box-shadow:
+    0 0 22px 2px rgba(161, 77, 255, 0.5),
+    0 0 46px 6px rgba(255, 77, 148, 0.22);
+}
+/* A step with nothing to point at dims the whole screen and shows no ring. */
+.tour-spot[data-empty='true'] {
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+}
+.tour-spot[data-empty='true']::before,
+.tour-spot[data-empty='true']::after {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ step card */
+.tour-card {
+  z-index: 95;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(336px, calc(100vw - 24px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 14px 12px;
+  color: var(--ink);
+  border: 1px solid rgba(169, 159, 255, 0.34);
+  border-radius: var(--radius-3);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(108, 84, 255, 0.42), transparent 60%),
+    radial-gradient(90% 80% at 100% 100%, rgba(255, 77, 148, 0.2), transparent 62%),
+    linear-gradient(160deg, var(--night-2), var(--night-1) 46%, var(--night-0));
+  box-shadow:
+    0 24px 60px rgba(8, 6, 40, 0.5),
+    0 2px 8px rgba(8, 6, 40, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  /* Opacity only: the card is placed with a transform, which an entrance must not fight. */
+  animation: lv-fade 220ms var(--ease-out) both;
+}
+/* First light along the top edge, as on every headline band. */
+.tour-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--grad-dawn);
+  box-shadow: 0 0 16px 1px rgba(161, 77, 255, 0.7);
+}
+.tour-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 24px;
+}
+.tour-kicker {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--text-xs);
+  font-weight: 550;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.tour-close {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  margin: -2px -4px -2px 0;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--ink-3);
+  cursor: pointer;
+  transition:
+    background var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease);
+}
+.tour-close:hover {
+  background: var(--surface-2);
+  color: var(--ink);
+}
+.tour-card h2 {
+  font: 700 1.0625rem / 1.2 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.02em;
+  text-wrap: balance;
+}
+.tour-card h2:focus-visible {
+  outline: none;
+}
+.tour-card p {
+  font-size: var(--text-sm);
+  line-height: 1.5;
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+/* "Try it": an invitation, then a quiet confirmation once the control has been used. */
+.tour-card p.tour-try {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-1);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 600;
+}
+.tour-card p.tour-try > svg {
+  flex: none;
+  color: var(--dawn-amber);
+}
+.tour-card p.tour-try[data-done='true'] {
+  border-color: color-mix(in srgb, var(--ok) 55%, transparent);
+}
+.tour-card p.tour-try[data-done='true'] > svg {
+  color: var(--ok);
+}
+.tour-link {
+  align-self: flex-start;
+  font-size: var(--text-xs);
+  font-weight: 600;
+}
+/* One pip per step: where you are in the tour without reading a number. */
+.tour-pips {
+  display: flex;
+  gap: 4px;
+  margin-top: 2px;
+}
+.tour-pips > i {
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--surface-3);
+  transition: background var(--motion-base) var(--ease);
+}
+.tour-pips > i[data-on='true'] {
+  background: linear-gradient(90deg, var(--dawn-violet), var(--dawn-rose));
+}
+.tour-pips > i[data-now='true'] {
+  background: linear-gradient(90deg, var(--dawn-rose), var(--dawn-amber));
+  box-shadow: 0 0 10px rgba(255, 176, 46, 0.7);
+}
+.tour-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+.tour-keys {
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.tour-keys > kbd {
+  display: inline-block;
+  min-width: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  background: var(--surface);
+  font: 600 0.625rem / 16px var(--font-ui);
+  text-align: center;
+  color: var(--ink-2);
+}
+.tour-nav {
+  display: flex;
+  gap: 6px;
+  margin-left: auto;
+}
+/* Phones: a sheet docked to an edge, with room for a thumb. */
+.tour-card[data-sheet='true'] {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  border-radius: var(--radius-3) var(--radius-3) 0 0;
+  border-left: 0;
+  border-right: 0;
+  border-bottom: 0;
+  padding: 16px 16px calc(14px + env(safe-area-inset-bottom));
+}
+.tour-card[data-sheet='true'] .tour-keys {
+  display: none;
+}
+.tour-card[data-sheet='true'] .tour-nav .lv-btn,
+.tour-card[data-sheet='true'] .tour-close {
+  min-height: 44px;
+  min-width: 44px;
+}
+@media (pointer: coarse) {
+  .tour-keys {
+    display: none;
+  }
+}
+
+/* ------------------------------------------------------------------ the one-time offer */
+/* A slim pill on the footer line: it names the tour for this screen and stays off the charts and controls. */
+.tour-prompt {
+  position: fixed;
+  right: 20px;
+  bottom: 5px;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: min(600px, calc(100vw - 32px));
+  min-height: 36px;
+  padding: 3px 4px 3px 12px;
+  color: var(--ink);
+  font-size: var(--text-sm);
+  border: 1px solid rgba(169, 159, 255, 0.34);
+  border-radius: 999px;
+  background:
+    radial-gradient(80% 160% at 0% 0%, rgba(108, 84, 255, 0.45), transparent 62%),
+    linear-gradient(120deg, var(--night-2), var(--night-1) 55%, var(--night-0));
+  box-shadow:
+    0 14px 34px rgba(8, 6, 40, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+  animation: lv-rise 320ms var(--ease-out) both;
+}
+.tour-prompt > svg {
+  flex: none;
+  color: var(--dawn-amber);
+}
+.tour-prompt-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-2);
+}
+.tour-prompt-text > strong {
+  color: var(--ink);
+  font-weight: 650;
+}
+.tour-prompt > .lv-btn {
+  flex: none;
+}
+/* While a draft is open the bottom edge belongs to the draft bar; the offer waits until it is gone. */
+body:has(.draft-bar) .tour-prompt {
+  display: none;
+}
+/* Where the disclaimer would run under the pill, the pill sits just above it. */
+@media (max-width: 1340px) {
+  .tour-prompt {
+    bottom: 32px;
+  }
+}
+@media (max-width: 900px) {
+  .tour-prompt {
+    left: var(--space-3);
+    right: var(--space-3);
+    bottom: calc(66px + env(safe-area-inset-bottom));
+    max-width: none;
+    flex-wrap: wrap;
+    padding: 8px 10px 8px 12px;
+    border-radius: var(--radius-3);
+  }
+  .tour-prompt-text {
+    flex: 1 1 60%;
+    white-space: normal;
+  }
+  .tour-prompt > .lv-btn {
+    min-height: 40px;
+  }
+}
+@media print {
+  .tour-prompt,
+  .tour-spot,
+  .tour-card {
+    display: none !important;
+  }
+}

@@ -1,0 +1,273 @@
+/* The drill-down: what one bar is made of, and what moved since the year before. */
+.bd {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.bd-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  min-width: 0;
+}
+.bd-head > h3 {
+  font: 650 0.9375rem / 1.2 var(--font-ui);
+  letter-spacing: -0.015em;
+  flex: 1;
+  min-width: 0;
+}
+.bd-total {
+  font: 700 1.375rem / 1 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.03em;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+.bd-head > .lv-btn {
+  align-self: center;
+  flex: none;
+}
+
+/* Category buttons: the keyboard's way to choose what a chart click chooses. */
+.bd-keys {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+.bd-keys > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font: 600 var(--text-xs) var(--font-ui);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--motion-fast) var(--ease),
+    border-color var(--motion-fast) var(--ease);
+}
+.bd-keys > button > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 3px;
+  flex: none;
+}
+.bd-keys > button:hover {
+  border-color: var(--primary-line);
+  color: var(--ink);
+}
+.bd-keys > button[aria-pressed='true'] {
+  background: var(--primary-soft);
+  border-color: var(--primary-line);
+  color: var(--primary);
+}
+@media (pointer: coarse) {
+  .bd-keys > button {
+    min-height: 40px;
+  }
+}
+
+.bd-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bd-lines > li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+}
+.bd-line {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding: 5px 8px;
+  margin: 0 -8px;
+  border: 0;
+  border-radius: var(--radius-1);
+  background: none;
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+button.bd-line {
+  cursor: pointer;
+  transition: background var(--motion-fast) var(--ease);
+}
+button.bd-line:hover {
+  background: var(--primary-soft);
+}
+.bd-line-top {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: var(--text-sm);
+}
+.bd-line-label {
+  flex: 1;
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-weight: 550;
+  color: var(--ink-2);
+}
+.bd-line-label > svg {
+  color: var(--ink-3);
+  flex: none;
+}
+.bd-line-amount {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bd-line-share {
+  width: 4.5ch;
+  text-align: right;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bd-bar {
+  display: block;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--surface-2);
+  overflow: hidden;
+}
+.bd-bar > i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  transition: width var(--motion-base) var(--ease);
+}
+/* A credit: money back, drawn hatched so it never reads as a cost. */
+.bd-bar > i[data-credit] {
+  background-image: repeating-linear-gradient(
+    135deg,
+    transparent 0 3px,
+    color-mix(in srgb, var(--surface) 70%, transparent) 3px 6px
+  ) !important;
+  background-color: var(--ok) !important;
+}
+.bd-line-note {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  line-height: 1.3;
+}
+.bd-line-edit {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  margin: 3px -6px 0 0;
+  flex: none;
+  border-radius: 50%;
+  color: var(--ink-3);
+  opacity: 0.55;
+  transition:
+    opacity var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease);
+}
+.bd-lines > li:hover > .bd-line-edit,
+.bd-line-edit:focus-visible {
+  opacity: 1;
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+@media (pointer: coarse) {
+  .bd-line-edit {
+    width: 40px;
+    height: 40px;
+    opacity: 1;
+  }
+}
+
+/* What moved since last year: the answer to "why the spike?". */
+.bd-changes {
+  padding: 8px 10px;
+  border: 1px solid var(--primary-line);
+  border-radius: var(--radius-2);
+  background: linear-gradient(
+    120deg,
+    var(--primary-soft),
+    color-mix(in srgb, var(--primary-soft) 35%, var(--surface))
+  );
+}
+.bd-changes > h4 {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  font: 650 var(--text-sm) var(--font-ui);
+}
+.bd-delta {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+.bd-delta[data-dir='up'] {
+  color: var(--accent);
+}
+.bd-delta[data-dir='down'] {
+  color: var(--ok);
+}
+.bd-delta[data-dir='flat'] {
+  color: var(--ink-3);
+  font-weight: 550;
+}
+.bd-changes > ul {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.bd-changes > ul > li {
+  display: flex;
+  gap: 7px;
+  font-size: var(--text-sm);
+  line-height: 1.35;
+}
+.bd-changes > ul > li > svg {
+  flex: none;
+  margin-top: 2px;
+}
+.bd-changes > ul > li[data-dir='up'] > svg {
+  color: var(--accent);
+}
+.bd-changes > ul > li[data-dir='down'] > svg {
+  color: var(--ok);
+}
+.bd-changes strong {
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+.bd-reason {
+  display: block;
+  color: var(--ink-2);
+  font-size: var(--text-xs);
+}
+.bd-facts > div {
+  padding: 3px 0;
+}
+.bd-empty,
+.bd-foot {
+  margin: 0;
+}
+.bd-foot {
+  line-height: 1.45;
+}

@@ -7,6 +7,7 @@ import {
   HelpTip,
   KpiStrip,
   Notice,
+  Segmented,
   Stat,
   formatCompact,
   formatMoney,
@@ -111,34 +112,21 @@ export function ProjectionPage(): ReactNode {
         }
       />
       <RecomputeError error={error} />
-      {stale && (
-        <p className="lv-muted" role="status">
-          {error ? 'Last successful result' : 'Updating results…'}{' '}
-          {error && (
-            <Button size="sm" onClick={retry}>
-              Retry
-            </Button>
-          )}
-        </p>
-      )}
-      <div className="workspace-status" role="status">
-        {error ? (
+      {error ? (
+        <p className="lv-muted lv-small" role="status">
+          Last successful result{' '}
           <Button size="sm" onClick={retry}>
             Retry calculation
           </Button>
-        ) : stale ? (
-          'Updating · showing last successful projection'
-        ) : (
-          `Expected-return projection · ${m.unit}`
-        )}
-      </div>
+        </p>
+      ) : null}
       <Warnings warnings={result.warnings} />
       <KpiStrip data-tour="projection-stats">
         <Stat
           icon="wallet"
           label="Net worth today"
           value={formatCompact(s.currentNetWorth)}
-          note={`Start of ${s.startYear}; the chart shows each year's end`}
+          note={`Start of ${s.startYear}`}
         />
         <Stat
           icon="estate"
@@ -152,7 +140,7 @@ export function ProjectionPage(): ReactNode {
                 }
               : undefined
           }
-          note={`Net worth in ${s.endYear} (${endAges}), today's dollars`}
+          note={`In ${s.endYear}, ${endAges}`}
         />
         <Stat
           icon="target"
@@ -173,35 +161,34 @@ export function ProjectionPage(): ReactNode {
           data-tour="spending-covered"
         />
       </KpiStrip>
-      <div className="workspace-toolbar">
-        <div className="lv-segmented" aria-label="Chart mode">
-          <Button aria-pressed={view.mode === 'accounts'} onClick={() => view.set({ mode: 'accounts' })}>
-            Accounts
-          </Button>
-          <Button aria-pressed={view.mode === 'netWorth'} onClick={() => view.set({ mode: 'netWorth' })}>
-            Net worth
-          </Button>
-        </div>
-        <div className="lv-row">
-          <Button size="sm" onClick={() => view.set({ axis: view.axis === 'year' ? 'age' : 'year' })}>
-            {view.axis === 'year' ? 'Show ages' : 'Show years'}
-          </Button>
-          <Button
-            data-tour="workspace-details"
-            size="sm"
-            onClick={() => view.set({ inspector: !view.inspector })}
-          >
-            {view.inspector ? 'Hide details' : 'Show details'}
-          </Button>
-        </div>
-      </div>
       <div className="chart-ledger planning-workspace" data-inspector={view.inspector}>
         <Card
           title="Net worth over time"
           actions={
-            <span className="lv-muted lv-small" data-tour="recompute-time">
-              {m.unit} · recalculated in {ms.toFixed(0)} ms
-            </span>
+            <>
+              <span className="lv-muted lv-small proj-recalc" data-tour="recompute-time" role="status">
+                {stale && !error ? 'Updating…' : `${m.unit} · recalculated in ${ms.toFixed(0)} ms`}
+              </span>
+              <Segmented
+                label="Chart mode"
+                value={view.mode}
+                onChange={(mode) => view.set({ mode })}
+                options={[
+                  { value: 'accounts', label: 'Accounts' },
+                  { value: 'netWorth', label: 'Net worth' },
+                ]}
+              />
+              <Button size="sm" onClick={() => view.set({ axis: view.axis === 'year' ? 'age' : 'year' })}>
+                {view.axis === 'year' ? 'Show ages' : 'Show years'}
+              </Button>
+              <Button
+                data-tour="workspace-details"
+                size="sm"
+                onClick={() => view.set({ inspector: !view.inspector })}
+              >
+                {view.inspector ? 'Hide details' : 'Show details'}
+              </Button>
+            </>
           }
           data-tour="net-worth-chart"
         >

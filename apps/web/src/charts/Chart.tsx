@@ -1,5 +1,5 @@
 /** Thin React wrapper around Apache ECharts (D3) with the Longview theme layer and a data-table alternative for a11y. */
-import { Button } from '@fisim/ui';
+import { Button, formatMoney } from '@fisim/ui';
 import type { EChartsCoreOption } from 'echarts/core';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useStore } from '../state/store';
@@ -116,10 +116,13 @@ export function Chart({
   table,
   footer,
   onClick,
+  onItemClick,
   onHover,
   onZoom,
   ...rest
 }: {
+  /** A click on one mark (a bar segment, a point): which series and which category it belongs to. */
+  onItemClick?: (params: { dataIndex: number; seriesName: string; name: string }) => void;
   /** Builds the ECharts option from the current theme colours. */
   build: (c: ChartColors) => EChartsCoreOption;
   deps: unknown[];
@@ -139,6 +142,8 @@ export function Chart({
   // Keep the latest click handler without re-initialising the chart (it would otherwise go stale).
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
+  const itemClickRef = useRef(onItemClick);
+  itemClickRef.current = onItemClick;
   const hoverRef = useRef(onHover);
   hoverRef.current = onHover;
   const zoomRef = useRef(onZoom);
@@ -179,6 +184,15 @@ export function Chart({
           keyboardIndex.current = idx;
           clickRef.current({ dataIndex: idx });
         }
+      });
+      chart.on('click', (p: unknown) => {
+        const e = p as { dataIndex?: number; seriesName?: string; name?: string };
+        if (itemClickRef.current && typeof e.dataIndex === 'number')
+          itemClickRef.current({
+            dataIndex: e.dataIndex,
+            seriesName: e.seriesName ?? '',
+            name: e.name ?? '',
+          });
       });
       chart.getZr().on('mousemove', (e: { offsetX: number; offsetY: number }) => {
         if (!hoverRef.current) return;
@@ -366,6 +380,11 @@ export function axis(c: ChartColors): {
     splitLine: { lineStyle: { color: c.line, type: [3, 5], width: 1 } },
   };
 }
+/** Default tooltip value: whole dollars. Missing points read as a dash, not "NaN". */
+export const tipValue = (v: unknown): string => {
+  const n = Array.isArray(v) ? Number(v[v.length - 1]) : typeof v === 'number' ? v : Number(v);
+  return v === null || v === undefined || v === '' || !Number.isFinite(n) ? '—' : formatMoney(n);
+};
 /** A floating pane of frosted glass with a lit crosshair. */
 export function tooltip(c: ChartColors): object {
   return {
@@ -376,6 +395,9 @@ export function tooltip(c: ChartColors): object {
     textStyle: { color: c.ink, fontSize: 12 },
     confine: true,
     transitionDuration: 0.12,
+    // Every value a tooltip prints is rounded here unless a chart or series says otherwise: a raw float
+    // ("41234.56789012345") must never reach the screen.
+    valueFormatter: tipValue,
     axisPointer: {
       type: 'line',
       z: 3,

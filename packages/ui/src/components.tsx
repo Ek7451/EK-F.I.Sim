@@ -138,6 +138,12 @@ const ICONS: Record<string, string> = {
   percent: 'M19 5L5 19M7 9a2 2 0 100-4 2 2 0 000 4zM17 19a2 2 0 100-4 2 2 0 000 4z',
   leaf: 'M5 19c0-9 6-14 15-14 0 9-5 15-14 15M5 19l7-7',
   warning: 'M12 4l9 16H3zM12 10v4M12 17h.01',
+  // life events and timeline lanes
+  child: 'M12 8.5a2.75 2.75 0 100-5.5 2.75 2.75 0 000 5.5zM6 13l6-2 6 2M12 11v6M9 21l3-4 3 4',
+  pin: 'M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0113 0c0 5.4-6.5 11-6.5 11zM12 12.5a2.5 2.5 0 100-5 2.5 2.5 0 000 5z',
+  compass: 'M12 21a9 9 0 110-18 9 9 0 010 18zM15.5 8.5l-2 5-5 2 2-5z',
+  food: 'M7 3v18M4.5 3v5a2.5 2.5 0 005 0V3M17 3c-2 2-3 4.5-3 8h3zM17 11v10',
+  plane: 'M3 12l18-8-6 17-3.5-7zM11.5 14L21 4',
 };
 export type IconName = keyof typeof ICONS;
 
@@ -218,6 +224,77 @@ export function Card({
       ) : null}
       {children}
     </section>
+  );
+}
+
+/**
+ * A card that folds down to its title row. The row always shows what the section currently says (`summary`),
+ * so a folded section still answers "what is set here?" without being opened. Open state is remembered per
+ * `storageKey` for the browser session.
+ */
+export function Fold({
+  title,
+  summary,
+  icon,
+  kind,
+  defaultOpen = false,
+  storageKey,
+  actions,
+  children,
+  ...rest
+}: {
+  title: ReactNode;
+  /** The section's current settings in a few words, shown beside the title (and when folded). */
+  summary?: ReactNode;
+  icon?: string;
+  kind?: 'account' | 'income' | 'expense' | 'milestone' | 'debt';
+  defaultOpen?: boolean;
+  storageKey?: string;
+  /** Controls that stay visible on the title row (they do not toggle the fold). */
+  actions?: ReactNode;
+  children: ReactNode;
+  id?: string;
+} & Record<`data-${string}`, string | undefined>): ReactNode {
+  const key = storageKey ? `lv-fold:${storageKey}` : null;
+  const [open, setOpen] = useState<boolean>(() => {
+    if (!key) return defaultOpen;
+    try {
+      const saved = sessionStorage.getItem(key);
+      return saved === null ? defaultOpen : saved === '1';
+    } catch {
+      return defaultOpen;
+    }
+  });
+  return (
+    <details
+      className="lv-card lv-fold"
+      open={open}
+      onToggle={(e) => {
+        const next = (e.currentTarget as HTMLDetailsElement).open;
+        setOpen(next);
+        if (key)
+          try {
+            sessionStorage.setItem(key, next ? '1' : '0');
+          } catch {
+            /* private mode: the fold simply is not remembered */
+          }
+      }}
+      {...rest}
+    >
+      <summary>
+        {icon ? <IconTile icon={icon} kind={kind} /> : null}
+        <h2>{title}</h2>
+        {summary ? <span className="lv-fold-summary">{summary}</span> : <span className="lv-fold-summary" />}
+        {actions ? <span className="lv-fold-actions-room" aria-hidden="true" /> : null}
+        <span className="lv-fold-chevron" aria-hidden="true">
+          <Icon name="down" size={16} />
+        </span>
+      </summary>
+      {/* Controls for an open section sit on its title row but outside the summary: a button inside a
+          summary is a control inside a control, which assistive tech cannot operate. */}
+      {actions ? <div className="lv-row lv-fold-actions">{actions}</div> : null}
+      <div className="lv-fold-body">{children}</div>
+    </details>
   );
 }
 
@@ -591,7 +668,8 @@ export function PercentField({
   const n = useNumberText(
     value,
     (v) => String(+(v * 100).toFixed(digits)),
-    (s) => parseLoose(s) / 100,
+    // Trim binary noise at the door: 1.1 / 100 is 0.011000000000000001, and that must not be what is saved.
+    (s) => +(parseLoose(s) / 100).toFixed(8),
     onChange,
   );
   return (
@@ -768,7 +846,9 @@ export function Slider({
           </label>
           {helpBody ? <HelpTip describedBy={`${id}-label`}>{helpBody}</HelpTip> : null}
         </span>
-        <span className="lv-range-value">{format ? format(value) : value}</span>
+        <span className="lv-range-value">
+          {format ? format(value) : Number.isInteger(value) ? value : +value.toFixed(4)}
+        </span>
       </div>
       <input
         id={id}
@@ -778,7 +858,7 @@ export function Slider({
         max={max}
         step={step}
         value={value}
-        onChange={(e) => onChange(Number(e.target.value))}
+        onChange={(e) => onChange(+Number(e.target.value).toFixed(8))}
         aria-valuetext={format ? format(value) : undefined}
         style={{ ['--fill' as string]: `${max > min ? ((value - min) / (max - min)) * 100 : 0}%` }}
       />

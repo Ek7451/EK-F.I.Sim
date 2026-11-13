@@ -226,8 +226,10 @@ test('reports: CSV and PDF are generated on the device', async ({ page }, info) 
 test('compare: a what-if variant shows a difference', async ({ page }) => {
   await seed(page);
   await go(page, '/compare');
-  await page.getByText('Customize and save a scenario', { exact: true }).click();
-  await page.locator('[data-tour="add-variant"]').click();
+  // The builder sits beside the results on a wide screen and is folded above them on a narrow one.
+  const add = page.locator('[data-tour="add-variant"]');
+  if (!(await add.isVisible())) await page.getByText('Create a what-if', { exact: true }).click();
+  await add.click();
   await expect(page.locator('[data-tour="variant-list"]')).toBeVisible();
   await expect(page.locator('[data-tour="compare-table"]')).toContainText('$');
 });

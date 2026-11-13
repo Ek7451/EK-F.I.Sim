@@ -20,9 +20,9 @@ Tokens live in `packages/ui/src/styles.css`.
 - **Dark theme**: `#070919` ground, `#10132E` panels, ink `#F0F1FF`, primary `#A99FFF`.
 - Semantic risk colors remain red and amber. Financial chart colors are named by what they stand for (`--financial-cash`, `-taxable`, `-pretax`, `-roth`, `-hsa`, `-property`, `-debts`).
 
-Type: self-hosted Bricolage Grotesque (variable, optical size) sets page titles, the brand and headline figures; self-hosted Inter Variable sets everything else. Both are OFL (see `apps/web/public/fonts/OFL.txt`). Figures that change while a year is scrubbed (the inspector, tables) stay in Inter with tabular numerals so they do not jitter. Body text is 14–16px; secondary text 12–13px; page titles 28–36px; headline figures 32–56px.
+Type: self-hosted Bricolage Grotesque (variable, optical size) sets page titles, the brand and headline figures; self-hosted Inter Variable sets everything else. Both are OFL (see `apps/web/public/fonts/OFL.txt`). Figures that change while a year is scrubbed (the inspector, tables) stay in Inter with tabular numerals so they do not jitter. Body text is 14–16px; secondary text 12–13px; page titles 22px; figures in a headline band 24px; the one hero figure on Overview 56px.
 
-Shape: controls are capsules (38px, at least 44px for touch); inputs 10px radius with persistent labels; cards 18px; hero panels 26px. Shadows are tinted indigo, never neutral grey.
+Shape: controls are capsules (34px, at least 44px for touch); inputs 10px radius with persistent labels; cards 18px; hero panels 20px. Shadows are tinted indigo, never neutral grey.
 
 Where the night panel appears, and nowhere else:
 
@@ -32,7 +32,20 @@ Where the night panel appears, and nowhere else:
 
 The dawn gradient appears on: the primary button, the active rail marker, progress and slider fills, the hairline of first light on the headline band, and headline paths in charts (§4). It is not a background wash for ordinary cards.
 
-Navigation is about 216px wide and the top bar 56px high. Four headline figures lead to a protected chart plotting area: at least 360px at 1440×900 and 280px at 1366×768, measured on the data plot, not its card. `tests/e2e/specs/layout.spec.ts` enforces this; changing the height of anything above the chart means re-measuring. At 200% zoom, natural reflow takes precedence over fitting a viewport.
+Navigation is about 216px wide and the top bar 48px high. Four headline figures lead to a protected chart plotting area: at least 360px at 1440×900 and 280px at 1366×768, measured on the data plot, not its card. `tests/e2e/specs/layout.spec.ts` enforces this; changing the height of anything above the chart means re-measuring. At 200% zoom, natural reflow takes precedence over fitting a viewport.
+
+### Density: one screen first
+
+Added November 12, 2026 after the owner's review ("too much vertical scrolling; screen space should go to plans and sliders, with expandable sections for detailed inputs"). The bold look stays; the chrome gets out of the way.
+
+- **One screen at 1440×900.** A screen's headline figures and its main chart or control surface are visible on load. Secondary material sits beside the chart, behind a `Segmented` switch in the same card, or in a `Fold`. Stacking a third full-width card under the fold needs a reason. `--page-h` is the height left under the shell.
+- **One row of chrome.** Inside a task group the screen switcher, a one-line description (full text on hover) and the page actions share a single row; the `h1` remains for assistive technology. Screens outside a group show a 22px title on that row.
+- **`Fold`** (`@fisim/ui`) is the expandable section: a card that folds to its title row, whose summary states the current setting in plain words ("Fill the 22% bracket, from retirement"), so a folded section still answers the question. Input screens lay folds out in two columns; the one or two groups people use most open by default.
+- **Fields.** `form-grid` columns are about 190px and do not stretch to fill a card. Labels are at most about 28 characters and never wrap; the explanation goes in `hint` or the (i) help. Values that are naturally dials (rates, ages, bracket choice) get a slider or segmented control beside exact entry.
+- **The year scrubber** is one 36px row (step buttons, the year in view, the slider) and lives in the header of the card it controls, not in a card of its own.
+- **The draft bar** is a slim strip that stays in view while a draft is open, so Apply, Save as scenario and Discard are never a scroll away.
+- **Figures.** Nothing reaches the screen unformatted: chart tooltips round through the shared `tooltip()` default, percent fields trim binary noise when parsed, and change summaries format every number.
+- **Asking "why?"** A stacked bar segment is a question. Clicking a category in a year opens its breakdown (what makes it up, what changed since the year before, links to the inputs) beside the chart.
 
 ## 3. Navigation and editing
 

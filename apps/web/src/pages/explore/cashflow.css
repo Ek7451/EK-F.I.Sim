@@ -1,0 +1,141 @@
+/* Cash flow: two charts on the left, one inspector on the right that explains whatever was clicked. All three
+   fit a 900px-tall window; the two chart heights share what is left under the shell. */
+.cf-grid {
+  /* 134px: the two cards' own padding and title rows, plus the gap between them. */
+  --cf-free: calc(var(--page-h) - 144px);
+  --cf-sankey-h: clamp(250px, calc(var(--cf-free) * 0.54), 460px);
+  --cf-spend-h: clamp(220px, calc(var(--cf-free) * 0.46), 400px);
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(340px, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.cf-left {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cf-grid .lv-card > header {
+  flex-wrap: nowrap;
+}
+.cf-grid .lv-card > header > h2 {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.cf-grid .lv-card > header > .lv-row {
+  flex-wrap: nowrap;
+  flex: none;
+}
+.cf-grid .lv-segmented {
+  padding: 2px;
+}
+.cf-grid .lv-segmented > button {
+  min-height: 24px;
+  padding: 0 10px;
+  font-size: var(--text-xs);
+}
+/* The diagram keeps a width it can be read at and scrolls sideways inside its own region below that. */
+.cf-grid .sankey-surface > div {
+  min-width: 520px;
+}
+.cf-flow-list {
+  min-height: var(--cf-sankey-h);
+  align-content: start;
+}
+.cf-flow-list h3 {
+  margin-bottom: 4px;
+}
+.cf-flow-amount {
+  flex-wrap: nowrap;
+  gap: 4px;
+}
+.cf-hint {
+  white-space: nowrap;
+}
+.cf-table {
+  height: var(--cf-spend-h);
+  overflow-y: auto;
+}
+.cf-table tr[aria-selected='true'] {
+  background: var(--primary-soft) !important;
+}
+.cf-cell,
+.cf-year {
+  border: 0;
+  background: none;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  border-radius: 4px;
+}
+.cf-cell:hover,
+.cf-year:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+/* The inspector: the year in view, then what the selected bar is made of. As tall as the two charts beside it. */
+.lv-card[data-cf='inspector'] {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: calc(var(--cf-sankey-h) + var(--cf-spend-h) + 134px);
+  overflow-y: auto;
+  position: sticky;
+  top: calc(var(--topbar-h) + 8px);
+}
+.lv-card[data-cf='inspector'] > .year-scrub {
+  flex: none;
+  box-shadow: none;
+  background: var(--surface-2);
+}
+.lv-card[data-cf='inspector'] .year-scrub-end {
+  display: none;
+}
+.cf-inputs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: min(360px, 80vw);
+  max-height: min(60vh, 460px);
+  overflow-y: auto;
+}
+.cf-inputs .lv-list > li {
+  justify-content: space-between;
+  padding: 4px 8px;
+  font-size: var(--text-sm);
+}
+
+@media (max-width: 1040px) {
+  .cf-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .lv-card[data-cf='inspector'] {
+    /* Under the spending chart that opens it; a chart click scrolls here. */
+    max-height: none;
+    position: static;
+    scroll-margin-top: calc(var(--topbar-h) + 8px);
+  }
+  .cf-grid .lv-card > header {
+    flex-wrap: wrap;
+  }
+  .cf-grid .lv-card > header > .lv-row {
+    flex-wrap: wrap;
+  }
+  .cf-hint {
+    display: none;
+  }
+}
+
+/* On a phone the header controls take a second line rather than push the page wider. */
+@media (max-width: 700px) {
+  .cf-grid .lv-card > header,
+  .cf-grid .lv-card > header > .lv-row {
+    flex-wrap: wrap;
+  }
+}

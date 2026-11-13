@@ -1,0 +1,162 @@
+/* Outcomes: a slim night band (dial + headline figures), then the fan chart beside its supporting detail. */
+:root {
+  --oc-chart-h: clamp(300px, calc(var(--page-h) - 246px), 640px);
+}
+.oc-band {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+/* The figure sits inside its dial; its label and run count read beside it. */
+.oc-dial {
+  display: grid;
+  grid-template: 'ring label' auto 'ring note' auto / 84px minmax(150px, 230px);
+  column-gap: 14px;
+  align-content: center;
+  flex: none;
+}
+.oc-dial-ring {
+  grid-area: ring;
+  width: 84px;
+  height: 84px;
+}
+.oc-dial-ring .dial-track {
+  stroke: rgba(190, 196, 255, 0.16);
+}
+.oc-dial-ring .dial-lit {
+  filter: drop-shadow(0 0 6px rgba(255, 77, 148, 0.65));
+  transition: stroke-dasharray var(--motion-slow) var(--ease-out);
+}
+.oc-dial-value {
+  grid-area: ring;
+  place-self: center;
+  font: 750 1.375rem / 1 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.04em;
+  font-variant-numeric: lining-nums;
+  text-shadow: 0 0 24px rgba(169, 159, 255, 0.55);
+}
+.oc-dial-label {
+  grid-area: label;
+  align-self: end;
+  font: 700 1.0625rem / 1.2 var(--font-display);
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+.oc-dial-note {
+  grid-area: note;
+  align-self: start;
+  margin-top: 2px;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  line-height: 1.35;
+}
+.oc-stats {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 10px 22px;
+  padding-left: 22px;
+  border-left: 1px solid var(--line);
+}
+.oc-run {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+.oc-progress {
+  margin-top: 10px;
+}
+
+.oc-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 10px;
+  align-items: start;
+}
+.oc-main > * {
+  min-width: 0;
+}
+.oc-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oc-note {
+  margin-top: 6px;
+}
+.oc-key {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+}
+.oc-key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.oc-key i {
+  display: inline-block;
+  width: 16px;
+  height: 8px;
+  border-radius: 3px;
+  background: var(--dawn-violet);
+}
+.oc-key i[data-k='mid'] {
+  opacity: 0.5;
+}
+.oc-key i[data-k='wide'] {
+  opacity: 0.22;
+}
+.oc-key i[data-k='median'] {
+  height: 3px;
+  background: var(--grad-dawn);
+}
+
+@media (max-width: 1100px) {
+  .oc-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .oc-side {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    align-items: start;
+  }
+  :root {
+    --oc-chart-h: clamp(300px, calc(var(--page-h) - 250px), 460px);
+  }
+}
+@media (max-width: 900px) {
+  .oc-band {
+    flex-wrap: wrap;
+    gap: 14px;
+  }
+  .oc-stats {
+    flex-basis: 100%;
+    order: 3;
+    padding-left: 0;
+    border-left: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .oc-run {
+    margin-left: auto;
+  }
+  .oc-dial {
+    grid-template-columns: 72px minmax(0, 1fr);
+    flex: 1 1 220px;
+  }
+  .oc-dial-ring {
+    width: 72px;
+    height: 72px;
+  }
+  .oc-dial-value {
+    font-size: 1.125rem;
+  }
+}

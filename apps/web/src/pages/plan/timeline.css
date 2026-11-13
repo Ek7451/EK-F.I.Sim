@@ -1,0 +1,616 @@
+/* Timeline: a night-band life line with a pin per milestone, and lanes on the same axis beneath it. */
+.tl-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+.tl-layout[data-editing='true'] {
+  grid-template-columns: minmax(0, 1fr) 372px;
+}
+@media (min-width: 1281px) {
+  .tl-layout[data-editing='false'] .tl-board {
+    --tl-label: 272px;
+  }
+}
+.tl-board {
+  --tl-label: 228px;
+  --tl-gutter: 22px;
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-4);
+  background: var(--surface);
+  box-shadow: var(--shadow-2);
+}
+.tl-scroll {
+  overflow-x: auto;
+}
+.tl-row {
+  display: grid;
+  grid-template-columns: var(--tl-label) minmax(0, 1fr);
+}
+.tl-track {
+  position: relative;
+  min-width: 0;
+  margin-right: var(--tl-gutter);
+}
+.tl-label {
+  min-width: 0;
+  padding: 0 12px 0 16px;
+}
+
+/* ------------------------------------------------------------------ the life line */
+.tl-life {
+  position: relative;
+  isolation: isolate;
+  padding-top: 14px;
+  background:
+    radial-gradient(60% 140% at 0% 0%, rgba(108, 84, 255, 0.55), transparent 60%),
+    radial-gradient(45% 130% at 62% 120%, rgba(255, 77, 148, 0.26), transparent 62%),
+    radial-gradient(40% 120% at 100% 0%, rgba(255, 176, 46, 0.2), transparent 64%),
+    linear-gradient(120deg, var(--night-2), var(--night-1) 50%, var(--night-0));
+}
+.tl-life::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(190, 196, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(190, 196, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(90deg, #000, transparent 75%);
+}
+.tl-life-label > h2 {
+  font: 700 1.25rem / 1.1 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.03em;
+  text-shadow: 0 0 28px rgba(169, 159, 255, 0.5);
+}
+.tl-life-label > p {
+  margin-top: 4px;
+  font-size: 0.71875rem;
+  line-height: 1.35;
+  color: var(--night-ink-3);
+}
+.tl-unreached {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+.tl-unreached > span {
+  flex-basis: 100%;
+  font-size: 0.6875rem;
+  color: var(--night-ink-3);
+}
+.tl-unreached > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px dashed rgba(190, 196, 255, 0.45);
+  border-radius: 999px;
+  background: var(--night-glass);
+  color: var(--night-ink-2);
+  font: 600 0.6875rem var(--font-ui);
+  cursor: pointer;
+}
+.tl-unreached > button[aria-pressed='true'] {
+  border-color: var(--dawn-amber);
+  color: var(--night-ink);
+}
+.tl-line {
+  position: absolute;
+  left: 0;
+  right: calc(var(--tl-gutter) * -1 + 8px);
+  height: 6px;
+  transform: translateY(-50%);
+  border-radius: 3px;
+  background: var(--grad-dawn);
+  box-shadow: 0 0 18px 1px rgba(161, 77, 255, 0.7);
+}
+.tl-line::before,
+.tl-line::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: var(--night-1);
+  border: 2px solid #b9b1ff;
+}
+.tl-line::before {
+  left: 0;
+}
+.tl-line::after {
+  left: 100%;
+  border-color: var(--dawn-amber);
+}
+.tl-line > i {
+  position: absolute;
+  top: 50%;
+  width: 2px;
+  height: 12px;
+  border-radius: 1px;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 255, 255, 0.5);
+}
+.tl-empty {
+  position: absolute;
+  left: 0;
+  top: 4px;
+  max-width: 46ch;
+  font-size: var(--text-sm);
+  color: var(--night-ink-2);
+}
+.tl-stem {
+  position: absolute;
+  width: 2px;
+  transform: translateX(-50%);
+  border-radius: 1px;
+  background: rgba(210, 214, 245, 0.5);
+  pointer-events: none;
+}
+.tl-dot {
+  position: absolute;
+  z-index: 1;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  background: #fff;
+  box-shadow:
+    0 0 0 3px rgba(255, 255, 255, 0.22),
+    0 0 16px 2px rgba(255, 255, 255, 0.7);
+  pointer-events: none;
+}
+.tl-dot[data-kind='retirement'] {
+  background: var(--dawn-amber);
+  box-shadow:
+    0 0 0 3px rgba(255, 176, 46, 0.28),
+    0 0 16px 2px rgba(255, 176, 46, 0.8);
+}
+.tl-pin {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 12px 0 0;
+  border: 1px solid rgba(190, 196, 255, 0.3);
+  border-radius: 999px;
+  background: #1c2158;
+  color: var(--night-ink);
+  font: inherit;
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+  box-shadow: 0 8px 22px rgba(4, 4, 30, 0.45);
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-base) var(--ease);
+}
+.tl-pin[data-flip='true'] {
+  flex-direction: row-reverse;
+  padding: 0 0 0 12px;
+  text-align: right;
+}
+.tl-pin[data-derived='true'] {
+  border-style: dashed;
+  border-color: rgba(255, 199, 110, 0.6);
+  cursor: pointer;
+}
+.tl-pin[data-dragging='true'] {
+  cursor: grabbing;
+}
+.tl-pin:hover,
+.tl-pin:focus-visible {
+  border-color: #c9c4ff;
+  box-shadow:
+    0 0 0 3px rgba(169, 159, 255, 0.25),
+    0 10px 26px rgba(4, 4, 30, 0.55);
+}
+.tl-pin[aria-pressed='true'] {
+  border-color: var(--dawn-amber);
+  box-shadow:
+    0 0 0 3px rgba(255, 176, 46, 0.3),
+    0 0 26px rgba(255, 176, 46, 0.35);
+}
+.tl-pin-wrap[data-selected='true'] > .tl-stem {
+  background: var(--dawn-amber);
+}
+.tl-medal {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  color: #fff;
+  background: linear-gradient(135deg, #7468ff, var(--dawn-violet));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
+    0 4px 14px rgba(108, 84, 255, 0.55);
+}
+.tl-pin[data-kind='retirement'] > .tl-medal,
+.tl-pin[data-kind='windfall'] > .tl-medal {
+  background: linear-gradient(135deg, #ffb02e, #ff5c7a);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.36),
+    0 4px 16px rgba(255, 140, 60, 0.6);
+}
+.tl-pin[data-kind='fi'] > .tl-medal {
+  background: linear-gradient(135deg, #18b79c, #2f7df6);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
+    0 4px 14px rgba(47, 224, 181, 0.45);
+}
+.tl-pin[data-kind='homePurchase'] > .tl-medal,
+.tl-pin[data-kind='relocation'] > .tl-medal {
+  background: linear-gradient(135deg, #2f7df6, #6c54ff);
+}
+.tl-pin[data-kind='child'] > .tl-medal,
+.tl-pin[data-kind='college'] > .tl-medal {
+  background: linear-gradient(135deg, #ff4d94, #a14dff);
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.32),
+    0 4px 14px rgba(255, 77, 148, 0.5);
+}
+.tl-pin-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.2;
+}
+.tl-pin-text > b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.78125rem;
+  font-weight: 650;
+}
+.tl-pin-text > small {
+  white-space: nowrap;
+  font-size: 0.65625rem;
+  color: var(--night-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.tl-axis {
+  margin-top: 6px;
+  border-top: 1px solid var(--night-line);
+  background: rgba(6, 8, 24, 0.28);
+}
+.tl-axis > .tl-label {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-end;
+  gap: 1px;
+  font-size: 0.65625rem;
+  color: var(--night-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.tl-axis > .tl-track {
+  height: 38px;
+}
+.tl-tick {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding-left: 5px;
+  border-left: 1px solid var(--night-line);
+  line-height: 1.25;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.tl-tick > b {
+  font-size: 0.71875rem;
+  font-weight: 650;
+  color: var(--night-ink);
+}
+.tl-tick > small {
+  font-size: 0.65625rem;
+  color: var(--night-ink-3);
+}
+
+/* ------------------------------------------------------------------ lanes */
+.tl-lanes-inner {
+  position: relative;
+  padding: 2px 0 10px;
+}
+.tl-grid {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: var(--tl-label);
+  right: var(--tl-gutter);
+  pointer-events: none;
+}
+.tl-grid > i {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-left: 1px solid var(--line);
+}
+.tl-grid > i[data-mark] {
+  border-left: 1px dashed var(--primary-line);
+}
+.tl-grid > i[data-mark='selected'] {
+  border-left: 2px solid var(--dawn-amber);
+  transform: translateX(-1px);
+  box-shadow: 0 0 12px rgba(255, 176, 46, 0.6);
+}
+.tl-group {
+  --tl-c: var(--chart-2);
+}
+.tl-group[data-group='spending'] {
+  --tl-c: var(--chart-4);
+}
+.tl-group[data-group='coverage'] {
+  --tl-c: var(--chart-7);
+}
+.tl-group[data-group='saving'] {
+  --tl-c: var(--chart-1);
+}
+.tl-group-head > .tl-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  padding-top: 9px;
+  padding-bottom: 2px;
+}
+.tl-group-head h3 {
+  font-size: 0.71875rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+.tl-group-head a {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-decoration: none;
+}
+.tl-group-head a:hover {
+  text-decoration: underline;
+}
+.tl-lane {
+  position: relative;
+  min-height: 27px;
+  align-items: center;
+  transition: background var(--motion-fast) var(--ease);
+}
+.tl-lane:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+.tl-lane[data-linked='true'] {
+  background: color-mix(in srgb, var(--accent-soft) 80%, transparent);
+  box-shadow: inset 3px 0 0 var(--dawn-amber);
+}
+.tl-lane > .tl-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78125rem;
+}
+.tl-lane > .tl-label > a {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  font-weight: 550;
+  text-decoration: none;
+}
+.tl-lane > .tl-label > a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+.tl-lane > .tl-label > small {
+  flex: none;
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.tl-lane-icon {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 7px;
+  color: color-mix(in srgb, var(--tl-c) 70%, var(--ink));
+  background: color-mix(in srgb, var(--tl-c) 16%, transparent);
+}
+.tl-lane > .tl-track {
+  height: 27px;
+}
+.tl-bar {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  height: 17px;
+  min-width: 5px;
+  transform: translateY(-50%);
+  overflow: hidden;
+  padding: 0 7px;
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--tl-c) 52%, #14123a);
+  border-top: 1px solid color-mix(in srgb, var(--tl-c) 80%, #fff);
+  color: #fff;
+  font: 650 0.65625rem / 16px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--tl-c) 34%, transparent);
+  transition: opacity var(--motion-fast) var(--ease);
+}
+.tl-bar[data-tone='employer'],
+.tl-bar[data-tone='spouseEmployer'] {
+  --tl-c: var(--chart-2);
+}
+.tl-bar[data-tone='cobra'] {
+  --tl-c: var(--chart-8);
+}
+.tl-bar[data-tone='aca'] {
+  --tl-c: var(--chart-1);
+}
+.tl-bar[data-tone='medicaid'] {
+  --tl-c: var(--chart-7);
+}
+.tl-bar[data-tone='medicare'] {
+  --tl-c: var(--chart-4);
+}
+.tl-point {
+  position: absolute;
+  z-index: 1;
+  top: 50%;
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: color-mix(in srgb, var(--tl-c) 62%, #14123a);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--tl-c) 22%, transparent);
+}
+.tl-never {
+  position: absolute;
+  top: 50%;
+  left: 6px;
+  transform: translateY(-50%);
+  font-size: 0.6875rem;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.tl-lanes[data-focus='true'] .tl-lane:not([data-linked='true']) :is(.tl-bar, .tl-point) {
+  opacity: 0.4;
+}
+.tl-lanes[data-focus='true'] .tl-lane:not([data-linked='true']):hover :is(.tl-bar, .tl-point) {
+  opacity: 1;
+}
+@media (min-width: 901px) {
+  /* The lanes scroll inside the board, so a long plan does not push the page down. */
+  .tl-lanes {
+    max-height: max(190px, calc(100dvh - 416px));
+    overflow-y: auto;
+  }
+}
+
+/* ------------------------------------------------------------------ the editor beside the board */
+.tl-editor {
+  position: sticky;
+  top: calc(var(--topbar-h) + 8px);
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100dvh - var(--topbar-h) - 20px);
+  padding: 0;
+  overflow: hidden;
+  border-color: var(--primary-line);
+  box-shadow: var(--shadow-2);
+}
+.tl-editor > header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  padding: 8px 8px 8px 14px;
+  border-bottom: 1px solid var(--line);
+  flex-wrap: nowrap;
+}
+.tl-editor > header > h2 {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.tl-editor-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px 14px;
+}
+.tl-editor > footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 14px;
+  border-top: 1px solid var(--line);
+}
+.tl-editor .form-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.tl-effects-head {
+  display: grid;
+  gap: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.tl-effects-head > h3 {
+  font-size: var(--text-md);
+}
+.tl-effect {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.tl-effect > .tl-effect-what {
+  flex: 2 1 160px;
+  min-width: 0;
+}
+.tl-effect > .tl-effect-amount {
+  flex: 1 1 96px;
+  min-width: 0;
+}
+.tl-list-effects {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 900px) {
+  .tl-board {
+    --tl-label: 150px;
+    --tl-gutter: 14px;
+  }
+  .tl-inner {
+    min-width: 720px;
+  }
+  /* Names stay put while the years scroll sideways. */
+  .tl-label {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    padding: 0 8px 0 10px;
+  }
+  .tl-axis > .tl-label {
+    background: var(--night-0);
+  }
+  /* The heading scrolls away with the line; only the row names are pinned. */
+  .tl-life-label {
+    position: static;
+  }
+  .tl-lanes .tl-label {
+    background: var(--surface);
+  }
+  .tl-lane[data-linked='true'] > .tl-label {
+    background: var(--accent-soft);
+  }
+  .tl-lane > .tl-label > small,
+  .tl-life-label > p {
+    display: none;
+  }
+  .tl-lane,
+  .tl-lane > .tl-track {
+    min-height: 34px;
+  }
+}

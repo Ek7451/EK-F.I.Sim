@@ -1,0 +1,314 @@
+/* Settings, the tours hub and the methods reference: the same one-screen, two-column language as the plan screens. */
+
+/* ------------------------------------------------------------------ the slim night band these pages open with */
+.hs-band {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+  padding: 10px 16px;
+  border: 1px solid rgba(169, 159, 255, 0.28);
+  border-radius: var(--radius-4);
+  background:
+    radial-gradient(60% 140% at 0% 0%, rgba(108, 84, 255, 0.55), transparent 60%),
+    radial-gradient(40% 120% at 100% 0%, rgba(255, 176, 46, 0.2), transparent 64%),
+    linear-gradient(120deg, var(--night-2), var(--night-1) 50%, var(--night-0));
+  box-shadow:
+    0 18px 44px rgba(22, 16, 96, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.hs-band::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--grad-dawn);
+  box-shadow: 0 0 18px 1px rgba(161, 77, 255, 0.7);
+}
+.hs-band-main {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 220px;
+}
+.hs-band-main > strong {
+  font: 700 1.25rem / 1.15 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.03em;
+}
+.hs-band-sub {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+.hs-band .lv-progress {
+  width: min(320px, 100%);
+}
+.hs-band-note {
+  flex: 1 1 320px;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  text-wrap: pretty;
+}
+
+/* ------------------------------------------------------------------ tours hub */
+.hs-tours {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+  gap: 10px;
+  align-items: start;
+}
+.hs-tour-list {
+  display: grid;
+  gap: 0 20px;
+}
+.hs-tour-list[data-cols='2'] {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.hs-tour {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--line);
+  min-width: 0;
+}
+.hs-tour:last-child,
+.hs-tour-list[data-cols='2'] > .hs-tour:nth-last-child(2):nth-child(odd) {
+  border-bottom: 0;
+}
+/* The tour's number in the series; a tick once it is done. */
+.hs-tour-mark {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  font: 650 var(--text-xs) var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+}
+.hs-tour[data-state='started'] > .hs-tour-mark {
+  color: var(--primary);
+  border-color: var(--primary-line);
+  background: var(--primary-soft);
+}
+.hs-tour[data-state='done'] > .hs-tour-mark {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--dawn-indigo), var(--dawn-violet));
+}
+.hs-tour-text {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+.hs-tour-text > h3 {
+  font-size: var(--text-md);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hs-tour-text > h3 > .hs-tour-meta {
+  margin-left: 8px;
+  font-weight: 400;
+  letter-spacing: 0;
+}
+.hs-tour-text > p {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hs-tour-meta {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+.hs-tour-actions {
+  display: flex;
+  gap: 4px;
+  flex: none;
+}
+
+/* ------------------------------------------------------------------ methods reference */
+.hs-methods {
+  display: grid;
+  grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  gap: 10px;
+  align-items: start;
+}
+.hs-search {
+  width: 220px;
+  min-height: var(--control-h-sm);
+  border-radius: 999px;
+  padding: 0 14px;
+}
+/* Publisher names are long: they wrap; paths, dates and status stay whole. */
+.hs-datasets td:nth-child(2) {
+  white-space: normal;
+  text-align: left;
+}
+.hs-datasets th:nth-child(2) {
+  text-align: left;
+}
+.hs-method-list,
+.hs-datasets {
+  max-height: calc(var(--page-h) - 196px);
+  min-height: 240px;
+  overflow-y: auto;
+}
+.hs-method {
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: 8px;
+}
+.hs-method:last-of-type {
+  border-bottom: 0;
+}
+.hs-method > summary {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.8fr) minmax(0, 2fr);
+  gap: 12px;
+  align-items: baseline;
+  padding: 7px 6px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-1);
+  font-size: var(--text-sm);
+}
+.hs-method > summary::-webkit-details-marker {
+  display: none;
+}
+.hs-method > summary:hover {
+  background: var(--surface-2);
+}
+.hs-method > summary > span {
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.hs-method[open] > summary > span {
+  visibility: hidden;
+}
+.hs-method[open] > summary > strong {
+  color: var(--primary);
+}
+.hs-method-body {
+  display: grid;
+  gap: 6px;
+  padding: 2px 6px 12px;
+  font-size: var(--text-sm);
+}
+.hs-method-body > code {
+  display: block;
+  background: var(--surface-2);
+  border-radius: var(--radius-2);
+  padding: 8px 12px;
+  font-size: var(--text-sm);
+  white-space: pre-wrap;
+}
+
+/* ------------------------------------------------------------------ settings */
+.hs-settings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.hs-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.hs-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 20px;
+  margin-top: 10px;
+}
+.hs-split > section {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+.hs-split > section > .form-grid {
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr);
+}
+.hs-split > section + section {
+  padding-left: 20px;
+  border-left: 1px solid var(--line);
+}
+.hs-device {
+  display: grid;
+  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+  gap: 8px 24px;
+  align-items: start;
+}
+.hs-device dd {
+  white-space: normal;
+}
+/* Sign-in, register and recover share one compact form. */
+.hs-account-form {
+  display: grid;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+@media (max-width: 1100px) {
+  .hs-tours,
+  .hs-methods,
+  .hs-settings {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hs-method-list {
+    max-height: none;
+  }
+  /* The dataset table stays a scroll area: 75 rows would otherwise be most of the page. */
+  .hs-datasets {
+    max-height: 420px;
+  }
+}
+@media (max-width: 700px) {
+  .hs-tour-list[data-cols='2'],
+  .hs-split,
+  .hs-device {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hs-tour-list[data-cols='2'] > .hs-tour:nth-last-child(2):nth-child(odd) {
+    border-bottom: 1px solid var(--line);
+  }
+  .hs-split > section + section {
+    padding-left: 0;
+    border-left: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+  }
+  .hs-tour {
+    grid-template-columns: 26px minmax(0, 1fr);
+  }
+  .hs-tour-actions {
+    grid-column: 2;
+  }
+  .hs-tour-text > p {
+    white-space: normal;
+  }
+  .hs-method > summary {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+  .hs-search {
+    width: 100%;
+  }
+}

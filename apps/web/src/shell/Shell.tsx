@@ -460,16 +460,16 @@ export function PageHead({
   useEffect(() => {
     document.title = `${title} · Longview Planner`;
   }, [title]);
+  // Inside a task group the active pill and the breadcrumb already name the screen, so the row carries the
+  // screen switcher, the one-line description and the actions; the heading stays for assistive tech.
   return (
-    <>
+    <div className="page-head" data-group={group}>
       {group ? <SubNav group={group} /> : null}
-      <div className="page-head">
-        <div className="page-title">
-          <h1>{title}</h1>
-          {intro ? <p>{intro}</p> : null}
-        </div>
-        {actions ? <div className="lv-row">{actions}</div> : null}
+      <div className="page-title">
+        <h1 className={group ? 'lv-sr' : undefined}>{title}</h1>
+        {intro ? <p title={intro}>{intro}</p> : null}
       </div>
-    </>
+      {actions ? <div className="lv-row page-actions">{actions}</div> : null}
+    </div>
   );
 }

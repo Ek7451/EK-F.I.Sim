@@ -1,4 +1,4 @@
-import { Button, Card, Dialog, Notice, SelectField, TextField } from '@fisim/ui';
+import { Button, Card, Dialog, Notice, Segmented, TextField } from '@fisim/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -85,27 +85,37 @@ export function CloudAccountCard(): ReactNode {
     }
   }
   return (
-    <Card id="cloud-account" title="Local or cloud saving" data-tour="cloud-account">
+    <Card
+      id="cloud-account"
+      title="Cloud saving"
+      data-tour="cloud-account"
+      actions={
+        <span className="lv-small lv-muted">
+          {account.user
+            ? `Signed in as ${account.user.username}`
+            : 'Optional · plans always save on this device'}
+        </span>
+      }
+    >
       <p className="lv-muted lv-small">
-        Your plans save in this browser without an account. Create a free account to save encrypted copies in
-        the cloud and open them on other devices. Cloud storage includes 20 plans, up to 2 MiB total (256 KiB
-        per plan).
+        A free account keeps encrypted copies of your plans in the cloud so you can open them on other
+        devices. It holds 20 plans, up to 2 MiB in total (256 KiB each).
       </p>
       {error || account.error ? <Notice tone="danger">{error || account.error}</Notice> : null}
       {notice ? <Notice>{notice}</Notice> : null}
       {account.loading ? (
         <p role="status">Checking cloud sign-in…</p>
       ) : account.user ? (
-        <div className="lv-stack" style={{ marginTop: 16 }}>
+        <div className="lv-stack" style={{ marginTop: 10, gap: 8 }}>
           <p>
             Signed in as <strong>{account.user.username}</strong>. Unlock your encrypted vault below to sync.
           </p>
           <p className="lv-muted lv-small">
-            Signing out stops cloud saving. Plans already on this device remain here. On a shared computer,
-            use a private browser window and close it when finished.
+            Signing out stops cloud saving; plans already on this device stay here. On a shared computer, use
+            a private window and close it when you finish.
           </p>
           <div>
-            <Button disabled={busy} onClick={() => void run(signOutAccount)}>
+            <Button size="sm" disabled={busy} onClick={() => void run(signOutAccount)}>
               Sign out
             </Button>
           </div>
@@ -133,47 +143,48 @@ export function CloudAccountCard(): ReactNode {
         </div>
       ) : (
         <form
-          className="lv-stack"
-          style={{ marginTop: 16, maxWidth: 600 }}
+          className="hs-account-form"
           onSubmit={(e) => {
             e.preventDefault();
             void run(submit);
           }}
         >
-          <SelectField
+          <Segmented
             label="Cloud account"
             value={mode}
             onChange={setMode}
             options={[
               { value: 'signin', label: 'Sign in' },
-              { value: 'register', label: 'Create a free account' },
-              { value: 'recover', label: 'Recover my account' },
+              { value: 'register', label: 'Create an account' },
+              { value: 'recover', label: 'Recover' },
             ]}
           />
-          <TextField
-            label="Username"
-            hint="3–30 letters, numbers or underscores. No email address needed."
-            value={username}
-            onChange={setUsername}
-          />
-          {mode === 'recover' ? (
+          <div className="form-grid">
             <TextField
-              label="Account recovery code"
-              hint="This resets your account password. Your separate vault recovery key unlocks your encrypted plans."
-              value={recovery}
-              onChange={setRecovery}
+              label="Username"
+              hint="3–30 letters, numbers or underscores. No email needed."
+              value={username}
+              onChange={setUsername}
             />
-          ) : null}
-          <TextField
-            label={mode === 'recover' ? 'New account password' : 'Account password'}
-            hint="At least 12 characters. Use a different passphrase for your encrypted vault."
-            type="password"
-            value={password}
-            onChange={setPassword}
-          />
-          {mode !== 'signin' ? (
-            <TextField label="Account password again" type="password" value={again} onChange={setAgain} />
-          ) : null}
+            {mode === 'recover' ? (
+              <TextField
+                label="Account recovery code"
+                hint="Resets your account password. Your separate vault recovery key unlocks your plans."
+                value={recovery}
+                onChange={setRecovery}
+              />
+            ) : null}
+            <TextField
+              label={mode === 'recover' ? 'New account password' : 'Account password'}
+              hint="At least 12 characters. Use a different passphrase for your vault."
+              type="password"
+              value={password}
+              onChange={setPassword}
+            />
+            {mode !== 'signin' ? (
+              <TextField label="Account password again" type="password" value={again} onChange={setAgain} />
+            ) : null}
+          </div>
           <div className="lv-row">
             <Button
               type="submit"
@@ -194,7 +205,6 @@ export function CloudAccountCard(): ReactNode {
                     ? 'Reset account password'
                     : 'Sign in'}
             </Button>
-            <span className="lv-small lv-muted">Local saving is always available.</span>
           </div>
         </form>
       )}
