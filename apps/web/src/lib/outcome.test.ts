@@ -49,6 +49,9 @@ const person = (o: Partial<Draft['people'][0]> = {}): Draft['people'][0] => ({
   matchUpTo: 0.06,
   pretax: 50000,
   rothBalance: 10000,
+  brokerage: 30000,
+  hsa: 0,
+  hsaContribution: 0,
   retireAge: 60,
   ...o,
 });
@@ -57,7 +60,6 @@ const draft = (o: Partial<Draft> = {}): Draft => ({
   partner: false,
   people: [person(), person({ name: 'Alex', salary: 70000, deferPct: 0.05, retireAge: 64, birthYear: 1984 })],
   cash: 20000,
-  brokerage: 30000,
   spending: 60000,
   phases: false,
   ...o,
@@ -94,6 +96,42 @@ describe('new-plan wizard', () => {
     const r = project(plan, data);
     expect(r.records[0].contributions.roth).toBeGreaterThan(9999);
     expect(r.records[0].contributions.employer).toBeGreaterThan(2999);
+  });
+
+  it('gives each partner their own brokerage account and health savings account', () => {
+    const plan = PlanZ.parse(
+      buildPlan(
+        draft({
+          partner: true,
+          people: [
+            person({ brokerage: 120000, hsa: 18000, hsaContribution: 4000 }),
+            person({ name: 'Alex', salary: 70000, brokerage: 45000, hsa: 6000, hsaContribution: 0 }),
+          ],
+        }),
+        year,
+      ),
+    );
+    const by = (id: string) => plan.accounts.find((a) => a.id === id)!;
+    expect(by('a-brokerage-p1')).toMatchObject({ ownerId: 'p1', type: 'taxable', balance: 12000000 });
+    expect(by('a-brokerage-p2')).toMatchObject({ ownerId: 'p2', type: 'taxable', balance: 4500000 });
+    expect(by('a-brokerage-p1').name).toBe("Sam's brokerage");
+    expect(by('a-brokerage-p2').name).toBe("Alex's brokerage");
+    expect(by('a-hsa-p1')).toMatchObject({ ownerId: 'p1', type: 'hsa', balance: 1800000 });
+    expect(by('a-hsa-p2')).toMatchObject({ ownerId: 'p2', type: 'hsa', balance: 600000 });
+    expect(plan.accounts.some((a) => a.ownerId === 'joint' && a.type === 'taxable')).toBe(false);
+    // Sam pays into the HSA from pay, so Sam is on a high-deductible plan and the money actually goes in.
+    expect(by('a-hsa-p1').contribution?.employeeAmount).toBe(400000);
+    expect(by('a-hsa-p2').contribution).toBeUndefined();
+    const r = project(plan, data);
+    expect(r.records[0].contributions.hsa).toBeGreaterThan(3999);
+    // Money left over still has somewhere to land.
+    expect(plan.strategies.surplusWaterfall.at(-1)).toEqual({ type: 'account', accountId: 'a-brokerage-p1' });
+  });
+
+  it('a single person gets one brokerage account, and an HSA only when there is one', () => {
+    const plan = PlanZ.parse(buildPlan(draft(), year));
+    expect(plan.accounts.filter((a) => a.type === 'taxable').map((a) => a.name)).toEqual(['Brokerage']);
+    expect(plan.accounts.some((a) => a.type === 'hsa')).toBe(false);
   });
 
   it('keeps spending level unless the age phases are chosen', () => {

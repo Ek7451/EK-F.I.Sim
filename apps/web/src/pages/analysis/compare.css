@@ -1,0 +1,188 @@
+/* Compare: the what-if controls sit beside the results, so a change and its effect share one screen. */
+.cmp-workspace {
+  --cmp-h: var(--page-h);
+  --cmp-chart-h: clamp(240px, calc(var(--cmp-h) - 244px), 760px);
+  display: grid;
+  grid-template-columns: minmax(300px, 340px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.cmp-side {
+  position: sticky;
+  top: calc(var(--topbar-h) + 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  max-height: calc(100dvh - var(--topbar-h) - 16px);
+  overflow-y: auto;
+  /* Room for focus rings and card shadows inside the scroll box. */
+  padding: 2px;
+  margin: -2px;
+}
+.cmp-builder {
+  display: grid;
+  gap: 12px;
+}
+.cmp-save {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+.cmp-saved {
+  border-top: 1px solid var(--line);
+  padding-top: 4px;
+}
+.cmp-saved > li {
+  gap: 4px;
+  padding-block: 4px;
+}
+.cmp-saved strong {
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+.cmp-pick {
+  display: grid;
+  gap: 10px;
+}
+.cmp-changes {
+  margin-top: 6px;
+  font-size: var(--text-sm);
+}
+.cmp-changes > summary {
+  color: var(--ink-2);
+  font-weight: 550;
+  padding: 6px 0 2px;
+}
+.cmp-changes > ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+  max-height: 168px;
+  overflow-y: auto;
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+
+.cmp-main {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+.cmp-main .lv-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.cmp-main .lv-kpis .lv-stat-value {
+  white-space: nowrap;
+}
+.cmp-main .lv-kpis .lv-stat-note {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* While the next result is worked out the last one stays, visibly at rest. */
+.cmp-main[data-updating='true'] .cmp-view {
+  opacity: 0.62;
+  transition: opacity var(--motion-base) var(--ease) 120ms;
+}
+.cmp-results {
+  min-height: calc(var(--cmp-h) - 110px);
+}
+.cmp-results-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.cmp-legend {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+}
+.cmp-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  max-width: 260px;
+}
+.cmp-key > i {
+  flex: none;
+  width: 22px;
+  height: 0;
+  border-top: 2px dashed var(--financial-baseline);
+}
+.cmp-key[data-side='b'] > i {
+  height: 4px;
+  border: 0;
+  border-radius: 2px;
+  background: var(--grad-dawn);
+  box-shadow: 0 0 10px var(--glow);
+}
+/* The views are folds without a visible handle: the switch in the header opens them. */
+.cmp-view > summary {
+  display: none;
+}
+.cmp-plot {
+  min-height: var(--cmp-chart-h);
+}
+.cmp-table {
+  max-height: calc(var(--cmp-h) - 196px);
+  overflow-y: auto;
+}
+.cmp-table .lv-table th,
+.cmp-table .lv-table td {
+  padding-block: 9px;
+}
+.cmp-table .lv-table thead th {
+  white-space: normal;
+  max-width: 220px;
+  vertical-align: bottom;
+}
+.cmp-table .lv-badge {
+  margin-left: 4px;
+}
+.cmp-note {
+  margin-top: 8px;
+}
+
+@media (max-width: 1100px) {
+  .cmp-workspace {
+    --cmp-chart-h: 320px;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .cmp-side {
+    position: static;
+    max-height: none;
+    overflow: visible;
+  }
+  .cmp-results {
+    min-height: 0;
+  }
+  .cmp-table {
+    max-height: none;
+  }
+}
+@media (max-width: 700px) {
+  .cmp-main .lv-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .cmp-legend {
+    flex-wrap: wrap;
+    gap: 4px 14px;
+  }
+  .cmp-key {
+    max-width: 100%;
+  }
+  .cmp-table .lv-table th,
+  .cmp-table .lv-table td {
+    padding-block: 6px;
+  }
+}

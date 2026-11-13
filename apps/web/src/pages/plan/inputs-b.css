@@ -1,0 +1,534 @@
+/* Plan inputs (Strategy, Healthcare, Assumptions, Household): folded sections in two stacks, dials and
+   one-line rows. Everything here is prefixed pib-. */
+
+/* ------------------------------------------------------------------ two stacks of folds */
+.pib-cols {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  align-items: start;
+}
+.pib-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+@media (max-width: 1020px) {
+  .pib-cols {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.pib-lead {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 0 0 8px;
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.pib-sub {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin: 14px 0 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-sm);
+  font-weight: 650;
+  color: var(--ink);
+}
+.pib-sub > h3 {
+  font-size: var(--text-sm);
+}
+.pib-sub > .lv-btn {
+  margin-left: auto;
+}
+.pib-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* Switches side by side when there is room. */
+.pib-switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+
+/* ------------------------------------------------------------------ dial: slider + exact field */
+.pib-dial {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 84px;
+  column-gap: 10px;
+  row-gap: 3px;
+  align-items: center;
+  min-width: 0;
+}
+.pib-dial > .lv-field {
+  display: contents;
+}
+.pib-dial > .lv-field > label,
+.pib-dial > .lv-field > .lv-label-row {
+  grid-column: 1 / -1;
+  grid-row: 1;
+}
+.pib-dial > .lv-range {
+  grid-column: 1;
+  grid-row: 2;
+}
+.pib-dial > .lv-field > .lv-affix,
+.pib-dial > .lv-field > .lv-input {
+  grid-column: 2;
+  grid-row: 2;
+}
+.pib-dial > .lv-field > .lv-hint {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+/* A grid of dials: each wide enough for its slider to be worth dragging. */
+.pib-dials {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr));
+  gap: 10px 18px;
+  align-items: start;
+}
+.pib-dials > .span-all {
+  grid-column: 1 / -1;
+}
+.pib-choice > .lv-segmented {
+  align-self: flex-start;
+  padding: 2px;
+}
+.pib-choice > .lv-segmented > button {
+  min-height: 28px;
+  padding: 0 11px;
+}
+@media (pointer: coarse) {
+  .pib-choice > .lv-segmented > button {
+    min-height: 40px;
+  }
+}
+
+/* ------------------------------------------------------------------ ordered rows (waterfall, withdrawal order) */
+.pib-rows {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.pib-rows > li {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  padding: 3px 4px 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+  transition: border-color var(--motion-fast) var(--ease);
+}
+.pib-rows > li:hover {
+  border-color: var(--primary-line);
+}
+.pib-rows-n {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font: 700 0.6875rem / 1 var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+.pib-rows-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+  font-size: var(--text-sm);
+}
+.pib-rows-field {
+  width: 132px;
+}
+/* The column heading names the field once; each row's own label is kept for screen readers only. */
+.pib-rows-field .lv-field > label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.pib-rows-field .lv-input {
+  min-height: 30px;
+}
+.pib-rows-tools {
+  display: flex;
+  gap: 0;
+}
+.pib-rows-tools .lv-btn {
+  width: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+.pib-rows-head {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 2px;
+  padding-right: 96px;
+  margin-bottom: 2px;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+}
+@media (max-width: 560px) {
+  .pib-rows > li {
+    grid-template-columns: 22px minmax(0, 1fr) auto;
+  }
+  .pib-rows-field {
+    grid-column: 2 / -1;
+    width: auto;
+  }
+  .pib-rows-tools {
+    grid-row: 1;
+    grid-column: 3;
+  }
+  .pib-rows-head {
+    display: none;
+  }
+  .pib-rows-field .lv-field > label {
+    position: static;
+    width: auto;
+    height: auto;
+    clip: auto;
+    white-space: normal;
+    font-size: var(--text-xs);
+  }
+}
+@media (pointer: coarse) {
+  .pib-rows-tools .lv-btn {
+    width: 40px;
+    min-height: 40px;
+  }
+}
+
+/* One line for a rule that has a few parts (a 72(t) schedule, a filing-status change, a dependent). */
+.pib-line {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0 0;
+  margin-top: 8px;
+  border-top: 1px solid var(--line);
+}
+.pib-line:first-child {
+  border-top: 0;
+  margin-top: 0;
+  padding-top: 0;
+}
+.pib-line > .pib-grow {
+  flex: 1 1 150px;
+  min-width: 0;
+}
+.pib-line > .pib-when {
+  flex: 2 1 250px;
+  min-width: 0;
+}
+.pib-line > .pib-narrow {
+  flex: 0 0 104px;
+}
+
+/* ------------------------------------------------------------------ strategy: what the rules do */
+.pib-preview {
+  position: sticky;
+  top: calc(var(--topbar-h) + 6px);
+  z-index: 5;
+  grid-template-columns: repeat(4, max-content) minmax(300px, 1fr);
+  align-items: stretch;
+}
+.pib-preview > .lv-stat {
+  justify-content: center;
+}
+.pib-preview .lv-stat > .lv-stat-value {
+  font-size: 1.375rem;
+  white-space: nowrap;
+}
+.pib-preview .lv-stat > .lv-stat-label,
+.pib-preview .lv-stat > .lv-stat-note {
+  white-space: nowrap;
+}
+.pib-preview .lv-delta {
+  font-size: var(--text-xs);
+}
+.pib-preview-chart {
+  position: relative;
+  padding: 6px 12px 2px 8px;
+  min-width: 0;
+}
+.pib-preview-cap {
+  margin: 0 96px 2px 4px;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--night-ink-2);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pib-preview-chart .chart-foot {
+  position: absolute;
+  top: 2px;
+  right: 8px;
+  margin: 0;
+  z-index: 2;
+}
+.pib-preview-chart .chart-foot .lv-btn {
+  min-height: 22px;
+  padding: 0 8px;
+  font-size: var(--text-xs);
+}
+.pib-preview-chart .lv-table-wrap {
+  margin-top: 22px;
+}
+/* A draft bar under the band sticks below it, not over it. */
+@media (min-width: 1281px) {
+  .pib-preview {
+    min-height: 132px;
+  }
+  .pib-preview + .draft-bar {
+    top: calc(var(--topbar-h) + 12px + 132px);
+  }
+}
+@media (max-width: 1280px) {
+  .pib-preview {
+    position: static;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  .pib-preview .lv-stat > .lv-stat-label,
+  .pib-preview .lv-stat > .lv-stat-note {
+    white-space: normal;
+  }
+  .pib-preview-chart {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--night-line);
+  }
+}
+@media (max-width: 900px) {
+  .pib-preview {
+    position: static;
+  }
+}
+@media (max-width: 700px) {
+  .pib-preview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ------------------------------------------------------------------ healthcare */
+.pib-health-kpis .lv-stat > .lv-stat-value {
+  font-size: 1.375rem;
+}
+/* A person's coverage across the plan as one bar: each stretch is as wide as the years it lasts. */
+.pib-cover {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+.pib-cover-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-3);
+  gap: 2px;
+}
+.pib-cover-bar > span {
+  min-width: 4px;
+  background: var(--chart-2);
+}
+.pib-cover-bar > span[data-type='spouseEmployer'] {
+  background: var(--chart-7);
+}
+.pib-cover-bar > span[data-type='cobra'] {
+  background: var(--chart-8);
+}
+.pib-cover-bar > span[data-type='aca'] {
+  background: var(--chart-3);
+}
+.pib-cover-bar > span[data-type='medicaid'] {
+  background: var(--chart-5);
+}
+.pib-cover-bar > span[data-type='medicare'] {
+  background: var(--chart-1);
+}
+.pib-cover-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+}
+/* A coverage period reads as one line; opening it shows its fields. */
+.pib-period {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+.pib-period + .pib-period {
+  margin-top: 4px;
+}
+.pib-period > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+  padding: 4px 10px;
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--text-sm);
+  border-radius: var(--radius-2);
+}
+.pib-period > summary::-webkit-details-marker {
+  display: none;
+}
+.pib-period > summary:hover {
+  background: color-mix(in srgb, var(--primary-soft) 55%, transparent);
+}
+.pib-period > summary > strong {
+  flex: none;
+}
+.pib-period-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--chart-2);
+}
+.pib-period-dot[data-type='spouseEmployer'] {
+  background: var(--chart-7);
+}
+.pib-period-dot[data-type='cobra'] {
+  background: var(--chart-8);
+}
+.pib-period-dot[data-type='aca'] {
+  background: var(--chart-3);
+}
+.pib-period-dot[data-type='medicaid'] {
+  background: var(--chart-5);
+}
+.pib-period-dot[data-type='medicare'] {
+  background: var(--chart-1);
+}
+.pib-period-dot[data-type='none'] {
+  background: var(--line-strong);
+}
+.pib-period-what {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-3);
+}
+.pib-period-edit {
+  flex: none;
+  font-size: var(--text-xs);
+  font-weight: 600;
+  color: var(--primary);
+}
+.pib-period[open] > summary {
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-2) var(--radius-2) 0 0;
+}
+.pib-period[open] .pib-period-edit {
+  visibility: hidden;
+}
+.pib-period > .form-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(130px, 100%), 1fr));
+  padding: 8px 10px 0;
+}
+.pib-period-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 6px 4px 10px;
+}
+
+/* ------------------------------------------------------------------ assumptions */
+.pib-glide {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+}
+.pib-glide + .pib-glide {
+  margin-top: 8px;
+}
+.pib-glide-point {
+  margin-top: 8px;
+  padding: 6px 0 2px 10px;
+  border-left: 3px solid var(--primary-line);
+}
+.pib-glide-point .form-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(120px, 100%), 1fr));
+}
+
+/* ------------------------------------------------------------------ household */
+.pib-people {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pib-person {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-3);
+  background: color-mix(in srgb, var(--surface-2) 60%, transparent);
+}
+.pib-person-avatar {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  color: #fff;
+  font: 700 1rem / 1 var(--font-display);
+  background: linear-gradient(135deg, var(--dawn-indigo), var(--dawn-violet) 60%, var(--dawn-rose));
+  box-shadow: 0 6px 16px var(--glow);
+}
+.pib-person:nth-child(2) .pib-person-avatar {
+  background: linear-gradient(135deg, var(--dawn-rose), var(--dawn-amber));
+}
+.pib-person-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-top: 4px;
+}
+.pib-person > .pib-dial {
+  grid-column: 1 / -1;
+  grid-row: 2;
+  grid-template-columns: minmax(0, 1fr) 76px;
+}
+.pib-person > .lv-btn {
+  grid-column: 3;
+  grid-row: 1;
+}

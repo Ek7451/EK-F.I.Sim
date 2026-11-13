@@ -1,0 +1,90 @@
+/* Estate: a slim night band, then the composition chart (with its year scrubber) beside the year's figures. */
+:root {
+  --es-chart-h: clamp(280px, calc(var(--page-h) - 236px), 640px);
+}
+.es-band {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 10px 28px;
+}
+.es-main {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 10px;
+  align-items: start;
+}
+.es-main > * {
+  min-width: 0;
+}
+.es-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+/* Title on the left, the year scrubber taking the rest of the row. */
+.lv-card > .es-chart-head {
+  flex-wrap: nowrap;
+  gap: 16px;
+}
+.es-chart-head > h2 {
+  flex: none;
+}
+.es-chart-head > .year-scrub {
+  flex: 1;
+  max-width: 560px;
+  box-shadow: none;
+}
+.es-swatch {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  margin-right: 8px;
+}
+.es-hint {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+}
+.lv-facts > .es-total {
+  border-top: 1px solid var(--line-strong);
+  border-bottom: 0;
+}
+.lv-facts > .es-total dt {
+  font-weight: 650;
+  color: var(--ink);
+}
+.lv-facts > .es-total dd {
+  font-weight: 750;
+}
+.es-note {
+  margin-top: 6px;
+}
+.es-run {
+  margin-top: 8px;
+}
+
+@media (max-width: 1100px) {
+  .es-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .es-side {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(280px, 100%), 1fr));
+    align-items: start;
+  }
+  :root {
+    --es-chart-h: clamp(280px, calc(var(--page-h) - 250px), 440px);
+  }
+}
+@media (max-width: 900px) {
+  .lv-card > .es-chart-head {
+    flex-wrap: wrap;
+  }
+  .es-chart-head > .year-scrub {
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .es-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

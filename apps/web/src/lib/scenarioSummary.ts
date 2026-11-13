@@ -41,8 +41,15 @@ export function describeChange(plan: Plan, patch: Scenario['patches'][number]): 
       /amount|balance|costBasis|legacyGoal|^value$|principal|payment|premiumAnnual/i.test(field)
     )
       return formatMoney(v / 100);
-    if (typeof v === 'number' && /rate|pct|stocks|bonds|reits|^cash$|appreciation/i.test(field))
-      return formatPct(v, 2);
+    if (
+      typeof v === 'number' &&
+      /rate|pct|stocks|bonds|reits|^cash$|appreciation|band|adjust|floor|ceiling|factor|share|fee|yield|inflation/i.test(
+        field,
+      )
+    )
+      return formatPct(v, Number.isInteger(+(v * 100).toFixed(6)) ? 0 : 2);
+    // Any other number: whole if it is whole, otherwise trimmed. Never a raw float ("0.07250000000000001").
+    if (typeof v === 'number') return Number.isInteger(v) ? String(v) : String(+v.toFixed(4));
     return String(v);
   };
   return `${names.join(' › ')}: ${format(value)} → ${format(patch.value)}`;

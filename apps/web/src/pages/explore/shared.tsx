@@ -1,5 +1,5 @@
 import { toReal, type ProjectionResult, type YearRecord } from '@fisim/engine';
-import { Badge, Button, Card, Notice, Slider } from '@fisim/ui';
+import { Badge, Button, Card, Notice } from '@fisim/ui';
 import { type ReactNode } from 'react';
 import { useProjection } from '../../engine/useResults';
 import { usePlan } from '../../state/store';
@@ -92,40 +92,49 @@ export function YearPicker({
   onChange: (y: number) => void;
 }): ReactNode {
   const r = records.find((x) => x.year === year) ?? records[0];
+  const first = records[0].year;
+  const last = records[records.length - 1].year;
+  const text = `${r.year} · age ${r.ages.join(' and ')}`;
   return (
-    <div data-tour="year-picker">
-      <div className="lv-spread year-stepper">
-        <Button
-          size="sm"
-          aria-label="Previous year"
-          title="Previous year"
-          disabled={r.year === records[0].year}
-          onClick={() => onChange(r.year - 1)}
-        >
-          ←
-        </Button>
-        <span aria-live="polite">
-          {r.year} · age {r.ages.join(' and ')}
-        </span>
-        <Button
-          size="sm"
-          aria-label="Next year"
-          title="Next year"
-          disabled={r.year === records.at(-1)!.year}
-          onClick={() => onChange(r.year + 1)}
-        >
-          →
-        </Button>
-      </div>
-      <Slider
-        label="Year"
-        value={r.year}
-        min={records[0].year}
-        max={records[records.length - 1].year}
+    <div className="year-scrub" data-tour="year-picker">
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-label="Previous year"
+        title="Previous year"
+        disabled={r.year === first}
+        onClick={() => onChange(r.year - 1)}
+      >
+        ←
+      </Button>
+      <span className="year-scrub-now" aria-live="polite">
+        {text}
+      </span>
+      <Button
+        size="sm"
+        variant="ghost"
+        aria-label="Next year"
+        title="Next year"
+        disabled={r.year === last}
+        onClick={() => onChange(r.year + 1)}
+      >
+        →
+      </Button>
+      <input
+        type="range"
+        className="lv-range"
+        aria-label="Year"
+        min={first}
+        max={last}
         step={1}
-        onChange={onChange}
-        format={(y) => `${y} · age ${records.find((x) => x.year === y)?.ages.join(' and ') ?? ''}`}
+        value={r.year}
+        aria-valuetext={text}
+        onChange={(e) => onChange(Number(e.target.value))}
+        style={{ ['--fill' as string]: `${last > first ? ((r.year - first) / (last - first)) * 100 : 0}%` }}
       />
+      <span className="year-scrub-end" aria-hidden="true">
+        {first}–{last}
+      </span>
     </div>
   );
 }

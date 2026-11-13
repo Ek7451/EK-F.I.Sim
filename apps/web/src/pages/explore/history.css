@@ -1,0 +1,246 @@
+/* Against history: a slim night band, then a start-year map beside the path it selects. */
+:root {
+  --hx-chart-h: clamp(260px, calc(var(--page-h) - 344px), 560px);
+}
+.hx-band {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 10px 28px;
+}
+.hx-main {
+  display: grid;
+  grid-template-columns: 384px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+.hx-main > * {
+  min-width: 0;
+}
+.hx-side {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.hx-picks {
+  margin: 8px 0;
+  gap: 6px;
+}
+
+/* The map: a decade to a row, a year to a cell. */
+.hx-map {
+  display: grid;
+  gap: 3px;
+}
+.hx-map-head,
+.hx-map-row {
+  display: grid;
+  grid-template-columns: 44px repeat(10, minmax(0, 1fr));
+  gap: 3px;
+  align-items: center;
+}
+.hx-map-head > span {
+  text-align: center;
+  font: 550 0.625rem / 1 var(--font-ui);
+  color: var(--ink-3);
+}
+.hx-map-decade {
+  font: 550 0.6875rem / 1 var(--font-ui);
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.hx-cell {
+  display: block;
+  height: 17px;
+  min-width: 0;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: var(--surface-2);
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast) var(--ease),
+    box-shadow var(--motion-fast) var(--ease);
+}
+.hx-cell[data-empty] {
+  background: none;
+  cursor: default;
+}
+.hx-cell[data-level='1'],
+.hx-key i[data-level='1'] {
+  background: color-mix(in srgb, var(--primary) 20%, var(--surface));
+}
+.hx-cell[data-level='2'] {
+  background: color-mix(in srgb, var(--primary) 38%, var(--surface));
+}
+.hx-cell[data-level='3'],
+.hx-key i[data-level='3'] {
+  background: color-mix(in srgb, var(--primary) 56%, var(--surface));
+}
+.hx-cell[data-level='4'] {
+  background: color-mix(in srgb, var(--primary) 76%, var(--surface));
+}
+.hx-cell[data-level='5'],
+.hx-key i[data-level='5'] {
+  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+}
+/* Ran short: a different colour and a hatch, so it does not rest on colour alone. */
+.hx-cell[data-outcome='short'],
+.hx-key i[data-outcome='short'] {
+  background:
+    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0 2px, transparent 2px 5px), var(--danger);
+}
+/* History has not finished these plans yet: an empty, dashed cell. */
+.hx-cell[data-outcome='partial'],
+.hx-key i[data-outcome='partial'] {
+  background: transparent;
+  border: 1px dashed var(--line-strong);
+}
+button.hx-cell:hover {
+  transform: scale(1.18);
+  box-shadow: var(--shadow-hover);
+  position: relative;
+  z-index: 1;
+}
+button.hx-cell[aria-pressed='true'] {
+  outline: 2px solid var(--ink);
+  outline-offset: 1px;
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--dawn-amber) 55%, transparent),
+    0 0 14px var(--dawn-amber);
+  position: relative;
+  z-index: 2;
+}
+button.hx-cell:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+  z-index: 3;
+  position: relative;
+}
+.hx-key {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  margin-top: 8px;
+}
+.hx-key > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+.hx-key i {
+  display: inline-block;
+  width: 14px;
+  height: 10px;
+  border-radius: 3px;
+}
+.hx-key i:last-of-type {
+  margin-right: 3px;
+}
+
+/* The selected year in plain words. */
+.hx-story {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 12px;
+  margin-bottom: 8px;
+  border-radius: var(--radius-2);
+  border: 1px solid var(--primary-line);
+  border-left: 4px solid var(--dawn-amber);
+  background: color-mix(in srgb, var(--primary-soft) 60%, transparent);
+  font-size: var(--text-sm);
+}
+.hx-story[data-outcome='short'] {
+  border-color: color-mix(in srgb, var(--danger) 45%, transparent);
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+.hx-story[data-outcome='partial'] {
+  border-color: var(--line-strong);
+  border-left-color: var(--ink-3);
+  background: var(--surface-2);
+}
+.hx-story > p {
+  flex: 1;
+  min-width: 0;
+  color: var(--ink);
+  text-wrap: pretty;
+}
+.hx-story-facts {
+  display: flex;
+  gap: 18px;
+  margin: 0;
+  flex: none;
+}
+.hx-story-facts dt {
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+.hx-story-facts dd {
+  margin: 0;
+  font: 700 1.0625rem / 1.2 var(--font-display);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums lining-nums;
+  white-space: nowrap;
+}
+.hx-link {
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--primary);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+.hx-path > summary {
+  cursor: pointer;
+  padding: 6px 0 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.hx-path-table {
+  max-height: 260px;
+  overflow-y: auto;
+  margin-top: 6px;
+}
+
+@media (max-width: 1100px) {
+  .hx-main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .hx-story {
+    flex-wrap: wrap;
+    gap: 8px 18px;
+  }
+  .hx-story > p {
+    flex-basis: 100%;
+  }
+  .hx-story-facts {
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+  }
+  :root {
+    --hx-chart-h: 340px;
+  }
+}
+@media (max-width: 700px) {
+  .hx-band {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hx-story-facts {
+    flex-wrap: wrap;
+    gap: 8px 18px;
+  }
+  .hx-map-head,
+  .hx-map-row {
+    grid-template-columns: 40px repeat(10, minmax(0, 1fr));
+  }
+  .hx-cell {
+    height: 24px;
+  }
+}

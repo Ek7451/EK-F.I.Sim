@@ -1,0 +1,461 @@
+/* Plan inputs: Income, Spending and What you have. One screen each: a slim headline band, the list of
+   items on the left, the picture of them on the right, and the rarely touched settings folded away. */
+
+/* ------------------------------------------------------------------ page frame */
+.pic-split {
+  /* The chart takes what is left of the window under the band (clamped so it never collapses). */
+  --pic-chart-h: clamp(240px, calc(var(--page-h) - 238px), 560px);
+  display: grid;
+  grid-template-columns: minmax(340px, 5fr) minmax(0, 7fr);
+  gap: 10px;
+  align-items: start;
+}
+.pic-split[data-lead='wide'] {
+  grid-template-columns: minmax(0, 7fr) minmax(320px, 5fr);
+}
+.pic-col {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+}
+/* The band's fourth figure carries a sentence; let it wrap inside its cell, never widen the band. */
+.pic-band .lv-stat-note {
+  text-wrap: pretty;
+}
+.pic-chart-note {
+  margin-top: 4px;
+}
+@media (max-width: 1100px) {
+  .pic-split,
+  .pic-split[data-lead='wide'] {
+    grid-template-columns: minmax(0, 1fr);
+    --pic-chart-h: 280px;
+  }
+}
+
+/* ------------------------------------------------------------------ item rows */
+.pic-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.pic-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+  overflow: hidden;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-base) var(--ease);
+}
+.pic-item:hover {
+  border-color: var(--primary-line);
+  box-shadow: var(--shadow-hover);
+}
+.pic-item > .lv-tile {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+.pic-item-body {
+  min-width: 0;
+}
+.pic-item-name {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 2px 6px;
+  min-width: 0;
+  font-weight: 650;
+  line-height: 1.3;
+}
+.pic-item-name > span:first-child {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.pic-item-name > .lv-badge {
+  flex: none;
+}
+.pic-item-meta {
+  color: var(--ink-3);
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+.pic-item-meta a {
+  white-space: nowrap;
+}
+.pic-amount {
+  font: 700 var(--text-md) / 1.2 var(--font-ui);
+  font-variant-numeric: tabular-nums lining-nums;
+  letter-spacing: -0.01em;
+  text-align: right;
+  white-space: nowrap;
+}
+.pic-amount > small {
+  display: block;
+  font-weight: 500;
+  font-size: var(--text-xs);
+  color: var(--ink-3);
+  letter-spacing: 0;
+}
+/* How much of the total this item is: a hairline of first light along the bottom edge. */
+.pic-share {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  width: var(--share, 0%);
+  background: var(--grad-dawn);
+  opacity: 0.85;
+  border-radius: 0 2px 2px 0;
+}
+.pic-item[data-quiet='true'] {
+  border-style: dashed;
+  background: transparent;
+}
+.pic-empty {
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+  padding: 4px 0 8px;
+}
+/* The "add one" row at the foot of a folded list. */
+.pic-add {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 8px;
+}
+/* A long list scrolls inside its card on a desktop window instead of pushing the page down. */
+@media (min-width: 1101px) {
+  .pic-scroll {
+    max-height: max(220px, calc(var(--page-h) - 190px));
+    overflow-y: auto;
+    margin-right: -8px;
+    padding-right: 8px;
+    scrollbar-width: thin;
+  }
+}
+
+/* ------------------------------------------------------------------ spending phases */
+.pic-phases {
+  display: grid;
+  gap: 6px;
+}
+.pic-phase {
+  display: grid;
+  grid-template-columns: minmax(90px, 3fr) 88px 88px minmax(60px, 2fr) auto;
+  gap: 8px;
+  align-items: end;
+}
+/* Labels are printed once, above the first phase; the rest keep theirs for screen readers only. */
+.pic-phase:not(:first-child) .lv-field > label,
+.pic-phase:not(:first-child) .lv-field > .lv-label-row {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.pic-phase > .lv-range {
+  align-self: end;
+  min-height: var(--control-h);
+}
+.pic-dial {
+  display: grid;
+  grid-template-columns: minmax(150px, 190px) minmax(0, 1fr);
+  gap: 10px;
+  align-items: end;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.pic-dial > .lv-range {
+  min-height: var(--control-h);
+}
+@media (max-width: 520px) {
+  .pic-phase {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+  .pic-phase > :first-child {
+    grid-column: 1 / -1;
+  }
+  .pic-phase > .lv-range {
+    display: none;
+  }
+  .pic-dial {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ------------------------------------------------------------------ what you have: the mix and the account tiles */
+.pic-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+.pic-search {
+  flex: 0 1 180px;
+  width: 180px;
+  min-width: 110px;
+  min-height: var(--control-h-sm);
+}
+.pic-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+.pic-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--ink-2);
+  font: 550 var(--text-xs) var(--font-ui);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    background var(--motion-fast) var(--ease);
+}
+.pic-chip:hover {
+  border-color: var(--primary-line);
+  color: var(--ink);
+}
+.pic-chip[aria-pressed='true'] {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+  color: var(--ink);
+}
+.pic-chip > i,
+.pic-mix > span {
+  background: var(--pic-hue, var(--ink-3));
+}
+.pic-chip > i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+}
+.pic-chip > b {
+  font-weight: 700;
+  color: var(--ink);
+}
+@media (pointer: coarse) {
+  .pic-chip,
+  .pic-search {
+    min-height: 44px;
+  }
+}
+/* Where the money sits by tax treatment, drawn to scale. */
+.pic-mix {
+  display: flex;
+  gap: 2px;
+  height: 10px;
+  margin-bottom: 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--surface-3);
+}
+.pic-mix > span {
+  min-width: 2px;
+  transition: flex-grow var(--motion-slow) var(--ease-out);
+}
+.pic-tiles {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(250px, 100%), 1fr));
+  gap: 8px;
+}
+.pic-tile {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 10px;
+  padding: 8px 8px 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: color-mix(in srgb, var(--surface-2) 45%, var(--surface));
+  overflow: hidden;
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-base) var(--ease),
+    transform var(--motion-fast) var(--ease);
+}
+.pic-tile::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--pic-hue, var(--primary));
+}
+.pic-tile:hover {
+  border-color: var(--primary-line);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-1px);
+}
+.pic-tile > .lv-tile {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+.pic-tile-foot {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  min-width: 0;
+}
+.pic-tile-links {
+  display: flex;
+  gap: 4px 10px;
+  flex-wrap: wrap;
+  min-width: 0;
+  font-size: var(--text-xs);
+}
+.pic-tile-foot > .pic-amount {
+  font-size: var(--text-base);
+}
+
+/* ------------------------------------------------------------------ editors */
+/* The item editors carry three fields to a row, so their dialog is a little wider than the default. */
+.lv-dialog:has(.pic-editor) {
+  width: min(780px, 100%);
+}
+.pic-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.pic-editor .form-grid {
+  grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr));
+}
+/* The opening row holds the short, always-present fields: four across. */
+.pic-editor > .form-grid:first-child {
+  grid-template-columns: repeat(auto-fill, minmax(min(160px, 100%), 1fr));
+}
+/* The investment mix reads as one row of five. */
+@media (min-width: 760px) {
+  .pic-editor fieldset[data-tour='allocation'] .form-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+/* Two "when" pickers (or a rate and its basis) side by side. */
+.pic-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px 16px;
+  align-items: start;
+}
+.pic-pair > .span-all {
+  grid-column: 1 / -1;
+}
+@media (max-width: 700px) {
+  .pic-pair {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+.pic-editor h3 {
+  font-size: var(--text-sm);
+  color: var(--ink-2);
+  letter-spacing: 0;
+}
+.pic-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 10px 12px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  min-width: 0;
+}
+.pic-group > legend {
+  padding: 0 6px;
+}
+/* Rarely used settings: one quiet row until opened. */
+.pic-more {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  background: color-mix(in srgb, var(--surface-2) 45%, transparent);
+}
+.pic-more > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  border-radius: var(--radius-2);
+}
+.pic-more > summary > span {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 400;
+  color: var(--ink-3);
+}
+.pic-more[open] > summary {
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-2) var(--radius-2) 0 0;
+}
+.pic-more-body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 10px 12px 12px;
+}
+.pic-tier,
+.pic-refi {
+  display: grid;
+  gap: 8px;
+  align-items: end;
+}
+.pic-tier {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) auto;
+}
+.pic-refi {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+.pic-refi > :first-child {
+  grid-column: 1 / -1;
+}
+@media (max-width: 520px) {
+  .pic-refi {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

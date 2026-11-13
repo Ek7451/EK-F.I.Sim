@@ -54,6 +54,18 @@ export function findTarget(target: string | undefined): HTMLElement | null {
     for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`))
       if (visible(el)) return el;
   }
+  // A target inside a folded section: open the fold(s) around it so the tour can point at it.
+  for (const name of target.split('|')) {
+    for (const el of document.querySelectorAll<HTMLElement>(`[data-tour="${name}"]`)) {
+      let opened = false;
+      for (let d = el.parentElement?.closest('details'); d; d = d.parentElement?.closest('details'))
+        if (!d.open) {
+          d.open = true;
+          opened = true;
+        }
+      if (opened && visible(el)) return el;
+    }
+  }
   return null;
 }
 

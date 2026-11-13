@@ -29,8 +29,8 @@
   --text-xl: 1.75rem;
   --text-2xl: 2.25rem;
   --text-hero: 3.5rem;
-  --control-h: 38px;
-  --control-h-sm: 30px;
+  --control-h: 34px;
+  --control-h-sm: 28px;
   --motion-fast: 130ms;
   --motion-base: 220ms;
   --motion-slow: 520ms;
@@ -457,7 +457,7 @@ a {
     var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
-  padding: 18px 20px;
+  padding: 12px 16px 14px;
   box-shadow: var(--shadow-1);
   min-width: 0;
 }
@@ -466,8 +466,8 @@ a {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  border-radius: var(--radius-5);
-  padding: var(--space-5);
+  border-radius: var(--radius-4);
+  padding: 16px 18px;
   border-color: rgba(169, 159, 255, 0.28);
   background:
     radial-gradient(120% 90% at 0% 0%, rgba(108, 84, 255, 0.5), transparent 58%),
@@ -499,12 +499,12 @@ a {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
   flex-wrap: wrap;
-  min-height: 30px;
+  min-height: 28px;
 }
 .lv-card > header > h2 {
-  font-size: 1.0625rem;
+  font-size: 0.9375rem;
   letter-spacing: -0.02em;
 }
 .lv-stack {
@@ -697,13 +697,15 @@ a {
 
 .lv-switch {
   display: inline-flex;
-  align-items: center;
+  align-items: flex-start;
+  line-height: 1.35;
+  text-wrap: pretty;
   gap: var(--space-2);
   cursor: pointer;
   font-size: var(--text-sm);
   font-weight: 550;
   color: var(--ink-2);
-  min-height: var(--control-h);
+  padding: 7px 0;
 }
 .lv-switch input {
   appearance: none;
@@ -716,6 +718,7 @@ a {
   cursor: pointer;
   transition: background var(--motion-fast);
   flex: none;
+  margin-top: -1px;
 }
 .lv-switch input::after {
   content: '';
@@ -916,7 +919,7 @@ a {
   animation: lv-sweep 900ms var(--ease-out) both;
 }
 .lv-kpis > * {
-  padding: 14px 20px 13px;
+  padding: 9px 16px 9px;
   border-left: 1px solid var(--night-line);
   margin-left: -1px;
   animation: lv-settle 620ms var(--ease-out) both;
@@ -934,11 +937,11 @@ a {
   animation-delay: 280ms;
 }
 .lv-kpis .lv-stat {
-  gap: 4px;
+  gap: 1px;
 }
 .lv-kpis .lv-stat > .lv-stat-value,
 .lv-card[data-variant='hero'] .lv-stat:not([data-size='hero']) > .lv-stat-value {
-  font-size: 2rem;
+  font-size: 1.5rem;
   text-wrap: balance;
   text-shadow: 0 0 28px rgba(169, 159, 255, 0.45);
 }
@@ -1104,7 +1107,7 @@ a {
 .lv-table th,
 .lv-table td {
   text-align: right;
-  padding: 7px 10px;
+  padding: 5px 10px;
   border-bottom: 1px solid var(--line);
   white-space: nowrap;
 }
@@ -1143,7 +1146,7 @@ a {
   display: flex;
   align-items: center;
   gap: var(--space-3);
-  padding: 10px 8px;
+  padding: 6px 8px;
   margin: 0 -8px;
   border-radius: var(--radius-2);
   border-bottom: 1px solid var(--line);
@@ -1350,6 +1353,130 @@ a {
   border-top: 1px solid var(--line-strong);
   padding-top: 4px;
   font-weight: 700;
+}
+
+/* ------------------------------------------------------------------ folds (collapsible cards) */
+.lv-fold {
+  padding: 0;
+}
+.lv-fold > summary {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 46px;
+  padding: 8px 14px;
+  cursor: pointer;
+  list-style: none;
+  border-radius: var(--radius-3);
+  transition: background var(--motion-fast) var(--ease);
+}
+.lv-fold > summary::-webkit-details-marker {
+  display: none;
+}
+.lv-fold > summary:hover {
+  background: color-mix(in srgb, var(--primary-soft) 55%, transparent);
+}
+.lv-fold > summary > h2 {
+  font-size: 0.9375rem;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+  flex: none;
+}
+.lv-fold > summary > .lv-tile {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+}
+/* What the section currently says, readable while folded. */
+.lv-fold-summary {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
+}
+.lv-fold {
+  position: relative;
+}
+.lv-fold-actions {
+  position: absolute;
+  top: 8px;
+  right: 50px;
+  flex-wrap: nowrap;
+}
+/* Room on the title row for those controls while the section is open. */
+.lv-fold[open] > summary > .lv-fold-actions-room {
+  flex: none;
+  width: var(--fold-actions-w, 150px);
+}
+.lv-fold-chevron {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  flex: none;
+  border-radius: 50%;
+  color: var(--ink-3);
+  background: var(--surface-2);
+  transition: transform var(--motion-base) var(--ease);
+}
+.lv-fold[open] > summary .lv-fold-chevron {
+  transform: rotate(180deg);
+  color: var(--primary);
+  background: var(--primary-soft);
+}
+.lv-fold[open] > summary {
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-3) var(--radius-3) 0 0;
+}
+.lv-fold-body {
+  padding: 12px 14px 14px;
+}
+@media (max-width: 700px) {
+  .lv-fold > summary {
+    flex-wrap: wrap;
+  }
+  .lv-fold-summary {
+    order: 5;
+    flex-basis: 100%;
+    white-space: normal;
+  }
+}
+
+/* ------------------------------------------------------------------ definition rows (label left, figure right) */
+.lv-facts {
+  display: grid;
+  margin: 0;
+}
+.lv-facts > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: var(--text-sm);
+}
+.lv-facts > div:last-child {
+  border-bottom: 0;
+}
+.lv-facts dt {
+  color: var(--ink-2);
+  min-width: 0;
+}
+.lv-facts dd {
+  margin: 0;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+/* The same rows laid out in as many columns as fit. */
+.lv-facts[data-cols] {
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  column-gap: 28px;
 }
 
 /* ------------------------------------------------------------------ loading */

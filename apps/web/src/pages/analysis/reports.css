@@ -1,0 +1,266 @@
+/* Reports: one slim row of choices and exports, then the report itself as a finished sheet. */
+.rpt-bar {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: stretch;
+}
+.rpt-options {
+  display: flex;
+  align-items: center;
+  gap: 10px 20px;
+  flex-wrap: wrap;
+  padding-block: 10px;
+}
+.rpt-version {
+  width: 230px;
+  max-width: 100%;
+}
+.rpt-mc {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 240px;
+}
+.rpt-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.rpt-progress > .lv-progress {
+  flex: 1;
+  max-width: 320px;
+}
+.rpt-exports {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: max-content;
+  gap: 10px;
+}
+/* An export: its button, and one line on what you get. */
+.rpt-tile {
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 5px;
+  padding: 10px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-3);
+  background:
+    var(--card-sheen) top / 100% 72px no-repeat,
+    var(--surface);
+  box-shadow: var(--shadow-1);
+  transition:
+    border-color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-base) var(--ease),
+    transform var(--motion-fast) var(--ease);
+}
+.rpt-tile::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 3px;
+  background: var(--grad-dawn);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--motion-slow) var(--ease-out);
+}
+.rpt-tile:hover {
+  border-color: var(--primary-line);
+  box-shadow: var(--shadow-hover);
+  transform: translateY(-2px);
+}
+.rpt-tile:hover::after {
+  transform: scaleX(1);
+}
+.rpt-tile > span {
+  font-size: var(--text-xs);
+  line-height: 1.35;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+/* The sheet. */
+.rpt-paper {
+  --rpt-body-h: clamp(220px, calc(var(--page-h) - 336px), 620px);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rpt-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  flex-wrap: wrap;
+}
+.rpt-title {
+  min-width: 0;
+  flex: 1 1 280px;
+}
+.rpt-eyebrow {
+  display: block;
+  font: 650 0.6875rem / 1.2 var(--font-ui);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary);
+}
+.rpt-title > h2 {
+  font: 700 1.375rem / 1.15 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.03em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow-wrap: anywhere;
+}
+.rpt-tags {
+  flex: none;
+  max-width: 100%;
+}
+.rpt-paper .lv-kpis {
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.rpt-paper .lv-kpis .lv-stat-value {
+  white-space: nowrap;
+}
+.rpt-paper .lv-kpis .lv-stat-note {
+  font-variant-numeric: tabular-nums;
+}
+.rpt-body {
+  display: grid;
+  grid-template-columns: minmax(0, 5fr) minmax(0, 6fr);
+  gap: 16px;
+  align-items: start;
+}
+.rpt-chart {
+  margin: 0;
+  min-width: 0;
+}
+.rpt-chart > figcaption {
+  font-size: var(--text-sm);
+  font-weight: 600;
+  color: var(--ink-2);
+  margin-bottom: 4px;
+}
+.rpt-table {
+  max-height: calc(var(--rpt-body-h) + 24px);
+  overflow-y: auto;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+}
+.rpt-table .lv-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+.rpt-foot {
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-xs);
+  line-height: 1.45;
+  color: var(--ink-3);
+}
+
+@media (max-width: 1240px) {
+  .rpt-bar {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rpt-exports {
+    grid-auto-columns: minmax(0, 1fr);
+  }
+  .rpt-tile > span {
+    white-space: normal;
+  }
+}
+@media (max-width: 1100px) {
+  .rpt-paper {
+    --rpt-body-h: 260px;
+  }
+  .rpt-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .rpt-table {
+    max-height: 420px;
+  }
+}
+@media (max-width: 700px) {
+  .rpt-exports {
+    grid-auto-flow: row;
+  }
+  .rpt-tile {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+  }
+  .rpt-tile > .lv-btn {
+    flex: none;
+    min-height: 44px;
+  }
+  .rpt-version {
+    width: 100%;
+  }
+  .rpt-paper .lv-kpis {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* On paper: no controls, no scroll box, ink on white. */
+@media print {
+  .rpt-paper {
+    border: 0;
+    padding: 0;
+    background: none;
+    --rpt-body-h: 260px;
+  }
+  .rpt-paper .lv-kpis {
+    --ink: #111;
+    --ink-2: #333;
+    --ink-3: #555;
+    color: #111;
+    background: none;
+    border: 1px solid #bbb;
+    box-shadow: none;
+  }
+  .rpt-paper .lv-kpis::before,
+  .rpt-paper .lv-kpis::after,
+  .rpt-paper .lv-kpi-icon {
+    display: none;
+  }
+  .rpt-paper .lv-kpis > * {
+    border-color: #ccc;
+    animation: none;
+  }
+  .rpt-paper .lv-kpis .lv-stat > .lv-stat-label,
+  .rpt-paper .lv-kpis .lv-stat > .lv-stat-note {
+    color: #333;
+  }
+  .rpt-paper .lv-kpis .lv-stat > .lv-stat-value {
+    text-shadow: none;
+  }
+  .rpt-eyebrow {
+    color: #333;
+  }
+  .rpt-body {
+    display: block;
+  }
+  .rpt-chart {
+    break-inside: avoid;
+    margin-bottom: 12px;
+  }
+  .rpt-table {
+    max-height: none;
+    overflow: visible;
+    border: 0;
+  }
+  .rpt-table .lv-table thead th {
+    position: static;
+  }
+}

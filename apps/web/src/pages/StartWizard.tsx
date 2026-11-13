@@ -65,6 +65,11 @@ interface PersonDraft {
   matchUpTo: number;
   pretax: number;
   rothBalance: number;
+  /** Taxable investments in this person's own name (each partner has their own account). */
+  brokerage: number;
+  /** Health savings account in this person's name, and what goes into it from pay each year. */
+  hsa: number;
+  hsaContribution: number;
   retireAge: number;
 }
 interface Draft {
@@ -72,7 +77,6 @@ interface Draft {
   partner: boolean;
   people: [PersonDraft, PersonDraft];
   cash: number;
-  brokerage: number;
   spending: number;
   phases: boolean;
 }
@@ -134,23 +138,40 @@ export function buildPlan(d: Draft, year: number): PlanInput {
       balance: D(d.cash),
       // No fixed yield: cash earns the cash return under Assumptions and follows short-term rates in simulations.
     },
-    {
-      id: 'a-brokerage',
-      ownerId: d.partner ? 'joint' : 'p1',
-      name: 'Brokerage',
-      type: 'taxable',
-      balance: D(d.brokerage),
-      costBasis: D(d.brokerage * ASSUMED.brokerageBasisShare),
-      allocation: { ...ASSUMED.mix },
-    },
   ];
   const milestones: PlanInput['milestones'] = [];
   const rothIras: string[] = [];
+  // Paying into an HSA takes a high-deductible plan, so anyone who does is put on one while they work.
+  const hdhp: string[] = [];
   ppl.forEach((p, i) => {
     const id = pid(i);
     const who = displayName(p, i);
     const label = i === 0 && !p.name.trim() ? 'Your' : possessive(who);
     const working = p.salary > 0;
+    // Each person's taxable investments are their own account. The first person always has one, because
+    // money left over each year needs somewhere to land; a partner's appears when it holds something.
+    if (i === 0 || p.brokerage > 0)
+      accounts.push({
+        id: `a-brokerage-${id}`,
+        ownerId: id,
+        name: d.partner ? `${label} brokerage` : 'Brokerage',
+        type: 'taxable',
+        balance: D(p.brokerage),
+        costBasis: D(p.brokerage * ASSUMED.brokerageBasisShare),
+        allocation: { ...ASSUMED.mix },
+      });
+    const hsaSaving = working && p.hsaContribution > 0;
+    if (hsaSaving) hdhp.push(id);
+    if (p.hsa > 0 || hsaSaving)
+      accounts.push({
+        id: `a-hsa-${id}`,
+        ownerId: id,
+        name: d.partner ? `${label} HSA` : 'HSA',
+        type: 'hsa',
+        balance: D(p.hsa),
+        allocation: { ...ASSUMED.mix },
+        contribution: hsaSaving ? { incomeId: `i-${id}`, employeeAmount: D(p.hsaContribution) } : undefined,
+      });
     if (working) {
       milestones.push({
         id: `m-retire-${id}`,
@@ -263,11 +284,21 @@ export function buildPlan(d: Draft, year: number): PlanInput {
       },
     ],
     milestones,
+    ...(hdhp.length
+      ? {
+          healthcare: {
+            people: hdhp.map((personId) => ({
+              personId,
+              coverage: [{ type: 'employer' as const, from: { type: 'year' as const, year }, hdhp: true }],
+            })),
+          },
+        }
+      : {}),
     strategies: {
       surplusWaterfall: [
         { type: 'emergencyFund', accountId: 'a-cash', months: ASSUMED.emergencyMonths },
         ...rothIras.map((accountId) => ({ type: 'account' as const, accountId })),
-        { type: 'account', accountId: 'a-brokerage' },
+        { type: 'account', accountId: 'a-brokerage-p1' },
       ],
       spendingPhases: d.phases
         ? [
@@ -294,6 +325,9 @@ function newPerson(year: number, partner: boolean): PersonDraft {
     matchUpTo: 0.06,
     pretax: partner ? 40000 : 60000,
     rothBalance: partner ? 10000 : 15000,
+    brokerage: partner ? 0 : 20000,
+    hsa: 0,
+    hsaContribution: 0,
     retireAge: 62,
   };
 }
@@ -328,7 +362,6 @@ export function StartPage(): ReactNode {
     partner: false,
     people: [newPerson(year, false), newPerson(year, true)],
     cash: 15000,
-    brokerage: 20000,
     spending: 55000,
     phases: false,
   }));
@@ -565,23 +598,33 @@ export function StartPage(): ReactNode {
                 cents={D(d.cash)}
                 onChange={(v) => up({ cash: Math.max(0, v / 100) })}
               />
-              <MoneyField
-                label="Brokerage (taxable investments)"
-                cents={D(d.brokerage)}
-                onChange={(v) => up({ brokerage: Math.max(0, v / 100) })}
-              />
             </div>
             {ppl.map((p, i) => (
               <PersonBlock
                 key={i}
                 title={
                   d.partner
-                    ? `Retirement accounts in ${possessive(displayName(p, i))} name`
-                    : 'Retirement accounts'
+                    ? `Accounts in ${possessive(displayName(p, i))} name`
+                    : 'Investments and retirement'
                 }
               >
                 <MoneyField
-                  label="Pre-tax retirement (401(k), IRA)"
+                  label="Brokerage (taxable)"
+                  cents={D(p.brokerage)}
+                  onChange={(v) => upP(i, { brokerage: Math.max(0, v / 100) })}
+                />
+                <MoneyField
+                  label="HSA balance"
+                  cents={D(p.hsa)}
+                  onChange={(v) => upP(i, { hsa: Math.max(0, v / 100) })}
+                />
+                <MoneyField
+                  label="HSA added per year"
+                  cents={D(p.hsaContribution)}
+                  onChange={(v) => upP(i, { hsaContribution: Math.max(0, v / 100) })}
+                />
+                <MoneyField
+                  label="Pre-tax (401(k), IRA)"
                   cents={D(p.pretax)}
                   onChange={(v) => upP(i, { pretax: Math.max(0, v / 100) })}
                 />
@@ -721,16 +764,16 @@ function Assumptions({ plan, d, year }: { plan: Plan; d: Draft; year: number }):
     ],
     [
       'Investment mix',
-      `Brokerage and workplace plans ${pct(ASSUMED.mix.usStocks)} US stocks, ${pct(ASSUMED.mix.usBonds)} bonds, ${pct(ASSUMED.mix.intlStocks)} international; Roth IRAs ${pct(ASSUMED.rothMix.usStocks)} US and ${pct(ASSUMED.rothMix.intlStocks)} international stocks.`,
+      `Brokerage, health savings and workplace plans ${pct(ASSUMED.mix.usStocks)} US stocks, ${pct(ASSUMED.mix.usBonds)} bonds, ${pct(ASSUMED.mix.intlStocks)} international; Roth IRAs ${pct(ASSUMED.rothMix.usStocks)} US and ${pct(ASSUMED.rothMix.intlStocks)} international stocks.`,
     ],
     ['Pay', `Rises ${pct(ASSUMED.salaryGrowthReal)} a year above inflation until each person retires.`],
     [
       'Savings',
-      `Cash earns the cash return under Assumptions (${pct(r.cash, 1)} a year) and follows short-term interest rates in simulations. ${ASSUMED.emergencyMonths} months of spending stays in cash; money left over each year goes to ${d.partner ? 'your Roth IRAs' : 'your Roth IRA'} (within the income limits), then the brokerage account.`,
+      `Cash earns the cash return under Assumptions (${pct(r.cash, 1)} a year) and follows short-term interest rates in simulations. ${ASSUMED.emergencyMonths} months of spending stays in cash; money left over each year goes to ${d.partner ? 'your Roth IRAs' : 'your Roth IRA'} (within the income limits), then ${d.partner ? `${ppl[0].name.trim() ? possessive(names[0]) : 'your'} brokerage account` : 'the brokerage account'}.`,
     ],
     [
       'Tax history of what you have',
-      `${pct(ASSUMED.brokerageBasisShare)} of the brokerage balance is what you paid for it (only the rest is a taxable gain). ${pct(ASSUMED.rothContributionShare)} of each Roth balance is your own contributions, first made more than five years ago, so that part can come out at any time.`,
+      `${pct(ASSUMED.brokerageBasisShare)} of ${d.partner ? 'each brokerage balance' : 'the brokerage balance'} is what you paid for it (only the rest is a taxable gain). ${pct(ASSUMED.rothContributionShare)} of each Roth balance is your own contributions, first made more than five years ago, so that part can come out at any time.`,
     ],
     [
       'Social Security',
