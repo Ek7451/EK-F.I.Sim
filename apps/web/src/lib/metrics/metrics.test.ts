@@ -19,7 +19,8 @@ describe('shared financial view models', () => {
         const total = (items: typeof full.sources): number =>
           items.reduce((sum, item) => sum + item.amount, 0);
         expect(full.residual).toBeCloseTo(explainCashFlow(record).result - record.contributions.afterTax, 6);
-        expect(total(full.sources)).toBeCloseTo(total(full.uses), 2);
+        // The two sides meet to within the solver's $1 tolerance; a larger gap gets an explicit residual row.
+        expect(Math.abs(total(full.sources) - total(full.uses))).toBeLessThan(1.01);
         expect(total(compact.sources)).toBeCloseTo(total(full.sources), 6);
         expect(total(compact.uses)).toBeCloseTo(total(full.uses), 6);
         const estate =

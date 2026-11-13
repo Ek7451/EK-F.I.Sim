@@ -97,7 +97,8 @@ export function YearPicker({
       <div className="lv-spread year-stepper">
         <Button
           size="sm"
-          label="Previous year"
+          aria-label="Previous year"
+          title="Previous year"
           disabled={r.year === records[0].year}
           onClick={() => onChange(r.year - 1)}
         >
@@ -108,7 +109,8 @@ export function YearPicker({
         </span>
         <Button
           size="sm"
-          label="Next year"
+          aria-label="Next year"
+          title="Next year"
           disabled={r.year === records.at(-1)!.year}
           onClick={() => onChange(r.year + 1)}
         >

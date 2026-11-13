@@ -13,7 +13,18 @@ import {
   formatPct,
 } from '@fisim/ui';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Chart, alpha, areaSeries, axis, kindColor, short, tooltip, tooltipCard } from '../../charts/Chart';
+import {
+  Chart,
+  alpha,
+  areaSeries,
+  axis,
+  dawnFill,
+  dawnLine,
+  kindColor,
+  short,
+  tooltip,
+  tooltipCard,
+} from '../../charts/Chart';
 import { useProjection, useProjectionOf } from '../../engine/useResults';
 import { outcomeMetrics } from '../../lib/metrics';
 import { agesText, fundedStat, isShort } from '../../lib/outcome';
@@ -290,9 +301,20 @@ export function ProjectionPage(): ReactNode {
                   xAxisIndex: [0, 1],
                   height: 16,
                   bottom: 4,
-                  borderColor: c.line,
-                  fillerColor: alpha(c.primary, 0.12),
-                  handleStyle: { color: c.surface, borderColor: c.ink3 },
+                  borderColor: 'transparent',
+                  backgroundColor: alpha(c.line, 0.5),
+                  borderRadius: 8,
+                  fillerColor: alpha(c.dawn[1], 0.2),
+                  handleIcon:
+                    'path://M-4,-9 h8 a3,3 0 0 1 3,3 v12 a3,3 0 0 1 -3,3 h-8 a3,3 0 0 1 -3,-3 v-12 a3,3 0 0 1 3,-3 z',
+                  handleSize: '130%',
+                  handleStyle: {
+                    color: c.surface,
+                    borderColor: c.primary,
+                    borderWidth: 1.5,
+                    shadowColor: alpha(c.primary, 0.4),
+                    shadowBlur: 6,
+                  },
                   moveHandleSize: 0,
                   textStyle: { color: c.ink3, fontSize: 10 },
                   dataBackground: {
@@ -330,10 +352,25 @@ export function ProjectionPage(): ReactNode {
                 {
                   name: 'Net worth',
                   type: 'line',
-                  symbol: 'none',
+                  symbol: 'circle',
+                  symbolSize: 10,
+                  showSymbol: false,
                   smooth: false,
-                  color: c.ink,
-                  lineStyle: { width: 2, color: c.ink },
+                  // In the stacked view the total is the ink line the layers add up to; on its own it is the
+                  // plan's headline path and takes the dawn stroke.
+                  color: view.mode === 'accounts' ? c.ink : c.dawn[1],
+                  itemStyle: { borderColor: '#fff', borderWidth: 2 },
+                  lineStyle:
+                    view.mode === 'accounts'
+                      ? {
+                          width: 2.25,
+                          color: c.ink,
+                          shadowColor: alpha(c.ink, 0.25),
+                          shadowBlur: 8,
+                          shadowOffsetY: 3,
+                        }
+                      : dawnLine(c, 3.5),
+                  areaStyle: view.mode === 'accounts' ? undefined : dawnFill(c),
                   z: 5,
                   data: recs.map((r) => m.bal(r, r.netWorth)),
                 },
@@ -348,9 +385,9 @@ export function ProjectionPage(): ReactNode {
                   data: recs.map((r) => ({
                     value: 1,
                     itemStyle: {
-                      color: isShort(r) ? c.danger : c.primary,
-                      opacity: isShort(r) ? 1 : 0.3,
-                      borderRadius: 2,
+                      color: isShort(r) ? c.danger : c.series[0],
+                      opacity: isShort(r) ? 1 : 0.6,
+                      borderRadius: 3,
                     },
                   })),
                 },

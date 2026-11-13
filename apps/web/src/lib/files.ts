@@ -1,6 +1,7 @@
 /** Encrypted backups (SYNC-03), CSV (RPT-05) and PDF reports (RPT-04), all generated on this device. */
 import { exportEncrypted, importEncrypted } from '@fisim/crypto';
 import { recordsToCsv, type McSummary, type Plan, type ProjectionResult } from '@fisim/engine';
+import { formatShare } from '@fisim/ui';
 import { DISCLAIMER } from '../shell/nav';
 
 export function download(name: string, data: BlobPart, type: string): void {
@@ -190,7 +191,7 @@ export async function exportPdf(
     stats.push(
       [
         'Chance of success (estimated)',
-        `${Math.round(mc.successRate * 100)}% of ${mc.runs.toLocaleString()} simulated runs, seed ${mc.seed}`,
+        `${formatShare(mc.successRate)} of ${mc.runs.toLocaleString()} simulated runs, seed ${mc.seed}`,
       ],
       [
         'Ending wealth, 10th to 90th percentile',
@@ -265,8 +266,12 @@ export async function exportPdf(
 
   heading('Assumptions and sources');
   const A = plan.assumptions;
+  // Under long-run historical averages the engine does not read the typed-in figures, so the report must not
+  // print them as if it did.
   para(
-    `Expected returns: US stocks ${(A.returns.fixed.usStocks * 100).toFixed(1)}%, US bonds ${(A.returns.fixed.usBonds * 100).toFixed(1)}%, cash ${(A.returns.fixed.cash * 100).toFixed(1)}%. Inflation ${(A.inflation.rate * 100).toFixed(1)}%; healthcare costs rise ${(A.healthcareInflation.excessOverCpi * 100).toFixed(1)} points faster.`,
+    A.returns.mode === 'historicalAverage'
+      ? `Expected returns and inflation: the long-run compound averages of the bundled market history for US stocks, US bonds, cash and prices. Healthcare costs rise ${(A.healthcareInflation.excessOverCpi * 100).toFixed(1)} points faster than inflation.`
+      : `Expected returns: US stocks ${(A.returns.fixed.usStocks * 100).toFixed(1)}%, US bonds ${(A.returns.fixed.usBonds * 100).toFixed(1)}%, cash ${(A.returns.fixed.cash * 100).toFixed(1)}%. Inflation ${(A.inflation.rate * 100).toFixed(1)}%; healthcare costs rise ${(A.healthcareInflation.excessOverCpi * 100).toFixed(1)} points faster.`,
   );
   const proj = recs.find((r) => r.dataStatus === 'projected');
   para(

@@ -156,7 +156,8 @@ export function summarizeMonteCarlo(
       const met = ch.netWorthEndReal[r] >= goal - 0.5;
       if (met) goalOk++;
       if (ch.success[r] && met) bothOk++;
-      else fail.set(ch.failYear[r], (fail.get(ch.failYear[r]) ?? 0) + 1);
+      // Only a run that ran short has a year it ran short in. A funded run that missed the ending goal does not.
+      if (!ch.success[r]) fail.set(ch.failYear[r], (fail.get(ch.failYear[r]) ?? 0) + 1);
       ending.push(ch.endingReal[r]);
       estate.push(ch.estateReal[r]);
       taxes.push(ch.lifetimeTaxReal[r]);

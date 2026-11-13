@@ -39,16 +39,29 @@ const compact = new Intl.NumberFormat('en-US', {
 });
 
 /** Dollars -> "$41,200". Rounding happens only here, at display. */
+// `|| 0` turns a rounded negative zero into zero, so a few cents below nothing never prints as "-$0".
 export const formatMoney = (dollars: number): string =>
-  Number.isFinite(dollars) ? usd0.format(Math.round(dollars)) : '—';
+  Number.isFinite(dollars) ? usd0.format(Math.round(dollars) || 0) : '—';
 export const formatCompact = (dollars: number): string =>
   Number.isFinite(dollars)
     ? Math.abs(dollars) < 10000
-      ? usd0.format(Math.round(dollars))
+      ? usd0.format(Math.round(dollars) || 0)
       : compact.format(dollars)
     : '—';
 export const formatPct = (v: number, digits = 0): string =>
   Number.isFinite(v) ? `${(v * 100).toFixed(digits)}%` : '—';
+/**
+ * A share of runs or outcomes. Whole percent, except near the ends: 99.6% must not read as "100%" while failures
+ * are listed beside it, nor 0.4% as "0%". Only an exact 1 or 0 prints as 100% or 0%.
+ */
+export const formatShare = (v: number): string => {
+  if (!Number.isFinite(v)) return '—';
+  if ((v >= 0.995 && v < 1) || (v > 0 && v < 0.005)) {
+    const one = Math.min(99.9, Math.max(0.1, Math.floor(v * 1000) / 10));
+    return `${one.toFixed(1)}%`;
+  }
+  return `${(v * 100).toFixed(0)}%`;
+};
 export const centsToDollars = (c: number): number => c / 100;
 
 // ------------------------------------------------------------------ icons (original, simple strokes)

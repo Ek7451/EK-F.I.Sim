@@ -1,11 +1,12 @@
-/* Longview design system: tokens (UX-01, brand.md §2). Neutral surfaces, indigo actions, semantic financial colors.
-   Self-hosted Inter with system fallbacks (strict CSP, offline first). */
+/* Longview design system: tokens (UX-01, brand.md §2). "First light": a night-sky instrument panel, a dawn
+   gradient for the things that matter, quiet paper everywhere else. Self-hosted fonts (strict CSP, offline first). */
 :root {
   --font-ui:
     Inter, 'Segoe UI Variable Text', 'Segoe UI', system-ui, -apple-system, BlinkMacSystemFont, Roboto,
     'Helvetica Neue', Arial, sans-serif;
   --font-display:
-    Inter, 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, Roboto, sans-serif;
+    'Bricolage Grotesque', Inter, 'Segoe UI Variable Display', 'Segoe UI', system-ui, -apple-system, Roboto,
+    sans-serif;
   --font-mono: ui-monospace, 'Cascadia Mono', Consolas, Menlo, monospace;
 
   --space-1: 4px;
@@ -15,164 +16,245 @@
   --space-5: 24px;
   --space-6: 32px;
   --space-7: 48px;
-  --radius-1: 6px;
-  --radius-2: 8px;
-  --radius-3: 14px;
-  --radius-4: 14px;
-  --radius-5: 20px;
+  --radius-1: 10px;
+  --radius-2: 12px;
+  --radius-3: 18px;
+  --radius-4: 20px;
+  --radius-5: 26px;
   --text-xs: 0.75rem;
   --text-sm: 0.8125rem;
   --text-md: 0.875rem;
   --text-base: 1rem;
   --text-lg: 1.25rem;
-  --text-xl: 1.5rem;
-  --text-2xl: 2rem;
-  --text-hero: 2.75rem;
-  --control-h: 36px;
+  --text-xl: 1.75rem;
+  --text-2xl: 2.25rem;
+  --text-hero: 3.5rem;
+  --control-h: 38px;
   --control-h-sm: 30px;
-  --motion-fast: 120ms;
-  --motion-base: 200ms;
+  --motion-fast: 130ms;
+  --motion-base: 220ms;
+  --motion-slow: 520ms;
   --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
 
-  --bg: #f4f6fa;
+  /* The dawn spectrum. Brand constants: the same in both themes. */
+  --dawn-indigo: #5b4dff;
+  --dawn-violet: #a14dff;
+  --dawn-rose: #ff4d94;
+  --dawn-amber: #ffb02e;
+  --dawn-mint: #2fe0b5;
+  --grad-dawn: linear-gradient(
+    90deg,
+    var(--dawn-indigo) 0%,
+    var(--dawn-violet) 34%,
+    var(--dawn-rose) 68%,
+    var(--dawn-amber) 100%
+  );
+  /* The night panel: navigation, headline bands and anything that plays the instrument. */
+  --night-0: #060818;
+  --night-1: #0c1030;
+  --night-2: #171c4d;
+  --night-ink: #f5f6ff;
+  --night-ink-2: #d2d6f5;
+  --night-ink-3: #a9aedb;
+  --night-line: rgba(190, 196, 255, 0.16);
+  --night-glass: rgba(255, 255, 255, 0.07);
+  --night-glass-2: rgba(255, 255, 255, 0.13);
+
+  --bg: #f2f2fb;
   --surface: #ffffff;
-  --surface-2: #eef2f7;
-  --surface-3: #e8ebf0;
-  --line: #e3e6eb;
-  --line-strong: #c6ccd5;
-  --ink: #172033;
-  --ink-2: #3e4653;
-  --ink-3: #626b79;
-  --primary: #4f5dd5;
-  --primary-hover: #414bb9;
+  --surface-2: #f1f1fb;
+  --surface-3: #e4e5f6;
+  --line: #e3e4f3;
+  --line-strong: #c3c6e0;
+  --ink: #131432;
+  --ink-2: #3a3d5e;
+  --ink-3: #5f627f;
+  --primary: #4a41e6;
+  --primary-hover: #3a31cc;
+  --primary-2: #7a3bf0;
   --on-primary: #ffffff;
-  --primary-soft: #eceefe;
-  --primary-line: #c5caf4;
-  --accent: #9a5b05;
-  --accent-soft: #fdf1dc;
-  --accent-fill: #e08a1e;
-  --danger: #c0392b;
-  --danger-soft: #fdecea;
-  --ok: #087a60;
-  --warn: #9a5b05;
-  --focus: #2f6feb;
-  --shadow-1: 0 1px 2px rgba(18, 22, 29, 0.05), 0 1px 1px rgba(18, 22, 29, 0.03);
-  --shadow-2: 0 6px 18px rgba(18, 22, 29, 0.1), 0 2px 4px rgba(18, 22, 29, 0.05);
-  --shadow-3: 0 18px 48px rgba(18, 22, 29, 0.18), 0 4px 10px rgba(18, 22, 29, 0.06);
-  --shadow-hover: 0 4px 14px rgba(18, 22, 29, 0.08);
+  --primary-soft: #ecebff;
+  --primary-line: #c8c4fb;
+  --accent: #8f5207;
+  --accent-soft: #fff0d6;
+  --accent-fill: #f59e0b;
+  --danger: #c22b3f;
+  --danger-soft: #feeaed;
+  --ok: #07775c;
+  --ok-soft: #dcf8ee;
+  --warn: #8f5207;
+  --focus: #3b5bfd;
+  --glow: rgba(91, 77, 255, 0.28);
+  --aurora-a: rgba(122, 92, 255, 0.16);
+  --aurora-b: rgba(255, 77, 148, 0.1);
+  --aurora-c: rgba(255, 176, 46, 0.1);
+  --card-sheen: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  --shadow-1: 0 1px 2px rgba(28, 24, 96, 0.05), 0 2px 8px rgba(28, 24, 96, 0.04);
+  --shadow-2: 0 10px 28px rgba(28, 24, 96, 0.12), 0 2px 6px rgba(28, 24, 96, 0.06);
+  --shadow-3: 0 28px 70px rgba(18, 14, 80, 0.26), 0 6px 16px rgba(18, 14, 80, 0.1);
+  --shadow-hover: 0 14px 34px rgba(60, 48, 200, 0.16), 0 2px 6px rgba(28, 24, 96, 0.06);
+  --shadow-glow: 0 8px 24px rgba(91, 77, 255, 0.35), 0 2px 6px rgba(91, 77, 255, 0.25);
   /* Generic categorical fallback. Named financial tokens below retain entity meaning. */
-  --chart-1: #159eaa;
-  --chart-2: #3a7bd5;
-  --chart-3: #e08a1e;
-  --chart-4: #8a5cd6;
-  --chart-5: #6f8f1f;
-  --chart-6: #e0607e;
-  --chart-7: #1ba7bf;
-  --chart-8: #c0563a;
+  --chart-1: #0fb5a2;
+  --chart-2: #3b7cf6;
+  --chart-3: #f59e0b;
+  --chart-4: #8b5cf6;
+  --chart-5: #74b816;
+  --chart-6: #ec4899;
+  --chart-7: #06b6d4;
+  --chart-8: #ef6b3c;
   --financial-cash: var(--chart-1);
   --financial-taxable: var(--chart-2);
   --financial-pretax: var(--chart-4);
-  --financial-roth: var(--chart-7);
+  --financial-roth: var(--chart-6);
   --financial-hsa: var(--chart-5);
   --financial-property: var(--chart-3);
-  --financial-debts: var(--danger);
+  --financial-debts: #e5484d;
   --financial-income: var(--chart-2);
   --financial-expense: var(--chart-4);
   --financial-tax: var(--chart-3);
   --financial-baseline: var(--ink-3);
   --financial-draft: var(--primary);
-  --tile-account: #eceefe;
-  --tile-income: #e6effb;
-  --tile-expense: #fdf1dc;
-  --tile-milestone: #efe9fb;
-  --tile-debt: #fbe9e4;
+  --tile-account: #ecebff;
+  --tile-income: #e2edff;
+  --tile-expense: #fff0d6;
+  --tile-milestone: #f3e8ff;
+  --tile-debt: #feeaed;
   color-scheme: light;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --bg: #101827;
-    --surface: #182336;
-    --surface-2: #202c40;
-    --surface-3: #282d38;
-    --line: #2a2f3a;
-    --line-strong: #444b59;
-    --ink: #eef0f4;
-    --ink-2: #c3c8d2;
-    --ink-3: #9aa2b0;
-    --primary: #a5afff;
-    --primary-hover: #bbc3ff;
-    --on-primary: #11182f;
-    --primary-soft: #252e50;
-    --primary-line: #414c7c;
-    --accent: #f0b35a;
-    --accent-soft: #33280f;
-    --accent-fill: #c97f1c;
-    --danger: #f2877a;
-    --danger-soft: #3a1d1a;
-    --ok: #65d5b1;
-    --warn: #f0b35a;
-    --focus: #7aa7ff;
-    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
-    --shadow-3: 0 20px 56px rgba(0, 0, 0, 0.6);
-    --shadow-hover: 0 6px 18px rgba(0, 0, 0, 0.45);
-    --chart-1: #1fa082;
-    --chart-2: #4a88dc;
-    --chart-3: #c97f1c;
-    --chart-4: #9070dc;
-    --chart-5: #7f9c2a;
-    --chart-6: #dc6a86;
-    --chart-7: #2399ad;
-    --chart-8: #c9603f;
-    --tile-account: #252e50;
-    --tile-income: #17263d;
-    --tile-expense: #33280f;
-    --tile-milestone: #261f3b;
-    --tile-debt: #3a1d1a;
+    --bg: #070919;
+    --surface: #10132e;
+    --surface-2: #181c40;
+    --surface-3: #232856;
+    --line: #23274f;
+    --line-strong: #3d437c;
+    --ink: #f0f1ff;
+    --ink-2: #c6caea;
+    --ink-3: #989dc6;
+    --primary: #a99fff;
+    --primary-hover: #c0b8ff;
+    --primary-2: #d09bff;
+    --on-primary: #0d0e2b;
+    --primary-soft: #24215c;
+    --primary-line: #45409a;
+    --accent: #ffc76e;
+    --accent-soft: #33260c;
+    --accent-fill: #f5a524;
+    --danger: #ff8c97;
+    --danger-soft: #3d1622;
+    --ok: #5fe3bb;
+    --ok-soft: #0f3a30;
+    --warn: #ffc76e;
+    --focus: #8fa6ff;
+    --glow: rgba(140, 124, 255, 0.4);
+    --aurora-a: rgba(108, 84, 255, 0.3);
+    --aurora-b: rgba(255, 77, 148, 0.14);
+    --aurora-c: rgba(255, 176, 46, 0.1);
+    --card-sheen: linear-gradient(180deg, rgba(190, 196, 255, 0.09), rgba(190, 196, 255, 0));
+    --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.25);
+    --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
+    --shadow-3: 0 28px 72px rgba(0, 0, 0, 0.7);
+    --shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(169, 159, 255, 0.25);
+    --shadow-glow: 0 8px 26px rgba(140, 124, 255, 0.45), 0 2px 6px rgba(140, 124, 255, 0.3);
+    --chart-1: #2dd4bf;
+    --chart-2: #5b9bff;
+    --chart-3: #fbbf24;
+    --chart-4: #a78bfa;
+    --chart-5: #a3e635;
+    --chart-6: #f472b6;
+    --chart-7: #22d3ee;
+    --chart-8: #fb8a5c;
+    --financial-debts: #ff6b74;
+    --tile-account: #24215c;
+    --tile-income: #152a52;
+    --tile-expense: #33260c;
+    --tile-milestone: #2b1c50;
+    --tile-debt: #3d1622;
     color-scheme: dark;
   }
 }
 :root[data-theme='dark'] {
-  --bg: #101827;
-  --surface: #182336;
-  --surface-2: #202c40;
-  --surface-3: #282d38;
-  --line: #2a2f3a;
-  --line-strong: #444b59;
-  --ink: #eef0f4;
-  --ink-2: #c3c8d2;
-  --ink-3: #9aa2b0;
-  --primary: #a5afff;
-  --primary-hover: #bbc3ff;
-  --on-primary: #11182f;
-  --primary-soft: #252e50;
-  --primary-line: #414c7c;
-  --accent: #f0b35a;
-  --accent-soft: #33280f;
-  --accent-fill: #c97f1c;
-  --danger: #f2877a;
-  --danger-soft: #3a1d1a;
-  --ok: #65d5b1;
-  --warn: #f0b35a;
-  --focus: #7aa7ff;
-  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-2: 0 8px 24px rgba(0, 0, 0, 0.45);
-  --shadow-3: 0 20px 56px rgba(0, 0, 0, 0.6);
-  --shadow-hover: 0 6px 18px rgba(0, 0, 0, 0.45);
-  --chart-1: #1fa082;
-  --chart-2: #4a88dc;
-  --chart-3: #c97f1c;
-  --chart-4: #9070dc;
-  --chart-5: #7f9c2a;
-  --chart-6: #dc6a86;
-  --chart-7: #2399ad;
-  --chart-8: #c9603f;
-  --tile-account: #252e50;
-  --tile-income: #17263d;
-  --tile-expense: #33280f;
-  --tile-milestone: #261f3b;
-  --tile-debt: #3a1d1a;
+  --bg: #070919;
+  --surface: #10132e;
+  --surface-2: #181c40;
+  --surface-3: #232856;
+  --line: #23274f;
+  --line-strong: #3d437c;
+  --ink: #f0f1ff;
+  --ink-2: #c6caea;
+  --ink-3: #989dc6;
+  --primary: #a99fff;
+  --primary-hover: #c0b8ff;
+  --primary-2: #d09bff;
+  --on-primary: #0d0e2b;
+  --primary-soft: #24215c;
+  --primary-line: #45409a;
+  --accent: #ffc76e;
+  --accent-soft: #33260c;
+  --accent-fill: #f5a524;
+  --danger: #ff8c97;
+  --danger-soft: #3d1622;
+  --ok: #5fe3bb;
+  --ok-soft: #0f3a30;
+  --warn: #ffc76e;
+  --focus: #8fa6ff;
+  --glow: rgba(140, 124, 255, 0.4);
+  --aurora-a: rgba(108, 84, 255, 0.3);
+  --aurora-b: rgba(255, 77, 148, 0.14);
+  --aurora-c: rgba(255, 176, 46, 0.1);
+  --card-sheen: linear-gradient(180deg, rgba(190, 196, 255, 0.09), rgba(190, 196, 255, 0));
+  --shadow-1: 0 1px 2px rgba(0, 0, 0, 0.5), 0 2px 10px rgba(0, 0, 0, 0.25);
+  --shadow-2: 0 12px 32px rgba(0, 0, 0, 0.55);
+  --shadow-3: 0 28px 72px rgba(0, 0, 0, 0.7);
+  --shadow-hover: 0 14px 36px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(169, 159, 255, 0.25);
+  --shadow-glow: 0 8px 26px rgba(140, 124, 255, 0.45), 0 2px 6px rgba(140, 124, 255, 0.3);
+  --chart-1: #2dd4bf;
+  --chart-2: #5b9bff;
+  --chart-3: #fbbf24;
+  --chart-4: #a78bfa;
+  --chart-5: #a3e635;
+  --chart-6: #f472b6;
+  --chart-7: #22d3ee;
+  --chart-8: #fb8a5c;
+  --financial-debts: #ff6b74;
+  --tile-account: #24215c;
+  --tile-income: #152a52;
+  --tile-expense: #33260c;
+  --tile-milestone: #2b1c50;
+  --tile-debt: #3d1622;
   color-scheme: dark;
+}
+
+/* The night scope: any element with this class reads as part of the instrument, in either theme. */
+.lv-night,
+.lv-card[data-variant='hero'],
+.lv-kpis {
+  --surface: var(--night-glass);
+  --surface-2: var(--night-glass-2);
+  --surface-3: rgba(255, 255, 255, 0.2);
+  --line: var(--night-line);
+  --line-strong: rgba(190, 196, 255, 0.34);
+  --ink: var(--night-ink);
+  --ink-2: var(--night-ink-2);
+  --ink-3: var(--night-ink-3);
+  --primary: #b9b1ff;
+  --primary-hover: #d0caff;
+  --primary-2: #e0a3ff;
+  --on-primary: #0d0e2b;
+  --primary-soft: rgba(150, 138, 255, 0.24);
+  --primary-line: rgba(169, 159, 255, 0.45);
+  --ok: #5fe3bb;
+  --danger: #ff96a0;
+  --danger-soft: rgba(255, 110, 130, 0.18);
+  --accent: #ffc76e;
+  --accent-soft: rgba(255, 176, 46, 0.16);
+  --warn: #ffc76e;
+  --focus: #a9baff;
+  --shadow-1: none;
+  color: var(--ink);
 }
 
 *,
@@ -191,18 +273,23 @@ body {
   font-feature-settings: 'cv11', 'ss01';
   -webkit-font-smoothing: antialiased;
 }
+::selection {
+  background: color-mix(in srgb, var(--dawn-violet) 32%, transparent);
+}
 h1,
 h2,
 h3,
 h4 {
-  font-family: var(--font-display);
+  font-family: var(--font-ui);
   font-weight: 650;
   line-height: 1.25;
   margin: 0;
   letter-spacing: -0.015em;
 }
 h1 {
-  font-size: var(--text-xl);
+  font: 700 var(--text-xl) / 1.1 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.03em;
 }
 h2 {
   font-size: var(--text-base);
@@ -249,7 +336,7 @@ a {
   min-height: var(--control-h);
   padding: 0 14px;
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius-1);
+  border-radius: 999px;
   background: var(--surface);
   color: var(--ink);
   font: 600 var(--text-md) var(--font-ui);
@@ -258,25 +345,53 @@ a {
   transition:
     background var(--motion-fast) var(--ease),
     border-color var(--motion-fast) var(--ease),
-    box-shadow var(--motion-fast) var(--ease),
+    box-shadow var(--motion-base) var(--ease),
     transform var(--motion-fast) var(--ease);
   text-decoration: none;
   white-space: nowrap;
+  position: relative;
+  isolation: isolate;
 }
 .lv-btn:hover {
   background: var(--surface-2);
+  border-color: var(--primary-line);
 }
 .lv-btn:active {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.985);
 }
+/* The one loud control on a screen: a lit indigo-to-violet capsule with a sheen that crosses it on hover. */
 .lv-btn[data-variant='primary'] {
-  background: var(--primary);
+  background: linear-gradient(120deg, var(--primary) 0%, var(--primary-2) 100%);
   color: var(--on-primary);
-  border-color: var(--primary);
+  border-color: transparent;
+  box-shadow:
+    var(--shadow-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  overflow: hidden;
+}
+.lv-btn[data-variant='primary']::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(105deg, transparent 30%, rgba(255, 255, 255, 0.38) 50%, transparent 70%);
+  transform: translateX(-120%);
+  transition: transform var(--motion-slow) var(--ease-out);
 }
 .lv-btn[data-variant='primary']:hover {
-  background: var(--primary-hover);
-  border-color: var(--primary-hover);
+  background: linear-gradient(120deg, var(--primary-hover) 0%, var(--primary-2) 100%);
+  border-color: transparent;
+  transform: translateY(-1px);
+  box-shadow:
+    0 12px 30px var(--glow),
+    var(--shadow-glow),
+    inset 0 1px 0 rgba(255, 255, 255, 0.28);
+}
+.lv-btn[data-variant='primary']:hover::after {
+  transform: translateX(120%);
+}
+.lv-btn[data-variant='primary']:active {
+  transform: translateY(1px) scale(0.985);
 }
 .lv-btn[data-variant='ghost'] {
   border-color: transparent;
@@ -295,6 +410,12 @@ a {
 .lv-btn[data-variant='danger']:hover {
   background: var(--danger-soft);
 }
+/* A toggle that is on (a view mode, a filter) outside a segmented control. */
+.lv-btn[aria-pressed='true'] {
+  background: var(--primary-soft);
+  border-color: var(--primary-line);
+  color: var(--primary);
+}
 .lv-btn[data-size='sm'] {
   min-height: var(--control-h-sm);
   padding: 0 10px;
@@ -310,6 +431,13 @@ a {
 .lv-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+  transform: none;
+}
+.lv-btn[data-variant='primary']:disabled {
+  box-shadow: none;
+}
+.lv-btn[data-variant='primary']:disabled::after {
+  display: none;
 }
 @media (pointer: coarse) {
   .lv-btn,
@@ -324,16 +452,43 @@ a {
 
 /* ------------------------------------------------------------------ cards and layout */
 .lv-card {
-  background: var(--surface);
+  background:
+    var(--card-sheen) top / 100% 72px no-repeat,
+    var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
-  padding: var(--space-4);
+  padding: 18px 20px;
   box-shadow: var(--shadow-1);
   min-width: 0;
 }
+/* The headline panel of a screen plays the instrument: night glass, aurora, a horizon line of first light. */
 .lv-card[data-variant='hero'] {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
   border-radius: var(--radius-5);
   padding: var(--space-5);
+  border-color: rgba(169, 159, 255, 0.28);
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(108, 84, 255, 0.5), transparent 58%),
+    radial-gradient(90% 80% at 100% 100%, rgba(255, 77, 148, 0.3), transparent 60%),
+    radial-gradient(70% 60% at 85% 0%, rgba(255, 176, 46, 0.16), transparent 62%),
+    linear-gradient(160deg, var(--night-2), var(--night-1) 45%, var(--night-0));
+  box-shadow:
+    var(--shadow-2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+.lv-card[data-variant='hero']::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(190, 196, 255, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(190, 196, 255, 0.07) 1px, transparent 1px);
+  background-size: 32px 32px;
+  mask-image: radial-gradient(120% 100% at 0% 0%, #000 0%, transparent 78%);
 }
 .lv-card[data-variant='inset'] {
   background: var(--surface-2);
@@ -349,7 +504,8 @@ a {
   min-height: 30px;
 }
 .lv-card > header > h2 {
-  font-size: var(--text-base);
+  font-size: 1.0625rem;
+  letter-spacing: -0.02em;
 }
 .lv-stack {
   display: flex;
@@ -434,12 +590,13 @@ a {
 .lv-helptip {
   z-index: 95;
   max-width: min(320px, calc(100vw - 24px));
-  padding: 10px 12px;
-  background: var(--surface);
+  padding: 12px 14px;
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--radius-2);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-3);
   font-size: var(--text-sm);
   font-weight: 400;
   line-height: 1.5;
@@ -473,6 +630,7 @@ a {
   background: var(--surface);
   color: var(--ink);
   font: var(--text-md) var(--font-ui);
+  box-shadow: inset 0 1px 2px rgba(28, 24, 96, 0.04);
   transition:
     border-color var(--motion-fast) var(--ease),
     box-shadow var(--motion-fast) var(--ease);
@@ -485,13 +643,15 @@ a {
 .lv-select:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--primary) 20%, transparent),
+    0 6px 18px color-mix(in srgb, var(--primary) 14%, transparent);
 }
 /* A styled select: native element (keyboard, screen readers, phones) with our own chevron. */
 .lv-select {
   appearance: none;
   padding-right: 30px;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23626b79' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7da0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 8px center;
   text-overflow: ellipsis;
@@ -570,7 +730,8 @@ a {
   transition: transform var(--motion-fast) var(--ease);
 }
 .lv-switch input:checked {
-  background: var(--primary);
+  background: linear-gradient(120deg, var(--primary), var(--primary-2));
+  box-shadow: 0 2px 10px var(--glow);
 }
 .lv-switch input:checked::after {
   transform: translateX(14px);
@@ -589,7 +750,8 @@ a {
 .lv-range::-webkit-slider-runnable-track {
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(to right, var(--primary) 0 var(--fill), var(--surface-3) var(--fill) 100%);
+  background:
+    linear-gradient(to right, transparent 0 var(--fill), var(--surface-3) var(--fill) 100%), var(--grad-dawn);
 }
 .lv-range::-moz-range-track {
   height: 6px;
@@ -607,9 +769,11 @@ a {
   height: 18px;
   margin-top: -6px;
   border-radius: 50%;
-  background: var(--surface);
+  background: #fff;
   border: 2px solid var(--primary);
-  box-shadow: var(--shadow-1);
+  box-shadow:
+    0 0 0 4px color-mix(in srgb, var(--primary) 18%, transparent),
+    0 2px 8px var(--glow);
 }
 .lv-range::-moz-range-thumb {
   width: 14px;
@@ -624,7 +788,8 @@ a {
   font-size: var(--text-sm);
   background: var(--primary-soft);
   color: var(--primary);
-  padding: 1px 8px;
+  border: 1px solid var(--primary-line);
+  padding: 1px 10px;
   border-radius: 999px;
 }
 
@@ -646,7 +811,7 @@ a {
 .lv-badge[data-tone='ok'] {
   background: var(--primary-soft);
   color: var(--primary);
-  border-color: transparent;
+  border-color: var(--primary-line);
 }
 .lv-badge[data-tone='warn'] {
   background: var(--accent-soft);
@@ -686,9 +851,10 @@ a {
   color: var(--ink-3);
 }
 .lv-stat > .lv-stat-value {
-  font: 650 var(--text-xl) / 1.15 var(--font-display);
-  letter-spacing: -0.02em;
-  font-variant-numeric: tabular-nums lining-nums;
+  font: 700 var(--text-xl) / 1.1 var(--font-display);
+  font-variation-settings: 'opsz' 48;
+  letter-spacing: -0.035em;
+  font-variant-numeric: lining-nums;
 }
 .lv-stat > .lv-stat-note {
   font-size: var(--text-xs);
@@ -697,49 +863,141 @@ a {
 }
 .lv-stat[data-size='hero'] > .lv-stat-value {
   font-size: var(--text-hero);
-  letter-spacing: -0.03em;
-  line-height: 1.05;
+  font-weight: 750;
+  font-variation-settings: 'opsz' 96;
+  letter-spacing: -0.045em;
+  line-height: 1;
 }
 .lv-stat[data-size='hero'] > .lv-stat-label {
   font-size: var(--text-md);
 }
-/* A strip of key figures: compact tiles divided by hairlines. */
+/* The headline band of an analysis screen: night glass lit by the dawn spectrum, figures set large. The
+   one orchestrated moment on a page is this band arriving: the light sweeps in, then each figure settles. */
 .lv-kpis {
+  position: relative;
+  isolation: isolate;
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-3);
-  box-shadow: var(--shadow-1);
+  background:
+    radial-gradient(60% 140% at 0% 0%, rgba(108, 84, 255, 0.55), transparent 60%),
+    radial-gradient(45% 130% at 62% 120%, rgba(255, 77, 148, 0.3), transparent 62%),
+    radial-gradient(40% 120% at 100% 0%, rgba(255, 176, 46, 0.2), transparent 64%),
+    linear-gradient(120deg, var(--night-2), var(--night-1) 50%, var(--night-0));
+  border: 1px solid rgba(169, 159, 255, 0.28);
+  border-radius: var(--radius-4);
+  box-shadow:
+    0 18px 44px rgba(22, 16, 96, 0.28),
+    inset 0 1px 0 rgba(255, 255, 255, 0.14);
   overflow: hidden;
 }
+.lv-kpis::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(190, 196, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(190, 196, 255, 0.06) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(90deg, #000, transparent 70%);
+}
+/* First light along the top edge. */
+.lv-kpis::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 2px;
+  background: var(--grad-dawn);
+  box-shadow: 0 0 18px 1px rgba(161, 77, 255, 0.7);
+  transform-origin: left;
+  animation: lv-sweep 900ms var(--ease-out) both;
+}
 .lv-kpis > * {
-  padding: 12px 16px;
-  border-left: 1px solid var(--line);
+  padding: 14px 20px 13px;
+  border-left: 1px solid var(--night-line);
   margin-left: -1px;
+  animation: lv-settle 620ms var(--ease-out) both;
+}
+.lv-kpis > :nth-child(2) {
+  animation-delay: 70ms;
+}
+.lv-kpis > :nth-child(3) {
+  animation-delay: 140ms;
+}
+.lv-kpis > :nth-child(4) {
+  animation-delay: 210ms;
+}
+.lv-kpis > :nth-child(n + 5) {
+  animation-delay: 280ms;
+}
+.lv-kpis .lv-stat {
+  gap: 4px;
+}
+.lv-kpis .lv-stat > .lv-stat-value,
+.lv-card[data-variant='hero'] .lv-stat:not([data-size='hero']) > .lv-stat-value {
+  font-size: 2rem;
+  text-wrap: balance;
+  text-shadow: 0 0 28px rgba(169, 159, 255, 0.45);
+}
+.lv-card[data-variant='hero'] .lv-stat > .lv-stat-label {
+  color: var(--night-ink-2);
+}
+.lv-card[data-variant='hero'] > .lv-grid {
+  gap: 18px 28px;
+}
+.lv-kpis .lv-stat > .lv-stat-label {
+  display: flex;
+  align-items: center;
+  color: var(--night-ink-2);
 }
 .lv-kpi-icon {
   display: inline-grid;
   place-items: center;
-  width: 22px;
-  height: 22px;
-  border-radius: 6px;
-  margin-right: 6px;
-  vertical-align: -6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 9px;
+  margin-right: 8px;
+  flex: none;
   background: var(--primary-soft);
   color: var(--primary);
+}
+.lv-kpis .lv-kpi-icon {
+  color: #fff;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0.05));
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(108, 84, 255, 0.4);
+}
+.lv-kpis > :nth-child(4n + 2) .lv-kpi-icon {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(161, 77, 255, 0.5);
+}
+.lv-kpis > :nth-child(4n + 3) .lv-kpi-icon {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(255, 77, 148, 0.45);
+}
+.lv-kpis > :nth-child(4n + 4) .lv-kpi-icon {
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
+    0 4px 14px rgba(255, 176, 46, 0.45);
 }
 
 /* ------------------------------------------------------------------ icon tiles */
 .lv-tile {
   display: inline-grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   flex: none;
-  border-radius: var(--radius-2);
+  border-radius: 11px;
   background: var(--tile-account);
   color: var(--primary);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 16%, transparent);
 }
 .lv-tile[data-kind='income'] {
   background: var(--tile-income);
@@ -782,15 +1040,18 @@ a {
 }
 .lv-tab[aria-selected='true'] {
   color: var(--ink);
-  border-bottom-color: var(--primary);
+  border-image: var(--grad-dawn) 1;
+  border-bottom-width: 2px;
 }
 .lv-segmented {
   display: inline-flex;
-  padding: 3px;
+  padding: 4px;
   gap: 2px;
-  border-radius: var(--radius-2);
-  background: var(--surface-2);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  backdrop-filter: blur(12px) saturate(1.4);
   border: 1px solid var(--line);
+  box-shadow: var(--shadow-1);
   max-width: 100%;
   overflow-x: auto;
 }
@@ -800,10 +1061,14 @@ a {
   background: transparent;
   color: var(--ink-2);
   font: 600 var(--text-sm) var(--font-ui);
-  padding: 0 12px;
-  min-height: 28px;
-  border-radius: 6px;
+  padding: 0 14px;
+  min-height: 32px;
+  border-radius: 999px;
   cursor: pointer;
+  transition:
+    background var(--motion-fast) var(--ease),
+    color var(--motion-fast) var(--ease),
+    box-shadow var(--motion-base) var(--ease);
   white-space: nowrap;
   text-decoration: none;
   display: inline-flex;
@@ -816,9 +1081,14 @@ a {
 .lv-segmented > [aria-pressed='true'],
 .lv-segmented > [aria-current='page'],
 .lv-segmented > [aria-selected='true'] {
-  background: var(--surface);
-  color: var(--ink);
-  box-shadow: var(--shadow-1);
+  background: linear-gradient(120deg, var(--primary), var(--primary-2));
+  color: var(--on-primary);
+  box-shadow: 0 6px 16px var(--glow);
+}
+.lv-segmented > .lv-btn:not([aria-pressed='true']) {
+  box-shadow: none;
+  border: 0;
+  background: transparent;
 }
 
 /* ------------------------------------------------------------------ tables */
@@ -849,9 +1119,16 @@ a {
   top: 0;
   background: var(--surface);
   z-index: 1;
+  border-bottom-color: var(--line-strong);
+}
+.lv-table tbody tr {
+  transition: background var(--motion-fast) var(--ease);
+}
+.lv-table tbody tr:nth-child(even) {
+  background: color-mix(in srgb, var(--surface-2) 55%, transparent);
 }
 .lv-table tbody tr:hover {
-  background: var(--surface-2);
+  background: var(--primary-soft);
 }
 
 /* ------------------------------------------------------------------ lists */
@@ -897,7 +1174,8 @@ a {
 .lv-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(10, 13, 18, 0.5);
+  background: rgba(8, 8, 30, 0.58);
+  backdrop-filter: blur(6px) saturate(1.2);
   z-index: 85;
   display: flex;
   align-items: center;
@@ -918,12 +1196,24 @@ a {
   animation: lv-rise var(--motion-base) var(--ease);
 }
 .lv-dialog > header {
+  position: relative;
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-3);
-  padding: 12px 20px;
+  padding: 14px 20px;
   border-bottom: 1px solid var(--line);
+}
+.lv-dialog > header::after {
+  content: '';
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--grad-dawn);
+  opacity: 0.85;
 }
 .lv-dialog > .lv-dialog-body {
   padding: 20px;
@@ -949,7 +1239,8 @@ a {
   }
 }
 .lv-popover {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
   color: var(--ink);
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
@@ -964,12 +1255,14 @@ a {
   max-width: min(320px, calc(100vw - 24px));
   max-height: 60vh;
   overflow-y: auto;
-  padding: 4px;
-  background: var(--surface);
+  padding: 6px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(18px) saturate(1.5);
   border: 1px solid var(--line);
   border-radius: var(--radius-3);
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-3);
   z-index: 88;
+  animation: lv-rise var(--motion-base) var(--ease-out);
 }
 .lv-menu [role='menuitem'],
 .lv-menu [role='menuitemradio'] {
@@ -977,10 +1270,10 @@ a {
   align-items: center;
   gap: 8px;
   width: 100%;
-  min-height: 34px;
+  min-height: 36px;
   padding: 0 10px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 10px;
   background: transparent;
   color: var(--ink);
   font: 500 var(--text-md) var(--font-ui);
@@ -991,7 +1284,8 @@ a {
 .lv-menu [role='menuitemradio']:hover,
 .lv-menu [role='menuitem']:focus-visible,
 .lv-menu [role='menuitemradio']:focus-visible {
-  background: var(--surface-2);
+  background: var(--primary-soft);
+  color: var(--primary);
   outline: none;
 }
 .lv-menu [aria-checked='true'] {
@@ -1006,7 +1300,7 @@ a {
 .lv-notice {
   display: flex;
   gap: 10px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   border-radius: var(--radius-2);
   background: var(--accent-soft);
   color: var(--ink);
@@ -1041,7 +1335,8 @@ a {
 }
 .lv-progress > div {
   height: 100%;
-  background: var(--primary);
+  background: var(--grad-dawn);
+  box-shadow: 0 0 12px var(--glow);
   border-radius: 3px;
   transition: width var(--motion-base) var(--ease);
 }
@@ -1075,6 +1370,19 @@ a {
   from {
     opacity: 0;
     transform: translateY(8px);
+  }
+}
+@keyframes lv-sweep {
+  from {
+    transform: scaleX(0);
+    opacity: 0;
+  }
+}
+@keyframes lv-settle {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(6px);
   }
 }
 @keyframes lv-shimmer {

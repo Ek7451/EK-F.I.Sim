@@ -109,7 +109,7 @@ export function SnapshotPage(): ReactNode {
         title="What you have"
         intro="Balances are typed in by hand and stay on this device. Nothing here connects to a bank."
       />
-      <Card data-tour="snapshot-totals">
+      <Card variant="hero" data-tour="snapshot-totals">
         <div className="lv-grid">
           <Stat label="Accounts" value={formatMoney(invest)} />
           <Stat label="Property and other" value={formatMoney(owned)} />

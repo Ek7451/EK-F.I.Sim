@@ -1,5 +1,5 @@
 import { applyScenario } from '@fisim/engine';
-import { Button, Card, Notice, SelectField, Stat, formatMoney, formatPct } from '@fisim/ui';
+import { Button, Card, Notice, SelectField, Stat, formatMoney, formatShare } from '@fisim/ui';
 import { useEffect, useState, type ReactNode } from 'react';
 import { useMonteCarlo, useProjection } from '../../engine/useResults';
 import { exportCsv, exportPdf } from '../../lib/files';
@@ -152,7 +152,7 @@ export function ReportsPage(): ReactNode {
             {withMc && mc.summary ? (
               <Stat
                 label="Chance of success"
-                value={formatPct(mc.summary.successRate)}
+                value={formatShare(mc.summary.successRate)}
                 note={`${mc.summary.runs.toLocaleString()} runs`}
               />
             ) : null}

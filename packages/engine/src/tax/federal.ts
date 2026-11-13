@@ -166,7 +166,6 @@ export function taxableSocialSecurity(
   return Math.min(tier2, 0.85 * benefits);
 }
 
-/** QBI thresholds are not in the dataset contract; 2026 values (Rev. Proc. 2025-32 / OBBBA phase-in ranges). */
 /** OBBBA provisions effective 2026 that the dataset contract has no fields for (none are indexed). */
 const OBBBA = {
   charityFloorPct: 0.005,
@@ -175,12 +174,22 @@ const OBBBA = {
   qbiMinimum: 400,
   qbiMinimumIncome: 1000,
 };
+/**
+ * QBI thresholds are not in the dataset contract. Section 199A(e)(2) indexes them from the same base as the top of
+ * the 24% bracket, rounded down to $50, with the joint amount twice the single one; deriving them from each year's
+ * own bracket table reproduces the published figures (2026: $201,750 / $403,500; 2027: $208,300 / $416,600) and
+ * keeps later years in step. The constants are the 2026 values, used only if a table has no 24% bracket.
+ */
 const QBI = {
   rate: 0.2,
   threshold: { single: 201750, mfj: 403500 },
   phaseIn: { single: 75000, mfj: 150000 },
-  baseYear: 2026,
 };
+export function qbiThreshold(p: FederalTaxParams, joint: boolean): number {
+  const top24 = p.ordinaryBrackets.single.find((b) => Math.abs(b.rate - 0.24) < 1e-9)?.upTo;
+  const single = top24 ? Math.floor(top24 / 50) * 50 : QBI.threshold.single;
+  return joint ? single * 2 : single;
+}
 
 export function federalTax(
   p: FederalTaxParams,
@@ -292,7 +301,9 @@ export function federalTax(
   let deduction = itemizing ? itemizedTotal : standardPlus;
   let senior = 0;
   if (p.seniorDeduction.perPerson > 0 && n65 > 0 && s !== 'mfs') {
-    const start = s === 'mfj' ? p.seniorDeduction.phaseoutStart.mfj : p.seniorDeduction.phaseoutStart.single;
+    // The higher phase-out start is for a joint return only; a qualifying surviving spouse uses the single one.
+    const start =
+      x.status === 'mfj' ? p.seniorDeduction.phaseoutStart.mfj : p.seniorDeduction.phaseoutStart.single;
     senior =
       Math.max(0, p.seniorDeduction.perPerson - Math.max(0, agi - start) * p.seniorDeduction.phaseoutRate) *
       n65;
@@ -305,7 +316,7 @@ export function federalTax(
   if (seIncome > 0) {
     const qbiBase = Math.max(0, seIncome - halfSeTax);
     const tiBefore = Math.max(0, agi - deduction);
-    const thr = (s === 'mfj' ? QBI.threshold.mfj : QBI.threshold.single) * k;
+    const thr = qbiThreshold(p, s === 'mfj') * k;
     const range = s === 'mfj' ? QBI.phaseIn.mfj : QBI.phaseIn.single;
     let allowed = QBI.rate * qbiBase;
     if (tiBefore > thr) allowed *= Math.max(0, 1 - (tiBefore - thr) / range);

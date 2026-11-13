@@ -50,6 +50,10 @@ export function irmaaTier(
   const table =
     status === 'mfj' || status === 'qss' ? m.irmaa.mfj : status === 'mfs' ? m.irmaa.mfs : m.irmaa.single;
   let tier = 0;
-  for (let i = 0; i < table.length; i++) if (magiTwoYearsAgo > table[i].magiOver * k) tier = i;
+  // Each tier starts above its threshold, except the top one, which the law starts at "greater than or equal to".
+  for (let i = 0; i < table.length; i++) {
+    const over = table[i].magiOver * k;
+    if (i > 0 && i === table.length - 1 ? magiTwoYearsAgo >= over : magiTwoYearsAgo > over) tier = i;
+  }
   return { tier, row: table[tier] };
 }

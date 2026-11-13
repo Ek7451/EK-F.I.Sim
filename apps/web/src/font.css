@@ -1,8 +1,17 @@
-/* Inter by the Inter Project Authors, SIL Open Font License 1.1 (see /fonts/OFL.txt). */
+/* Inter by the Inter Project Authors and Bricolage Grotesque by Mathieu Triay, both under the SIL Open Font
+   License 1.1 (see /fonts/OFL.txt). Inter carries the interface; Bricolage Grotesque sets headlines and figures. */
 @font-face {
   font-family: Inter;
   font-style: normal;
   font-weight: 100 900;
   font-display: swap;
   src: url('@fontsource-variable/inter/files/inter-latin-wght-normal.woff2') format('woff2-variations');
+}
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 200 800;
+  font-display: swap;
+  src: url('@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-opsz-normal.woff2')
+    format('woff2-variations');
 }

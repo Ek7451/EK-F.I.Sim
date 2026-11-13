@@ -49,6 +49,50 @@ The v1.0 gate is **not met**. The open items are listed under "Release gate" bel
 | Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                       |
 | CI green                                                  | CI runs on pull requests. Playwright and Lighthouse are run locally, not in CI.                                     |
 
+## November 2026 accuracy review
+
+Three independent read-only audits (tax, Social Security and healthcare rules and data; the projection engine;
+the simulations and every figure the screens derive) found the defects below. Each is fixed and pinned by
+`packages/engine/test/audit-2026-11.test.ts` or `apps/web/src/lib/audit-2026-11.test.ts`.
+
+| Area       | Defect                                                                                                                                                                       | Effect before the fix                                                                       |
+| ---------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| State tax  | CO, IA, ID, MT and ND start from federal taxable income, but the federal deduction was added back                                                                            | Tax on federal AGI: about $700 a year too much at $100k single                              |
+| Federal    | QBI thresholds were not re-based on each year's table                                                                                                                        | One inflation step low from 2027                                                            |
+| Federal    | Senior deduction phased out from $150,000 for a qualifying surviving spouse                                                                                                  | Up to $2,700 too much deduction                                                             |
+| Medicare   | Top IRMAA tier started above, not at, its threshold                                                                                                                          | Wrong tier at exactly $500,000 / $750,000                                                   |
+| Projection | A year's effective tax rate left required distributions out of its base                                                                                                      | A retiree on RMDs could be shown 77% instead of 16%                                         |
+| Projection | The independence milestone tested living costs only                                                                                                                          | Independence dated years early for anyone with a mortgage or healthcare costs               |
+| Projection | "Net worth today" mixed start-of-year investments with year-end property and debt                                                                                            | Off by a year of appreciation and principal                                                 |
+| Projection | Rule of 55 granted to people who left work before 55                                                                                                                         | 10% penalty missing on 401(k) withdrawals from 55 to 59½                                    |
+| Projection | HSA family limit granted to each spouse when the non-primary spouse's account came first                                                                                     | Up to twice the legal family contribution                                                   |
+| Projection | A drained account could leave a residue that overflowed the cost-basis ratio into NaN                                                                                        | The year read as funded with no withdrawals; the solver now reports such a year as unfunded |
+| Projection | An income floor (MAGI target) taxed a conversion with nowhere to convert into                                                                                                | Phantom conversion income when no Roth IRA existed                                          |
+| Projection | 529-to-Roth rollovers were counted as cash in                                                                                                                                | Bookkeeping only; balances were right                                                       |
+| Simulation | Funded runs that missed an ending goal were listed under failure year -1                                                                                                     | Histogram overcounted failures                                                              |
+| Screens    | The cash-flow diagram did not draw (links named a node the chart could not find), and crashed in compact mode in credit years                                                | Diagram blank                                                                               |
+| Screens    | 99.6% success printed as "100%"; "-$0"; "$-1.0M" and "$1000k" on axes; raw cents in change lists                                                                             | Display only                                                                                |
+| Screens    | The average tax rate was nominal-weighted beside a real lifetime tax; both now use today's dollars and one base                                                              | About 1.5 points on the early-retiree sample                                                |
+| Screens    | Progress anchored the reference path at 1 January                                                                                                                            | A plan frozen in November read 9% behind on day one                                         |
+| Screens    | History said incomplete cohorts "repeat"; they stop when the data stops. Outcomes said replayed history ignores your return assumptions; by default it is re-centred on them | Wrong explanation                                                                           |
+
+Found and not changed (stated here so the figures are read correctly):
+
+- **The first plan year is a whole year.** Opening balances are treated as 1 January of the start year, so a plan
+  created late in a year still adds a full year of saving and growth to that year. Later balances run up to a year
+  ahead. Fixing it needs a part-year first step in the engine.
+- The independence milestone compares the start of each year with the previous year's spending, so it cannot fire
+  in the plan's first year.
+- State taxation of Social Security is a yes/no flag per state; age and income exemptions (Colorado at 65, for
+  example) are not modelled, which overstates state tax for retirees there.
+- `asset.sale.proceedsToAccountId` is in the schema but not read; sale proceeds follow the surplus order.
+- Percent-of-portfolio and floor-and-ceiling spending rules ignore other income when sizing spending.
+- Wage-indexed amounts (the Social Security wage base, earnings-test limits) grow with prices, not wages.
+- Under "long-run historical averages" the Compare what-if for returns changes only the classes without bundled
+  history (international stocks, REITs).
+- A year's tax is net of the premium tax credit, so its effective rate can be negative in subsidy years.
+- 2027 Medicare premiums and retirement-plan limits are projections until CMS and the IRS publish them.
+
 ## Known limitations of the model
 
 Tax
@@ -61,7 +105,7 @@ Tax
 - Contribution limits for 2027 and Medicare premiums for 2027 are projected, not enacted.
 - Rebalancing happens at the start of the year. The advance premium tax credit is treated as exact, so
   repaying excess credit at tax time is not modelled.
-- The IRMAA life-changing-event appeal is stored in the plan but not applied.
+- The IRMAA life-changing-event appeal is applied in the year it names (an earlier note here said it was not).
 - Mortgage interest is deductible unless the debt's "interest is deductible" flag is set to false (the flag
   was previously ignored for mortgages).
 

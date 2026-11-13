@@ -66,8 +66,11 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
     spend += toReal(r.expenses.total, r, 'flow');
     const fiSpend = fiSpending(r);
     if (fiYear === null && fiSpend > 0 && r.investable >= 25 * fiSpend) fiYear = r.year;
-    taxSum += r.taxes.total;
-    grossSum += r.income.total + r.withdrawals.pretax + r.rothConversion;
+    // Both sums in today's dollars, so the average sits on the same footing as the lifetime tax beside it.
+    taxSum += r.taxes.total / r.cpi;
+    // The same base as each year's own rate: income, pre-tax withdrawals, conversions and realized gains.
+    grossSum +=
+      (r.income.total + r.withdrawals.pretax + r.rothConversion + Math.max(0, r.realizedGains)) / r.cpi;
   }
   let retirementYear: number | null = null;
   for (const m of plan.milestones) {
@@ -95,7 +98,8 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
       peakNetWorthReal: peak,
       lifetimeTaxReal: res.lifetimeTax,
       lifetimeSpendingReal: spend,
-      currentNetWorth: first ? first.check.opening + first.assets - first.debts : 0,
+      // All three at the start of the first year. (The record's own assets and debts are year-end values.)
+      currentNetWorth: first ? first.check.opening + first.check.openingAssets - first.check.openingDebts : 0,
       savingsRate: first && first.income.total > 0 ? Math.max(0, saved0) / first.income.total : 0,
       averageEffectiveTaxRate: grossSum > 0 ? taxSum / grossSum : 0,
       legacyGoalReal: plan.strategies.estate.legacyGoal / 100,

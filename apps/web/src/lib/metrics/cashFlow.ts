@@ -19,8 +19,12 @@ export function cashFlowView(
     const tax = /tax|credit|Penalt/i.test(line.label);
     const withdrawals = /Withdrawal/.test(line.label);
     const savings = /saving/i.test(line.label);
+    // A credit that arrives as cash and a tax that leaves as cash are different groups: the flow diagram
+    // identifies a node by its name, so one name on both sides breaks it.
     const group = tax
-      ? 'Taxes and credits'
+      ? line.amount > 0
+        ? 'Tax credits and refunds'
+        : 'Taxes'
       : withdrawals
         ? 'Account withdrawals'
         : savings
@@ -54,7 +58,8 @@ export function cashFlowView(
       route: '/plan/strategy',
     });
   const residual = sources.reduce((sum, x) => sum + x.amount, 0) - uses.reduce((sum, x) => sum + x.amount, 0);
-  if (Math.abs(residual) > 0.005)
+  // The solver balances a year to within $1, so a smaller difference is rounding, not a flow.
+  if (Math.abs(residual) > 1)
     (residual > 0 ? uses : sources).push({
       id: 'residual',
       label: residual > 0 ? 'Remaining cash / balance adjustments' : 'Unfunded gap / balance adjustments',

@@ -61,7 +61,7 @@ export function EstatePage(): ReactNode {
           in today's dollars. The estate estimates below refer to the final plan year.
         </p>
       </Card>
-      <Card data-tour="estate-stats">
+      <Card variant="hero" data-tour="estate-stats">
         <div className="lv-grid">
           <Stat
             label="Estate"
