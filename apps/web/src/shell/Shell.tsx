@@ -6,6 +6,7 @@ import { tourForRoute } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
 import { DISCLAIMER, NAV, PRIMARY_NAV } from './nav';
 import { useDraft } from '../state/draft';
+import { publicCloud, signOutAccount, useCloudAccount } from '../lib/cloud-account';
 
 const THEMES: Theme[] = ['system', 'light', 'dark'];
 
@@ -26,6 +27,8 @@ export function Shell({
   const draft = useDraft((s) => s.transaction);
   const { setActive, undo, redo, setSettings, dismissNotice } = useStore.getState();
   const [menu, setMenu] = useState(false);
+  const account = useCloudAccount();
+  const [signingOut, setSigningOut] = useState(false);
   const loc = useLocation();
   const nav = useNavigate();
   const tour = useTour();
@@ -186,37 +189,118 @@ export function Shell({
               )}
             </span>
           )}
-          <Button
-            variant="ghost"
-            icon="undo"
-            label="Undo"
-            onClick={undo}
-            disabled={!history?.undo.length || !!sandbox}
-            data-tour="undo"
-          />
-          <Button
-            variant="ghost"
-            icon="redo"
-            label="Redo"
-            onClick={redo}
-            disabled={!history?.redo.length || !!sandbox}
-            data-tour="redo"
-          />
-          <Button
-            variant="ghost"
-            icon={settings.theme === 'dark' ? 'moon' : 'sun'}
-            label={`Theme: ${settings.theme}. Switch to ${nextTheme}`}
-            onClick={() => setSettings({ theme: nextTheme })}
-            data-tour="theme-toggle"
-          />
-          {screenTour ? (
+          <div className={`header-tools${publicCloud ? ' hide-phone' : ''}`}>
             <Button
               variant="ghost"
-              icon="help"
-              label={`Take the tour: ${screenTour.title}`}
-              onClick={() => tour.start(screenTour.id)}
-              data-tour="screen-tour"
+              icon="undo"
+              label="Undo"
+              onClick={undo}
+              disabled={!history?.undo.length || !!sandbox}
+              data-tour="undo"
             />
+            <Button
+              variant="ghost"
+              icon="redo"
+              label="Redo"
+              onClick={redo}
+              disabled={!history?.redo.length || !!sandbox}
+              data-tour="redo"
+            />
+            <Button
+              variant="ghost"
+              icon={settings.theme === 'dark' ? 'moon' : 'sun'}
+              label={`Theme: ${settings.theme}. Switch to ${nextTheme}`}
+              onClick={() => setSettings({ theme: nextTheme })}
+              data-tour="theme-toggle"
+            />
+            {screenTour ? (
+              <Button
+                variant="ghost"
+                icon="help"
+                label={`Take the tour: ${screenTour.title}`}
+                onClick={() => tour.start(screenTour.id)}
+                data-tour="screen-tour"
+              />
+            ) : null}
+          </div>
+          {publicCloud ? (
+            <>
+              <div className="only-phone">
+                <Menu
+                  label="Toolbar actions"
+                  placement="bottom-end"
+                  items={[
+                    ...(history?.undo.length && !sandbox
+                      ? [{ id: 'undo', label: 'Undo', icon: 'undo', onSelect: undo }]
+                      : []),
+                    ...(history?.redo.length && !sandbox
+                      ? [{ id: 'redo', label: 'Redo', icon: 'redo', onSelect: redo }]
+                      : []),
+                    {
+                      id: 'theme',
+                      label: `Theme: ${settings.theme}. Switch to ${nextTheme}`,
+                      icon: 'sun',
+                      onSelect: () => setSettings({ theme: nextTheme }),
+                    },
+                    ...(screenTour
+                      ? [
+                          {
+                            id: 'tour',
+                            label: `Take the tour: ${screenTour.title}`,
+                            icon: 'help',
+                            onSelect: () => tour.start(screenTour.id),
+                          },
+                        ]
+                      : []),
+                  ]}
+                  trigger={({ open: _open, ...props }) => (
+                    <button
+                      {...props}
+                      type="button"
+                      className="lv-btn"
+                      data-variant="ghost"
+                      data-icon=""
+                      aria-label="Toolbar actions"
+                      title="Toolbar actions"
+                    >
+                      <Icon name="more" size={18} />
+                    </button>
+                  )}
+                />
+              </div>
+              <Button
+                className="lv-btn account-toggle"
+                size="sm"
+                disabled={signingOut}
+                title={
+                  account.user
+                    ? `Signed in as ${account.user.username}`
+                    : 'Sign in to save plans in the cloud'
+                }
+                onClick={() => {
+                  if (!account.user) {
+                    nav('/settings#cloud-account');
+                    return;
+                  }
+                  setSigningOut(true);
+                  void signOutAccount()
+                    .then(() =>
+                      useStore.getState().notify('Signed out. Your local plans stay on this device.'),
+                    )
+                    .catch((e: unknown) =>
+                      useStore
+                        .getState()
+                        .notify(
+                          e instanceof Error ? e.message : 'Could not sign out. Please try again.',
+                          'danger',
+                        ),
+                    )
+                    .finally(() => setSigningOut(false));
+                }}
+              >
+                {signingOut ? 'Signing out…' : account.user ? 'Sign out' : 'Sign in'}
+              </Button>
+            </>
           ) : null}
         </header>
         <main className="content" id="main" tabIndex={-1}>
