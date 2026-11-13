@@ -8,6 +8,7 @@ export default tseslint.config(
       '**/dist/**',
       '**/node_modules/**',
       'research/**',
+      'output/**',
       '**/.wrangler/**',
       '**/dev-dist/**',
       '**/*.config.js',
@@ -20,6 +21,7 @@ export default tseslint.config(
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  { files: ['workers/sync/scripts/*.mjs'], languageOptions: { globals: { process: 'readonly' } } },
   {
     plugins: { 'react-hooks': reactHooks },
     rules: {

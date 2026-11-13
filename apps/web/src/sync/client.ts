@@ -126,7 +126,12 @@ export function createSyncClient(options: SyncClientOptions): SyncClient {
   async function read(response: Response): Promise<{ version: number; data: Uint8Array } | null> {
     if (response.status === 404 || response.status === 410) return null;
     if (!response.ok) return fail(response);
-    const version = Number((response.headers.get('ETag') ?? '').replace(/"/g, ''));
+    // Cloudflare may weaken ETags when compressing responses (W/"1"). The version is an application
+    // counter, independent of the transfer encoding; prefer its explicit header and accept weak ETags.
+    const raw =
+      response.headers.get('X-Plan-Version') ??
+      (response.headers.get('ETag') ?? '').replace(/^W\//, '').replace(/^"|"$/g, '');
+    const version = /^\d+$/.test(raw) ? Number(raw) : NaN;
     if (!Number.isInteger(version) || version < 1)
       throw new SyncError(response.status, 'bad_response', 'Missing version');
     return { version, data: new Uint8Array(await response.arrayBuffer()) };

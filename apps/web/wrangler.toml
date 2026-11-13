@@ -1,0 +1,13 @@
+name = "longview-planner"
+pages_build_output_dir = "dist"
+compatibility_date = "2026-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+[vars]
+APP_ORIGIN = "https://longview-planner.pages.dev"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "longview-planner"
+database_id = "cbb94af7-2a67-469a-a471-1b6e63834a39"
+migrations_dir = "../../workers/sync/migrations"

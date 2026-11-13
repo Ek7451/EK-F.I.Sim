@@ -408,7 +408,7 @@ export function StartPage(): ReactNode {
   return (
     <>
       <PageHead
-        title={hasPlans ? 'New plan' : 'Welcome to Longview'}
+        title={hasPlans ? 'New plan' : 'Welcome to Longview Planner'}
         intro="Five short steps to a first plan. Rough numbers are fine: you can refine everything afterwards."
       />
       <Card data-tour="wizard">

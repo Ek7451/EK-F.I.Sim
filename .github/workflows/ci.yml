@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  PAGES_PROJECT: ek-fi-sim
+  PAGES_PROJECT: longview-planner
 
 jobs:
   lint:
@@ -234,7 +234,7 @@ jobs:
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
           workingDirectory: workers/sync
           command: >-
-            pages deploy ../../apps/web/dist
+            pages deploy dist --cwd ../../apps/web
             --project-name=${{ env.PAGES_PROJECT }}
             --branch=pr-${{ github.event.pull_request.number }}
             --commit-hash=${{ github.event.pull_request.head.sha }}

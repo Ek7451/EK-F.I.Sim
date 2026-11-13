@@ -1,4 +1,4 @@
-# Longview design system
+# Longview Planner design system
 
 Updated November 11, 2026. [The premium UX plan](../../plan/PREMIUM_UX_UPGRADE.md) is the implementation specification. It supersedes the earlier differentiation policy.
 

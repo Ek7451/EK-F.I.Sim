@@ -1,4 +1,4 @@
-# Longview
+# Longview Planner
 
 A personal finance scenario-modeling app: enter what you own, earn and spend, lay out the life events you
 expect, and see where that leads, year by year, with taxes and healthcare costs estimated from versioned
@@ -6,7 +6,7 @@ public data. It runs in the browser as an installable PWA, keeps your data on yo
 between your devices with end-to-end encryption.
 
 The repository's working name is **EK-F.I.Sim** (packages are scoped `@fisim/*`). The app is called
-**Longview**.
+**Longview Planner** (Longview for short).
 
 Status: in development. The full specification is the [build plan](plan/BUILD_PLAN.md); progress by feature
 is in the [parity matrix](docs/parity-matrix.md).
@@ -98,13 +98,13 @@ research/            Local-only design reference material. Git-ignored; never co
   tours, axe) and `pnpm build && pnpm lighthouse` (budgets in `lighthouserc.json`). Run both before a
   release.
 - **Deploy** (`.github/workflows/deploy.yml`) runs the same checks on every push to `main`, then applies D1
-  migrations, deploys the sync Worker and publishes the web app to Cloudflare Pages.
+  migrations and publishes the web app plus its account API to Cloudflare Pages when deployment credentials are configured.
 - **Data ingest** (`.github/workflows/ingest.yml`) refreshes market history each January and on demand, and
   opens a pull request with the data diff.
 
 ## Documentation
 
-Hosted app: [Longview](https://ek-fi-sim.pages.dev) (Cloudflare sign-in required). See the [first deployment record](docs/deployments/2026-11-12.md) for storage, access and publishing details.
+Hosted app: [Longview Planner](https://longview-planner.pages.dev) (public; no sign-in required). Anyone can optionally create a username/password account in Settings for private encrypted cloud saving. See the [public cloud runbook](docs/runbooks/public-cloud.md) and [deployment record](docs/deployments/2026-11-12.md).
 
 | Document                                                                       | What it covers                                                                                 |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
@@ -121,7 +121,7 @@ Hosted app: [Longview](https://ek-fi-sim.pages.dev) (Cloudflare sign-in required
 ## Privacy and security in brief
 
 - Local-first: plans live in IndexedDB on your device. The app works offline.
-- Optional sync is end-to-end encrypted. The server stores ciphertext only and never sees keys.
+- Optional sync is end-to-end encrypted. The server stores encrypted plans and wrapped keys, plus account credentials and synchronization metadata. Vault passphrases and unwrapped encryption keys stay on the device.
 - A strict Content Security Policy, no third-party origins, a pinned lockfile and weekly dependency
   updates.
 - Make an encrypted export from Settings as your own backup. The app will remind you.
