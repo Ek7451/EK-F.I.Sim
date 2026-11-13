@@ -27,6 +27,7 @@ export function Shell({
   const draft = useDraft((s) => s.transaction);
   const { setActive, undo, redo, setSettings, dismissNotice } = useStore.getState();
   const [menu, setMenu] = useState(false);
+  const [reloading, setReloading] = useState(false);
   const account = useCloudAccount();
   const [signingOut, setSigningOut] = useState(false);
   const loc = useLocation();
@@ -308,8 +309,16 @@ export function Shell({
             <Notice tone="ok">
               <div className="lv-spread">
                 <span>A new version is ready. Your work is saved; reload when it suits you.</span>
-                <Button size="sm" variant="primary" onClick={applyUpdate}>
-                  Reload now
+                <Button
+                  size="sm"
+                  variant="primary"
+                  disabled={reloading}
+                  onClick={() => {
+                    setReloading(true);
+                    applyUpdate();
+                  }}
+                >
+                  {reloading ? 'Reloading…' : 'Reload now'}
                 </Button>
               </div>
             </Notice>
