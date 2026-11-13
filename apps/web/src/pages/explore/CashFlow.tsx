@@ -105,8 +105,8 @@ export function CashFlowPage(): ReactNode {
                     layoutIterations: 0,
                     top: 12,
                     bottom: 12,
-                    nodeGap: 14,
-                    nodeWidth: 14,
+                    nodeGap: 16,
+                    nodeWidth: 16,
                     draggable: false,
                     emphasis: { focus: 'adjacency' },
                     label: {
@@ -114,10 +114,13 @@ export function CashFlowPage(): ReactNode {
                       fontSize: 12,
                       formatter: (p: { name: string; value: number }) => `${p.name}\n${short(p.value)}`,
                     },
-                    lineStyle: { color: 'gradient', opacity: 0.35, curveness: 0.5 },
+                    lineStyle: { color: 'gradient', opacity: 0.42, curveness: 0.5 },
+                    itemStyle: { borderRadius: 5, borderWidth: 0 },
                     data: [
+                      // Node ids are unique per side; links refer to ids. (A link that names a node the chart
+                      // cannot find is dropped, and the whole diagram collapses.)
                       ...inflow.map(([name]) => ({
-                        id: name,
+                        id: `in:${name}`,
                         name,
                         depth: 0,
                         itemStyle: {
@@ -130,7 +133,7 @@ export function CashFlowPage(): ReactNode {
                       })),
                       { id: 'available', name: 'Available', depth: 1, itemStyle: { color: c.ink3 } },
                       ...outflow.map(([name]) => ({
-                        id: name,
+                        id: `out:${name}`,
                         name,
                         depth: 2,
                         itemStyle: {
@@ -143,8 +146,16 @@ export function CashFlowPage(): ReactNode {
                       })),
                     ],
                     links: [
-                      ...inflow.map(([name, v]) => ({ source: name, target: 'Available', value: val(v) })),
-                      ...outflow.map(([name, v]) => ({ source: 'Available', target: name, value: val(v) })),
+                      ...inflow.map(([name, v]) => ({
+                        source: `in:${name}`,
+                        target: 'available',
+                        value: val(v),
+                      })),
+                      ...outflow.map(([name, v]) => ({
+                        source: 'available',
+                        target: `out:${name}`,
+                        value: val(v),
+                      })),
                     ],
                   },
                 ],

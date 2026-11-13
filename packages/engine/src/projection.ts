@@ -166,6 +166,9 @@ export interface YearRecord {
   /** Conservation-of-money bookkeeping (§6.5). */
   check: {
     opening: number;
+    /** Property and debts at the start of the year, before this year's appreciation and payments. */
+    openingAssets: number;
+    openingDebts: number;
     deposits: number;
     withdrawals: number;
     closing: number;
@@ -314,7 +317,12 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     const b = bal(a);
     if (b <= 0) return;
     const f = Math.max(0, 1 - amt / b);
-    for (let k = 0; k < NC; k++) hold[o + k] *= f;
+    if (b * f < 1e-6) {
+      // An emptied account is exactly empty. A sub-micro-dollar residue would later overflow the cost-basis
+      // ratio (basis / balance) into NaN, and a NaN in the tax ledger reads as a funded year.
+      for (let k = 0; k < NC; k++) hold[o + k] = 0;
+      basis[a] = 0;
+    } else for (let k = 0; k < NC; k++) hold[o + k] *= f;
     wd[a] += amt;
   };
   const dep = new Float64Array(nA);
@@ -405,7 +413,12 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
   let prevStateTax = 0;
   // Prior-year wages for the SECURE 2.0 Roth catch-up rule; year 1 assumes last year's pay matched this year's.
   let prevWages: number[] | null = null;
-  let lastLivingSpend = 0;
+  /** Last year's recurring spending as the independence test counts it: living, housing, debt payments, healthcare. */
+  let lastFiSpend = 0;
+  /** Age in the last year each person had earned income (Rule of 55); NaN until they earn inside the plan. */
+  const lastEarnedAge = [NaN, NaN];
+  /** Age in the plan's first year, for people who have already stopped work when the plan starts. */
+  const startAge = [NaN, NaN];
   const cobraStart: number[] = c.people.map(() => NaN);
 
   // ------------------------------------------------------------ outputs
@@ -533,7 +546,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
             ? nw >= (w.value / 100) * cpi
             : w.metric === 'investable'
               ? openInvestable >= (w.value / 100) * cpi
-              : lastLivingSpend > 0 && openInvestable >= w.fiMultiple * lastLivingSpend * (1 + infl);
+              : lastFiSpend > 0 && openInvestable >= w.fiMultiple * lastFiSpend * (1 + infl);
         if (hit) milestoneYear[m] = y;
       }
       if (milestoneYear[m] === y) {
@@ -1138,7 +1151,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       const firstPartAMonth = ages[i] === 65 ? Math.max(7, p.birthMonth) : 7; // 1-based month in this year
       return (firstPartAMonth - 1) / 12;
     };
-    const hsaLimitFor = (i: number): number => {
+    const hsaLimitFor = (i: number, used: number[]): number => {
       const tp = covType[i];
       const en = covEntry[i];
       const eligible =
@@ -1154,11 +1167,13 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       const family =
         (nP === 2 && alive[sI] && covType[sI] !== 'medicare' && covType[sI] !== 'none') ||
         kidsUnder17 + otherDeps > 0;
-      // The family limit is shared; give it to the first eligible spouse and the catch-up to each.
-      const baseLim = family ? (i === primary || hsaLimitShared === 0 ? lim.hsa.family : 0) : lim.hsa.self;
-      return (baseLim * kLim + (ages[i] >= 55 ? lim.hsa.catchUp55 : 0)) * hsaMonthsFrac(i);
+      // The family limit is one pool for the couple, whichever account is filled first; the 55+ catch-up is each
+      // person's own. What the other spouse has put in beyond their own catch-up has used up that much of the pool.
+      const otherCatchUp = nP === 2 && ages[sI] >= 55 ? lim.hsa.catchUp55 : 0;
+      const otherUsed = nP === 2 ? Math.max(0, used[sI] - otherCatchUp) : 0;
+      const baseLim = family ? Math.max(0, lim.hsa.family * kLim - otherUsed) : lim.hsa.self * kLim;
+      return (baseLim + (ages[i] >= 55 ? lim.hsa.catchUp55 : 0)) * hsaMonthsFrac(i);
     };
-    let hsaLimitShared = 0;
     for (let a = 0; a < nA; a++) {
       const ac = accts[a];
       const cfg = ac.src.contribution;
@@ -1179,8 +1194,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       const wantBase = cfg.employeePct * salary + (cfg.employeeAmount / 100) * cpi;
       const comp = Math.min(salary, lim.compensationCap * kLim);
       if (ac.kind === Kind.Hsa) {
-        const limit = Math.max(0, hsaLimitFor(oi) - hsaContributed[oi]);
-        if (limit > 0 && lim.hsa.family > 0) hsaLimitShared = 1;
+        const limit = Math.max(0, hsaLimitFor(oi, hsaContributed) - hsaContributed[oi]);
         const employer = Math.min(limit, cfg.employerFixedPct * comp);
         const emp = Math.min(limit - employer, cfg.maxOut ? limit : wantBase, salary);
         if (emp + employer <= 0) continue;
@@ -1399,7 +1413,6 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       byCategory[e.category] = (byCategory[e.category] ?? 0) + v;
       if (e.category === 'education') eduExpense += v;
     }
-    lastLivingSpend = living;
     const recurringPlanned = essentialRecurring + flexibleRecurring;
     const effectiveSpendMult =
       recurringPlanned > 0
@@ -1706,12 +1719,21 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
 
     // penalty-free and total availability per account
     const earnedHousehold = earned[0] + earned[1];
+    for (let i = 0; i < nP; i++) {
+      if (t === 0) startAge[i] = ages[i];
+      if (earned[i] > 0) lastEarnedAge[i] = ages[i];
+    }
     const penaltyFree = (a: number): boolean => {
       const ac = accts[a];
       const p = c.people[owner[a]];
       if (y >= p.year59Half) return true;
       if (ac.type === 'gov457b' || ac.type === 'inheritedIra') return true;
-      if (ac.src.ruleOf55 && ages[owner[a]] >= 55 && earned[owner[a]] <= 0) return true;
+      // Rule of 55: only for someone who left the job in or after the year they turned 55. Leaving at 50 and
+      // waiting until 55 does not qualify. A person already out of work when the plan starts is taken to have
+      // left at their starting age.
+      const oi = owner[a];
+      const leftAt = Number.isNaN(lastEarnedAge[oi]) ? startAge[oi] : lastEarnedAge[oi];
+      if (ac.src.ruleOf55 && ages[oi] >= 55 && earned[oi] <= 0 && leftAt >= 55) return true;
       return false;
     };
     const rothSeasoned = (a: number): number => {
@@ -1771,6 +1793,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       }
     }
     // 529-to-Roth rollover (PLAN-14)
+    let rolled529Now = 0;
     for (let a = 0; a < nA; a++) {
       const ac = accts[a];
       const cfg = ac.src.plan529;
@@ -1795,6 +1818,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         deposit(dest, amt);
         rothContrib[dest] += amt;
         rolled529.set(a, done + amt);
+        rolled529Now += amt;
         iraUsedBy[owner[dest]] += amt;
       }
     }
@@ -2321,7 +2345,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
               put(a, amt);
             }
           } else if (ac.kind === Kind.Hsa) {
-            amt = Math.min(rem, cap, Math.max(0, hsaLimitFor(oi) - hsaUse[oi]));
+            amt = Math.min(rem, cap, Math.max(0, hsaLimitFor(oi, hsaUse) - hsaUse[oi]));
             if (amt > 0) {
               deductible += amt;
               hsaUse[oi] += amt;
@@ -2439,6 +2463,15 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         yearWarnings.push(
           'Tax solver did not fully converge this year; the result is within the last bracket tested.',
         );
+      }
+      if (!Number.isFinite(f) || !Number.isFinite(G)) {
+        // A number that is not a number must never pass for a funded year: withdraw nothing and report the gap.
+        G = 0;
+        f = evaluate(0, false);
+        iterations++;
+        out.solver.nonConverged++;
+        yearWarnings.push('This year could not be solved; it is shown as unfunded rather than guessed.');
+        if (!Number.isFinite(f)) f = Math.min(0, cashInFixed - cashOutFixed);
       }
       if (f < -0.5) shortfall = -f;
     }
@@ -2607,6 +2640,7 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
     const assetVal = assetTotal();
     const debtVal = debtTotal();
     const healthTotal = hPremiums + hOop + hLtc + eHealthAdj;
+    lastFiSpend = living + housing + debtService + healthTotal;
     const spendingTotal = spendingFixed + hsaPaid + eduPaid + eHealthAdj - shortfall;
     out.investable[t] = investable;
     out.netWorth[t] = investable + assetVal - debtVal;
@@ -2649,7 +2683,9 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
       }
       const incomeTotal =
         wages[0] + wages[1] + seInc[0] + seInc[1] + pension + annuityCash + ssTotal + rentalCash + otherCash;
-      const gross = incomeTotal + wOrd + eConv + Math.max(0, ti.longTermGains);
+      // Everything the year's tax was levied on: income, pre-tax withdrawals (chosen and required), conversions
+      // and realized gains. Leaving out required distributions made a retiree's rate look several times too high.
+      const gross = incomeTotal + wOrd + reqOrdinary + eConv + Math.max(0, ti.longTermGains);
       out.records!.push({
         year: y,
         t,
@@ -2752,10 +2788,13 @@ export function runPath(c: Compiled, path: PathInputs, opts: { detail?: boolean 
         spendingMultiplier: effectiveSpendMult,
         check: {
           opening: openTotal,
+          openingAssets: openAssets,
+          openingDebts: openDebts,
           deposits: depSum,
           withdrawals: wdSum,
           closing: investable,
-          cashIn: cashInFixed - reqOrdinary + (wdSum - eConv) + ePtc,
+          // Conversions and 529-to-Roth rollovers move between accounts without becoming cash.
+          cashIn: cashInFixed - reqOrdinary + (wdSum - eConv - rolled529Now) + ePtc,
           cashOut:
             spendingFixed +
             hsaPaid +

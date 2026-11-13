@@ -21,8 +21,9 @@ export function stateTax(p: StateTaxParams | undefined, k: number, x: StateTaxIn
   if (!p || p.kind === 'none') return 0;
   const s = tableStatus(x.status);
   const kk = p.indexed ? k : 1;
-  let base =
-    p.startingPoint === 'federalTaxableIncome' ? x.federalTaxableIncome + x.federalDeduction : x.federalAgi;
+  // A state that starts from federal taxable income has the federal deduction inside its base already (its own
+  // standardDeduction is 0 in the data). Adding the deduction back would tax federal AGI instead.
+  let base = p.startingPoint === 'federalTaxableIncome' ? x.federalTaxableIncome : x.federalAgi;
   if (!p.taxesSocialSecurity) base -= x.taxableSocialSecurity;
   const ex = p.retirementIncomeExclusion;
   for (let i = 0; i < x.ages.length; i++) {

@@ -56,12 +56,16 @@ export interface ChartColors {
   ink2: string;
   ink3: string;
   line: string;
+  lineStrong: string;
   surface: string;
   bg: string;
   series: string[];
   primary: string;
   accent: string;
   danger: string;
+  ok: string;
+  /** The brand spectrum, night indigo to first light, for headline paths. */
+  dawn: [string, string, string, string];
 }
 export function readColors(): ChartColors {
   const s = getComputedStyle(document.documentElement);
@@ -87,11 +91,14 @@ export function readColors(): ChartColors {
     ink2: v('--ink-2'),
     ink3: v('--ink-3'),
     line: v('--line'),
+    lineStrong: v('--line-strong'),
     surface: v('--surface'),
     bg: v('--bg'),
     primary: v('--primary'),
     accent: v('--accent-fill'),
     danger: v('--danger'),
+    ok: v('--ok'),
+    dawn: [v('--dawn-indigo'), v('--dawn-violet'), v('--dawn-rose'), v('--dawn-amber')],
     series: [1, 2, 3, 4, 5, 6, 7, 8].map((i) => v(`--chart-${i}`)),
   };
 }
@@ -167,7 +174,11 @@ export function Chart({
         // For a category x axis the first coordinate is the category index.
         const x = chart.convertFromPixel({ gridIndex: 0 }, pt) as number[] | null;
         const idx = Math.round(x?.[0] ?? NaN);
-        if (Number.isFinite(idx)) clickRef.current({ dataIndex: idx });
+        if (Number.isFinite(idx)) {
+          // Arrow keys continue from the year just clicked, not from the first year.
+          keyboardIndex.current = idx;
+          clickRef.current({ dataIndex: idx });
+        }
       });
       chart.getZr().on('mousemove', (e: { offsetX: number; offsetY: number }) => {
         if (!hoverRef.current) return;
@@ -206,17 +217,20 @@ export function Chart({
     const base: EChartsCoreOption = {
       color: c.series,
       animation: !reduce,
-      animationDuration: 200,
-      animationDurationUpdate: 220,
+      animationDuration: 900,
+      animationEasing: 'cubicOut',
+      animationDurationUpdate: 260,
+      animationEasingUpdate: 'cubicOut',
       textStyle: { color: c.ink2, fontFamily: getComputedStyle(document.body).fontFamily, fontSize: 12 },
       aria: { enabled: true, label: { description: label } },
     };
     const legendStyle = {
       textStyle: { color: c.ink2, fontSize: 12 },
-      icon: 'roundRect',
-      itemWidth: 10,
-      itemHeight: 10,
-      itemGap: 14,
+      icon: 'circle',
+      itemWidth: 9,
+      itemHeight: 9,
+      itemGap: 16,
+      inactiveColor: c.lineStrong,
     };
     // Keep the user's zoom window across rebuilds.
     const prev = chart.getOption() as
@@ -346,22 +360,47 @@ export function axis(c: ChartColors): {
   axisTick: object;
 } {
   return {
-    axisLine: { lineStyle: { color: c.line } },
+    axisLine: { lineStyle: { color: c.lineStrong, opacity: 0.6 } },
     axisTick: { show: false },
-    axisLabel: { color: c.ink3, fontSize: 11 },
-    splitLine: { lineStyle: { color: c.line, type: 'solid', width: 1 } },
+    axisLabel: { color: c.ink3, fontSize: 11, margin: 10 },
+    splitLine: { lineStyle: { color: c.line, type: [3, 5], width: 1 } },
   };
 }
+/** A floating pane of frosted glass with a lit crosshair. */
 export function tooltip(c: ChartColors): object {
   return {
-    backgroundColor: c.surface,
-    borderColor: c.line,
+    backgroundColor: alpha(c.surface, 0.86),
+    borderColor: alpha(c.primary, 0.28),
     borderWidth: 1,
-    padding: [10, 12],
+    padding: [12, 14],
     textStyle: { color: c.ink, fontSize: 12 },
     confine: true,
-    axisPointer: { type: 'line', lineStyle: { color: c.ink3, width: 1, type: 'solid' } },
-    extraCssText: 'box-shadow:0 10px 30px rgba(0,0,0,.16);border-radius:10px;',
+    transitionDuration: 0.12,
+    axisPointer: {
+      type: 'line',
+      z: 3,
+      lineStyle: {
+        width: 1.5,
+        type: 'solid',
+        color: {
+          type: 'linear',
+          x: 0,
+          y: 0,
+          x2: 0,
+          y2: 1,
+          colorStops: [
+            { offset: 0, color: alpha(c.dawn[3], 0.95) },
+            { offset: 0.5, color: alpha(c.dawn[2], 0.8) },
+            { offset: 1, color: alpha(c.dawn[0], 0.15) },
+          ],
+        },
+        shadowColor: alpha(c.dawn[2], 0.6),
+        shadowBlur: 10,
+      },
+    },
+    extraCssText:
+      'box-shadow:0 22px 54px rgba(18,14,80,.28),0 2px 8px rgba(18,14,80,.12);border-radius:16px;' +
+      'backdrop-filter:blur(16px) saturate(1.6);-webkit-backdrop-filter:blur(16px) saturate(1.6);',
   };
 }
 
@@ -380,14 +419,68 @@ export function fade(color: string, stacked = false): object {
     y: 0,
     x2: 0,
     y2: 1,
-    colorStops: [
-      { offset: 0, color: alpha(color, stacked ? 0.9 : 0.38) },
-      { offset: 1, color: alpha(color, stacked ? 0.55 : 0.02) },
-    ],
+    colorStops: stacked
+      ? [
+          { offset: 0, color: alpha(color, 0.92) },
+          { offset: 1, color: alpha(color, 0.62) },
+        ]
+      : [
+          { offset: 0, color: alpha(color, 0.5) },
+          { offset: 0.55, color: alpha(color, 0.16) },
+          { offset: 1, color: alpha(color, 0) },
+        ],
   };
 }
 
-/** One area series in the Longview style: 2px line, fading fill, focus on hover. */
+/**
+ * The dawn spectrum laid along the time axis: the stroke of a plan's headline path (brand.md §4). It starts
+ * at night indigo and ends in first light, so the line itself says "this runs forward in time".
+ */
+export function dawn(c: ChartColors): object {
+  return {
+    type: 'linear',
+    x: 0,
+    y: 0,
+    x2: 1,
+    y2: 0,
+    colorStops: c.dawn.map((color, i) => ({ offset: i / (c.dawn.length - 1), color })),
+  };
+}
+
+/** Line styling for a headline path: the dawn stroke with a soft bloom beneath it. */
+export function dawnLine(c: ChartColors, width = 3): object {
+  return {
+    width,
+    color: dawn(c),
+    cap: 'round',
+    join: 'round',
+    shadowColor: alpha(c.dawn[1], 0.55),
+    shadowBlur: 16,
+    shadowOffsetY: 6,
+  };
+}
+
+/** The fill under a headline path: the same spectrum, fading out toward the axis. */
+export function dawnFill(c: ChartColors, strength = 0.34): object {
+  return {
+    opacity: 1,
+    color: {
+      type: 'linear',
+      x: 0,
+      y: 0,
+      x2: 1,
+      y2: 1,
+      colorStops: [
+        { offset: 0, color: alpha(c.dawn[0], strength) },
+        { offset: 0.45, color: alpha(c.dawn[1], strength * 0.7) },
+        { offset: 0.8, color: alpha(c.dawn[2], strength * 0.38) },
+        { offset: 1, color: alpha(c.dawn[3], 0) },
+      ],
+    },
+  };
+}
+
+/** One area series in the Longview style: a glowing line, a fading fill, focus on hover. */
 export function areaSeries(
   name: string,
   color: string,
@@ -399,13 +492,33 @@ export function areaSeries(
     name,
     type: 'line',
     stack: opts.stack,
-    symbol: 'none',
+    symbol: 'circle',
+    symbolSize: 9,
+    showSymbol: false,
     smooth: opts.smooth ? 0.25 : false,
     color,
-    lineStyle: { width: opts.stack ? 1 : 2, color },
-    areaStyle: { color: fade(color, !!opts.stack) },
+    itemStyle: { color, borderColor: '#fff', borderWidth: 2 },
+    lineStyle: opts.stack
+      ? { width: 1.25, color: alpha(color, 0.95) }
+      : { width: 2.5, color, shadowColor: alpha(color, 0.5), shadowBlur: 14, shadowOffsetY: 5 },
+    areaStyle: { color: fade(color, !!opts.stack), opacity: 1 },
     emphasis: { focus: 'series' },
     data,
+  };
+}
+
+/** A bar in the Longview style: a lit top edge fading down, softly rounded where it ends. */
+export function barFill(color: string): object {
+  return {
+    type: 'linear',
+    x: 0,
+    y: 0,
+    x2: 0,
+    y2: 1,
+    colorStops: [
+      { offset: 0, color },
+      { offset: 1, color: alpha(color, 0.72) },
+    ],
   };
 }
 
@@ -427,9 +540,9 @@ export function tooltipCard(
   },
 ): string {
   const row = (r: { name: string; color?: string; value: string }): string =>
-    `<tr><td style="padding:2px 12px 2px 0;color:${c.ink2}">${r.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:2px;background:${r.color};margin-right:6px"></span>` : ''}${esc(r.name)}</td><td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${r.value}</td></tr>`;
+    `<tr><td style="padding:2px 12px 2px 0;color:${c.ink2}">${r.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.color};box-shadow:0 0 0 3px ${alpha(r.color, 0.18)};margin-right:8px"></span>` : ''}${esc(r.name)}</td><td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${r.value}</td></tr>`;
   return [
-    `<div style="font-weight:650;font-size:13px">${esc(t.title)}</div>`,
+    `<div style="font-weight:700;font-size:14px;letter-spacing:-0.01em">${esc(t.title)}</div>`,
     t.subtitle
       ? `<div style="color:${c.ink3};font-size:11px;margin-bottom:6px">${esc(t.subtitle)}</div>`
       : '<div style="height:6px"></div>',
@@ -452,9 +565,12 @@ export function kindColor(
 ): string {
   return c.financial[kind];
 }
+/** Axis money: "-$1.0M" (sign before the dollar), rolling over at each unit instead of printing "$1000k". */
 export const short = (v: number): string => {
   const a = Math.abs(v);
-  if (a >= 1e6) return `$${(v / 1e6).toFixed(a >= 1e7 ? 0 : 1)}M`;
-  if (a >= 1e3) return `$${Math.round(v / 1e3)}k`;
-  return `$${Math.round(v)}`;
+  const sign = v < 0 && Math.round(a) > 0 ? '-' : '';
+  if (a >= 999.5e6) return `${sign}$${(a / 1e9).toFixed(a >= 9.995e9 ? 0 : 1)}B`;
+  if (a >= 999.5e3) return `${sign}$${(a / 1e6).toFixed(a >= 9.995e6 ? 0 : 1)}M`;
+  if (a >= 1e3) return `${sign}$${Math.round(a / 1e3)}k`;
+  return `${sign}$${Math.round(a)}`;
 };

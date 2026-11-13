@@ -63,7 +63,7 @@ export function TaxesPage(): ReactNode {
           )}
         </p>
       )}
-      <Card data-tour="tax-stats">
+      <Card variant="hero" data-tour="tax-stats">
         <div className="lv-grid">
           <Stat
             label="Lifetime tax"

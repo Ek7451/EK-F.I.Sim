@@ -1,13 +1,54 @@
 import { Card, Icon, IconTile, Skeleton, Stat, formatCompact, formatMoney, formatPct } from '@fisim/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { Chart, areaSeries, axis, short, tooltip, tooltipCard } from '../charts/Chart';
+import { Chart, areaSeries, axis, dawnFill, dawnLine, short, tooltip, tooltipCard } from '../charts/Chart';
 import { useProjection } from '../engine/useResults';
 import { agesText, fundedStat } from '../lib/outcome';
 import { PageHead } from '../shell/Shell';
 import { usePlan, useStore } from '../state/store';
 import { StartPage } from './StartWizard';
 import { CalculationStatus } from './workspace/CalculationStatus';
+
+/**
+ * The plan drawn as a line of time: today on the left, the last plan year on the right, and the years that
+ * matter along it. A picture of figures already stated in words beside it, so it is hidden from assistive tech.
+ */
+function Journey({
+  start,
+  end,
+  stops,
+}: {
+  start: number;
+  end: number;
+  stops: { year: number; kind: 'fi' | 'retire'; label: string }[];
+}): ReactNode {
+  const span = Math.max(1, end - start);
+  const at = (year: number): number => Math.max(0, Math.min(1, (year - start) / span)) * 100;
+  return (
+    <div className="journey" aria-hidden="true">
+      <div className="journey-track">
+        {stops.map((x, i) => (
+          <span
+            key={x.kind}
+            className="journey-stop"
+            data-kind={x.kind}
+            data-row={i % 2}
+            style={{ left: `${at(x.year)}%` }}
+          >
+            <i />
+            <b>
+              {x.label} {x.year}
+            </b>
+          </span>
+        ))}
+      </div>
+      <div className="journey-ends">
+        <span>{start}</span>
+        <span>{end}</span>
+      </div>
+    </div>
+  );
+}
 
 export function HomePage(): ReactNode {
   const plan = usePlan();
@@ -120,6 +161,18 @@ export function HomePage(): ReactNode {
                 <span>{changed}</span>
               </p>
             ) : null}
+            {s ? (
+              <Journey
+                start={s.startYear}
+                end={s.endYear}
+                stops={[
+                  ...(s.fiYear ? [{ year: s.fiYear, kind: 'fi' as const, label: 'Independent' }] : []),
+                  ...(s.retirementYear
+                    ? [{ year: s.retirementYear, kind: 'retire' as const, label: 'Retire' }]
+                    : []),
+                ]}
+              />
+            ) : null}
             <dl className="home-facts">
               <div>
                 <dt>Financially independent</dt>
@@ -174,7 +227,7 @@ export function HomePage(): ReactNode {
                       title: `End of ${r.year}`,
                       subtitle: agesText(r),
                       rows: [
-                        { name: 'Net worth', color: c.primary, value: formatMoney(r.netWorth / r.cpiEnd) },
+                        { name: 'Net worth', color: c.dawn[1], value: formatMoney(r.netWorth / r.cpiEnd) },
                       ],
                     });
                   },
@@ -195,10 +248,11 @@ export function HomePage(): ReactNode {
                   {
                     ...areaSeries(
                       'Net worth',
-                      c.primary,
+                      c.dawn[1],
                       result.records.map((r) => r.netWorth / r.cpiEnd),
                     ),
-                    lineStyle: { width: 2.5, color: c.primary },
+                    lineStyle: dawnLine(c, 3.5),
+                    areaStyle: dawnFill(c),
                   },
                 ],
               })}

@@ -18,7 +18,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { STATES } from '../lib/fields';
 import { survivalNote } from '../lib/lifespan';
-import { PageHead } from '../shell/Shell';
+import { HorizonArt, PageHead } from '../shell/Shell';
 import { useStore } from '../state/store';
 import { useTour } from '../tours/TourEngine';
 import { loadEngine } from '../engine/load';
@@ -407,10 +407,13 @@ export function StartPage(): ReactNode {
 
   return (
     <>
-      <PageHead
-        title={hasPlans ? 'New plan' : 'Welcome to Longview Planner'}
-        intro="Five short steps to a first plan. Rough numbers are fine: you can refine everything afterwards."
-      />
+      <div className="start-hero lv-night">
+        <PageHead
+          title={hasPlans ? 'New plan' : 'Welcome to Longview Planner'}
+          intro="Five short steps to a first plan. Rough numbers are fine: you can refine everything afterwards."
+        />
+        <HorizonArt />
+      </div>
       <Card data-tour="wizard">
         <div
           className="lv-progress"

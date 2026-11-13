@@ -43,7 +43,7 @@ export function HistoryPage(): ReactNode {
         </Card>
       ) : (
         <>
-          <Card data-tour="history-stats">
+          <Card variant="hero" data-tour="history-stats">
             <div className="lv-grid">
               <Stat
                 label="Start years that worked"
@@ -119,8 +119,9 @@ export function HistoryPage(): ReactNode {
                 Selected: {selected.startYear} ·{' '}
                 {selected.complete
                   ? 'Full history'
-                  : 'Incomplete history (history repeats beyond available data)'}{' '}
-                · ending investments {formatMoney(selected.endingReal)} in today's dollars.
+                  : `Incomplete history (the data ends after ${selected.series.length} ${selected.series.length === 1 ? 'year' : 'years'}, before the plan does)`}{' '}
+                · {selected.complete ? 'ending investments' : 'investments when the data ends'}{' '}
+                {formatMoney(selected.endingReal)} in today's dollars.
               </p>
             )}
           </Card>
@@ -210,11 +211,7 @@ export function HistoryPage(): ReactNode {
                     {selected.series.map((v, i) => (
                       <tr key={i}>
                         <th>{i + 1}</th>
-                        <td>
-                          {selected.startYear + i <= result.dataThrough
-                            ? selected.startYear + i
-                            : 'Repeated history'}
-                        </td>
+                        <td>{selected.startYear + i}</td>
                         <td>{formatMoney(v)}</td>
                       </tr>
                     ))}

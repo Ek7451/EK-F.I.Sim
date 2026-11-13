@@ -97,7 +97,8 @@ describe('V-08 IRMAA tier assignment and RMDs (exact)', () => {
       const table = m.irmaa[status];
       table.forEach((row, i) => {
         if (i === 0) return;
-        expect(irmaaTier(m, 1, status, row.magiOver).tier).toBe(i - 1);
+        // Every tier starts above its threshold except the top one, which starts at it ("greater than or equal to").
+        expect(irmaaTier(m, 1, status, row.magiOver).tier).toBe(i === table.length - 1 ? i : i - 1);
         expect(irmaaTier(m, 1, status, row.magiOver + 1).tier).toBe(i);
       });
       expect(irmaaTier(m, 1, status, 0).row.partBMonthly).toBe(m.partB.standardMonthlyPremium);

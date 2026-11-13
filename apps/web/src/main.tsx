@@ -40,7 +40,7 @@ function Root(): ReactNode {
     else root.dataset.theme = theme;
     const dark =
       theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#101827' : '#4f5dd5');
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#070919' : '#f2f2fb');
   }, [theme]);
 
   return (

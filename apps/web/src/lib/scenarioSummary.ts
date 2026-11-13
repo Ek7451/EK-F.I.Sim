@@ -36,8 +36,13 @@ export function describeChange(plan: Plan, patch: Scenario['patches'][number]): 
     if (Array.isArray(v)) return `${v.length} items`;
     if (v && typeof v === 'object') return 'updated settings';
     if (typeof v === 'boolean') return v ? 'on' : 'off';
-    if (typeof v === 'number' && /amount|balance|costBasis/i.test(field)) return formatMoney(v / 100);
-    if (typeof v === 'number' && /rate|pct|stocks|bonds|reits/i.test(field)) return formatPct(v, 2);
+    if (
+      typeof v === 'number' &&
+      /amount|balance|costBasis|legacyGoal|^value$|principal|payment|premiumAnnual/i.test(field)
+    )
+      return formatMoney(v / 100);
+    if (typeof v === 'number' && /rate|pct|stocks|bonds|reits|^cash$|appreciation/i.test(field))
+      return formatPct(v, 2);
     return String(v);
   };
   return `${names.join(' › ')}: ${format(value)} → ${format(patch.value)}`;

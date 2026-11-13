@@ -69,7 +69,7 @@ export function Shell({
           <Link className="brand" to="/" aria-label="Longview Planner home">
             <img src="/icon.svg" alt="" />
             <span className="rail-text">
-              Longview <small style={{ display: 'block', fontSize: 11, fontWeight: 500 }}>Planner</small>
+              Longview <small>Planner</small>
             </span>
           </Link>
         </div>
@@ -398,6 +398,51 @@ export function SubNav({ group }: { group: 'plan' | 'explore' }): ReactNode {
         {group === 'explore' ? 'Plan inputs' : '← Projection'}
       </NavLink>
     </nav>
+  );
+}
+
+/**
+ * The brand picture, drawn large: a horizon, a path climbing toward it and the first light it reaches.
+ * Decorative only.
+ */
+export function HorizonArt(): ReactNode {
+  return (
+    <svg className="horizon-art" viewBox="0 0 640 260" aria-hidden="true" focusable="false">
+      <defs>
+        <linearGradient id="ha-path" x1="0" y1="1" x2="1" y2="0">
+          <stop offset="0" stopColor="#8f84ff" />
+          <stop offset="0.45" stopColor="#c46bff" />
+          <stop offset="0.75" stopColor="#ff5c9a" />
+          <stop offset="1" stopColor="#ffb02e" />
+        </linearGradient>
+        <linearGradient id="ha-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#a14dff" stopOpacity="0.4" />
+          <stop offset="1" stopColor="#a14dff" stopOpacity="0" />
+        </linearGradient>
+        <radialGradient id="ha-sun" cx="0.5" cy="0.5" r="0.5">
+          <stop offset="0" stopColor="#ffe3a6" />
+          <stop offset="0.35" stopColor="#ffb02e" stopOpacity="0.85" />
+          <stop offset="1" stopColor="#ffb02e" stopOpacity="0" />
+        </radialGradient>
+      </defs>
+      <circle cx="560" cy="62" r="92" fill="url(#ha-sun)" opacity="0.55" />
+      <path
+        d="M0 226 C 110 218 170 196 240 160 S 380 118 440 96 S 520 70 560 62 L 640 56 L 640 232 L 0 232 Z"
+        fill="url(#ha-fill)"
+      />
+      <path className="horizon-line" d="M0 232 H640" />
+      <path
+        className="horizon-path"
+        pathLength="1"
+        d="M0 226 C 110 218 170 196 240 160 S 380 118 440 96 S 520 70 560 62"
+        fill="none"
+        stroke="url(#ha-path)"
+      />
+      <circle cx="560" cy="62" r="11" fill="#ffc45c" />
+      <g className="horizon-ticks">
+        <path d="M80 232v8M200 232v8M320 232v8M440 232v8M560 232v8" />
+      </g>
+    </svg>
   );
 }
 

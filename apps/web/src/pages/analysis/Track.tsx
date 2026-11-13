@@ -1,11 +1,17 @@
 import { Button, Card, MoneyField, Stat, TextField, formatCompact, formatMoney, formatPct } from '@fisim/ui';
 import { useEffect, useState, type ReactNode } from 'react';
-import { Chart, axis, short, tooltip } from '../../charts/Chart';
+import { Chart, axis, short, tooltip, tooltipCard } from '../../charts/Chart';
 import { useProjection } from '../../engine/useResults';
 import { ACCOUNT_LABELS } from '../../lib/fields';
 import { PageHead } from '../../shell/Shell';
 import { getSetting, setSetting } from '../../state/db';
 import { usePlan, useStore, useUpdate } from '../../state/store';
+
+/** A calendar date on the chart's time axis, where year y's end sits at y. */
+const axisTime = (date: string): number =>
+  +date.slice(0, 4) +
+  (new Date(date).getTime() - Date.UTC(+date.slice(0, 4), 0, 1)) / (365.25 * 86400000) -
+  1;
 
 interface Baseline {
   takenAt: string;
@@ -34,11 +40,19 @@ export function TrackPage(): ReactNode {
   }, [plan.id]);
   const freeze = (): void => {
     if (!result) return;
+    const takenAt = new Date().toISOString();
+    // The opening balances are what you hold on the day you freeze the plan, so the reference path starts
+    // there. Anchoring it at 1 January made a plan frozen in November read as months behind on day one.
+    const today = axisTime(takenAt.slice(0, 10));
+    const start = plan.settings.startYear;
     const b: Baseline = {
-      takenAt: new Date().toISOString(),
-      startYear: plan.settings.startYear,
+      takenAt,
+      startYear: start,
       points: [
-        { year: plan.settings.startYear - 1, investable: result.records[0].check.opening },
+        {
+          year: today > start - 1 && today < start ? today : start - 1,
+          investable: result.records[0].check.opening,
+        },
         ...result.records.map((r) => ({ year: r.year, investable: r.investable })),
       ],
     };
@@ -59,10 +73,7 @@ export function TrackPage(): ReactNode {
   };
   const actuals = plan.actuals.map((a) => ({
     date: a.date,
-    t:
-      +a.date.slice(0, 4) +
-      (new Date(a.date).getTime() - Date.UTC(+a.date.slice(0, 4), 0, 1)) / (365.25 * 86400000) -
-      1,
+    t: axisTime(a.date),
     total: Object.values(a.balances).reduce((s, v) => s + v, 0) / 100,
   }));
   const planned = (t: number): number | null => {
@@ -184,8 +195,22 @@ export function TrackPage(): ReactNode {
                 tooltip: {
                   ...tooltip(c),
                   trigger: 'item',
-                  formatter: (p: { seriesName: string; value: [number, number] }) =>
-                    `${p.seriesName}<br/>${p.value[0].toFixed(1)}: ${formatMoney(p.value[1])}`,
+                  formatter: (p: { seriesName: string; dataIndex: number; value: [number, number] }) =>
+                    tooltipCard(c, {
+                      title: p.seriesName,
+                      rows: [
+                        {
+                          // An entry is labelled by its date; a planned point by the year it closes.
+                          name:
+                            p.seriesName === 'Actual'
+                              ? (actuals[p.dataIndex]?.date ?? '')
+                              : Number.isInteger(p.value[0])
+                                ? `End of ${p.value[0]}`
+                                : 'When the plan was frozen',
+                          value: formatMoney(p.value[1]),
+                        },
+                      ],
+                    }),
                 },
                 xAxis: {
                   type: 'value',
@@ -219,7 +244,13 @@ export function TrackPage(): ReactNode {
                     symbolSize: 9,
                     lineStyle: { width: 0 },
                     showSymbol: true,
-                    itemStyle: { color: c.primary },
+                    itemStyle: {
+                      color: c.dawn[2],
+                      borderColor: '#fff',
+                      borderWidth: 2,
+                      shadowColor: c.dawn[2],
+                      shadowBlur: 12,
+                    },
                     data: actuals.map((a) => [+a.t.toFixed(3), Math.round(a.total)]),
                   },
                 ],

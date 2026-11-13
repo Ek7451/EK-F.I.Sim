@@ -426,7 +426,14 @@ export function compilePlan(
     const want = plan.strategies.rothConversion.targetAccountId;
     let t = want ? accounts.findIndex((a) => a.id === want && a.owner === pi) : -1;
     if (t < 0) t = accounts.findIndex((a) => a.type === 'rothIra' && a.owner === pi);
-    if (t < 0 && (plan.strategies.rothConversion.mode !== 'none' || plan.strategies.backdoorRoth))
+    // An income floor (healthcare MAGI target) is met by converting too, so it needs somewhere to convert into.
+    const floor = plan.strategies.magiTarget;
+    if (
+      t < 0 &&
+      (plan.strategies.rothConversion.mode !== 'none' ||
+        plan.strategies.backdoorRoth ||
+        (floor.enabled && floor.minFplPct > 0))
+    )
       t = synth(`__roth_${p.id}`, `Roth IRA (${p.name})`, 'rothIra', p.id);
     return t;
   });
