@@ -9,7 +9,7 @@
   },
   "scripts": {
     "dev": "pnpm --filter @fisim/web dev",
-    "build": "pnpm --filter @fisim/web build",
+    "build": "pnpm --filter @fisim/web build && node workers/sync/scripts/build-pages.mjs",
     "preview": "pnpm --filter @fisim/web preview",
     "lint": "eslint .",
     "format": "prettier --write .",

@@ -1,6 +1,6 @@
 # UI implementation status
 
-Implementation of [PREMIUM_UX_UPGRADE.md](PREMIUM_UX_UPGRADE.md), verified on November 12, 2026. The six delivery phases are implemented and merged through [PR #6](https://github.com/Ek7451/EK-F.I.Sim/pull/6). The first hosted release is available at [Longview](https://ek-fi-sim.pages.dev), protected by Cloudflare Access. See the [deployment record](../docs/deployments/2026-11-12.md).
+Implementation of [PREMIUM_UX_UPGRADE.md](PREMIUM_UX_UPGRADE.md), verified on November 12, 2026. The six delivery phases are implemented and merged through [PR #6](https://github.com/Ek7451/EK-F.I.Sim/pull/6). The first hosted release is available at [Longview Planner](https://longview-planner.pages.dev), publicly available without sign-in. See the [deployment record](../docs/deployments/2026-11-12.md).
 
 ## Delivery scorecard
 

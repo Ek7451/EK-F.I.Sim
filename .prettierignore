@@ -2,6 +2,7 @@ node_modules
 dist
 pnpm-lock.yaml
 research
+output
 packages/data/**/*.json
 packages/engine/schema
 tests/validation/fixtures

@@ -211,6 +211,11 @@ export const useStore = create<State>((set, get) => ({
   },
   async deletePlan(id) {
     const { plans, meta, history, settings } = get();
+    const pending = saveTimers.get(id);
+    if (pending) clearTimeout(pending);
+    saveTimers.delete(id);
+    if (plans[id])
+      await addSnapshot({ planId: id, plan: plans[id], takenAt: new Date().toISOString(), reason: 'manual' });
     const next = { ...plans };
     delete next[id];
     const nm = { ...meta };
@@ -218,7 +223,13 @@ export const useStore = create<State>((set, get) => ({
     const nh = { ...history };
     delete nh[id];
     await removePlan(id);
-    await enqueue({ planId: id, op: 'delete', queuedAt: new Date().toISOString() });
+    await enqueue({
+      planId: id,
+      op: 'delete',
+      queuedAt: new Date().toISOString(),
+      syncVersion: meta[id]?.syncVersion ?? 0,
+      planName: plans[id]?.name,
+    });
     const activePlanId =
       settings.activePlanId === id ? (Object.keys(next)[0] ?? null) : settings.activePlanId;
     set({ plans: next, meta: nm, history: nh });

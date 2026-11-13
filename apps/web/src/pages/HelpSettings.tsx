@@ -21,6 +21,8 @@ import { useStore, type Theme } from '../state/store';
 import { TOURS, tourById } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
 import type { TourDef } from '../tours/types';
+import { CloudAccountCard } from './CloudAccountCard';
+import { publicCloud, useCloudAccount } from '../lib/cloud-account';
 
 const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 const when = (iso: string | null): string => (iso ? new Date(iso).toLocaleString() : 'never');
@@ -474,6 +476,7 @@ function BackupCard(): ReactNode {
 
 function SyncCard(): ReactNode {
   const sync = useSync();
+  const account = useCloudAccount();
   const url = useStore((s) => s.settings.syncUrl);
   const plans = useStore((s) => s.plans);
   const { setSettings, notify } = useStore.getState();
@@ -512,12 +515,15 @@ function SyncCard(): ReactNode {
     error: 'Could not sync',
   };
   const strong = pass.length >= 12 && pass === again;
+  if (publicCloud && !account.user) return null;
   return (
-    <Card title="Sync between devices" data-tour="settings-sync">
+    <Card title={publicCloud ? 'Encrypted cloud vault' : 'Sync between devices'} data-tour="settings-sync">
       <p className="lv-muted lv-small">
         Optional. Plans are encrypted on this device before upload, so the sync service only ever holds
-        scrambled data. You need your own sync service address; see the setup guide in the project's docs
-        folder.
+        scrambled data.{' '}
+        {publicCloud
+          ? 'Create a vault once, then unlock it on each device. Its passphrase and recovery key are separate from your account password and account recovery code. Keep both recovery credentials somewhere safe.'
+          : 'You need your own sync service address; see the setup guide in the project’s docs folder.'}
       </p>
       <div className="lv-row" style={{ marginTop: 12 }} data-tour="sync-status" role="status">
         <Badge
@@ -547,14 +553,16 @@ function SyncCard(): ReactNode {
             <div className="lv-stack" style={{ gap: 8 }}>
               <span>
                 <strong>{c.planName}</strong>{' '}
-                {c.deletedOnServer
-                  ? 'was deleted on another device'
-                  : `was also changed on another device (${when(c.serverUpdatedAt)})`}
+                {c.deletedLocally
+                  ? 'was deleted here but changed on another device'
+                  : c.deletedOnServer
+                    ? 'was deleted on another device'
+                    : `was also changed on another device (${when(c.serverUpdatedAt)})`}
                 . A snapshot of this device's version is kept whichever you choose.
               </span>
               <span className="lv-row">
                 <Button size="sm" onClick={() => void run(() => resolveConflict(c, 'mine'))}>
-                  Keep this device's
+                  {c.deletedLocally ? 'Delete the cloud copy' : "Keep this device's"}
                 </Button>
                 <Button size="sm" onClick={() => void run(() => resolveConflict(c, 'theirs'))}>
                   {c.deletedOnServer ? 'Delete here too' : "Use the other device's"}
@@ -569,16 +577,18 @@ function SyncCard(): ReactNode {
           </Notice>
         </div>
       ))}
-      <div style={{ marginTop: 16, maxWidth: 520 }}>
-        <TextField
-          label="Sync service address"
-          hint="For example https://longview-sync.your-name.workers.dev"
-          type="url"
-          value={url}
-          onChange={(v) => setSettings({ syncUrl: v })}
-          data-tour="sync-url"
-        />
-      </div>
+      {!publicCloud ? (
+        <div style={{ marginTop: 16, maxWidth: 520 }}>
+          <TextField
+            label="Sync service address"
+            hint="For example https://longview-sync.your-name.workers.dev"
+            type="url"
+            value={url}
+            onChange={(v) => setSettings({ syncUrl: v })}
+            data-tour="sync-url"
+          />
+        </div>
+      ) : null}
       {unlocked ? (
         <div className="lv-stack" style={{ marginTop: 16 }}>
           <div className="lv-row">
@@ -706,7 +716,7 @@ function SyncCard(): ReactNode {
       )}
       <Dialog
         open={!!shown}
-        title="Write down your recovery key"
+        title="Save your vault recovery key"
         onClose={() => setShown(null)}
         footer={
           <Button variant="primary" onClick={() => setShown(null)}>
@@ -879,6 +889,7 @@ export function SettingsPage(): ReactNode {
         </details>
       </Card>
       <BackupCard />
+      <CloudAccountCard />
       <SyncCard />
       <DeviceCard />
     </>

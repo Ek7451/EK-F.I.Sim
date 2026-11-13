@@ -18,23 +18,27 @@ interface DocRow {
   body: string;
 }
 
-function getRow(env: Env, kind: DocKind, userId: string): Promise<DocRow | null> {
+function getRow(env: Pick<Env, 'DB'>, kind: DocKind, userId: string): Promise<DocRow | null> {
   return env.DB.prepare(`SELECT version, updated_at, body FROM ${kind.table} WHERE user_id = ?`)
     .bind(userId)
     .first<DocRow>();
 }
 
-export async function getDoc(env: Env, kind: DocKind, userId: string): Promise<Response> {
+export async function getDoc(env: Pick<Env, 'DB'>, kind: DocKind, userId: string): Promise<Response> {
   const row = await getRow(env, kind, userId);
   if (!row) throw new HttpError(404, 'not_found', 'Nothing stored yet');
   return new Response(fromBase64(row.body), {
-    headers: { 'Content-Type': kind.contentType, ETag: `"${row.version}"` },
+    headers: {
+      'Content-Type': kind.contentType,
+      ETag: `"${row.version}"`,
+      'X-Plan-Version': String(row.version),
+    },
   });
 }
 
 export async function putDoc(
   request: Request,
-  env: Env,
+  env: Pick<Env, 'DB'>,
   kind: DocKind,
   userId: string,
   now: number,

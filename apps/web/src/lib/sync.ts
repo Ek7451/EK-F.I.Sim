@@ -20,6 +20,7 @@ import { create } from 'zustand';
 import { addSnapshot, dequeue, getSetting, queue, setSetting } from '../state/db';
 import { useStore, type TourProgress } from '../state/store';
 import { createSyncClient, isConflict, SyncError, type SyncClient } from '../sync/client';
+import { publicCloud, refreshAccount, type CloudUser } from './cloud-account';
 
 export interface SyncConflict {
   planId: string;
@@ -27,6 +28,7 @@ export interface SyncConflict {
   serverVersion: number;
   serverUpdatedAt: string | null;
   deletedOnServer: boolean;
+  deletedLocally?: boolean;
 }
 
 interface SyncState {
@@ -48,6 +50,7 @@ let dek: CryptoKey | null = null;
 let bundle: KeyBundle | null = null;
 let bundleVersion = 0;
 let settingsVersion = 0;
+let cloudAccountId: string | null = null;
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 const SETTINGS_ID = 'app-settings';
@@ -55,12 +58,17 @@ const SETTINGS_ID = 'app-settings';
 function client(): SyncClient {
   const url = useStore.getState().settings.syncUrl.trim();
   if (!url) throw new Error('Enter the address of your sync service first.');
-  return createSyncClient({ baseUrl: url });
+  return createSyncClient({
+    baseUrl: url,
+    ...(url === '/api' ? { headers: () => ({ 'X-Longview-Account': cloudAccountId ?? '' }) } : {}),
+  });
 }
 const fail = (e: unknown): string =>
   e instanceof SyncError
-    ? e.status === 401 || e.status === 403
-      ? 'Not signed in to the sync service. Open its address in a browser tab, sign in, then try again.'
+    ? e.status === 401
+      ? publicCloud
+        ? 'Sign in to your cloud account in Settings, then unlock your vault.'
+        : 'Not signed in to the sync service. Open its address in a browser tab, sign in, then try again.'
       : e.message
     : e instanceof Error
       ? e.message
@@ -71,14 +79,63 @@ export async function initSync(): Promise<void> {
   bundle = (await getSetting<KeyBundle>('keyBundle')) ?? null;
   bundleVersion = (await getSetting<number>('keyBundleVersion')) ?? 0;
   settingsVersion = (await getSetting<number>('settingsSyncVersion')) ?? 0;
+  cloudAccountId = (await getSetting<string>('cloudAccountId')) ?? null;
   useSync.setState({ status: s.syncEnabled ? 'locked' : 'off', hasKeys: !!bundle });
   window.addEventListener('online', () => {
     if (dek) void syncNow();
   });
+  if (publicCloud) await refreshAccount();
+  // Debounce completed local saves. A second edit during a network request schedules another pass.
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  useStore.subscribe((state, previous) => {
+    if (!dek || (state.plans === previous.plans && state.meta === previous.meta)) return;
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      if (dek) void syncNow(true);
+    }, 1500);
+  });
+  setInterval(() => {
+    if (dek && document.visibilityState === 'visible') void syncNow(true);
+  }, 60_000);
+}
+
+/** Bind this browser's vault to one account; never upload cached plans into another user's account. */
+export async function bindCloudAccount(user: CloudUser): Promise<void> {
+  const bound = (await getSetting<string>('cloudAccountId')) ?? cloudAccountId;
+  if (bound && bound !== user.id)
+    throw new Error(
+      'This browser contains plans linked to another account. Use a separate browser profile for this account, or export your plans and clear this site’s browser data first.',
+    );
+  const url = useStore.getState().settings.syncUrl;
+  if (url && url !== '/api')
+    throw new Error(
+      'This browser is linked to a different sync service. Use a separate browser profile for your Longview cloud account.',
+    );
+  cloudAccountId = user.id;
+  await setSetting('cloudAccountId', user.id);
+  useStore.getState().setSettings({ syncUrl: '/api' });
+}
+
+export async function stopCloudSync(): Promise<void> {
+  // Drain a running upload before removing its key; no new sync may start after this point.
+  useStore.getState().setSettings({ syncEnabled: false });
+  if (running) await running;
+  lockSync();
+  bundle = null;
+  bundleVersion = 0;
+  useSync.setState({ status: 'off', conflicts: [], message: '' });
+}
+
+async function checkCloudAccount(): Promise<void> {
+  if (!publicCloud || useStore.getState().settings.syncUrl !== '/api') return;
+  const user = await refreshAccount();
+  if (!user) throw new Error('Sign in to your cloud account first.');
+  await bindCloudAccount(user);
 }
 
 /** First device: create the data key, wrap it with the passphrase and a recovery key, and upload the wrapped bundle. */
 export async function setUpSync(passphrase: string): Promise<{ recoveryKey: string }> {
+  await checkCloudAccount();
   const c = client();
   const existing = await c.getKeys();
   if (existing)
@@ -106,7 +163,8 @@ export async function setUpSync(passphrase: string): Promise<{ recoveryKey: stri
 
 /** Another device, or a new session: fetch the wrapped bundle and unlock it with the passphrase. */
 export async function unlockSync(passphrase: string): Promise<void> {
-  if (!bundle) {
+  await checkCloudAccount();
+  if (!bundle || publicCloud) {
     const got = await client().getKeys();
     if (!got) throw new Error('No encryption key exists for this account yet. Set up sync first.');
     bundle = got.bundle as KeyBundle;
@@ -122,6 +180,7 @@ export async function unlockSync(passphrase: string): Promise<void> {
 
 /** Lost passphrase: unlock with the recovery key and set a new passphrase. Plans are not re-encrypted. */
 export async function recoverSync(recoveryKey: string, newPassphrase: string): Promise<void> {
+  await checkCloudAccount();
   const c = client();
   const got = await c.getKeys();
   const b = (got?.bundle as KeyBundle | undefined) ?? bundle;
@@ -214,15 +273,39 @@ export function syncNow(force = false): Promise<void> {
         const item = pending.find((q) => q.planId === id);
         const plan = useStore.getState().plans[id];
         const meta = useStore.getState().meta[id];
-        if (item?.op === 'delete' || !plan) {
+        if (item?.op === 'delete') {
           const remote = (await c.listPlans()).find((p) => p.id === id && !p.deleted);
-          if (remote) await c.deletePlan(id, remote.version);
-        } else if (meta?.dirty || force) {
+          if (remote) {
+            const result = await c.deletePlan(id, item.syncVersion ?? 0);
+            if (isConflict(result)) {
+              conflicts.push({
+                planId: id,
+                planName: item.planName ?? 'Deleted plan',
+                serverVersion: result.version,
+                serverUpdatedAt: result.updatedAt,
+                deletedOnServer: !!result.deleted,
+                deletedLocally: true,
+              });
+              continue;
+            }
+          }
+        } else if (plan && (meta?.dirty || force)) {
           const res = await upload(c, plan, meta?.syncVersion ?? 0);
           if (typeof res === 'number') {
-            useStore.getState().setMeta(id, { syncVersion: res, dirty: false });
+            const latest = useStore.getState().plans[id];
+            // Edits made while the upload was in flight are still unsent. Never overwrite them on disk.
+            if (!latest) continue;
+            const changed = latest !== plan;
+            useStore.getState().setMeta(id, { syncVersion: res, dirty: changed });
             const { putPlan } = await import('../state/db');
-            await putPlan({ id, plan, updatedAt: plan.updatedAt, syncVersion: res, dirty: false });
+            await putPlan({
+              id,
+              plan: latest,
+              updatedAt: latest.updatedAt,
+              syncVersion: res,
+              dirty: changed,
+            });
+            if (changed) continue;
           } else {
             conflicts.push(res);
             continue; // leave it queued until the user decides
@@ -251,8 +334,21 @@ export function syncNow(force = false): Promise<void> {
         }
         if (!local || (r.version > (meta?.syncVersion ?? 0) && !meta?.dirty)) {
           const got = await download(c, r.id);
-          if (got)
-            await useStore.getState().replacePlan(got.plan, { syncVersion: got.version, dirty: false });
+          if (got) {
+            if (useStore.getState().plans[r.id] !== local) {
+              conflicts.push({
+                planId: r.id,
+                planName: useStore.getState().plans[r.id]?.name ?? got.plan.name,
+                serverVersion: got.version,
+                serverUpdatedAt: r.updatedAt,
+                deletedOnServer: false,
+                deletedLocally: !useStore.getState().plans[r.id],
+              });
+            } else {
+              await useStore.getState().replacePlan(got.plan, { syncVersion: got.version, dirty: false });
+              if (!useStore.getState().settings.activePlanId) useStore.getState().setActive(got.plan.id);
+            }
+          }
         }
       }
       await syncSettings(c);
@@ -324,21 +420,42 @@ export async function resolveConflict(
   const c = client();
   const store = useStore.getState();
   const mine = store.plans[conflict.planId];
+  let keepPending = false;
   if (mine)
     await addSnapshot({ planId: mine.id, takenAt: new Date().toISOString(), reason: 'conflict', plan: mine });
   if (choice === 'both' && mine) await store.createPlan(`${mine.name} (this device)`, mine);
-  if (choice === 'mine' && mine) {
+  if (choice === 'mine' && conflict.deletedLocally) {
+    const result = await c.deletePlan(conflict.planId, conflict.serverVersion);
+    if (isConflict(result)) throw new Error('The cloud plan changed again. Sync and choose again.');
+  } else if (choice === 'mine' && mine) {
     const res = await upload(c, mine, conflict.serverVersion);
     if (typeof res !== 'number')
       throw new Error('The plan changed again on another device. Sync and choose again.');
-    useStore.getState().setMeta(mine.id, { syncVersion: res, dirty: false });
+    const latest = useStore.getState().plans[mine.id];
+    keepPending = latest !== mine;
+    if (latest) {
+      useStore.getState().setMeta(mine.id, { syncVersion: res, dirty: keepPending });
+      const { putPlan } = await import('../state/db');
+      await putPlan({
+        id: latest.id,
+        plan: latest,
+        updatedAt: latest.updatedAt,
+        syncVersion: res,
+        dirty: keepPending,
+      });
+    }
   } else {
     const got = conflict.deletedOnServer ? null : await download(c, conflict.planId);
+    if (useStore.getState().plans[conflict.planId] !== mine)
+      throw new Error(
+        'The local plan changed while resolving the conflict. Review your changes and choose again.',
+      );
     if (got) await useStore.getState().replacePlan(got.plan, { syncVersion: got.version, dirty: false });
     else if (mine) await useStore.getState().deletePlan(mine.id);
   }
-  for (const q of await queue())
-    if (q.planId === conflict.planId && q.key !== undefined) await dequeue(q.key);
+  if (!keepPending)
+    for (const q of await queue())
+      if (q.planId === conflict.planId && q.key !== undefined) await dequeue(q.key);
   useSync.setState((s) => ({ conflicts: s.conflicts.filter((x) => x.planId !== conflict.planId) }));
   void syncNow();
 }

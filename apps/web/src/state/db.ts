@@ -25,6 +25,9 @@ export interface QueueItem {
   planId: string;
   op: 'put' | 'delete';
   queuedAt: string;
+  /** The version actually seen before a local deletion, never a freshly fetched remote version. */
+  syncVersion?: number;
+  planName?: string;
 }
 
 let dbp: Promise<IDBPDatabase> | null = null;

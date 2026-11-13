@@ -63,9 +63,11 @@ export function Shell({
       </a>
       <nav className="rail" aria-label="Main" data-open={menu} data-tour="nav">
         <div className="rail-head">
-          <Link className="brand" to="/" aria-label="Longview home">
+          <Link className="brand" to="/" aria-label="Longview Planner home">
             <img src="/icon.svg" alt="" />
-            <span className="rail-text">Longview</span>
+            <span className="rail-text">
+              Longview <small style={{ display: 'block', fontSize: 11, fontWeight: 500 }}>Planner</small>
+            </span>
           </Link>
         </div>
         <div className="rail-scroll">
@@ -125,7 +127,7 @@ export function Shell({
           </div>
         ) : null}
         <header className="topbar">
-          <Link className="brand only-phone" to="/" aria-label="Longview home">
+          <Link className="brand only-phone" to="/" aria-label="Longview Planner home">
             <img src="/icon.svg" alt="" />
           </Link>
           <Menu
@@ -327,7 +329,7 @@ export function PageHead({
   group?: 'plan' | 'explore';
 }): ReactNode {
   useEffect(() => {
-    document.title = `${title} · Longview`;
+    document.title = `${title} · Longview Planner`;
   }, [title]);
   return (
     <>

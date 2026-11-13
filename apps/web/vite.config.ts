@@ -20,9 +20,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
         maximumFileSizeToCacheInBytes: 4 * 1024 * 1024,
         cleanupOutdatedCaches: true,
+        navigateFallbackDenylist: [/^\/api\//],
       },
       manifest: {
-        name: 'Longview',
+        name: 'Longview Planner',
         short_name: 'Longview',
         description: 'Personal finance scenario modeling. For personal educational planning only.',
         theme_color: '#4f5dd5',
