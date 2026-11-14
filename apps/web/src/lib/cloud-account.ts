@@ -14,7 +14,7 @@ const crypto = (): Promise<typeof import('@fisim/crypto')> => import('@fisim/cry
 
 export const publicCloud =
   import.meta.env.VITE_PUBLIC_CLOUD === 'true' ||
-  (typeof window !== 'undefined' && window.location.hostname === 'longview-planner.pages.dev');
+  (typeof window !== 'undefined' && window.location.hostname === 'longviewplanner.app');
 export interface CloudUser {
   id: string;
   username: string;

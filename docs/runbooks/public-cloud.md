@@ -1,6 +1,6 @@
 # Longview Planner public hosting and optional accounts
 
-Production: https://longview-planner.pages.dev. The calculator is public; accounts are optional and open to anyone. This replaces the original invitation-only Access/R2 plan for the public deployment. The older Access Worker remains available for private self-hosting.
+Production: https://longviewplanner.app (the old address, https://longview-planner.pages.dev, forwards there and hands over plans saved in the browser; see apps/web/src/lib/new-home.ts). The calculator is public; accounts are optional and open to anyone. This replaces the original invitation-only Access/R2 plan for the public deployment. The older Access Worker remains available for private self-hosting.
 
 ## Using the site
 

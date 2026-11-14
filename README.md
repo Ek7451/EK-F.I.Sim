@@ -104,7 +104,7 @@ research/            Local-only design reference material. Git-ignored; never co
 
 ## Documentation
 
-Hosted app: [Longview Planner](https://longview-planner.pages.dev) (public; no sign-in required). Anyone can optionally create a username/password account in Settings for private encrypted cloud saving. See the [public cloud runbook](docs/runbooks/public-cloud.md) and [deployment record](docs/deployments/2026-11-12.md).
+Hosted app: [Longview Planner](https://longviewplanner.app) (public; no sign-in required). Anyone can optionally create an account (Sign in in the header); plans are then encrypted in the browser and saved to the cloud automatically. See the [public cloud runbook](docs/runbooks/public-cloud.md) and [deployment record](docs/deployments/2026-11-12.md).
 
 | Document                                                                       | What it covers                                                                                 |
 | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |

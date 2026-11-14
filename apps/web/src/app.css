@@ -1698,3 +1698,13 @@ h2[tabindex='-1']:focus-visible,
 main[tabindex='-1']:focus-visible {
   outline: none;
 }
+
+/* The old address's one screen (pages/MovedHome.tsx): a hero card, centred a little above the middle. */
+.moved-home {
+  margin: max(48px, 16vh) auto 24px;
+  max-width: 600px;
+  padding: 28px 30px;
+}
+.moved-home > h1 {
+  font-size: 1.6rem;
+}
