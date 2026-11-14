@@ -1,10 +1,10 @@
-name = "longview-planner"
+name = "longviewplanner"
 pages_build_output_dir = "dist"
 compatibility_date = "2026-11-01"
 compatibility_flags = ["nodejs_compat"]
 
 [vars]
-APP_ORIGIN = "https://longview-planner.pages.dev"
+APP_ORIGIN = "https://longviewplanner.pages.dev"
 
 [[d1_databases]]
 binding = "DB"

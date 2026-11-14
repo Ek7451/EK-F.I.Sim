@@ -1,6 +1,6 @@
 # Longview Planner public hosting and optional accounts
 
-Production: https://longview-planner.pages.dev. The calculator is public; accounts are optional and open to anyone. This replaces the original invitation-only Access/R2 plan for the public deployment. The older Access Worker remains available for private self-hosting.
+Production: https://longviewplanner.pages.dev (the old address, https://longview-planner.pages.dev, forwards there and hands over plans saved in the browser; see apps/web/src/lib/new-home.ts). The calculator is public; accounts are optional and open to anyone. This replaces the original invitation-only Access/R2 plan for the public deployment. The older Access Worker remains available for private self-hosting.
 
 ## Using the site
 
@@ -24,7 +24,7 @@ Plans at `ek-fi-sim.pages.dev` or localhost remain at those origins. Transfer th
 
 ## Resources and release
 
-Configuration: `apps/web/wrangler.toml`. Project: `longview-planner`; D1: `longview-planner`, ID `cbb94af7-2a67-469a-a471-1b6e63834a39`. The `AUTH_SECRET` is stored as a Cloudflare Pages production secret, not in Git. Production account APIs reject preview hostnames; preview builds cannot access accounts through the production API.
+Configuration: `apps/web/wrangler.toml`. Project: `longviewplanner` (the old project, `longview-planner`, keeps one build that forwards to it); D1: `longview-planner`, ID `cbb94af7-2a67-469a-a471-1b6e63834a39`. The `AUTH_SECRET` is stored as a Cloudflare Pages production secret, not in Git. Production account APIs reject preview hostnames; preview builds cannot access accounts through the production API.
 
 `pnpm build` builds the browser app and bundles `workers/sync/src/pages.ts` into `apps/web/dist/_worker.js`. The backend is not included in the browser's precache or initial JavaScript. Worker development dependencies include current Vitest/Vite versions because Better Auth exposes an optional Vitest peer; these do not change the repository's existing Vitest runner.
 
@@ -40,7 +40,7 @@ pnpm build
 pnpm e2e
 pnpm lighthouse
 node workers/sync/node_modules/wrangler/bin/wrangler.js d1 migrations apply longview-planner --remote --config apps/web/wrangler.toml
-node workers/sync/node_modules/wrangler/bin/wrangler.js pages deploy dist --cwd apps/web --project-name longview-planner --branch main
+node workers/sync/node_modules/wrangler/bin/wrangler.js pages deploy dist --cwd apps/web --project-name longviewplanner --branch main
 ```
 
 Apply backward-compatible migrations before publication. For production release, prefer the exact `web-dist` artifact from the passing PR workflow. `.github/workflows/deploy.yml` performs migrations and publication when repository `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets are present; those secrets are currently absent, so uploads are manual. A green skipped deploy job is not evidence of publication. Never reuse the local OAuth token as a repository secret.
