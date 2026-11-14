@@ -1,13 +1,13 @@
 /**
- * The app moved from longview-planner.pages.dev to longviewplanner.app. A browser keeps saved plans per address, so
+ * The app moved from longview-planner.pages.dev to longviewplanner.pages.dev. A browser keeps saved plans per address, so
  * plans made at the old address without an account would be left behind. The old address hands them to the new one
  * inside the link itself: compressed into the part after `#`, which browsers never send to any server. The new
  * address imports them and wipes them from the address bar at once.
  */
 import type { Plan } from '@fisim/engine';
 
-export const HOME = 'https://longviewplanner.app';
-export const HOME_NAME = 'longviewplanner.app';
+export const HOME = 'https://longviewplanner.pages.dev';
+export const HOME_NAME = 'longviewplanner.pages.dev';
 const OLD_HOST = 'longview-planner.pages.dev';
 const KEY = 'move=';
 /** Remembered at the old address once its plans have moved, so later visits go straight to the new one. */

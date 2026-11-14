@@ -13,7 +13,7 @@ concurrency:
   cancel-in-progress: false
 
 env:
-  PAGES_PROJECT: longview-planner
+  PAGES_PROJECT: longviewplanner
 
 jobs:
   checks:

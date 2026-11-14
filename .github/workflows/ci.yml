@@ -18,7 +18,7 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 env:
-  PAGES_PROJECT: longview-planner
+  PAGES_PROJECT: longviewplanner
 
 jobs:
   lint:

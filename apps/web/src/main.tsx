@@ -18,7 +18,7 @@ window.addEventListener(
   (e) => void logError(`rejection: ${e.reason instanceof Error ? e.reason.message : String(e.reason)}`),
 );
 
-// The app moved to longviewplanner.app; the old address forwards there (see lib/new-home.ts).
+// The app moved to longviewplanner.pages.dev; the old address forwards there (see lib/new-home.ts).
 const oldHome = onOldHome();
 
 function Root(): ReactNode {
