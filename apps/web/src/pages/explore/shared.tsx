@@ -1,5 +1,5 @@
 import { toReal, type ProjectionResult, type YearRecord } from '@fisim/engine';
-import { Badge, Button, Card, Notice } from '@fisim/ui';
+import { Badge, Button, Icon, Notice, Skeleton } from '@fisim/ui';
 import { type ReactNode } from 'react';
 import { useProjection } from '../../engine/useResults';
 import { usePlan } from '../../state/store';
@@ -28,17 +28,24 @@ export function useMoney(): {
 export function Loading({ error }: { error: string | null }): ReactNode {
   const { retry } = useProjection();
   return error ? (
-    <Notice tone="danger">
-      The projection could not be worked out: {error} <Button onClick={retry}>Retry calculation</Button>
-    </Notice>
-  ) : (
-    <Card>
-      <div style={{ minHeight: 280 }}>
-        <p className="lv-muted" role="status">
-          Working out the projection…
-        </p>
+    <div className="lv-card lv-state" role="alert">
+      <span className="lv-state-mark" data-tone="danger" aria-hidden="true">
+        <Icon name="warning" size={22} />
+      </span>
+      <h2>The projection could not be worked out</h2>
+      <p>{error}</p>
+      <div className="lv-row">
+        <Button variant="primary" onClick={retry}>
+          Retry calculation
+        </Button>
       </div>
-    </Card>
+    </div>
+  ) : (
+    <div className="lv-placeholder" role="status" aria-live="polite">
+      <span className="lv-sr">Working out the projection…</span>
+      <span className="lv-placeholder-band" aria-hidden="true" />
+      <Skeleton height={360} />
+    </div>
   );
 }
 

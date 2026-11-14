@@ -4,9 +4,11 @@ import {
   Button,
   Card,
   Fold,
+  KpiStrip,
   MoneyField,
   NumberField,
   SelectField,
+  Stat,
   TextField,
   formatMoney,
 } from '@fisim/ui';
@@ -38,6 +40,13 @@ export function HouseholdPage(): ReactNode {
   const ePerson = plan.people.find((p) => p.id === earningsFor);
   const eIdx = plan.people.findIndex((p) => p.id === earningsFor);
   const deps = plan.household.dependents;
+  // The headline band: who, where, how they file and how long the plan runs, read straight from the inputs.
+  const start = plan.settings.startYear;
+  const born = (p: Person): number => Number(p.birthDate.slice(0, 4));
+  const endYear = Math.max(...plan.people.map((p) => born(p) + p.longevity.age));
+  const filingNow = [...status].reverse().find((f) => f.fromYear <= start) ?? status[0];
+  const home = plan.people[0]?.residence.filter((r) => r.fromYear <= start).at(-1) ?? plan.people[0]?.residence[0];
+  const moves = new Set(plan.people.flatMap((p) => p.residence.map((r) => r.state))).size - 1;
 
   return (
     <>
@@ -46,6 +55,32 @@ export function HouseholdPage(): ReactNode {
         title="Household"
         intro="Who the plan covers, where you live, how you file, and how long the plan should run."
       />
+      <KpiStrip data-tour="household-summary">
+        <Stat
+          icon="household"
+          label={plan.people.length > 1 ? 'Two people' : 'One person'}
+          value={plan.people.map((p) => p.name).join(' & ')}
+          note={plan.people.map((p) => `${p.name}, age ${start - born(p)}`).join(' · ')}
+        />
+        <Stat
+          icon="taxes"
+          label="Files as"
+          value={STATUS_LABELS[filingNow.status] ?? filingNow.status}
+          note={status.length > 1 ? `${status.length - 1} change${status.length > 2 ? 's' : ''} later` : 'For the whole plan'}
+        />
+        <Stat
+          icon="home"
+          label="Lives in"
+          value={home?.state ?? '—'}
+          note={moves > 0 ? `${moves} move${moves > 1 ? 's' : ''} planned` : 'No move planned'}
+        />
+        <Stat
+          icon="calendar"
+          label="Plan runs"
+          value={`${start}–${endYear}`}
+          note={`${endYear - start + 1} years · ${deps.length ? `${deps.length} dependent${deps.length > 1 ? 's' : ''}` : 'no dependents'}`}
+        />
+      </KpiStrip>
       <FoldColumns
         left={
           <Card

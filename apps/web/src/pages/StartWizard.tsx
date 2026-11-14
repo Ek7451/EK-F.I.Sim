@@ -469,7 +469,15 @@ export function StartPage(): ReactNode {
           ))}
         </ol>
         <h2 ref={heading} tabIndex={-1} className="wizard-heading">
-          {step < 5 ? `Step ${step + 1} of 5: ${titles[step]}` : 'Check what we assumed'}
+          {/* The step row above already numbers the steps on screen; assistive tech hears the number here. */}
+          {step < 5 ? (
+            <>
+              <span className="lv-sr">Step {step + 1} of 5: </span>
+              {titles[step]}
+            </>
+          ) : (
+            'Check what we assumed'
+          )}
         </h2>
 
         {step === 0 ? (
