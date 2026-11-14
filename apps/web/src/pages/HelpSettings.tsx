@@ -23,7 +23,7 @@ import { useTour } from '../tours/TourEngine';
 import type { TourDef } from '../tours/types';
 import { CloudAccountCard } from './CloudAccountCard';
 import './help-settings.css';
-import { publicCloud, useCloudAccount } from '../lib/cloud-account';
+import { publicCloud } from '../lib/cloud-account';
 
 const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
 const when = (iso: string | null): string => (iso ? new Date(iso).toLocaleString() : 'never');
@@ -519,9 +519,9 @@ function BackupCard(): ReactNode {
   );
 }
 
+/** Self-hosted builds only: sync to your own service with its own passphrase. The public site uses the Account card. */
 function SyncCard(): ReactNode {
   const sync = useSync();
-  const account = useCloudAccount();
   const url = useStore((s) => s.settings.syncUrl);
   const plans = useStore((s) => s.plans);
   const { setSettings, notify } = useStore.getState();
@@ -560,15 +560,12 @@ function SyncCard(): ReactNode {
     error: 'Could not sync',
   };
   const strong = pass.length >= 12 && pass === again;
-  if (publicCloud && !account.user) return null;
+  if (publicCloud) return null;
   return (
-    <Card title={publicCloud ? 'Encrypted cloud vault' : 'Sync between devices'} data-tour="settings-sync">
+    <Card title="Sync between devices" data-tour="settings-sync">
       <p className="lv-muted lv-small">
         Optional. Plans are encrypted on this device before upload, so the service only ever holds scrambled
-        data.{' '}
-        {publicCloud
-          ? 'Create a vault once, then unlock it on each device. Its passphrase and recovery key are separate from your account password and recovery code; keep both somewhere safe.'
-          : 'You need your own sync service address; see the setup guide in the project’s docs folder.'}
+        data. You need your own sync service address; see the setup guide in the project’s docs folder.
       </p>
       <div className="lv-row" style={{ marginTop: 8 }} data-tour="sync-status" role="status">
         <Badge
@@ -622,7 +619,8 @@ function SyncCard(): ReactNode {
           </Notice>
         </div>
       ))}
-      {!publicCloud ? (
+      {/* The public site never reaches here; this is the self-hosted service address. */}
+      {url !== '/api' ? (
         <div style={{ marginTop: 10, maxWidth: 520 }}>
           <TextField
             label="Sync service address"
@@ -895,15 +893,22 @@ function DeviceCard(): ReactNode {
 export function SettingsPage(): ReactNode {
   return (
     <>
-      <PageHead title="Settings" intro="Your plans, backups, cloud saving and this device." />
+      <PageHead
+        title="Settings"
+        intro={
+          publicCloud
+            ? 'Your account, plans, backups and this device.'
+            : 'Your plans, backups, sync and this device.'
+        }
+      />
       <div className="hs-settings">
         <div className="hs-col">
           <PlansCard />
           <BackupCard />
         </div>
         <div className="hs-col">
-          <DeviceCard />
           <CloudAccountCard />
+          <DeviceCard />
           <SyncCard />
         </div>
       </div>

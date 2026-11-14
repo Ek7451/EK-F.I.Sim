@@ -9,6 +9,7 @@ import { create } from 'zustand';
 import {
   addSnapshot,
   allPlans,
+  clearPlanData,
   enqueue,
   getSetting,
   putPlan,
@@ -82,6 +83,8 @@ interface State {
   createFromSample(id: SamplePlanId): Promise<string>;
   duplicatePlan(id: string): Promise<string>;
   deletePlan(id: string): Promise<void>;
+  /** Remove every plan from this browser without telling the cloud (signing out). */
+  clearPlans(): Promise<void>;
   importPlan(raw: unknown): Promise<string>;
   replacePlan(plan: Plan, meta?: Partial<PlanMeta>): Promise<void>;
   setActive(id: string): void;
@@ -234,6 +237,14 @@ export const useStore = create<State>((set, get) => ({
       settings.activePlanId === id ? (Object.keys(next)[0] ?? null) : settings.activePlanId;
     set({ plans: next, meta: nm, history: nh });
     get().setSettings({ activePlanId });
+  },
+  async clearPlans() {
+    // Pending saves would write a plan straight back after it is cleared.
+    for (const t of saveTimers.values()) clearTimeout(t);
+    saveTimers.clear();
+    await clearPlanData();
+    set({ plans: {}, meta: {}, history: {}, saveStatus: {}, scenarioId: null, sandbox: null });
+    get().setSettings({ activePlanId: null });
   },
   async importPlan(raw) {
     const loaded = (await loadEngine()).loadPlan(raw);
