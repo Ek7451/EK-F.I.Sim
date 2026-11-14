@@ -12,6 +12,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -195,15 +196,22 @@ function TourLayer({
   const loc = useLocation();
   const phone = usePhone();
   const body = useFilled(step);
-  const [el, setEl] = useState<HTMLElement | null>(null);
+  // The target found for this step. Keyed by the step, so the previous step's target is never shown for this one.
+  const [found, setFound] = useState<{ step: TourStep; el: HTMLElement } | null>(null);
+  const el = found?.step === step ? found.el : null;
+  // The target could not be found in time: the card shows in the middle instead.
+  const [lost, setLost] = useState<TourStep | null>(null);
   const [rect, setRect] = useState<DOMRect | null>(null);
+  // True once the target has stopped moving (after the scroll that brings it into view). Until then the spotlight
+  // and the card stay hidden, so they appear in place instead of opening elsewhere and sliding over.
+  const [settled, setSettled] = useState(false);
   const [acted, setActed] = useState(false);
   const card = useRef<HTMLDivElement | null>(null);
   const heading = useRef<HTMLHeadingElement>(null);
   const last = index === tour.steps.length - 1;
 
   // Go to the step's screen, then wait for its target to appear.
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (loc.pathname !== step.route) {
       nav(step.route);
       return;
@@ -212,47 +220,60 @@ function TourLayer({
     let tries = 0;
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const look = (): boolean => {
-      const found = findTarget(step.target);
-      if (!found) return false;
+      const target = findTarget(step.target);
+      if (!target) return false;
       // A folded section that is itself the target opens, so the step can point at what it describes.
-      if (found instanceof HTMLDetailsElement && !found.open) found.open = true;
-      found.scrollIntoView({ block: 'center', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
-      setEl(found);
+      if (target instanceof HTMLDetailsElement && !target.open) target.open = true;
+      target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: reduce ? 'auto' : 'smooth' });
+      setFound({ step, el: target });
       return true;
     };
     if (look()) return;
     const t = setInterval(() => {
-      if (look() || ++tries > 40) clearInterval(t);
+      if (look()) clearInterval(t);
+      else if (++tries > 40) {
+        clearInterval(t);
+        setLost(step);
+      }
     }, 100);
     return () => clearInterval(t);
-  }, [loc.pathname, step.route, step.target, nav]);
+  }, [loc.pathname, step, nav]);
 
-  // Keep the spotlight on the target as the page scrolls or reflows.
-  useEffect(() => {
+  // Follow the target every frame (scrolling, reflow), and note when it has come to rest.
+  useLayoutEffect(() => {
+    setSettled(false);
     if (!el) {
       setRect(null);
       return;
     }
-    const measure = (): void => {
+    const same = (a: DOMRect | null, b: DOMRect): boolean =>
+      !!a && a.x === b.x && a.y === b.y && a.width === b.width && a.height === b.height;
+    let prev: DOMRect | null = null;
+    let still = 0;
+    let rested = false;
+    let raf = 0;
+    const tick = (): void => {
       if (!el.isConnected) {
-        setEl(findTarget(step.target));
+        // The screen re-rendered the target: find the new one.
+        const again = findTarget(step.target);
+        if (again) setFound({ step, el: again });
+        else setLost(step);
         return;
       }
       const r = el.getBoundingClientRect();
-      setRect((p) =>
-        p && p.x === r.x && p.y === r.y && p.width === r.width && p.height === r.height ? p : r,
-      );
+      // A few unchanged frames in a row: the smooth scroll has finished (or never needed to start).
+      still = same(prev, r) ? still + 1 : 0;
+      if (!rested && still >= 4) {
+        rested = true;
+        setSettled(true);
+      }
+      prev = r;
+      setRect((p) => (same(p, r) ? p : r));
+      raf = requestAnimationFrame(tick);
     };
-    measure();
-    const t = setInterval(measure, 150);
-    window.addEventListener('scroll', measure, true);
-    window.addEventListener('resize', measure);
-    return () => {
-      clearInterval(t);
-      window.removeEventListener('scroll', measure, true);
-      window.removeEventListener('resize', measure);
-    };
-  }, [el, step.target]);
+    tick();
+    return () => cancelAnimationFrame(raf);
+  }, [el, step]);
 
   // "Try it" steps: notice when the user uses the control.
   useEffect(() => {
@@ -263,10 +284,7 @@ function TourLayer({
     return () => types.forEach((t) => el.removeEventListener(t, on));
   }, [el, step.action]);
 
-  // Focus moves to the card on every step; Esc leaves; arrows step when focus is in the card.
-  useEffect(() => {
-    heading.current?.focus({ preventScroll: true });
-  }, []);
+  // Esc leaves; arrows step when focus is in the card.
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
@@ -313,23 +331,32 @@ function TourLayer({
     : el
       ? floatingStyles
       : { position: 'fixed', left: '50%', top: '50%', transform: 'translate(-50%, -50%)' };
+  // Hidden while the step's target is still being found or scrolled to; a step with no target shows at once.
+  const ready = el ? settled && !!rect : !step.target || lost === step;
+  const lit = !!el && !!rect && settled;
+  // Focus moves to the card on every step, once it is on screen (a hidden card cannot take focus).
+  useEffect(() => {
+    if (ready) heading.current?.focus({ preventScroll: true });
+  }, [ready]);
   const pad = 6;
-  const spot: React.CSSProperties = rect
-    ? {
-        left: rect.left - pad,
-        top: rect.top - pad,
-        width: rect.width + pad * 2,
-        height: rect.height + pad * 2,
-      }
-    : {};
+  const spot: React.CSSProperties =
+    lit && rect
+      ? {
+          left: rect.left - pad,
+          top: rect.top - pad,
+          width: rect.width + pad * 2,
+          height: rect.height + pad * 2,
+        }
+      : {};
 
   return (
     <>
-      <div className="tour-spot" style={spot} data-empty={!rect} aria-hidden="true" />
+      <div className="tour-spot" style={spot} data-empty={!lit} aria-hidden="true" />
       <div
         ref={setCard}
         className="tour-card lv-night"
         data-sheet={phone}
+        data-ready={ready}
         style={style}
         role="dialog"
         aria-modal="false"

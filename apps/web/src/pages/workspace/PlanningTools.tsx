@@ -1,5 +1,17 @@
-import type { Milestone, Plan, ProjectionResult, YearRef } from '@fisim/engine';
-import { Badge, Button, Card, Dialog, Slider, TextField, formatMoney, formatPct } from '@fisim/ui';
+import type { Milestone, Plan, ProjectionResult } from '@fisim/engine';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  Icon,
+  IconTile,
+  Segmented,
+  Slider,
+  TextField,
+  formatMoney,
+  formatPct,
+} from '@fisim/ui';
 import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { scenarioChanges, useDraft } from '../../state/draft';
@@ -63,12 +75,18 @@ function PrecisionField({
   max,
   onChange,
   decimals = false,
+  money = false,
+  note,
 }: {
   label: string;
   value: number;
   min: number;
   max: number;
   decimals?: boolean;
+  /** Show a $ before the figure. */
+  money?: boolean;
+  /** A few words under the field (for example "a year"). */
+  note?: string;
   onChange: (value: number) => void;
 }): ReactNode {
   const id = useId();
@@ -87,29 +105,42 @@ function PrecisionField({
       <label className="lv-label" htmlFor={id}>
         {label}
       </label>
-      <input
-        id={id}
-        className="lv-input"
-        inputMode={decimals ? 'decimal' : 'numeric'}
-        value={text}
-        aria-invalid={!!error}
-        aria-describedby={error ? `${id}-error` : undefined}
-        onChange={(e) => {
-          const next = e.target.value;
-          setText(next);
-          const parsed = next.replace(/[$,\s]/g, '');
-          const n = Number(parsed);
-          const invalid =
-            !parsed || !Number.isFinite(n) || (!decimals && !Number.isInteger(n)) || n < min || n > max;
-          useDraft.getState().setInvalid(id, !!invalid);
-          if (invalid) {
-            setError(`Enter ${decimals ? 'an amount' : 'a whole number'} from ${min} to ${max}.`);
-          } else {
-            setError('');
-            onChange(n);
-          }
-        }}
-      />
+      <div className="lv-affix">
+        {money ? (
+          <span data-side="left" aria-hidden="true">
+            $
+          </span>
+        ) : null}
+        <input
+          id={id}
+          className="lv-input"
+          data-prefix={money ? '' : undefined}
+          inputMode={decimals ? 'decimal' : 'numeric'}
+          value={text}
+          aria-invalid={!!error}
+          aria-describedby={error ? `${id}-error` : note ? `${id}-note` : undefined}
+          onChange={(e) => {
+            const next = e.target.value;
+            setText(next);
+            const parsed = next.replace(/[$,\s]/g, '');
+            const n = Number(parsed);
+            const invalid =
+              !parsed || !Number.isFinite(n) || (!decimals && !Number.isInteger(n)) || n < min || n > max;
+            useDraft.getState().setInvalid(id, !!invalid);
+            if (invalid) {
+              setError(`Enter ${decimals ? 'an amount' : 'a whole number'} from ${min} to ${max}.`);
+            } else {
+              setError('');
+              onChange(n);
+            }
+          }}
+        />
+      </div>
+      {note && !error ? (
+        <span className="lv-hint" id={`${id}-note`}>
+          {note}
+        </span>
+      ) : null}
       {error && (
         <span id={`${id}-error`} className="field-error" role="alert">
           {error}
@@ -208,6 +239,16 @@ export function DraftActions({
   );
 }
 
+const COVERAGE_NAMES: Record<string, string> = {
+  employer: 'employer plan',
+  spouseEmployer: "partner's employer plan",
+  cobra: 'COBRA',
+  aca: 'marketplace plan',
+  medicaid: 'Medicaid',
+  medicare: 'Medicare',
+  none: 'no coverage',
+};
+
 export function PlanningEditor({
   base,
   plan,
@@ -243,9 +284,39 @@ export function PlanningEditor({
     ? plan.healthcare.people.flatMap((person) =>
         person.coverage
           .filter((c) => c.from.type === 'milestone' && c.from.milestoneId === m.id)
-          .map((c) => `${plan.people.find((p) => p.id === person.personId)?.name}: ${c.type} coverage`),
+          .map(
+            (c) =>
+              `${plan.people.find((p) => p.id === person.personId)?.name}: ${COVERAGE_NAMES[c.type] ?? c.type}`,
+          ),
       )
     : [];
+  const retirements = plan.milestones.filter((x) => x.kind === 'retirement');
+  const setAge = (v: number): void =>
+    edit(`${m?.name ?? 'Milestone'} timing`, (d) => {
+      const x = d.milestones.find((q) => q.id === m?.id);
+      if (x?.when.type === 'age') x.when.age = v;
+    });
+  const moves: { key: string; icon: string; label: string; to: string }[] = [
+    ...linked.map((i) => ({
+      key: i.id,
+      icon: i.to === '/plan/income' ? 'income' : 'spending',
+      label: i.name,
+      to: `${i.to}?edit=${i.id}`,
+    })),
+    ...contributions.map((a) => ({
+      key: `c-${a.id}`,
+      icon: 'piggy',
+      label: `Saving into ${a.name}`,
+      to: '/plan/snapshot',
+    })),
+    ...coverage.map((c) => ({ key: `h-${c}`, icon: 'health', label: c, to: '/plan/healthcare' })),
+    ...(m?.effects ?? []).map((effect, i) => ({
+      key: `e-${i}`,
+      icon: 'flag',
+      label: `A ${effect.type === 'setAmount' ? 'new amount' : effect.type} set at this milestone`,
+      to: '/plan/timeline',
+    })),
+  ];
   return (
     <div ref={editor}>
       <Card
@@ -258,47 +329,35 @@ export function PlanningEditor({
         data-tour="what-if-sliders"
       >
         <p className="lv-muted lv-small">
-          Changes preview here. Apply, save a scenario, or discard when ready.
+          Changes preview on the chart. Apply them, save a scenario or discard from the draft bar.
         </p>
-        <div className="planning-fields">
-          {plan.milestones
-            .filter((x) => x.kind === 'retirement')
-            .map((x) => (
-              <Button key={x.id} size="sm" aria-pressed={selected === x.id} onClick={() => onSelect(x.id)}>
-                {x.name}
-              </Button>
-            ))}
-          {m && (
-            <section aria-label={`Edit ${m.name}`}>
-              <h3>{m.name}</h3>
+        <div className="pe-body">
+          {retirements.length > 1 ? (
+            <Segmented
+              label="Milestone to move"
+              value={selected ?? ''}
+              onChange={onSelect}
+              options={retirements.map((x) => ({ value: x.id, label: x.name }))}
+            />
+          ) : null}
+          {m ? (
+            <section className="pe-section" aria-label={`Edit ${m.name}`}>
+              <h3>
+                <IconTile icon="sun" kind="milestone" />
+                {m.name}
+              </h3>
               {m.when.type === 'age' ? (
-                <>
+                <div className="pe-dial">
                   <Slider
                     label={`${m.name} at age`}
                     value={m.when.age}
                     min={0}
                     max={120}
                     step={1}
-                    onChange={(v) =>
-                      edit(`${m.name} timing`, (d) => {
-                        const x = d.milestones.find((q) => q.id === m.id);
-                        if (x?.when.type === 'age') x.when.age = v;
-                      })
-                    }
+                    onChange={setAge}
                   />
-                  <PrecisionField
-                    label="Exact age"
-                    value={m.when.age}
-                    min={0}
-                    max={120}
-                    onChange={(v) =>
-                      edit(`${m.name} timing`, (d) => {
-                        const x = d.milestones.find((q) => q.id === m.id);
-                        if (x?.when.type === 'age') x.when.age = v;
-                      })
-                    }
-                  />
-                </>
+                  <PrecisionField label="Exact age" value={m.when.age} min={0} max={120} onChange={setAge} />
+                </div>
               ) : m.when.type === 'year' ? (
                 <PrecisionField
                   label="Exact year"
@@ -313,83 +372,92 @@ export function PlanningEditor({
                   }
                 />
               ) : (
-                <p>
+                <p className="lv-small">
                   This milestone follows a condition. <Link to="/plan/timeline">Edit its condition</Link>.
                 </p>
               )}
-              <h4>Affected items</h4>
-              <ul className="dependency-list">
-                {linked.map((i) => (
-                  <li key={i.id}>
-                    <Link to={i.to}>{i.name}</Link>
-                  </li>
-                ))}
-                {contributions.map((a) => (
-                  <li key={a.id}>
-                    <Link to="/plan/snapshot">Contributions to {a.name}</Link>
-                  </li>
-                ))}
-                {coverage.map((c) => (
-                  <li key={c}>
-                    <Link to="/plan/healthcare">{c}</Link>
-                  </li>
-                ))}
-                {m.effects.map((effect, i) => (
-                  <li key={i}>Explicit {effect.type} change at this milestone</li>
-                ))}
-              </ul>
-              {!linked.length && !m.effects.length && (
+              <h4>Moves with it</h4>
+              {moves.length ? (
+                <ul className="pe-moves">
+                  {moves.map((x) => (
+                    <li key={x.key}>
+                      <Icon name={x.icon} size={14} />
+                      <Link to={x.to}>{x.label}</Link>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
                 <p className="lv-small lv-muted">No income or spending is linked to this milestone.</p>
               )}
             </section>
-          )}
-          {plan.assumptions.returns.mode === 'fixed' && (
+          ) : null}
+          <section className="pe-section" aria-label="Markets">
+            <h3>Markets</h3>
+            {plan.assumptions.returns.mode === 'fixed' && (
+              <Slider
+                label="US stock return"
+                value={plan.assumptions.returns.fixed.usStocks}
+                min={-0.05}
+                max={0.15}
+                step={0.0025}
+                format={(v) => formatPct(v, 2)}
+                onChange={(v) =>
+                  edit('Expected stock returns changed', (d) => {
+                    const f = d.assumptions.returns.fixed;
+                    f.intlStocks = +(f.intlStocks + v - f.usStocks).toFixed(6);
+                    f.usStocks = v;
+                  })
+                }
+              />
+            )}
             <Slider
-              label="US stock return"
-              value={plan.assumptions.returns.fixed.usStocks}
-              min={-0.05}
-              max={0.15}
+              label="Inflation"
+              value={plan.assumptions.inflation.rate}
+              min={0}
+              max={0.07}
               step={0.0025}
               format={(v) => formatPct(v, 2)}
               onChange={(v) =>
-                edit('Expected stock returns changed', (d) => {
-                  const f = d.assumptions.returns.fixed;
-                  f.intlStocks = +(f.intlStocks + v - f.usStocks).toFixed(6);
-                  f.usStocks = v;
+                edit('Inflation changed', (d) => {
+                  d.assumptions.inflation.rate = v;
                 })
               }
             />
-          )}
-          <Slider
-            label="Inflation"
-            value={plan.assumptions.inflation.rate}
-            min={0}
-            max={0.07}
-            step={0.0025}
-            format={(v) => formatPct(v, 2)}
-            onChange={(v) =>
-              edit('Inflation changed', (d) => {
-                d.assumptions.inflation.rate = v;
-              })
-            }
-          />
-          {plan.expenses.slice(0, 3).map((e) => (
-            <PrecisionField
-              key={e.id}
-              label={`${e.name} (${e.recurrence.type}, dollars)`}
-              value={e.amount / 100}
-              decimals
-              min={0}
-              max={10000000}
-              onChange={(v) =>
-                edit(`${e.name} amount changed`, (d) => {
-                  const x = d.expenses.find((q) => q.id === e.id);
-                  if (x) x.amount = Math.round(v * 100);
-                })
-              }
-            />
-          ))}
-          <Link to="/plan/household">All plan inputs →</Link>
+          </section>
+          {plan.expenses.length ? (
+            <section className="pe-section" aria-label="Spending">
+              <h3>Spending</h3>
+              <div className="pe-amounts">
+                {plan.expenses.slice(0, 3).map((e) => (
+                  <PrecisionField
+                    key={e.id}
+                    label={e.name}
+                    money
+                    note={
+                      e.recurrence.type === 'once'
+                        ? 'once'
+                        : e.recurrence.type === 'interval'
+                          ? `every ${e.recurrence.everyYears} years`
+                          : 'a year'
+                    }
+                    value={e.amount / 100}
+                    decimals
+                    min={0}
+                    max={10000000}
+                    onChange={(v) =>
+                      edit(`${e.name} amount changed`, (d) => {
+                        const x = d.expenses.find((q) => q.id === e.id);
+                        if (x) x.amount = Math.round(v * 100);
+                      })
+                    }
+                  />
+                ))}
+              </div>
+            </section>
+          ) : null}
+          <Link className="pe-more" to="/plan/household">
+            All plan inputs <Icon name="chevron" size={14} />
+          </Link>
         </div>
       </Card>
     </div>
@@ -425,19 +493,6 @@ export function EventTimeline({
   const last = result.records.at(-1)!.year;
   const start = first + ((last - first) * view.range[0]) / 100;
   const end = first + ((last - first) * view.range[1]) / 100;
-  const resolve = (ref: YearRef | undefined, fallback: number): number | null => {
-    if (!ref) return fallback;
-    if (ref.type === 'year') return ref.year;
-    if (ref.type === 'age')
-      return Number(plan.people.find((p) => p.id === ref.personId)?.birthDate.slice(0, 4) ?? first) + ref.age;
-    const m = plan.milestones.find((item) => item.id === ref.milestoneId);
-    const year = m ? milestoneYear(plan, m, result) : null;
-    return year === null ? null : year + ref.offset;
-  };
-  const spans = [
-    ...plan.incomes.map((item) => ({ ...item, route: '/plan/income' })),
-    ...plan.expenses.map((item) => ({ ...item, route: '/plan/spending' })),
-  ];
   const move = (id: string, year: number): void => {
     const y = Math.max(first, Math.min(last, Math.round(year)));
     useDraft.getState().edit(base, 'Milestone timing changed', (d) => {
@@ -456,10 +511,8 @@ export function EventTimeline({
   const lanes: number[] = [];
   const labelWidth = Math.min(190, trackWidth * 0.48);
   const labelPct = (labelWidth / Math.max(1, trackWidth)) * 100;
-  const laneHeight = Math.max(
-    44,
-    ...events.map(({ m }) => Math.ceil((m.name.length * 7) / Math.max(40, labelWidth - 16)) * 15 + 28),
-  );
+  // Pins are one line (name and year side by side in a capsule), so every lane is the same height.
+  const laneHeight = 38;
   const positioned = events
     .sort((a, b) => a.year! - b.year!)
     .map((event) => {
@@ -472,14 +525,17 @@ export function EventTimeline({
     });
   return (
     <section className="event-timeline" aria-label="Life events" data-tour="integrated-timeline">
-      <div className="lv-spread">
+      <div className="event-head">
         <strong>Life events</strong>
-        <span className="lv-small lv-muted">Drag or use arrow keys · Escape cancels</span>
+        <span className="lv-small lv-muted">Drag a pin or use the arrow keys · Esc cancels</span>
+        <Link className="lv-small" to="/plan/timeline">
+          Every stream on the timeline <Icon name="chevron" size={12} />
+        </Link>
       </div>
       <div
         ref={track}
         className="event-track"
-        style={{ height: Math.max(62, lanes.length * laneHeight + 22) }}
+        style={{ height: Math.max(46, lanes.length * laneHeight + 10) }}
       >
         <span className="event-start">{Math.round(start)}</span>
         <span className="event-end">{Math.round(end)}</span>
@@ -491,8 +547,7 @@ export function EventTimeline({
             data-tour="timeline-pin"
             data-derived={m.when.type === 'condition'}
             aria-pressed={selected === m.id}
-            style={{ left: `${left}%`, top: lane * laneHeight + 18, width: labelWidth }}
-            aria-label={`${m.name} ${year} · ${plan.people.map((p) => Math.max(0, year! - Number(p.birthDate.slice(0, 4)))).join(' / ')} years old${m.when.type === 'condition' ? ', condition based' : ', arrow keys move one year'}`}
+            style={{ left: `${left}%`, top: lane * laneHeight + 14, maxWidth: labelWidth }}
             onClick={() => onSelect(m.id)}
             onKeyDown={(e) => {
               if (m.when.type !== 'condition' && ['ArrowLeft', 'ArrowRight'].includes(e.key)) {
@@ -551,48 +606,24 @@ export function EventTimeline({
               aria-hidden="true"
               style={{ left: ((anchor - left) / 100) * trackWidth }}
             />
-            <span aria-hidden="true">{m.kind === 'retirement' ? '◉' : '◇'}</span> {m.name}{' '}
-            <small>
-              {year} ·{' '}
-              {plan.people.map((p) => Math.max(0, year! - Number(p.birthDate.slice(0, 4)))).join(' / ')} years
-              old
-            </small>
+            <span className="event-medal" aria-hidden="true">
+              <Icon name={m.kind === 'retirement' ? 'sun' : m.kind === 'fi' ? 'target' : 'flag'} size={13} />
+            </span>
+            {/* Named by what it shows, so voice control can say what is on screen; the hint is for
+                assistive tech only. */}
+            <span className="event-text">
+              <span>{m.name}</span>{' '}
+              <small>
+                {year} · age{' '}
+                {plan.people.map((p) => Math.max(0, year! - Number(p.birthDate.slice(0, 4)))).join(' / ')}
+              </small>
+            </span>
+            <span className="lv-sr">
+              {m.when.type === 'condition' ? ', condition based' : ', arrow keys move one year'}
+            </span>
           </button>
         ))}
       </div>
-      <details className="timeline-spans">
-        <summary>Income and spending spans</summary>
-        <ul className="lv-list">
-          {spans.map((item) => {
-            const from = resolve(item.start, first);
-            const to = resolve(item.end, last);
-            const linked = [item.start, item.end].some(
-              (ref) => ref?.type === 'milestone' && ref.milestoneId === selected,
-            );
-            return (
-              <li key={item.id} data-linked={linked}>
-                <div className="lv-grow">
-                  <Link to={`${item.route}?edit=${item.id}`}>{item.name}</Link>
-                  <div className="lv-small lv-muted">
-                    {from ?? 'Condition not reached'} → {to ?? 'Condition not reached'}
-                    {linked ? ' · linked to selected event' : ''}
-                  </div>
-                  <div className="span-track">
-                    {from !== null && to !== null && to >= start && from <= end && (
-                      <span
-                        style={{
-                          left: `${Math.max(0, ((from - start) / (end - start)) * 100)}%`,
-                          width: `${Math.max(0, ((Math.min(end, to) - Math.max(start, from)) / (end - start)) * 100)}%`,
-                        }}
-                      />
-                    )}
-                  </div>
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      </details>
       {!events.length && (
         <p className="lv-muted lv-small">
           No events in this range. <Link to="/plan/timeline">Manage milestones</Link>

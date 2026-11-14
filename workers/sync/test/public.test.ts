@@ -6,7 +6,7 @@ import type { PublicEnv } from '../src/public-auth';
 function setup() {
   const { DatabaseSync } = process.getBuiltinModule('node:sqlite');
   const db = new DatabaseSync(':memory:');
-  for (const name of ['0001_init', '0002_public_accounts', '0003_public_storage'])
+  for (const name of ['0001_init', '0002_public_accounts', '0003_public_storage', '0004_simple_accounts'])
     db.exec(readFileSync(new URL(`../migrations/${name}.sql`, import.meta.url), 'utf8'));
   type Value = string | number | null | Uint8Array;
   const statement = (sql: string, params: Value[] = []) => ({
@@ -54,11 +54,28 @@ function setup() {
     );
   return { call, db, env };
 }
-const password = 'long-test-password-unique';
+/**
+ * What the browser sends: 32-byte keys derived from the password and the recovery code (base64), never the typed
+ * secrets, and an opaque wrapped key bundle. The server must accept these shapes and nothing else.
+ */
+const key = (seed: string) => btoa(seed.padEnd(32, '.').slice(0, 32));
+const password = key('password-one');
+const recoveryAuth = key('recovery-one');
+const bundle = (tag: string) => ({
+  v: 2,
+  wrappedByPassword: key(`wrap-${tag}`),
+  wrappedByRecovery: key(`recovery-${tag}`),
+  keyCheck: key(`check-${tag}`),
+});
 async function register(call: ReturnType<typeof setup>['call'], username: string) {
-  const response = await call('/api/account/register', { username, password });
+  const response = await call('/api/account/register', {
+    username,
+    password,
+    recoveryAuth,
+    bundle: bundle('first'),
+  });
   expect(response.status, await response.clone().text()).toBe(200);
-  const data = (await response.json()) as { user: { id: string }; recoveryCode: string };
+  const data = (await response.json()) as { user: { id: string } };
   const cookie = response.headers
     .getSetCookie()
     .map((c) => c.split(';')[0])
@@ -86,36 +103,115 @@ describe('public accounts and encrypted cloud storage', () => {
     expect(await (await call('/api/v1/plans/one', undefined, alice.headers)).text()).toBe('encrypted bytes');
     expect((await call('/api/v1/plans/one', undefined, bob.headers)).status).toBe(404);
     expect(await (await call('/api/v1/plans', undefined, bob.headers)).json()).toEqual([]);
-    expect((await call('/api/v1/keys', { wrapped: 'key' }, headers, 'PUT')).status).toBe(200);
-    expect((await call('/api/v1/keys', undefined, bob.headers)).status).toBe(404);
+    // Registration stored the wrapped key; it can be read, but changes only through the account routes.
+    expect(await (await call('/api/v1/keys', undefined, alice.headers)).json()).toEqual(bundle('first'));
+    expect((await call('/api/v1/keys', { wrapped: 'key' }, headers, 'PUT')).status).toBe(405);
+    expect(await (await call('/api/v1/keys', undefined, bob.headers)).json()).toEqual(bundle('first'));
     expect(
       (await call('/api/v1/plans/one', undefined, { ...alice.headers, 'If-Match': '1' }, 'DELETE')).status,
     ).toBe(200);
     expect((await call('/api/v1/plans/one', undefined, alice.headers)).status).toBe(410);
   });
 
-  it('resets a password only once, rotates recovery codes, and revokes existing sessions', async () => {
+  it('resets a password once with the recovery code, swaps the key and revokes sessions', async () => {
     const { call, db } = setup();
     const alice = await register(call, 'alice');
     const saved = db.prepare('SELECT code_hash FROM account_recovery').get();
-    expect(saved?.code_hash).not.toBe(alice.recoveryCode);
-    const recovery = {
+    expect(saved?.code_hash).not.toBe(recoveryAuth);
+
+    // Step 1: the code (its derived half) unlocks the wrapped key so the browser can re-wrap it.
+    expect(
+      (await call('/api/account/recover/begin', { username: 'alice', recoveryAuth: key('wrong') })).status,
+    ).toBe(400);
+    const begin = await call('/api/account/recover/begin', { username: 'alice', recoveryAuth });
+    expect(begin.status, await begin.clone().text()).toBe(200);
+    expect(await begin.json()).toEqual({ bundle: bundle('first'), version: 1 });
+
+    const reset = {
       username: 'alice',
-      password: 'replacement-password-123',
-      recoveryCode: alice.recoveryCode,
+      recoveryAuth,
+      password: key('password-two'),
+      newRecoveryAuth: key('recovery-two'),
+      bundle: bundle('second'),
+      bundleVersion: 1,
     };
-    expect((await call('/api/account/recover', { ...recovery, recoveryCode: 'f'.repeat(64) })).status).toBe(
-      400,
-    );
-    const result = await call('/api/account/recover', recovery);
-    expect(result.status, await result.clone().text()).toBe(200);
-    expect(((await result.json()) as { recoveryCode: string }).recoveryCode).not.toBe(alice.recoveryCode);
-    expect((await call('/api/account/recover', recovery)).status).toBe(400);
-    expect((await call('/api/v1/plans', undefined, alice.headers)).status).toBe(401);
+    // A stale key version changes nothing at all.
+    expect((await call('/api/account/recover', { ...reset, bundleVersion: 2 })).status).toBe(400);
+    expect((await call('/api/v1/plans', undefined, alice.headers)).status).toBe(200);
+
+    const done = await call('/api/account/recover', reset);
+    expect(done.status, await done.clone().text()).toBe(200);
+    expect((await call('/api/account/recover', reset)).status).toBe(400); // the old code is spent
+    expect((await call('/api/v1/plans', undefined, alice.headers)).status).toBe(401); // sessions revoked
+    expect((await call('/api/auth/sign-in/username', { username: 'alice', password })).status).toBe(401);
+    const signIn = await call('/api/auth/sign-in/username', { username: 'alice', password: reset.password });
+    expect(signIn.status).toBe(200);
+    const cookie = signIn.headers
+      .getSetCookie()
+      .map((c) => c.split(';')[0])
+      .join('; ');
+    const headers = { Cookie: cookie, 'X-Longview-Account': alice.user.id };
+    expect(await (await call('/api/v1/keys', undefined, headers)).json()).toEqual(bundle('second'));
+    expect(
+      (await call('/api/account/recover/begin', { username: 'alice', recoveryAuth: key('recovery-two') }))
+        .status,
+    ).toBe(200);
+  });
+
+  it('changes the password and the recovery code together with the key, or not at all', async () => {
+    const { call } = setup();
+    const alice = await register(call, 'alice');
+    const change = { password, newPassword: key('password-two'), bundle: bundle('second'), bundleVersion: 1 };
+    expect((await call('/api/account/change-password', change)).status).toBe(401);
+    expect(
+      (await call('/api/account/change-password', { ...change, password: key('wrong') }, alice.headers))
+        .status,
+    ).toBe(401);
+    expect(
+      (await call('/api/account/change-password', { ...change, bundleVersion: 7 }, alice.headers)).status,
+    ).toBe(409);
+    expect((await call('/api/auth/sign-in/username', { username: 'alice', password })).status).toBe(200);
+    const changed = await call('/api/account/change-password', change, alice.headers);
+    expect(changed.status, await changed.clone().text()).toBe(200);
+    expect(await changed.json()).toEqual({ ok: true, version: 2 });
     expect((await call('/api/auth/sign-in/username', { username: 'alice', password })).status).toBe(401);
     expect(
-      (await call('/api/auth/sign-in/username', { username: 'alice', password: recovery.password })).status,
+      (await call('/api/auth/sign-in/username', { username: 'alice', password: change.newPassword })).status,
     ).toBe(200);
+
+    const recovery = {
+      password: change.newPassword,
+      recoveryAuth: key('recovery-three'),
+      bundle: bundle('third'),
+      bundleVersion: 2,
+    };
+    const made = await call('/api/account/recovery', recovery, alice.headers);
+    expect(made.status, await made.clone().text()).toBe(200);
+    expect((await call('/api/account/recover/begin', { username: 'alice', recoveryAuth })).status).toBe(400);
+    expect(
+      (await call('/api/account/recover/begin', { username: 'alice', recoveryAuth: recovery.recoveryAuth }))
+        .status,
+    ).toBe(200);
+  });
+
+  it('accepts only derived keys, never a typed password or a malformed bundle', async () => {
+    const { call } = setup();
+    const typed = await call('/api/account/register', {
+      username: 'carol',
+      password: 'a typed password here',
+      recoveryAuth,
+      bundle: bundle('first'),
+    });
+    expect(typed.status).toBe(400);
+    const badBundle = await call('/api/account/register', {
+      username: 'carol',
+      password,
+      recoveryAuth,
+      bundle: { v: 1, wrappedByPassword: 'x' },
+    });
+    expect(badBundle.status).toBe(400);
+    expect((await call('/api/account/recovery-code', { password })).status).toBe(404);
+    expect((await call('/api/auth/change-password', { currentPassword: password })).status).toBe(404);
   });
 
   it('blocks bypass auth routes, rejects oversize storage, enforces quota and logout', async () => {

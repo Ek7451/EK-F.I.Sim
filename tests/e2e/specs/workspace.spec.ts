@@ -74,7 +74,8 @@ test('year stays pinned across analyses and invalid draft input stays local', as
 test('drag cancellation restores the pre-gesture draft; keyboard move can be undone', async ({ page }) => {
   const event = page.locator('.event-marker').filter({ hasText: 'Retire' }).first();
   await event.scrollIntoViewIfNeeded();
-  const before = await event.innerText();
+  // Plain text, as toHaveText compares it (rendered text would add line breaks from the pin's layout).
+  const before = (await event.textContent())!;
   const box = (await event.boundingBox())!;
   await page.mouse.move(box.x + 8, box.y + 8);
   await page.mouse.down();

@@ -1202,21 +1202,19 @@ export function Explain({
         </button>
       )}
     >
-      <div className="lv-stack" style={{ gap: 8 }}>
-        <strong>{title}</strong>
+      <div className="lv-explain-card">
+        <strong className="lv-explain-title">{title.charAt(0).toUpperCase() + title.slice(1)}</strong>
         <div className="lv-explain">
           {lines.map((l) => (
             <span key={l.label} style={{ display: 'contents' }}>
               <span>{l.label}</span>
-              <span style={{ textAlign: 'right' }}>
+              <span data-sign={l.amount < 0 ? 'minus' : undefined}>
                 {l.amount < 0 ? `− ${formatMoney(-l.amount)}` : formatMoney(l.amount)}
               </span>
             </span>
           ))}
           <span className="lv-total">Result</span>
-          <span className="lv-total" style={{ textAlign: 'right' }}>
-            {formatMoney(total)}
-          </span>
+          <span className="lv-total">{formatMoney(total)}</span>
         </div>
         {source ? <span className="lv-muted lv-small">{source}</span> : null}
       </div>

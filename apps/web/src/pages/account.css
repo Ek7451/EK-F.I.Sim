@@ -1,0 +1,141 @@
+/* The cloud account: the sign-in dialog, the recovery code, the header chip and the Settings card. */
+
+/* The account dialog is a small, focused form: narrower than the app's editing dialogs. */
+.lv-dialog:has(.acct-form),
+.lv-dialog:has(> .lv-dialog-body > .acct-code) {
+  width: min(440px, 100%);
+}
+.acct-form {
+  display: grid;
+  gap: 12px;
+}
+.acct-lead {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  text-wrap: pretty;
+}
+.acct-submit {
+  width: 100%;
+  justify-content: center;
+  min-height: 40px;
+}
+.acct-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 6px 12px;
+  font-size: var(--text-sm);
+  color: var(--ink-3);
+}
+.acct-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--primary);
+  font: 600 var(--text-sm) var(--font-ui);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.acct-link:hover {
+  color: var(--primary-hover);
+}
+.acct-note {
+  text-wrap: pretty;
+}
+
+/* The recovery code: large, grouped, easy to copy by eye. */
+.acct-code {
+  display: grid;
+  gap: 12px;
+  justify-items: start;
+}
+.acct-code > p {
+  color: var(--ink-2);
+  font-size: var(--text-sm);
+  text-wrap: pretty;
+}
+.acct-code-value {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px dashed var(--primary-line);
+  border-radius: var(--radius-2);
+  background: var(--primary-soft);
+  color: var(--ink);
+  font: 600 0.9375rem / 1.6 var(--font-mono);
+  letter-spacing: 0.04em;
+  word-spacing: 0.2em;
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.acct-saved {
+  padding: 2px 0;
+}
+
+/* Header: the signed-in account with a dot for what cloud saving is doing. */
+.acct-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 200px;
+  min-height: 32px;
+  padding: 0 10px 0 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--ink);
+  font: 600 var(--text-sm) var(--font-ui);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.acct-chip:hover {
+  border-color: var(--primary-line);
+}
+.acct-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: none;
+  background: var(--ok);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--ok) 22%, transparent);
+}
+.acct-chip[data-tone='busy'] .acct-dot {
+  background: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 22%, transparent);
+  animation: acct-pulse 1.2s ease-in-out infinite;
+}
+.acct-chip[data-tone='warn'] .acct-dot {
+  background: var(--accent-fill);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-fill) 25%, transparent);
+}
+.acct-chip[data-tone='bad'] .acct-dot {
+  background: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 22%, transparent);
+}
+@keyframes acct-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+/* Settings: forms that open inside the Account card. */
+.acct-inline {
+  display: grid;
+  gap: 10px;
+  max-width: 380px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.acct-conflicts {
+  display: grid;
+  gap: 8px;
+  margin-top: 8px;
+}
+@media (max-width: 900px) {
+  .acct-chip {
+    min-height: 44px;
+    max-width: 140px;
+  }
+}

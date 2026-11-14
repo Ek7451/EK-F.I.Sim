@@ -1,5 +1,6 @@
 import { Component, Suspense, lazy, type ComponentType, type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Outlet, Route, Routes } from 'react-router-dom';
+import { Icon, Skeleton } from '@fisim/ui';
 // The landing screens ship in the first download: no second round trip, and no layout shift, before first paint.
 import { HomePage } from './pages/Home';
 import { StartPage } from './pages/StartWizard';
@@ -52,6 +53,24 @@ function RequirePlan(): ReactNode {
   );
 }
 
+/**
+ * The outline of a screen (head, headline band, two cards) shown while it loads, so the layout does not jump
+ * when it arrives. The words are for assistive tech; the shapes are decoration.
+ */
+function ScreenPlaceholder({ label }: { label: string }): ReactNode {
+  return (
+    <div className="lv-placeholder" role="status" aria-live="polite">
+      <span className="lv-sr">{label}</span>
+      <Skeleton height={26} width="38%" />
+      <span className="lv-placeholder-band" aria-hidden="true" />
+      <div className="lv-placeholder-grid" aria-hidden="true">
+        <Skeleton height={320} />
+        <Skeleton height={320} />
+      </div>
+    </div>
+  );
+}
+
 class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | null }> {
   override state = { error: null as Error | null };
   static getDerivedStateFromError(error: Error): { error: Error } {
@@ -63,20 +82,28 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { error: Error | 
   override render(): ReactNode {
     if (!this.state.error) return this.props.children;
     return (
-      <div className="lv-card" role="alert" style={{ margin: 24 }}>
-        <h1 style={{ fontSize: 'var(--text-lg)' }}>Something went wrong on this screen</h1>
-        <p style={{ margin: '8px 0 16px' }}>
+      <div className="lv-card lv-state" role="alert">
+        <span className="lv-state-mark" data-tone="danger" aria-hidden="true">
+          <Icon name="warning" size={22} />
+        </span>
+        <h1>Something went wrong on this screen</h1>
+        <p>
           Your plans are safe on this device. Reload to carry on. If it keeps happening, download the error
           log under Settings.
         </p>
-        <button
-          type="button"
-          className="lv-btn"
-          data-variant="primary"
-          onClick={() => window.location.assign('/')}
-        >
-          Reload
-        </button>
+        <div className="lv-row">
+          <button
+            type="button"
+            className="lv-btn"
+            data-variant="primary"
+            onClick={() => window.location.assign('/')}
+          >
+            Reload
+          </button>
+          <a className="lv-btn" href="/settings">
+            Settings
+          </a>
+        </div>
       </div>
     );
   }
@@ -92,9 +119,9 @@ export function App({
   const ready = useStore((s) => s.ready);
   if (!ready)
     return (
-      <p className="lv-muted" style={{ padding: 24 }} role="status">
-        Opening your plans…
-      </p>
+      <div style={{ padding: 20 }}>
+        <ScreenPlaceholder label="Opening your plans…" />
+      </div>
     );
   return (
     <BrowserRouter>
@@ -104,13 +131,7 @@ export function App({
             <Route
               element={
                 <ErrorBoundary>
-                  <Suspense
-                    fallback={
-                      <p className="lv-muted" role="status" style={{ minHeight: '70dvh' }}>
-                        Loading…
-                      </p>
-                    }
-                  >
+                  <Suspense fallback={<ScreenPlaceholder label="Loading…" />}>
                     <Outlet />
                   </Suspense>
                 </ErrorBoundary>

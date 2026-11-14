@@ -1,6 +1,10 @@
 /**
  * End-to-end-encrypted sync (SYNC-02, SYNC-04). Plans are encrypted on this device with the data key before upload;
- * the server only ever stores ciphertext. Sign-in to the sync service (Cloudflare Access) is separate from the key.
+ * the server only ever stores ciphertext.
+ *
+ * Public site: signing in hands this module the data key (see lib/cloud-account.ts), and from then on every save is
+ * encrypted and uploaded automatically. The key is kept on this device (non-extractable) until sign-out, so a reload
+ * carries on without asking for anything. Self-hosted builds keep the original passphrase-based setup below.
  * Offline edits wait in the IndexedDB queue and are sent on the next sync; a version mismatch becomes a conflict
  * the user resolves (keep mine, keep theirs, or keep both).
  */
@@ -16,35 +20,13 @@ import {
 } from '@fisim/crypto';
 import type { Plan } from '@fisim/engine';
 import { loadEngine } from '../engine/load';
-import { create } from 'zustand';
-import { addSnapshot, dequeue, getSetting, queue, setSetting } from '../state/db';
+import { addSnapshot, deleteSetting, dequeue, getSetting, queue, setSetting } from '../state/db';
 import { useStore, type TourProgress } from '../state/store';
 import { createSyncClient, isConflict, SyncError, type SyncClient } from '../sync/client';
 import { publicCloud, refreshAccount, type CloudUser } from './cloud-account';
 
-export interface SyncConflict {
-  planId: string;
-  planName: string;
-  serverVersion: number;
-  serverUpdatedAt: string | null;
-  deletedOnServer: boolean;
-  deletedLocally?: boolean;
-}
-
-interface SyncState {
-  status: 'off' | 'locked' | 'idle' | 'syncing' | 'offline' | 'error';
-  message: string;
-  lastSyncAt: string | null;
-  conflicts: SyncConflict[];
-  hasKeys: boolean;
-}
-export const useSync = create<SyncState>(() => ({
-  status: 'off',
-  message: '',
-  lastSyncAt: null,
-  conflicts: [],
-  hasKeys: false,
-}));
+import { useSync, type SyncConflict } from './sync-status';
+export { useSync, type SyncConflict };
 
 let dek: CryptoKey | null = null;
 let bundle: KeyBundle | null = null;
@@ -67,7 +49,7 @@ const fail = (e: unknown): string =>
   e instanceof SyncError
     ? e.status === 401
       ? publicCloud
-        ? 'Sign in to your cloud account in Settings, then unlock your vault.'
+        ? 'Your session ended. Sign in again to keep saving to the cloud.'
         : 'Not signed in to the sync service. Open its address in a browser tab, sign in, then try again.'
       : e.message
     : e instanceof Error
@@ -84,7 +66,7 @@ export async function initSync(): Promise<void> {
   window.addEventListener('online', () => {
     if (dek) void syncNow();
   });
-  if (publicCloud) await refreshAccount();
+  if (publicCloud) await resumeCloudSync();
   // Debounce completed local saves. A second edit during a network request schedules another pass.
   let timer: ReturnType<typeof setTimeout> | undefined;
   useStore.subscribe((state, previous) => {
@@ -116,14 +98,83 @@ export async function bindCloudAccount(user: CloudUser): Promise<void> {
   useStore.getState().setSettings({ syncUrl: '/api' });
 }
 
-export async function stopCloudSync(): Promise<void> {
-  // Drain a running upload before removing its key; no new sync may start after this point.
-  useStore.getState().setSettings({ syncEnabled: false });
+interface StoredCloudKey {
+  userId: string;
+  /** The data key, non-extractable: it can encrypt and decrypt here but can never be read out. */
+  key: CryptoKey;
+}
+
+/** Just signed in (or created the account): keep the key on this device and upload everything. */
+export async function startCloudSync(user: CloudUser, key: CryptoKey): Promise<void> {
+  await bindCloudAccount(user);
+  dek = key;
+  await setSetting('cloudKey', { userId: user.id, key } satisfies StoredCloudKey);
+  useStore.getState().setSettings({ syncUrl: '/api', syncEnabled: true });
+  // Plans made before signing in become this account's plans.
+  for (const id of Object.keys(useStore.getState().plans)) useStore.getState().setMeta(id, { dirty: true });
+  useSync.setState({ status: 'idle', hasKeys: true, message: '' });
+  await syncNow(true);
+}
+
+/** Page load: if still signed in with this device's key, carry on saving with nothing to enter. */
+async function resumeCloudSync(): Promise<void> {
+  const user = await refreshAccount();
+  const stored = await getSetting<StoredCloudKey>('cloudKey');
+  if (user && stored?.userId === user.id) {
+    cloudAccountId = user.id;
+    dek = stored.key;
+    useStore.getState().setSettings({ syncUrl: '/api', syncEnabled: true });
+    useSync.setState({ status: 'idle', hasKeys: true, message: '' });
+    void syncNow();
+  } else if (stored) {
+    // The key is here but the session is not: it expired, or was ended on another device.
+    useSync.setState({
+      status: 'off',
+      message: 'Your session ended. Sign in again to keep saving to the cloud.',
+    });
+  }
+}
+
+/**
+ * Send everything not yet in the cloud. True when nothing is left unsent (no queued edit, no unsaved plan, no
+ * unresolved conflict), so signing out cannot lose work.
+ */
+export async function flushCloudSync(): Promise<boolean> {
+  if (!dek) return !(await queue()).length;
+  // A save typed a moment ago is still on its way to disk.
+  await new Promise((r) => setTimeout(r, 250));
   if (running) await running;
-  lockSync();
+  await syncNow(true);
+  const state = useSync.getState();
+  return (
+    state.status === 'idle' &&
+    !state.conflicts.length &&
+    !(await queue()).length &&
+    !Object.values(useStore.getState().meta).some((m) => m.dirty)
+  );
+}
+
+/** Signing out: forget the key and the account link, and remove the account's plans from this browser. */
+export async function endCloudSession(): Promise<void> {
+  // No sync may start after this point; let a running one finish before its key is removed.
+  useStore.getState().setSettings({ syncEnabled: false, syncUrl: '' });
+  if (running) await running;
+  dek = null;
   bundle = null;
   bundleVersion = 0;
-  useSync.setState({ status: 'off', conflicts: [], message: '' });
+  settingsVersion = 0;
+  cloudAccountId = null;
+  for (const key of [
+    'cloudKey',
+    'cloudAccountId',
+    'keyBundle',
+    'keyBundleVersion',
+    'settingsSyncVersion',
+    'lastSyncAt',
+  ])
+    await deleteSetting(key);
+  await useStore.getState().clearPlans();
+  useSync.setState({ status: 'off', conflicts: [], message: '', lastSyncAt: null, hasKeys: false });
 }
 
 async function checkCloudAccount(): Promise<void> {

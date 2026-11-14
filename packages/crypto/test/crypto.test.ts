@@ -2,6 +2,12 @@ import { beforeAll, describe, expect, it, vi } from 'vitest';
 import {
   ARGON2ID,
   changePassphrase,
+  createAccountBundle,
+  deriveAccountKeys,
+  deriveRecoveryKeys,
+  openAccountBundle,
+  rewrapAccountBundle,
+  type AccountBundle,
   createAppLock,
   createKeyBundle,
   CryptoError,
@@ -24,6 +30,7 @@ import {
 const text = (s: string) => new TextEncoder().encode(s);
 const PLAN = text(JSON.stringify({ name: 'Base plan', balance: 123456.78 }));
 const PBKDF2 = { forcePbkdf2: true };
+const fromB64 = (b64: string): Uint8Array<ArrayBuffer> => Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
 
 async function expectCode(promise: Promise<unknown>, code: CryptoErrorCode): Promise<void> {
   const err = await promise.then(
@@ -371,4 +378,75 @@ describe('app lock', () => {
     // A sync-format blob is not accepted as a local record, and vice versa.
     await expectCode(decryptPlan(pbkdf2.dek, 'plans/plan-1', 1, record), 'INVALID_FORMAT');
   });
+});
+
+describe('cloud account keys (bundle v2)', () => {
+  let alice: Awaited<ReturnType<typeof deriveAccountKeys>>;
+  beforeAll(async () => {
+    alice = await deriveAccountKeys('Alice', 'correct horse battery');
+  }, 30_000);
+
+  it('derives the same keys for the same username and password, and unrelated keys otherwise', async () => {
+    const again = await deriveAccountKeys('  alice ', 'correct horse battery');
+    expect(again.authKey).toBe(alice.authKey);
+    expect(fromB64(alice.authKey)).toHaveLength(32);
+    expect(alice.wrapKey.extractable).toBe(false);
+    // The wrap key is not the auth key: a server holding the auth key cannot open a bundle.
+    const made = await createAccountBundle(again.wrapKey);
+    const authAsKey = await crypto.subtle.importKey('raw', fromB64(alice.authKey), 'AES-GCM', false, [
+      'encrypt',
+      'decrypt',
+    ]);
+    await expectCode(openAccountBundle(made.bundle, authAsKey), 'WRONG_PASSPHRASE');
+    expect((await deriveAccountKeys('bob', 'correct horse battery')).authKey).not.toBe(alice.authKey);
+    expect((await deriveAccountKeys('alice', 'correct horse batterY')).authKey).not.toBe(alice.authKey);
+  }, 60_000);
+
+  it('opens with the password or the recovery code, and re-wraps without changing the data key', async () => {
+    const made = await createAccountBundle(alice.wrapKey);
+    expect(made.dek.extractable).toBe(false);
+    expect(await isValidRecoveryKey(made.recoveryCode)).toBe(true);
+    const blob = await encryptPlan(made.dek, 'plan-1', 1, PLAN);
+    const stored = JSON.parse(JSON.stringify(made.bundle)) as AccountBundle;
+
+    // Password opens it; a wrong password does not.
+    const dek = await openAccountBundle(stored, alice.wrapKey);
+    expect(await decryptPlan(dek, 'plan-1', 1, blob)).toEqual(PLAN);
+    const wrong = await deriveAccountKeys('alice', 'not the password');
+    await expectCode(openAccountBundle(stored, wrong.wrapKey), 'WRONG_PASSPHRASE');
+
+    // Forgot password: the recovery code sets a new password and a new code; plans still open.
+    const recovery = await deriveRecoveryKeys(made.recoveryCode);
+    expect(recovery.recoveryAuth).not.toBe(alice.authKey);
+    const fresh = await deriveAccountKeys('alice', 'a brand new password');
+    const reset = await rewrapAccountBundle(
+      stored,
+      { recoveryWrap: recovery.recoveryWrap },
+      { wrapKey: fresh.wrapKey, newRecovery: true },
+    );
+    expect(reset.recoveryCode).toBeDefined();
+    expect(reset.recoveryCode).not.toBe(made.recoveryCode);
+    expect(await decryptPlan(reset.dek, 'plan-1', 1, blob)).toEqual(PLAN);
+    const reopened = await openAccountBundle(reset.bundle, fresh.wrapKey);
+    expect(await decryptPlan(reopened, 'plan-1', 1, blob)).toEqual(PLAN);
+    await expectCode(openAccountBundle(reset.bundle, alice.wrapKey), 'WRONG_PASSPHRASE');
+    // The old code no longer opens it; the new one does.
+    const old = await deriveRecoveryKeys(made.recoveryCode);
+    await expectCode(
+      rewrapAccountBundle(reset.bundle, { recoveryWrap: old.recoveryWrap }, {}),
+      'WRONG_RECOVERY_KEY',
+    );
+    const next = await deriveRecoveryKeys(reset.recoveryCode!);
+    expect(next.recoveryAuth).toBe(reset.recoveryAuth);
+    await rewrapAccountBundle(reset.bundle, { recoveryWrap: next.recoveryWrap }, {});
+  }, 60_000);
+
+  it('rejects mistyped codes, other bundle versions and tampering', async () => {
+    const made = await createAccountBundle(alice.wrapKey);
+    await expectCode(deriveRecoveryKeys(mutate(made.recoveryCode, 0)), 'INVALID_RECOVERY_KEY');
+    await expectCode(openAccountBundle({ ...made.bundle, v: 1 }, alice.wrapKey), 'UNSUPPORTED_VERSION');
+    await expectCode(openAccountBundle(null, alice.wrapKey), 'INVALID_FORMAT');
+    const tampered = { ...made.bundle, wrappedByPassword: mutate(made.bundle.wrappedByPassword, 30) };
+    await expectCode(openAccountBundle(tampered, alice.wrapKey), 'WRONG_PASSPHRASE');
+  }, 30_000);
 });

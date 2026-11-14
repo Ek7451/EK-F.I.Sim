@@ -73,6 +73,21 @@ export async function getSetting<T>(key: string): Promise<T | undefined> {
 export async function setSetting(key: string, value: unknown): Promise<void> {
   await (await db()).put('settings', value, key);
 }
+export async function deleteSetting(key: string): Promise<void> {
+  await (await db()).delete('settings', key);
+}
+/** Signing out of the cloud: every plan, snapshot, logged balance and pending upload leaves this browser. */
+export async function clearPlanData(): Promise<void> {
+  const d = await db();
+  const tx = d.transaction(['plans', 'snapshots', 'actuals', 'syncQueue'], 'readwrite');
+  await Promise.all([
+    tx.objectStore('plans').clear(),
+    tx.objectStore('snapshots').clear(),
+    tx.objectStore('actuals').clear(),
+    tx.objectStore('syncQueue').clear(),
+    tx.done,
+  ]);
+}
 export async function enqueue(item: QueueItem): Promise<void> {
   const d = await db();
   const all = (await d.getAll('syncQueue')) as QueueItem[];

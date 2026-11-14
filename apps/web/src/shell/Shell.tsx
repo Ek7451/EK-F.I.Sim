@@ -6,7 +6,8 @@ import { tourForRoute } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
 import { DISCLAIMER, NAV, PRIMARY_NAV } from './nav';
 import { useDraft } from '../state/draft';
-import { publicCloud, signOutAccount, useCloudAccount } from '../lib/cloud-account';
+import { publicCloud } from '../lib/cloud-account';
+import { AccountButton, AccountDialog } from '../pages/AccountDialog';
 
 const THEMES: Theme[] = ['system', 'light', 'dark'];
 
@@ -28,8 +29,6 @@ export function Shell({
   const { setActive, undo, redo, setSettings, dismissNotice } = useStore.getState();
   const [menu, setMenu] = useState(false);
   const [reloading, setReloading] = useState(false);
-  const account = useCloudAccount();
-  const [signingOut, setSigningOut] = useState(false);
   const loc = useLocation();
   const nav = useNavigate();
   const tour = useTour();
@@ -269,41 +268,11 @@ export function Shell({
                   )}
                 />
               </div>
-              <Button
-                className="lv-btn account-toggle"
-                size="sm"
-                disabled={signingOut}
-                title={
-                  account.user
-                    ? `Signed in as ${account.user.username}`
-                    : 'Sign in to save plans in the cloud'
-                }
-                onClick={() => {
-                  if (!account.user) {
-                    nav('/settings#cloud-account');
-                    return;
-                  }
-                  setSigningOut(true);
-                  void signOutAccount()
-                    .then(() =>
-                      useStore.getState().notify('Signed out. Your local plans stay on this device.'),
-                    )
-                    .catch((e: unknown) =>
-                      useStore
-                        .getState()
-                        .notify(
-                          e instanceof Error ? e.message : 'Could not sign out. Please try again.',
-                          'danger',
-                        ),
-                    )
-                    .finally(() => setSigningOut(false));
-                }}
-              >
-                {signingOut ? 'Signing out…' : account.user ? 'Sign out' : 'Sign in'}
-              </Button>
+              <AccountButton disabled={!!sandbox} />
             </>
           ) : null}
         </header>
+        {publicCloud ? <AccountDialog /> : null}
         <main className="content" id="main" tabIndex={-1}>
           {updateReady ? (
             <Notice tone="ok">
