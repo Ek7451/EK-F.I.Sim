@@ -9,11 +9,8 @@
   /* The scrim is the spotlight's own shadow, so the lit area is always exactly the target. */
   box-shadow: 0 0 0 9999px rgba(6, 8, 24, 0.62);
   pointer-events: none;
-  transition:
-    left var(--motion-base) var(--ease),
-    top var(--motion-base) var(--ease),
-    width var(--motion-base) var(--ease),
-    height var(--motion-base) var(--ease);
+  /* No movement transition: the spotlight is placed only once its target has come to rest, so it appears exactly
+     where it belongs instead of opening elsewhere and sliding over. */
 }
 /* A ring of first light around the target: the dawn spectrum as a hairline, with a soft bloom behind it. */
 .tour-spot::before,
@@ -23,6 +20,7 @@
   inset: -2px;
   border-radius: 16px;
   pointer-events: none;
+  animation: lv-fade 220ms var(--ease-out) both;
 }
 .tour-spot::before {
   padding: 2px;
@@ -75,6 +73,11 @@
     inset 0 1px 0 rgba(255, 255, 255, 0.14);
   /* Opacity only: the card is placed with a transform, which an entrance must not fight. */
   animation: lv-fade 220ms var(--ease-out) both;
+}
+/* Still finding or scrolling to the step's target: stay out of sight, then fade in already in place. */
+.tour-card[data-ready='false'] {
+  visibility: hidden;
+  animation: none;
 }
 /* First light along the top edge, as on every headline band. */
 .tour-card::before {
