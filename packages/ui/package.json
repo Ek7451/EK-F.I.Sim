@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.json"
   },
   "dependencies": {
-    "@floating-ui/react": "^0.26.28"
+    "@floating-ui/react": "^0.27.20"
   },
   "peerDependencies": {
     "react": "^18.3.1",
