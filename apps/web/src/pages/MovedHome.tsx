@@ -12,7 +12,7 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
   const plans = useStore((s) => s.plans);
   const list = Object.values(plans);
   const [state, setState] = useState<'idle' | 'moving' | 'too-big'>('idle');
-  const count = list.length === 1 ? 'Your plan is' : `Your ${list.length} plans are`;
+  const needsRecovery = useStore((s) => Object.values(s.meta).some((entry) => entry.readOnly));
 
   const move = async (): Promise<void> => {
     setState('moving');
@@ -30,10 +30,13 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
       </span>
       <h1 id="moved-title">Longview Planner has moved to {HOME_NAME}</h1>
       <p>
-        {count} saved in this browser at the old address. Bring {list.length === 1 ? 'it' : 'them'} with you
-        in one step: the plans travel inside the link, straight to the new address in this browser, and are
-        available to review before importing. Keep the link private. You can also export an encrypted backup
-        instead.
+        {list.length > 0 && (
+          <>
+            Review {list.length === 1 ? 'your plan' : `your ${list.length} plans`} at the new address before
+            importing. The transfer link contains your plan data. Keep it private.
+          </>
+        )}
+        {needsRecovery && ' Open Settings here to recover plans that this version could not open.'}
       </p>
       {state === 'too-big' ? (
         <p role="alert">
@@ -42,7 +45,7 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
         </p>
       ) : null}
       <div className="lv-row">
-        {state === 'too-big' ? (
+        {state === 'too-big' || !list.length ? (
           <button
             type="button"
             className="lv-btn"
@@ -65,9 +68,11 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
             {state === 'moving' ? 'Moving…' : `Move my plans to ${HOME_NAME}`}
           </button>
         )}
-        <button type="button" className="lv-btn" onClick={onStay}>
-          Open original plans here
-        </button>
+        {list.length > 0 && (
+          <button type="button" className="lv-btn" onClick={onStay}>
+            Open original plans here
+          </button>
+        )}
         <button type="button" className="lv-btn" data-variant="ghost" onClick={goHome}>
           Go without them
         </button>

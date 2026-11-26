@@ -357,10 +357,8 @@ export function SuccessPage(): ReactNode {
                 {partial ? 'These describe completed runs so far.' : ''}
               </p>
             </Card>
-            <Card title="When plans ran short" data-tour="failure-years">
-              {summary.failureYears.length === 0 ? (
-                <p className="lv-muted">No run ran short of money.</p>
-              ) : (
+            {summary.failureYears.length > 0 && (
+              <Card title="When plans ran short" data-tour="failure-years">
                 <Chart
                   label="Number of runs that first ran short, by year"
                   deps={[summary]}
@@ -406,8 +404,8 @@ export function SuccessPage(): ReactNode {
                     };
                   }}
                 />
-              )}
-            </Card>
+              </Card>
+            )}
             <Fold
               title="How the simulation is set up"
               summary={`${mc.method === 'bootstrap' ? 'Replayed history' : 'Random draws'} · ${mc.runs.toLocaleString()} runs`}

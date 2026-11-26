@@ -192,7 +192,7 @@ export function buildPlan(d: Draft, year: number): PlanInput {
       });
     }
     const contribution =
-      working && (p.deferPct > 0 || p.matchPct > 0)
+      working && p.deferPct > 0
         ? {
             incomeId: `i-${id}`,
             employeePct: p.deferPct,
@@ -410,25 +410,40 @@ export function StartPage(): ReactNode {
       ) : null}
     </div>
   );
-  const titles = ['About you', 'Income and retirement saving', 'What you have', 'Spending', 'Retirement'];
+  const hasPay = ppl.some((person) => person.salary > 0);
+  const titles = [
+    'About you',
+    'Income and retirement saving',
+    'What you have',
+    'Spending',
+    ...(hasPay ? ['Retirement'] : []),
+    'Review',
+  ];
+  const reviewIndex = titles.length - 1;
+  const atReview = step === reviewIndex;
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => {
-    heading.current?.focus();
+    heading.current?.focus({ preventScroll: step === 0 });
   }, [step]);
 
   // The parsed plan, for the review screen: it shows the defaults the plan will really use.
   const [preview, setPreview] = useState<Plan | null>(null);
   useEffect(() => {
-    if (step < 5) return;
+    if (!atReview) {
+      setPreview(null);
+      return;
+    }
     let live = true;
     void loadEngine().then(({ PlanZ }) => {
       const r = PlanZ.safeParse(buildPlan(d, year));
-      if (live) setPreview(r.success ? r.data : null);
+      if (!live) return;
+      setPreview(r.success ? r.data : null);
+      if (!r.success) setFinishError(r.error.issues.map((issue) => issue.message).join(' '));
     });
     return () => {
       live = false;
     };
-  }, [d, step, year]);
+  }, [d, atReview, year]);
   // Fetch the engine while the person fills in the first steps: a moment after the screen has drawn, so the
   // download does not compete with it (the same delay main.tsx uses for sync), or at once on the first input.
   useEffect(() => {
@@ -487,24 +502,43 @@ export function StartPage(): ReactNode {
       <div className="start-hero lv-night">
         <PageHead
           title={hasPlans ? 'New plan' : 'Welcome to Longview Planner'}
-          intro="Five short steps to a first plan. Rough numbers are fine: you can refine everything afterwards."
+          context="Start with estimates. You can refine them later."
         />
         <HorizonArt />
       </div>
+      {step === 0 && (
+        <div className="wizard-alternatives">
+          <details>
+            <summary>Use an example plan</summary>
+            <div className="lv-row" data-tour="samples">
+              <Button disabled={busy} onClick={() => void sample('sample-basic')}>
+                Single, mid-career
+              </Button>
+              <Button disabled={busy} onClick={() => void sample('sample-early-retiree')}>
+                Couple retiring at 50
+              </Button>
+              <Button disabled={busy} onClick={() => void sample('sample-couple-ss')}>
+                Couple near retirement
+              </Button>
+            </div>
+          </details>
+          <Link to="/settings#import-backup">Import a backup</Link>
+        </div>
+      )}
       <Card data-tour="wizard">
         <div
           className="lv-progress"
           role="progressbar"
           aria-label="Setup progress"
           aria-valuemin={1}
-          aria-valuemax={6}
+          aria-valuemax={titles.length}
           aria-valuenow={step + 1}
-          aria-valuetext={step < 5 ? `Step ${step + 1} of 5` : 'Review'}
+          aria-valuetext={`Step ${step + 1} of ${titles.length}: ${titles[step]}`}
         >
-          <div style={{ width: `${((step + 1) / 6) * 100}%` }} />
+          <div style={{ width: `${((step + 1) / titles.length) * 100}%` }} />
         </div>
         <ol className="wizard-steps" aria-hidden="true">
-          {[...titles, 'Review'].map((t, i) => (
+          {titles.map((t, i) => (
             <li key={t} data-state={i < step ? 'done' : i === step ? 'now' : 'next'}>
               <b>{i + 1}</b>
               <span>{t}</span>
@@ -513,27 +547,24 @@ export function StartPage(): ReactNode {
         </ol>
         <h2 ref={heading} tabIndex={-1} className="wizard-heading">
           {/* The step row above already numbers the steps on screen; assistive tech hears the number here. */}
-          {step < 5 ? (
+          {!atReview ? (
             <>
-              <span className="lv-sr">Step {step + 1} of 5: </span>
+              <span className="lv-sr">
+                Step {step + 1} of {titles.length}:{' '}
+              </span>
               {titles[step]}
             </>
           ) : (
-            'Check what we assumed'
+            'Review your plan'
           )}
         </h2>
 
-        <button type="button" className="lv-btn" onClick={discard}>
-          Discard wizard draft
-        </button>
-        {finishError && step < 5 && <p role="alert">{finishError}</p>}
-        {step === 5 && (
-          <label>
-            <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />I
-            reviewed the balances, income, spending, filing status and other estimates for my plan. My
-            starting balances are as of January 1 of the starting year.
-          </label>
+        {JSON.stringify(d) !== JSON.stringify(defaults()) && (
+          <button type="button" className="lv-btn" onClick={discard}>
+            Discard wizard draft
+          </button>
         )}
+        {finishError && !atReview && <p role="alert">{finishError}</p>}
         {step === 0 ? (
           <div className="lv-stack">
             <div className="form-grid">
@@ -603,40 +634,46 @@ export function StartPage(): ReactNode {
                     cents={D(p.salary)}
                     onChange={(v) => upP(i, { salary: Math.max(0, v / 100) })}
                   />
-                  <PercentField
-                    label="Contribution (share of pay)"
-                    digits={1}
-                    value={p.deferPct}
-                    onChange={(v) => upP(i, { deferPct: Math.max(0, Math.min(1, v)) })}
-                  />
-                  <SelectField
-                    label="Goes in as"
-                    value={p.roth ? 'roth' : 'pretax'}
-                    options={[
-                      { value: 'pretax', label: 'Pre-tax (traditional)' },
-                      { value: 'roth', label: 'Roth' },
-                    ]}
-                    onChange={(v) => upP(i, { roth: v === 'roth' })}
-                  />
-                  <PercentField
-                    label="Employer matches"
-                    digits={0}
-                    value={p.matchPct}
-                    onChange={(v) => upP(i, { matchPct: Math.max(0, Math.min(2, v)) })}
-                  />
-                  <PercentField
-                    label="Up to (share of pay)"
-                    digits={1}
-                    value={p.matchUpTo}
-                    onChange={(v) => upP(i, { matchUpTo: Math.max(0, Math.min(1, v)) })}
-                  />
-                  <div
-                    className="wizard-readout"
-                    aria-live="polite"
-                    data-tour={i === 0 ? 'wizard-contribution' : undefined}
-                  >
-                    {p.salary > 0 ? (
-                      <>
+                  {p.salary > 0 && (
+                    <>
+                      <PercentField
+                        label="Contribution (share of pay)"
+                        digits={1}
+                        value={p.deferPct}
+                        onChange={(v) => upP(i, { deferPct: Math.max(0, Math.min(1, v)) })}
+                      />
+                      {p.deferPct > 0 && (
+                        <>
+                          <SelectField
+                            label="Goes in as"
+                            value={p.roth ? 'roth' : 'pretax'}
+                            options={[
+                              { value: 'pretax', label: 'Pre-tax (traditional)' },
+                              { value: 'roth', label: 'Roth' },
+                            ]}
+                            onChange={(v) => upP(i, { roth: v === 'roth' })}
+                          />
+                          <PercentField
+                            label="Employer matches"
+                            digits={0}
+                            value={p.matchPct}
+                            onChange={(v) => upP(i, { matchPct: Math.max(0, Math.min(2, v)) })}
+                          />
+                          {p.matchPct > 0 && (
+                            <PercentField
+                              label="Up to (share of pay)"
+                              digits={1}
+                              value={p.matchUpTo}
+                              onChange={(v) => upP(i, { matchUpTo: Math.max(0, Math.min(1, v)) })}
+                            />
+                          )}
+                        </>
+                      )}
+                      <div
+                        className="wizard-readout"
+                        aria-live="polite"
+                        data-tour={i === 0 ? 'wizard-contribution' : undefined}
+                      >
                         <strong>{formatMoney(c.own)}</strong> a year from{' '}
                         {i === 0 && !p.name.trim() ? 'you' : displayName(p, i)}
                         {c.employer > 0 ? (
@@ -653,11 +690,9 @@ export function StartPage(): ReactNode {
                             at age {year - p.birthYear}, so Longview puts in the limit.
                           </span>
                         ) : null}
-                      </>
-                    ) : (
-                      'No pay entered, so nothing is saved from a paycheck.'
-                    )}
-                  </div>
+                      </div>
+                    </>
+                  )}
                 </PersonBlock>
               );
             })}
@@ -692,11 +727,13 @@ export function StartPage(): ReactNode {
                   cents={D(p.hsa)}
                   onChange={(v) => upP(i, { hsa: Math.max(0, v / 100) })}
                 />
-                <MoneyField
-                  label="HSA added per year"
-                  cents={D(p.hsaContribution)}
-                  onChange={(v) => upP(i, { hsaContribution: Math.max(0, v / 100) })}
-                />
+                {p.salary > 0 && (
+                  <MoneyField
+                    label="HSA added per year"
+                    cents={D(p.hsaContribution)}
+                    onChange={(v) => upP(i, { hsaContribution: Math.max(0, v / 100) })}
+                  />
+                )}
                 <MoneyField
                   label="Pre-tax (401(k), IRA)"
                   cents={D(p.pretax)}
@@ -728,26 +765,22 @@ export function StartPage(): ReactNode {
           </div>
         ) : null}
 
-        {step === 4 ? (
+        {step === 4 && !atReview ? (
           <div className="lv-stack">
             {ppl.map((p, i) => {
+              if (!p.salary) return null;
               const now = year - p.birthYear;
               return (
                 <PersonBlock key={i} title={displayName(p, i)}>
-                  {p.salary > 0 ? (
-                    <NumberField
-                      label="Age you would like to retire"
-                      value={p.retireAge}
-                      min={30}
-                      max={80}
-                      onChange={(v) => upP(i, { retireAge: v })}
-                    />
-                  ) : (
-                    <p className="lv-muted lv-small">
-                      No pay was entered, so there is no retirement age to set.
-                    </p>
-                  )}
-                  {p.salary > 0 && p.retireAge <= now ? (
+                  <NumberField
+                    label="Age you would like to retire"
+                    value={p.retireAge}
+                    min={30}
+                    max={80}
+                    onChange={(v) => upP(i, { retireAge: v })}
+                  />
+
+                  {p.retireAge <= now ? (
                     <Notice tone="warn">
                       {displayName(p, i)} {i === 0 && !p.name.trim() ? 'are' : 'is'} {now} this year, so pay
                       stops straight away. Choose an age above {now} if still working.
@@ -759,45 +792,103 @@ export function StartPage(): ReactNode {
           </div>
         ) : null}
 
-        {step === 5 ? (
+        {atReview ? (
           <div className="lv-stack" data-tour="wizard-review">
             {finishError ? (
               <Notice tone="danger">Your plan could not be created: {finishError}</Notice>
             ) : null}
-            <p>
-              These are the starting assumptions. They are all editable once the plan exists, under Plan and
-              Assumptions.
-            </p>
-            {preview ? <Assumptions plan={preview} d={d} year={year} /> : null}
-            <p>
-              Next comes a two-minute tour of how to get around. It runs on a sample plan, so nothing you do
-              in it changes yours.
-            </p>
+            {preview && (
+              <>
+                <dl className="wizard-assumptions wizard-review-inputs">
+                  {[
+                    [
+                      'Household',
+                      `${ppl.map(displayName).join(' and ')} · ${d.state} · ${d.partner ? 'Married filing jointly' : 'Single'}`,
+                    ],
+                    [
+                      'Annual pay',
+                      formatMoney(preview.incomes.reduce((sum, income) => sum + income.amount, 0) / 100),
+                    ],
+                    [
+                      'Opening balances',
+                      formatMoney(preview.accounts.reduce((sum, account) => sum + account.balance, 0) / 100),
+                    ],
+                    ['Annual spending', formatMoney(d.spending)],
+                    ...(hasPay
+                      ? [
+                          [
+                            'Retirement',
+                            ppl
+                              .flatMap((person, i) =>
+                                person.salary > 0 ? [`${displayName(person, i)} at ${person.retireAge}`] : [],
+                              )
+                              .join(' · '),
+                          ],
+                        ]
+                      : []),
+                  ].map(([label, value], index) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value}</dd>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        aria-label={`Edit ${label.toLowerCase()}`}
+                        onClick={() => {
+                          setAccepted(false);
+                          setStep(index);
+                        }}
+                      >
+                        Edit
+                      </Button>
+                    </div>
+                  ))}
+                </dl>
+                <details>
+                  <summary>Model assumptions</summary>
+                  <Assumptions plan={preview} d={d} year={year} />
+                </details>
+              </>
+            )}
+            <label>
+              <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} /> I
+              reviewed the balances, income, spending, filing status and other estimates for my plan. My
+              starting balances are as of January 1 of the starting year.
+            </label>
             <div className="lv-row">
               <Button
                 variant="primary"
-                disabled={busy || !accepted || !preview}
-                onClick={() => void finish(true)}
-                data-tour="wizard-take-tour"
-              >
-                Create my plan and take the tour
-              </Button>
-              <Button
                 disabled={busy || !accepted || !preview}
                 onClick={() => void finish(false)}
                 data-tour="wizard-skip-tour"
               >
                 Create my plan
               </Button>
+              <Button
+                disabled={busy || !accepted || !preview}
+                onClick={() => void finish(true)}
+                data-tour="wizard-take-tour"
+              >
+                Create my plan and take the tour
+              </Button>
             </div>
           </div>
         ) : null}
 
         <div className="lv-spread wizard-nav">
-          <Button disabled={step === 0} onClick={() => setStep((x) => x - 1)}>
-            Back
-          </Button>
-          {step < 5 ? (
+          {step > 0 ? (
+            <Button
+              onClick={() => {
+                setAccepted(false);
+                setStep((x) => x - 1);
+              }}
+            >
+              Back
+            </Button>
+          ) : (
+            <span />
+          )}
+          {!atReview ? (
             <Button
               variant="primary"
               onClick={() => {
@@ -813,30 +904,11 @@ export function StartPage(): ReactNode {
               }}
               data-tour="wizard-next"
             >
-              {step === 4 ? 'Review' : 'Next'}
+              {step === reviewIndex - 1 ? 'Review' : 'Next'}
             </Button>
           ) : (
             <span />
           )}
-        </div>
-      </Card>
-      <Card title="Or start from an example" data-tour="samples">
-        <p className="lv-muted lv-small" style={{ marginBottom: 12 }}>
-          A copy is made for you to edit. The people and figures are invented.
-        </p>
-        <div className="lv-row">
-          <Button disabled={busy} onClick={() => void sample('sample-basic')}>
-            Single, mid-career
-          </Button>
-          <Button disabled={busy} onClick={() => void sample('sample-early-retiree')}>
-            Couple retiring at 50
-          </Button>
-          <Button disabled={busy} onClick={() => void sample('sample-couple-ss')}>
-            Couple near retirement
-          </Button>
-          <Link className="lv-btn" to="/settings">
-            Import a backup
-          </Link>
         </div>
       </Card>
     </>
@@ -866,7 +938,14 @@ function Assumptions({ plan, d, year }: { plan: Plan; d: Draft; year: number }):
       'Investment mix',
       `Brokerage, health savings and workplace plans ${pct(ASSUMED.mix.usStocks)} US stocks, ${pct(ASSUMED.mix.usBonds)} bonds, ${pct(ASSUMED.mix.intlStocks)} international; Roth IRAs ${pct(ASSUMED.rothMix.usStocks)} US and ${pct(ASSUMED.rothMix.intlStocks)} international stocks.`,
     ],
-    ['Pay', `Rises ${pct(ASSUMED.salaryGrowthReal)} a year above inflation until each person retires.`],
+    ...(plan.incomes.length
+      ? [
+          ['Pay', `Rises ${pct(ASSUMED.salaryGrowthReal)} a year above inflation until retirement.`] as [
+            string,
+            string,
+          ],
+        ]
+      : []),
     [
       'Savings',
       `Cash earns the cash return under Assumptions (${pct(r.cash, 1)} a year) and follows short-term interest rates in simulations. ${ASSUMED.emergencyMonths} months of spending stays in cash; money left over each year goes to ${d.partner ? 'your Roth IRAs' : 'your Roth IRA'} (within the income limits), then ${d.partner ? `${ppl[0].name.trim() ? possessive(names[0]) : 'your'} brokerage account` : 'the brokerage account'}.`,

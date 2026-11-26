@@ -121,11 +121,9 @@ export function ComparePage(): ReactNode {
             ...p.scenarios.map((sc) => ({ value: `${p.id}|${sc.id}`, label: `${p.name}: ${sc.name}` })),
           ])),
   ];
-  const hasRetirement = plan.milestones.some((m) => m.kind === 'retirement');
   const [a, setA] = useState(options[0].value);
   const [b, setB] = useState(options[1]?.value ?? LIVE);
-  const [kind, setKind] = useState(hasRetirement ? 'retire' : 'spend');
-  const [val, setVal] = useState(hasRetirement ? -3 : 0.1);
+  const [selection, setSelection] = useState<{ kind: string; value: number } | null>(null);
   const [stateCode, setStateCode] = useState('FL');
   const [name, setName] = useState('');
   const [view, setView] = useState<View>('chart');
@@ -152,6 +150,42 @@ export function ComparePage(): ReactNode {
     }
   }, [ra.plan, ra.scenario]);
   const baseline = baselineCheck.plan;
+  const defaults: Record<string, { label: string; def: number; name: (v: number) => string }> = {
+    retire: {
+      label: 'Retire earlier or later',
+      def: -3,
+      name: (v) =>
+        v === 0
+          ? 'Retire as planned'
+          : `Retire ${Math.abs(v)} year${Math.abs(v) === 1 ? '' : 's'} ${v < 0 ? 'earlier' : 'later'}`,
+    },
+    spend: {
+      label: 'Change scheduled expenses',
+      def: 0.1,
+      name: (v) => `Spend ${Math.abs(Math.round(v * 100))}% ${v < 0 ? 'less' : 'more'}`,
+    },
+    returns: {
+      label: 'Change stock returns',
+      def: -0.02,
+      name: (v) => `Stocks ${v < 0 ? '−' : '+'}${points(v)} pts`,
+    },
+    claim: { label: 'Claim Social Security at age', def: 70, name: (v) => `Claim Social Security at ${v}` },
+    state: { label: 'Live in another state', def: 0, name: () => `Live in ${stateCode}` },
+  };
+  const choices = [
+    ...(baseline.milestones.some(
+      (m) => m.kind === 'retirement' && (m.when.type === 'age' || m.when.type === 'year'),
+    )
+      ? ['retire']
+      : []),
+    ...(baseline.expenses.some((e) => e.amount > 0) ? ['spend'] : []),
+    'returns',
+    ...(baseline.people.some((p) => p.socialSecurity.mode !== 'none') ? ['claim'] : []),
+    'state',
+  ];
+  const kind = selection && choices.includes(selection.kind) ? selection.kind : choices[0];
+  const val = selection?.kind === kind ? selection.value : defaults[kind].def;
+  const setVal = (value: number): void => setSelection({ kind, value });
   const encoded = kind === 'state' ? stateCode.charCodeAt(0) * 256 + stateCode.charCodeAt(1) : val;
   const experiment = useMemo(
     () => ({
@@ -180,28 +214,6 @@ export function ComparePage(): ReactNode {
     A.records.at(-1)?.year === B.records.at(-1)?.year;
   const updating = heldA.stale || heldB.stale;
 
-  const defaults: Record<string, { label: string; def: number; name: (v: number) => string }> = {
-    retire: {
-      label: 'Retire earlier or later',
-      def: -3,
-      name: (v) =>
-        v === 0
-          ? 'Retire as planned'
-          : `Retire ${Math.abs(v)} year${Math.abs(v) === 1 ? '' : 's'} ${v < 0 ? 'earlier' : 'later'}`,
-    },
-    spend: {
-      label: 'Change scheduled expenses',
-      def: 0.1,
-      name: (v) => `Spend ${Math.abs(Math.round(v * 100))}% ${v < 0 ? 'less' : 'more'}`,
-    },
-    returns: {
-      label: 'Change stock returns',
-      def: -0.02,
-      name: (v) => `Stocks ${v < 0 ? '−' : '+'}${points(v)} pts`,
-    },
-    claim: { label: 'Claim Social Security at age', def: 70, name: (v) => `Claim Social Security at ${v}` },
-    state: { label: 'Live in another state', def: 0, name: () => `Live in ${stateCode}` },
-  };
   const whatIf = defaults[kind].name(val);
   const labelA = options.find((o) => o.value === keyA)?.label ?? 'A';
   const labelB = live ? `${whatIf} (not saved)` : (options.find((o) => o.value === keyB)?.label ?? 'B');
@@ -327,11 +339,10 @@ export function ComparePage(): ReactNode {
               <SelectField
                 label="What changes"
                 value={kind}
-                options={Object.entries(defaults).map(([value, x]) => ({ value, label: x.label }))}
+                options={choices.map((value) => ({ value, label: defaults[value].label }))}
                 onChange={(v) =>
                   tune(() => {
-                    setKind(v);
-                    setVal(defaults[v].def);
+                    setSelection({ kind: v, value: defaults[v].def });
                   })
                 }
                 data-tour="variant-kind"
@@ -452,13 +463,19 @@ export function ComparePage(): ReactNode {
           </Fold>
           <Card title="Side by side" data-tour="compare-pick">
             <div className="cmp-pick">
-              <SelectField
-                label="First"
-                value={keyA}
-                options={options}
-                onChange={setA}
-                data-tour="compare-a"
-              />
+              {options.length > 1 ? (
+                <SelectField
+                  label="First"
+                  value={keyA}
+                  options={options}
+                  onChange={setA}
+                  data-tour="compare-a"
+                />
+              ) : (
+                <span className="lv-small" data-tour="compare-a">
+                  First: {options[0].label}
+                </span>
+              )}
               <SelectField
                 label="Second"
                 value={keyB}

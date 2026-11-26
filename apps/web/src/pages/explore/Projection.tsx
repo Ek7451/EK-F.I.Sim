@@ -52,20 +52,19 @@ export function ProjectionPage(): ReactNode {
   const { result, ms, error, stale, retry } = useProjection(true);
   const view = usePlanView();
   const compact = useCompactWorkspace();
-  useEffect(() => {
-    if (compact) view.set({ inspector: false });
-  }, [compact]); // eslint-disable-line react-hooks/exhaustive-deps
+  const [inspector, setInspector] = useState(false);
+  useEffect(() => setInspector(false), [compact]);
   const [editing, setEditing] = useState(false);
   const [entity, setEntity] = useState<string | null>(null);
   const selectEntity = (id: string): void => {
     setEntity(id);
     setEditing(true);
-    view.set({ inspector: true });
+    setInspector(true);
   };
   const editPlan = (): void => {
     setEntity(preview.milestones.find((x) => x.kind === 'retirement')?.id ?? null);
     setEditing(true);
-    view.set({ inspector: true });
+    setInspector(true);
   };
   const m = useMoney();
   const [year, setYear] = useSelectedYear();
@@ -101,6 +100,7 @@ export function ProjectionPage(): ReactNode {
       <PageHead
         group="explore"
         title="Projection"
+        context={m.unit}
         intro={`One path on your expected returns, in ${m.unit}: an estimate, not a forecast.`}
         actions={
           <div className="lv-row">
@@ -167,14 +167,16 @@ export function ProjectionPage(): ReactNode {
           data-tour="spending-covered"
         />
       </KpiStrip>
-      <div className="chart-ledger planning-workspace" data-inspector={view.inspector}>
+      <div className="chart-ledger planning-workspace" data-inspector={inspector}>
         <Card
           title="Net worth over time"
           actions={
             <>
-              <span className="lv-muted lv-small proj-recalc" data-tour="recompute-time" role="status">
-                {stale && !error ? 'Updating…' : `${m.unit} · recalculated in ${ms.toFixed(0)} ms`}
-              </span>
+              {stale && !error && (
+                <span className="lv-small" role="status">
+                  Updating…
+                </span>
+              )}
               <details className="chart-options">
                 <summary>Chart options</summary>
                 <div className="lv-row">
@@ -191,13 +193,20 @@ export function ProjectionPage(): ReactNode {
                     {view.axis === 'year' ? 'Show ages' : 'Show years'}
                   </Button>
                 </div>
+                <span className="lv-small lv-muted" data-tour="recompute-time">
+                  Calculated in {ms.toFixed(0)} ms
+                </span>
               </details>
               <Button
+                aria-expanded={inspector}
                 data-tour="workspace-details"
                 size="sm"
-                onClick={() => view.set({ inspector: !view.inspector })}
+                onClick={() => {
+                  setEditing(false);
+                  setInspector(!inspector);
+                }}
               >
-                {view.inspector ? 'Hide details' : 'Show details'}
+                {inspector ? 'Hide details' : 'Show details'}
               </Button>
             </>
           }
@@ -209,7 +218,8 @@ export function ProjectionPage(): ReactNode {
             height="var(--chart-h)"
             onClick={(p) => {
               setYear(recs[p.dataIndex]?.year ?? null);
-              view.set({ inspector: true });
+              setEditing(false);
+              setInspector(true);
             }}
             onHover={(p) => view.set({ hoverYear: p ? (recs[p.dataIndex]?.year ?? null) : null })}
             onZoom={(range) => view.set({ range })}
@@ -403,8 +413,8 @@ export function ProjectionPage(): ReactNode {
         </Card>
         <WorkspaceInspector
           compact={compact}
-          open={view.inspector}
-          onClose={() => view.set({ inspector: false })}
+          open={inspector}
+          onClose={() => setInspector(false)}
           footer={
             compact ? (
               <DraftActions base={base} result={result} baseline={baseline} stale={stale} />
@@ -481,7 +491,7 @@ export function ProjectionPage(): ReactNode {
           )}
         </WorkspaceInspector>
       </div>
-      {(!compact || !view.inspector) && (
+      {(!compact || !inspector) && (
         <DraftActions base={base} result={result} baseline={baseline} stale={stale} />
       )}
     </>

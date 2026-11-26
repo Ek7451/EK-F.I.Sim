@@ -119,48 +119,10 @@
   min-width: 0;
 }
 
-.trk-empty {
-  display: grid;
-  place-items: center;
-  align-content: center;
-  gap: 8px;
-  min-height: calc(var(--trk-chart-h) + 34px);
-  padding: 16px;
-  text-align: center;
-}
-.trk-empty > p {
-  max-width: 62ch;
-}
-.trk-empty > p:first-of-type {
-  font-weight: 600;
-  color: var(--ink);
-}
-.trk-empty > svg {
-  width: min(320px, 70%);
-  height: auto;
-  overflow: visible;
-}
-.trk-empty-plan {
-  fill: none;
-  stroke: var(--line-strong);
-  stroke-width: 2.5;
-  stroke-dasharray: 7 6;
-  stroke-linecap: round;
-}
-.trk-empty circle {
-  fill: var(--dawn-rose);
-  stroke: var(--surface);
-  stroke-width: 2.5;
-  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--dawn-rose) 60%, transparent));
-}
-
 @media (max-width: 1100px) {
   .trk-workspace {
     --trk-chart-h: 320px;
     grid-template-columns: minmax(0, 1fr);
-  }
-  .trk-empty {
-    min-height: 200px;
   }
 }
 @media (max-width: 700px) {

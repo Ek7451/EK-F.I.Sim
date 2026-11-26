@@ -5,6 +5,7 @@ import {
   Card,
   Icon,
   IconTile,
+  HelpTip,
   Segmented,
   Skeleton,
   Stat,
@@ -331,6 +332,7 @@ export function HomePage(): ReactNode {
             Edit plan
           </Link>
         }
+        context="Today’s dollars"
         intro="The headline numbers for this plan, in today's dollars. Every figure is an estimate that updates as you edit."
       />
       <CalculationStatus />
@@ -383,7 +385,12 @@ export function HomePage(): ReactNode {
             ) : null}
             <dl className="home-facts">
               <div>
-                <dt>Financially independent</dt>
+                <dt>
+                  Financially independent{' '}
+                  <HelpTip label="About financial independence">
+                    Investments reach 25 times a year’s spending, including housing and healthcare.
+                  </HelpTip>
+                </dt>
                 <dd>{s ? (s.fiYear ?? 'Not reached') : '…'}</dd>
               </div>
               <div>
@@ -407,18 +414,20 @@ export function HomePage(): ReactNode {
                 <dd>{s ? formatCompact(s.lifetimeTaxReal) : '…'}</dd>
               </div>
             </dl>
-            <p className="lv-small lv-muted home-fineprint">
-              {covered?.note ? `${covered.note}. ` : ''}Independent means investments reach 25× a year's
-              spending, with housing and healthcare.
-            </p>
+            {covered?.note && <p className="lv-small lv-muted home-fineprint">{covered.note}</p>}
             {result ? (
               <div className="home-next">
                 <div>
                   <strong>Next decision</strong>
                   <p>{retirement || 'Add your first milestone'}</p>
                 </div>
-                <Link className="lv-btn" data-variant="primary" data-size="sm" to="/explore/projection">
-                  View projection
+                <Link
+                  className="lv-btn"
+                  data-variant="primary"
+                  data-size="sm"
+                  to={retirement ? '/explore/projection' : '/plan/timeline'}
+                >
+                  {retirement ? 'View projection' : 'Open timeline'}
                 </Link>
               </div>
             ) : null}

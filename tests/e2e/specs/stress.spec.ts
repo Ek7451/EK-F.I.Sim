@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import type { Plan } from '../../../packages/engine/src';
 import { workspaceFixtures } from '../fixtures/workspace';
-import { dismissPrompt, go, watchErrors } from './helpers';
+import { go, watchErrors } from './helpers';
 
 async function loadFixture(page: Page, plan: Plan): Promise<void> {
   await page.goto('/start');
@@ -31,7 +31,6 @@ async function loadFixture(page: Page, plan: Plan): Promise<void> {
     db.close();
   }, plan);
   await page.goto('/explore/projection');
-  await dismissPrompt(page);
   await expect(page.locator('[data-tour="projection-stats"]')).toContainText('$');
 }
 
@@ -61,6 +60,31 @@ for (const [name, plan] of Object.entries(workspaceFixtures())) {
     expect(errors).toEqual([]);
   });
 }
+
+test('an empty plan offers only applicable what-ifs, withdrawal controls and simulation inputs', async ({
+  page,
+}) => {
+  const empty = workspaceFixtures().empty;
+  empty.healthcare.enabled = false;
+  empty.assumptions.monteCarlo.method = 'bootstrap';
+  await loadFixture(page, empty);
+  await go(page, '/compare');
+  const builder = page.locator('[data-tour="variant-builder"]');
+  if (!(await page.getByLabel('What changes').isVisible())) await builder.locator('summary').click();
+  const choices = page.getByLabel('What changes');
+  await expect(choices).toBeVisible();
+  await expect(choices.locator('option')).toHaveText(['Change stock returns', 'Live in another state']);
+  await expect(choices).toHaveValue('returns');
+  await go(page, '/plan/strategy');
+  await expect(page.getByLabel('Withdrawal strategy', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Pay medical bills' })).toHaveCount(0);
+  await expect(page.getByRole('heading', { name: 'Early access with 72(t) payments' })).toHaveCount(0);
+  await go(page, '/plan/assumptions');
+  await page.locator('[data-tour="volatility"] summary').click();
+  await expect(page.getByLabel('International stocks volatility')).toBeVisible();
+  await expect(page.getByLabel('US stocks volatility')).toHaveCount(0);
+  await expect(page.getByLabel('Vary healthcare inflation')).toHaveCount(0);
+});
 
 test('single worker: simulation cancellation and warm input-to-paint profile', async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop');

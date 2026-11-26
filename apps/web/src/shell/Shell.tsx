@@ -1,10 +1,10 @@
-import { Badge, Button, Icon, Menu, Notice } from '@fisim/ui';
+import { Badge, Button, HelpTip, Icon, Menu, Notice } from '@fisim/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
+import { Link, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
 import { useStore } from '../state/store';
 import { tourForRoute } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
-import { DISCLAIMER, NAV, PRIMARY_NAV, ownsRoute } from './nav';
+import { DISCLAIMER, NAV, PRIMARY_NAV, SETUP_NAV, ownsRoute } from './nav';
 import { useDraft } from '../state/draft';
 import { publicCloud } from '../lib/cloud-account';
 import { AccountButton, AccountDialog } from '../pages/AccountDialog';
@@ -29,7 +29,7 @@ export function Shell({
   const [reloading, setReloading] = useState(false);
   const loc = useLocation();
   const nav = useNavigate();
-  const menu = loc.state?.workspaceMenu === true;
+  const menu = !!(sandbox || plans[settings.activePlanId ?? '']) && loc.state?.workspaceMenu === true;
   const tour = useTour();
   const screenTour = tourForRoute(loc.pathname);
   const newer = Object.entries(meta).filter(([, m]) => m.readOnly);
@@ -71,6 +71,7 @@ export function Shell({
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const mod = e.ctrlKey || e.metaKey;
+      if (loc.pathname === '/start' || menu || sandbox) return;
       if (
         e.isComposing ||
         e.defaultPrevented ||
@@ -90,12 +91,16 @@ export function Shell({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [undo, redo]);
+  }, [undo, redo, menu, sandbox, loc.pathname]);
 
   const scenarioId = useStore((s) => s.scenarioId);
   const active = sandbox ? sandbox.plan : settings.activePlanId ? plans[settings.activePlanId] : undefined;
   const scenario = scenarioId ? active?.scenarios.find((x) => x.id === scenarioId) : undefined;
   const crumb = breadcrumb(loc.pathname);
+  const groups = active ? PRIMARY_NAV : SETUP_NAV;
+  const editingPlan = !!active && loc.pathname !== '/start';
+  const historyTools =
+    editingPlan && (tour.activeId === 'T-B07' || !!history?.undo.length || !!history?.redo.length);
   const collapsed = settings.railCollapsed;
   return (
     <div className="app" data-rail={collapsed ? 'collapsed' : 'open'}>
@@ -112,7 +117,7 @@ export function Shell({
           </Link>
         </div>
         <div className="rail-scroll">
-          {PRIMARY_NAV.map((g) => (
+          {groups.map((g) => (
             <div
               className={`nav-group${g.id === 'workspace' ? ' hide-phone' : ''}`}
               key={g.id}
@@ -169,40 +174,50 @@ export function Shell({
             </Button>
           </div>
         ) : null}
-        <header className="topbar">
+        <header className={`topbar${!active && !crumb && !publicCloud ? ' only-phone' : ''}`}>
           <Link className="brand only-phone" to="/" aria-label="Longview Planner home">
             <img src="/icon.svg" alt="" />
           </Link>
-          <Menu
-            label="Plans"
-            items={[
-              ...Object.values(plans).map((p) => ({
-                id: p.id,
-                label: p.name,
-                checked: p.id === settings.activePlanId,
-                onSelect: () => {
-                  if (p.id !== active?.id) setActive(p.id);
+          {active && (
+            <Menu
+              key={loc.pathname}
+              label="Plans"
+              items={[
+                ...Object.values(plans).map((p) => ({
+                  id: p.id,
+                  label: p.name,
+                  checked: p.id === settings.activePlanId,
+                  onSelect: () => {
+                    if (p.id !== active.id) setActive(p.id);
+                    if (loc.pathname === '/start') nav('/');
+                  },
+                })),
+                {
+                  id: '__new',
+                  label: 'New plan…',
+                  icon: 'plus',
+                  divider: true,
+                  onSelect: () => nav('/start'),
                 },
-              })),
-              { id: '__new', label: 'New plan…', icon: 'plus', divider: true, onSelect: () => nav('/start') },
-            ]}
-            trigger={({ open, ...p }) => (
-              <button
-                {...p}
-                type="button"
-                id="plan-switch"
-                className="plan-switch"
-                data-tour="plan-switcher"
-                disabled={!!sandbox}
-                aria-label={`Plan: ${active?.name ?? 'No plan yet'}`}
-                aria-haspopup="menu"
-              >
-                <span className="plan-dot" aria-hidden="true" />
-                <span className="lv-ellipsis">{active?.name ?? 'No plan yet'}</span>
-                <Icon name={open ? 'up' : 'down'} size={16} />
-              </button>
-            )}
-          />
+              ]}
+              trigger={({ open, ...p }) => (
+                <button
+                  {...p}
+                  type="button"
+                  id="plan-switch"
+                  className="plan-switch"
+                  data-tour="plan-switcher"
+                  disabled={!!sandbox}
+                  aria-label={`Plan: ${active.name}`}
+                  aria-haspopup="menu"
+                >
+                  <span className="plan-dot" aria-hidden="true" />
+                  <span className="lv-ellipsis">{active.name}</span>
+                  <Icon name={open ? 'up' : 'down'} size={16} />
+                </button>
+              )}
+            />
+          )}
           {crumb ? (
             <nav className="crumbs hide-phone" aria-label="Breadcrumb">
               <Icon name="chevron" size={14} />
@@ -211,13 +226,13 @@ export function Shell({
               <span aria-current="page">{crumb.page}</span>
             </nav>
           ) : null}
-          {scenario ? (
+          {editingPlan && scenario ? (
             <span data-tour="scenario-chip">
               <Badge tone="warn">What-if: {scenario.name}</Badge>
             </span>
           ) : null}
           <span className="spacer" />
-          {active && (
+          {editingPlan && (
             <span className="save-status" role="status">
               {draft?.base.id === active.id ? 'Draft · ' : ''}
               {saveStatus === 'saving' ? (
@@ -232,22 +247,26 @@ export function Shell({
             </span>
           )}
           <div className={`header-tools${publicCloud ? ' hide-phone' : ''}`}>
-            <Button
-              variant="ghost"
-              icon="undo"
-              label="Undo"
-              onClick={undo}
-              disabled={!history?.undo.length || !!sandbox}
-              data-tour="undo"
-            />
-            <Button
-              variant="ghost"
-              icon="redo"
-              label="Redo"
-              onClick={redo}
-              disabled={!history?.redo.length || !!sandbox}
-              data-tour="redo"
-            />
+            {historyTools && (
+              <>
+                <Button
+                  variant="ghost"
+                  icon="undo"
+                  label="Undo"
+                  onClick={undo}
+                  disabled={!history?.undo.length || !!sandbox}
+                  data-tour="undo"
+                />
+                <Button
+                  variant="ghost"
+                  icon="redo"
+                  label="Redo"
+                  onClick={redo}
+                  disabled={!history?.redo.length || !!sandbox}
+                  data-tour="redo"
+                />
+              </>
+            )}
             {screenTour ? (
               <Button
                 variant="ghost"
@@ -260,16 +279,16 @@ export function Shell({
           </div>
           {publicCloud ? (
             <>
-              {screenTour || history?.undo.length || history?.redo.length ? (
+              {screenTour || (historyTools && !sandbox) ? (
                 <div className="only-phone">
                   <Menu
                     label="Editing and help"
                     placement="bottom-end"
                     items={[
-                      ...(history?.undo.length && !sandbox
+                      ...(historyTools && history?.undo.length && !sandbox
                         ? [{ id: 'undo', label: 'Undo', icon: 'undo', onSelect: undo }]
                         : []),
-                      ...(history?.redo.length && !sandbox
+                      ...(historyTools && history?.redo.length && !sandbox
                         ? [{ id: 'redo', label: 'Redo', icon: 'redo', onSelect: redo }]
                         : []),
                       ...(screenTour
@@ -336,52 +355,69 @@ export function Shell({
               </Button>
             </Notice>
           )}
-          {newer.map(([id, m]) => (
-            <Notice key={id} tone="warn">
-              {m.validationError
-                ? 'A saved plan needs recovery. Download the original, then open it in Restore a recovery file.'
-                : `A saved plan needs Longview schema v${m.newerVersion}. Update to open it.`}
-              {m.validationError && (
-                <details>
-                  <summary>Show plan errors</summary>
-                  {m.validationError}
-                </details>
-              )}
-              <div className="lv-row">
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    try {
-                      const { db } = await import('../state/db');
-                      const record = await (await db()).get('plans', id);
-                      if (!record) throw new Error();
-                      const { download } = await import('../lib/files');
-                      download('longview-recovery.json', JSON.stringify(record.plan), 'application/json');
-                    } catch {
-                      useStore
-                        .getState()
-                        .notify('Recovery download failed. Your original is still on this device.', 'danger');
-                    }
-                  }}
-                >
-                  Download original (unencrypted)
-                </Button>
-                {m.validationError && loc.pathname !== '/settings/recovery' && (
-                  <Link className="lv-btn" data-size="sm" to="/settings/recovery">
-                    Restore a recovery file
-                  </Link>
-                )}
-              </div>
+          {newer.length > 0 && !loc.pathname.startsWith('/settings') && (
+            <Notice tone="warn">
+              {newer.length === 1
+                ? 'One saved plan needs attention.'
+                : `${newer.length} saved plans need attention.`}{' '}
+              <Link to="/settings">Review in Settings</Link>
             </Notice>
-          ))}
+          )}
+          {loc.pathname.startsWith('/settings') &&
+            newer.map(([id, m]) => (
+              <Notice key={id} tone="warn">
+                {m.validationError
+                  ? 'A saved plan needs recovery. Download the original, then open it in Restore a recovery file.'
+                  : `A saved plan needs Longview schema v${m.newerVersion}. Update to open it.`}
+                {m.validationError && (
+                  <details>
+                    <summary>Show plan errors</summary>
+                    {m.validationError}
+                  </details>
+                )}
+                <div className="lv-row">
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      try {
+                        const { db } = await import('../state/db');
+                        const record = await (await db()).get('plans', id);
+                        if (!record) throw new Error();
+                        const { download } = await import('../lib/files');
+                        download('longview-recovery.json', JSON.stringify(record.plan), 'application/json');
+                      } catch {
+                        useStore
+                          .getState()
+                          .notify(
+                            'Recovery download failed. Your original is still on this device.',
+                            'danger',
+                          );
+                      }
+                    }}
+                  >
+                    Download original (unencrypted)
+                  </Button>
+                  {m.validationError && loc.pathname !== '/settings/recovery' && (
+                    <Link className="lv-btn" data-size="sm" to="/settings/recovery">
+                      Restore a recovery file
+                    </Link>
+                  )}
+                </div>
+              </Notice>
+            ))}
           <Outlet />
         </main>
         <footer className="footer">
           <p>{DISCLAIMER}</p>
         </footer>
       </div>
-      <nav className="bottom-nav" aria-label="Main (phone)" data-tour="bottom-nav">
-        {PRIMARY_NAV[0].items.map((it) => (
+      <nav
+        className="bottom-nav"
+        data-setup={!active || undefined}
+        aria-label="Main (phone)"
+        data-tour="bottom-nav"
+      >
+        {groups[0].items.map((it) => (
           <Link
             key={it.to}
             to={it.to}
@@ -392,24 +428,26 @@ export function Shell({
             {it.label}
           </Link>
         ))}
-        <button
-          id="mobile-menu-toggle"
-          type="button"
-          data-current={PRIMARY_NAV[1].items.some((it) => ownsRoute(it.to, loc.pathname)) || undefined}
-          aria-controls="workspace-navigation"
-          aria-expanded={menu}
-          onClick={() =>
-            menu
-              ? nav(-1)
-              : nav(loc.pathname + loc.search + loc.hash, {
-                  state: { ...loc.state, workspaceMenu: true },
-                  preventScrollReset: true,
-                })
-          }
-        >
-          <Icon name={menu ? 'close' : 'more'} />
-          {menu ? 'Close' : 'More'}
-        </button>
+        {active && (
+          <button
+            id="mobile-menu-toggle"
+            type="button"
+            data-current={PRIMARY_NAV[1].items.some((it) => ownsRoute(it.to, loc.pathname)) || undefined}
+            aria-controls="workspace-navigation"
+            aria-expanded={menu}
+            onClick={() =>
+              menu
+                ? nav(-1)
+                : nav(loc.pathname + loc.search + loc.hash, {
+                    state: { ...loc.state, workspaceMenu: true },
+                    preventScrollReset: true,
+                  })
+            }
+          >
+            <Icon name={menu ? 'close' : 'more'} />
+            {menu ? 'Close' : 'More'}
+          </button>
+        )}
       </nav>
       <div className="toasts" aria-live="polite">
         {notices.map((n) => (
@@ -444,37 +482,23 @@ export function SubNav({ group }: { group: 'plan' | 'explore' }): ReactNode {
   const g = NAV.find((x) => x.id === group)!;
   const loc = useLocation();
   const navigate = useNavigate();
+  if (group === 'plan')
+    return (
+      <Link className="all-inputs" to="/plan">
+        All plan inputs
+      </Link>
+    );
   return (
-    <>
-      <nav
-        className="subnav lv-segmented hide-phone"
-        aria-label={`${g.label} screens`}
-        data-tour={`subnav-${group}`}
-      >
+    <label className="results-picker" data-tour="subnav-explore">
+      Results pages
+      <select value={loc.pathname} onChange={(e) => navigate(e.target.value)}>
         {g.items.map((it) => (
-          <NavLink key={it.to} to={it.to}>
-            <Icon name={it.icon} size={15} />
+          <option key={it.to} value={it.to}>
             {it.label}
-          </NavLink>
+          </option>
         ))}
-      </nav>
-      {group === 'plan' ? (
-        <Link className="all-inputs" to="/plan">
-          All plan inputs
-        </Link>
-      ) : (
-        <label className="results-picker only-phone">
-          Results pages
-          <select value={loc.pathname} onChange={(e) => navigate(e.target.value)}>
-            {g.items.map((it) => (
-              <option key={it.to} value={it.to}>
-                {it.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      )}
-    </>
+      </select>
+    </label>
   );
 }
 
@@ -526,11 +550,13 @@ export function HorizonArt(): ReactNode {
 export function PageHead({
   title,
   intro,
+  context,
   actions,
   group,
 }: {
   title: string;
   intro?: string;
+  context?: string;
   actions?: ReactNode;
   group?: 'plan' | 'explore';
 }): ReactNode {
@@ -539,11 +565,12 @@ export function PageHead({
   }, [title]);
   return (
     <div className="page-head" data-group={group}>
-      {group ? <SubNav group={group} /> : null}
       <div className="page-title">
         <h1>{title}</h1>
-        {intro ? <p title={intro}>{intro}</p> : null}
+        {intro && <HelpTip label={`About ${title}`}>{intro}</HelpTip>}
+        {context && <span className="page-context">{context}</span>}
       </div>
+      {group && <SubNav group={group} />}
       {actions ? <div className="lv-row page-actions">{actions}</div> : null}
     </div>
   );

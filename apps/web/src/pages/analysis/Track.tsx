@@ -1,4 +1,5 @@
 import './track.css';
+import { Link } from 'react-router-dom';
 import {
   Button,
   Card,
@@ -138,48 +139,55 @@ export function TrackPage(): ReactNode {
           <Card
             title="Log balances"
             actions={
-              <label className="trk-date" htmlFor={dateId}>
-                <span>As of</span>
-                <input
-                  id={dateId}
-                  className="lv-input"
-                  type="date"
-                  value={date}
-                  onChange={(e) => {
-                    setDraft({});
-                    setDate(e.target.value);
-                  }}
-                />
-              </label>
+              plan.accounts.length > 0 && (
+                <label className="trk-date" htmlFor={dateId}>
+                  <span>As of</span>
+                  <input
+                    id={dateId}
+                    className="lv-input"
+                    type="date"
+                    value={date}
+                    onChange={(e) => {
+                      setDraft({});
+                      setDate(e.target.value);
+                    }}
+                  />
+                </label>
+              )
             }
             data-tour="log-actuals"
           >
-            {plan.accounts.length === 0 ? <p className="lv-muted">Add accounts under Plan first.</p> : null}
-            <div className="trk-grid">
-              {plan.accounts.map((a) => (
-                <MoneyField
-                  key={a.id}
-                  label={a.name}
-                  hint={ACCOUNT_LABELS[a.type]}
-                  help={null}
-                  cents={balanceOf(a.id, a.balance)}
-                  onChange={(v) => setDraft((x) => ({ ...x, [a.id]: Math.max(0, v) }))}
-                />
-              ))}
-            </div>
-            <div className="trk-save">
-              <span className="lv-small lv-muted">
-                Total <strong className="lv-num">{formatMoney(entering)}</strong>
-              </span>
-              <Button
-                variant="primary"
-                onClick={log}
-                disabled={!plan.accounts.length || !dateOk || (!baseline && !canFreeze)}
-                data-tour="save-actuals"
-              >
-                Save these balances
-              </Button>
-            </div>
+            {plan.accounts.length === 0 ? (
+              <Link to="/plan/snapshot">Add an account to log balances</Link>
+            ) : (
+              <>
+                <div className="trk-grid">
+                  {plan.accounts.map((a) => (
+                    <MoneyField
+                      key={a.id}
+                      label={a.name}
+                      hint={ACCOUNT_LABELS[a.type]}
+                      help={null}
+                      cents={balanceOf(a.id, a.balance)}
+                      onChange={(v) => setDraft((x) => ({ ...x, [a.id]: Math.max(0, v) }))}
+                    />
+                  ))}
+                </div>
+                <div className="trk-save">
+                  <span className="lv-small lv-muted">
+                    Total <strong className="lv-num">{formatMoney(entering)}</strong>
+                  </span>
+                  <Button
+                    variant="primary"
+                    onClick={log}
+                    disabled={!plan.accounts.length || !dateOk || (!baseline && !canFreeze)}
+                    data-tour="save-actuals"
+                  >
+                    Save these balances
+                  </Button>
+                </div>
+              </>
+            )}
           </Card>
           {plan.actuals.length ? (
             <Fold
@@ -310,8 +318,8 @@ export function TrackPage(): ReactNode {
               </Button>
             </div>
           </KpiStrip>
-          <Card title="Actual versus planned" data-tour="track-chart">
-            {baseline ? (
+          {baseline && (
+            <Card title="Actual versus planned" data-tour="track-chart">
               <Chart
                 label="Actual investment balances against the frozen plan projection"
                 deps={[baseline, plan.actuals, plan.people]}
@@ -423,22 +431,8 @@ export function TrackPage(): ReactNode {
                   };
                 }}
               />
-            ) : (
-              <div className="trk-empty">
-                <svg viewBox="0 0 320 120" aria-hidden="true" focusable="false">
-                  <path className="trk-empty-plan" d="M8 104 C 80 96 140 78 196 54 S 280 20 312 12" />
-                  <circle cx="52" cy="92" r="6" />
-                  <circle cx="118" cy="84" r="6" />
-                  <circle cx="186" cy="52" r="6" />
-                </svg>
-                <p>The chart appears after your first entry.</p>
-                <p className="lv-small lv-muted">
-                  Dots are recorded balances on their stated dates. Gaps may reflect returns, contributions,
-                  withdrawals or timing; no balances are inferred between observations.
-                </p>
-              </div>
-            )}
-          </Card>
+            </Card>
+          )}
         </div>
       </div>
     </>

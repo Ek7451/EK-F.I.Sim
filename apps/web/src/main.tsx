@@ -50,6 +50,7 @@ const transfer = takeTransfer();
 function Root(): ReactNode {
   const theme = useStore((s) => s.settings.theme);
   const ready = useStore((s) => s.ready);
+  const hasSavedPlans = useStore((s) => Object.keys(s.meta).length > 0);
   const [updateReady, setUpdateReady] = useState(false);
   const [incoming, setIncoming] = useState<unknown[] | null>(null);
   const [transferError, setTransferError] = useState(false);
@@ -161,7 +162,7 @@ function Root(): ReactNode {
         <ImportReview raw={incoming} onClose={() => setIncoming(null)} />
       </Suspense>
     );
-  if (oldHome && !stay) return ready ? <MovedHome onStay={() => setStay(true)} /> : null;
+  if (oldHome && !stay) return ready && hasSavedPlans ? <MovedHome onStay={() => setStay(true)} /> : null;
 
   return (
     <HelpProvider value={helpText}>

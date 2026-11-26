@@ -7,7 +7,7 @@
 .start-hero .page-title > h1 {
   font-size: clamp(1.625rem, 1rem + 1.8vw, 2.375rem);
 }
-.start-hero .page-head p {
+.start-hero .page-context {
   font-size: var(--text-md);
 }
 .start-hero .horizon-art {
@@ -89,4 +89,24 @@
     display: inline;
     padding-right: 8px;
   }
+}
+
+.wizard-alternatives {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+}
+.wizard-alternatives summary,
+.wizard-alternatives > a {
+  cursor: pointer;
+  padding: 10px 0;
+}
+.wizard-alternatives details .lv-row {
+  margin-bottom: 8px;
+}
+
+.wizard-review-inputs > div {
+  grid-template-columns: minmax(6rem, 0.6fr) minmax(0, 1fr) auto;
+  align-items: center;
 }

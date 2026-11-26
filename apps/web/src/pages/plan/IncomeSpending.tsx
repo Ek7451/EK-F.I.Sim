@@ -202,6 +202,7 @@ export function IncomePage(): ReactNode {
       <PageHead
         group="plan"
         title="Income"
+        context="Today’s dollars"
         intro="Each stream has an amount in today's dollars, a growth rate, a start and an end. Social Security is set per person under Household."
       />
       <CalculationStatus />
@@ -569,6 +570,7 @@ export function SpendingPage(): ReactNode {
       <PageHead
         group="plan"
         title="Spending"
+        context="Today’s dollars"
         intro="What life costs, in today's dollars. Each item rises with its own inflation rate. Taxes, loan payments and healthcare are worked out separately."
       />
       <CalculationStatus />
@@ -675,8 +677,7 @@ export function SpendingPage(): ReactNode {
             kind="expense"
             summary={phaseSummary}
             storageKey="spending-phases"
-            // Open where there is room for it: a short list on a tall window. Otherwise its summary row says it all.
-            defaultOpen={plan.expenses.length <= 5 && window.innerHeight >= 860}
+            defaultOpen={phases.length > 0}
             data-tour="phases"
           >
             <p className="lv-muted lv-small" style={{ marginBottom: 8 }}>

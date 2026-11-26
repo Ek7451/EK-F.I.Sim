@@ -31,6 +31,7 @@ for (const tour of TOURS) {
   test(`${tour.id} ${tour.title}: completes with the keyboard`, async ({ page }) => {
     await seed(page, 'basic');
     await page.goto('/help/tours');
+    if (tour.level === 'advanced') await page.getByText('Going further', { exact: true }).click();
     const tile = page.locator(`[data-tour-id="${tour.id}"]`);
     await tile.getByRole('button', { name: /^Start the tour/ }).focus();
     await page.keyboard.press('Enter');

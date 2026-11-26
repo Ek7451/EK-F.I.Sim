@@ -228,11 +228,13 @@ export function StrategyPage(): ReactNode {
   const waterfallSummary = steps.length
     ? `${steps.map(name).join(' → ')} → ${defaultAccount}`
     : `Everything left goes to the ${defaultAccount}`;
+  const hasHsa = plan.accounts.some((a) => a.type === 'hsa');
+  const hasPretax = plan.accounts.some((a) => PRETAX.includes(a.type));
   const withdrawalSummary = [
     S.withdrawalOrder.strategy === 'bracketTargeted'
       ? `Fill the ${pct(S.withdrawalOrder.bracketRate)} bracket with pre-tax money first`
       : WITHDRAWAL_SHORT[S.withdrawalOrder.strategy],
-    S.hsaUse === 'spend' ? 'HSA pays medical bills' : 'HSA stays invested',
+    hasHsa && (S.hsaUse === 'spend' ? 'HSA pays medical bills' : 'HSA stays invested'),
     S.sepp.length ? `${S.sepp.length} 72(t) schedule${S.sepp.length > 1 ? 's' : ''}` : null,
   ]
     .filter(Boolean)
@@ -741,20 +743,22 @@ export function StrategyPage(): ReactNode {
                     }
                   />
                 </div>
-                <Choice
-                  label="Health savings account"
-                  help={helpText('Health savings account')}
-                  value={S.hsaUse}
-                  options={[
-                    { value: 'spend', label: 'Pay medical bills' },
-                    { value: 'save', label: 'Leave invested' },
-                  ]}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.strategies.hsaUse = v;
-                    })
-                  }
-                />
+                {hasHsa && (
+                  <Choice
+                    label="Health savings account"
+                    help={helpText('Health savings account')}
+                    value={S.hsaUse}
+                    options={[
+                      { value: 'spend', label: 'Pay medical bills' },
+                      { value: 'save', label: 'Leave invested' },
+                    ]}
+                    onChange={(v) =>
+                      update((d) => {
+                        d.strategies.hsaUse = v;
+                      })
+                    }
+                  />
+                )}
                 {S.withdrawalOrder.strategy === 'bracketTargeted' ? (
                   <div className="span-2">
                     <Choice
@@ -815,33 +819,34 @@ export function StrategyPage(): ReactNode {
               <p className="pib-lead" style={{ margin: '8px 0 0' }}>
                 Penalty-free money is always used first; required distributions come out whatever the order.
               </p>
-              <div className="pib-sub">
-                <h3>Early access with 72(t) payments</h3>
-                <HelpTip>
-                  A fixed yearly payment from one pre-tax account, penalty-free, that must continue for five
-                  years or until 59½, whichever is later.
-                </HelpTip>
-                {plan.accounts.some((a) => PRETAX.includes(a.type)) ? (
-                  <Button
-                    size="sm"
-                    icon="plus"
-                    data-tour="add-sepp"
-                    onClick={() =>
-                      update((d) => {
-                        const a = d.accounts.find((x) => PRETAX.includes(x.type))!;
-                        d.strategies.sepp.push({
-                          accountId: a.id,
-                          start: { type: 'year', year: d.settings.startYear + 1 },
-                          interestRate: 0.05,
-                        });
-                      })
-                    }
-                  >
-                    Add a 72(t) schedule
-                  </Button>
-                ) : null}
-              </div>
-              {S.sepp.length === 0 ? <p className="lv-muted lv-small">None set up.</p> : null}
+              {(hasPretax || S.sepp.length > 0) && (
+                <div className="pib-sub">
+                  <h3>Early access with 72(t) payments</h3>
+                  <HelpTip>
+                    A fixed yearly payment from one pre-tax account, penalty-free, that must continue for five
+                    years or until 59½, whichever is later.
+                  </HelpTip>
+                  {hasPretax ? (
+                    <Button
+                      size="sm"
+                      icon="plus"
+                      data-tour="add-sepp"
+                      onClick={() =>
+                        update((d) => {
+                          const a = d.accounts.find((x) => PRETAX.includes(x.type))!;
+                          d.strategies.sepp.push({
+                            accountId: a.id,
+                            start: { type: 'year', year: d.settings.startYear + 1 },
+                            interestRate: 0.05,
+                          });
+                        })
+                      }
+                    >
+                      Add a 72(t) schedule
+                    </Button>
+                  ) : null}
+                </div>
+              )}
               {S.sepp.map((sp, i) => (
                 <div key={i} className="pib-line">
                   <div className="pib-grow">

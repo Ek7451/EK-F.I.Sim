@@ -1,12 +1,11 @@
 import { expect, test } from '@playwright/test';
-import { dismissPrompt, go, seed, watchErrors } from './helpers';
+import { go, seed, watchErrors } from './helpers';
 
 test.beforeEach(async ({ page }, info) => {
   test.skip(info.project.name !== 'desktop');
   await page.setViewportSize({ width: 1440, height: 900 });
   await seed(page);
   await go(page, '/explore/projection');
-  await dismissPrompt(page);
 });
 
 test('retirement draft: discard, scenario, one-step undo, reload', async ({ page }) => {
@@ -48,6 +47,7 @@ test('retirement draft: discard, scenario, one-step undo, reload', async ({ page
 
 test('year stays pinned across analyses and invalid draft input stays local', async ({ page }) => {
   const year = page.getByRole('slider', { name: 'Year', exact: true });
+  await page.getByRole('button', { name: 'Show details' }).click();
   await year.focus();
   await page.keyboard.press('ArrowRight');
   await page.keyboard.press('ArrowRight');

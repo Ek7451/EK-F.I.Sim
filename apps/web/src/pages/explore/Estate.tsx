@@ -87,6 +87,7 @@ export function EstatePage(): ReactNode {
       <PageHead
         group="explore"
         title="Estate"
+        context="Today’s dollars"
         intro="What is left for heirs at the end of the plan on the expected path, and what tax takes from it. In today's dollars."
         actions={<ProjectedBadge result={result} />}
       />

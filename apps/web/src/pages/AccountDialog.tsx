@@ -210,7 +210,7 @@ export function AccountDialog(): ReactNode {
 
   if (shown)
     return (
-      <Dialog open={open} title={shown.title} onClose={() => undefined}>
+      <Dialog open={open} title={shown.title}>
         <RecoveryCode
           code={shown.code}
           username={shown.username}
@@ -283,20 +283,29 @@ export function AccountDialog(): ReactNode {
         ) : null}
         {Object.keys(localPlans).length > 0 && (
           <fieldset>
-            <legend>Plans to bring into this account</legend>
-            <p>On first sign-in, unchecked plans stay in the guest workspace and return when you sign out.</p>
-            {Object.values(localPlans).map((p) => (
-              <label key={p.id}>
-                <input
-                  type="checkbox"
-                  checked={adopted.includes(p.id)}
-                  onChange={(e) =>
-                    setAdopted((ids) => (e.target.checked ? [...ids, p.id] : ids.filter((id) => id !== p.id)))
-                  }
-                />
-                {p.name}
-              </label>
-            ))}
+            <legend>Local plans</legend>
+            <details>
+              <summary>
+                Choose plans to bring into this account{adopted.length ? ` (${adopted.length} selected)` : ''}
+              </summary>
+              <p>
+                On first sign-in, unchecked plans stay in the guest workspace and return when you sign out.
+              </p>
+              {Object.values(localPlans).map((p) => (
+                <label key={p.id}>
+                  <input
+                    type="checkbox"
+                    checked={adopted.includes(p.id)}
+                    onChange={(e) =>
+                      setAdopted((ids) =>
+                        e.target.checked ? [...ids, p.id] : ids.filter((id) => id !== p.id),
+                      )
+                    }
+                  />
+                  {p.name}
+                </label>
+              ))}
+            </details>
           </fieldset>
         )}
         {tried && problem ? (
@@ -357,7 +366,10 @@ export function SignOutDialog({ open, onClose }: { open: boolean; onClose: () =>
       useStore.getState().notify('Signed out. Your plans are safe in the cloud.', 'ok');
     } catch (e) {
       if (e instanceof UnsentChanges) setUnsent(e.message);
-      else useStore.getState().notify(message(e), 'danger');
+      else {
+        onClose();
+        useStore.getState().notify(message(e), 'danger');
+      }
     } finally {
       setBusy(false);
     }
@@ -445,6 +457,7 @@ export function AccountButton({ disabled }: { disabled?: boolean }): ReactNode {
           <button
             {...props}
             type="button"
+            disabled={disabled}
             className="acct-chip"
             data-tone={s.tone}
             aria-label={`Account: ${account.user!.username}. ${s.text}`}

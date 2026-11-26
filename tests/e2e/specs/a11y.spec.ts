@@ -72,6 +72,11 @@ test('keyboard: skip link, focus is visible, dialogs trap and return focus', asy
     await page.keyboard.press('Tab');
     expect(await page.evaluate(() => !!document.activeElement?.closest('[role="dialog"]'))).toBe(true);
   }
+  if (await dialog.locator('[data-help][aria-expanded="true"]').count()) {
+    await page.keyboard.press('Escape');
+    await expect(dialog).toBeVisible();
+    await expect(page.getByRole('tooltip')).toBeHidden();
+  }
   await page.keyboard.press('Escape');
   await expect(dialog).toBeHidden();
   await expect(add).toBeFocused();
