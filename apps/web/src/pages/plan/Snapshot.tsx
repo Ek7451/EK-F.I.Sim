@@ -157,7 +157,11 @@ export function SnapshotPage(): ReactNode {
           label="Property and other"
           icon="estate"
           value={formatMoney(owned)}
-          note={planned ? `Owned today · ${count(planned, 'planned purchase', 'planned purchases')}` : 'Owned today'}
+          note={
+            planned
+              ? `Owned today · ${count(planned, 'planned purchase', 'planned purchases')}`
+              : 'Owned today'
+          }
         />
         <Stat
           label="Debts"
@@ -192,30 +196,30 @@ export function SnapshotPage(): ReactNode {
                 />
               ) : null}
               <Button
-              variant="primary"
-              size="sm"
-              icon="plus"
-              data-tour="add-account"
-              onClick={() => {
-                const id = newId('a');
-                update((d) => {
-                  d.accounts.push({
-                    id,
-                    ownerId: d.people[0].id,
-                    name: 'New account',
-                    type: 'taxable',
-                    balance: 0,
-                    costBasis: 0,
-                    allocation: { usStocks: 0.6, usBonds: 0.4, cash: 0, intlStocks: 0, reits: 0 },
-                    fees: { expenseRatio: 0, advisory: 0 },
-                    ruleOf55: false,
+                variant="primary"
+                size="sm"
+                icon="plus"
+                data-tour="add-account"
+                onClick={() => {
+                  const id = newId('a');
+                  update((d) => {
+                    d.accounts.push({
+                      id,
+                      ownerId: d.people[0].id,
+                      name: 'New account',
+                      type: 'taxable',
+                      balance: 0,
+                      costBasis: 0,
+                      allocation: { usStocks: 0.6, usBonds: 0.4, cash: 0, intlStocks: 0, reits: 0 },
+                      fees: { expenseRatio: 0, advisory: 0 },
+                      ruleOf55: false,
+                    });
                   });
-                });
-                setAcct(id);
-              }}
-            >
-              Add account
-            </Button>
+                  setAcct(id);
+                }}
+              >
+                Add account
+              </Button>
             </>
           }
         >
@@ -947,7 +951,9 @@ export function SnapshotPage(): ReactNode {
                 label={s.kind === 'vehicle' ? 'Yearly change in value' : 'Yearly appreciation'}
                 hint={s.kind === 'vehicle' ? 'A negative rate loses value.' : undefined}
                 help={helpText(
-                  s.kind === 'vehicle' ? 'Yearly change in value (negative loses value)' : 'Yearly appreciation',
+                  s.kind === 'vehicle'
+                    ? 'Yearly change in value (negative loses value)'
+                    : 'Yearly appreciation',
                 )}
                 value={s.appreciation}
                 onChange={(v) =>
@@ -1109,6 +1115,21 @@ export function SnapshotPage(): ReactNode {
                     onChange={(v) =>
                       setS((x) => {
                         if (v) x.sale!.when = v;
+                      })
+                    }
+                  />
+                  <SelectField
+                    label="Where available sale proceeds go"
+                    value={s.sale.proceedsToAccountId ?? ''}
+                    options={[
+                      { value: '', label: 'Use the surplus strategy' },
+                      ...plan.accounts
+                        .filter((a) => a.type === 'cash' || a.type === 'taxable')
+                        .map((a) => ({ value: a.id, label: a.name })),
+                    ]}
+                    onChange={(v) =>
+                      setS((x) => {
+                        x.sale!.proceedsToAccountId = v || undefined;
                       })
                     }
                   />

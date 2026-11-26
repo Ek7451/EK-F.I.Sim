@@ -1,15 +1,29 @@
 /**
- * Plan schema v2 (build plan §5). Money in the plan file is nominal USD **cents** (integers).
+ * Plan schema v3 (build plan §5). Money in the plan file is nominal USD **cents** (integers).
  * The engine converts to float dollars when it compiles a plan and rounds only at display/export.
- * The JSON Schema in schema/plan.v2.json is emitted from these Zod types (scripts/emit-schema.ts).
+ * The JSON Schema in schema/plan.v3.json is emitted from these Zod types (scripts/emit-schema.ts).
  */
 import { z } from 'zod';
-import { ACCOUNT_TYPES } from './constants';
+import { cholesky } from './sim/rng';
+import { ACCOUNT_TYPES, ASSET_CLASSES } from './constants';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
+const year = z.number().int().min(1800).max(2300);
+const calendarDate = z.iso.date();
+const stateCode = z.enum(
+  'AL AK AZ AR CA CO CT DE DC FL GA HI ID IL IN IA KS KY LA ME MD MA MI MN MS MO MT NE NV NH NJ NM NY NC ND OH OK OR PA RI SC SD TN TX UT VT VA WA WV WI WY'.split(
+    ' ',
+  ),
+);
 const cents = z.number().int();
-const id = z.string().min(1);
+const id = z
+  .string()
+  .min(1)
+  .refine(
+    (v) => !['__proto__', 'prototype', 'constructor', 'toString', 'valueOf', 'hasOwnProperty'].includes(v),
+    'Reserved identifier.',
+  );
 const rate = z.number().min(-1).max(10);
 
 export { ACCOUNT_TYPES, ASSET_CLASSES, type AccountType, type AssetClass } from './constants';
@@ -18,7 +32,7 @@ export const FilingStatusZ = z.enum(['single', 'mfj', 'mfs', 'hoh', 'qss']);
 
 /** A point in time: a calendar year, a person's age, or a milestone (plus an offset in years). */
 export const YearRefZ = z.discriminatedUnion('type', [
-  z.object({ type: z.literal('year'), year: z.number().int() }),
+  z.object({ type: z.literal('year'), year }),
   z.object({ type: z.literal('age'), personId: id, age: z.number().int().min(0).max(130) }),
   z.object({ type: z.literal('milestone'), milestoneId: id, offset: z.number().int().default(0) }),
 ]);
@@ -39,7 +53,7 @@ export type Allocation = z.infer<typeof AllocationZ>;
 export const PersonZ = z.object({
   id,
   name: z.string(),
-  birthDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  birthDate: calendarDate,
   sex: z.enum(['male', 'female']).optional(),
   longevity: z
     .object({
@@ -51,7 +65,7 @@ export const PersonZ = z.object({
   residence: z
     .array(
       z.object({
-        state: z.string().length(2),
+        state: stateCode,
         countyFips: z.string().optional(),
         fromYear: z.number().int(),
       }),
@@ -61,7 +75,7 @@ export const PersonZ = z.object({
     .object({
       /** 'earnings' = compute PIA from the earnings record; 'pia' = user-entered PIA; 'none'. */
       mode: z.enum(['earnings', 'pia', 'none']).default('earnings'),
-      earnings: z.array(z.object({ year: z.number().int(), amount: cents })).default([]),
+      earnings: z.array(z.object({ year, amount: cents })).default([]),
       /** Monthly PIA in today's dollars when mode = 'pia'. */
       piaMonthly: cents.default(0),
       claimAge: z
@@ -84,13 +98,18 @@ export const AccountZ = z.object({
   rothBasis: z
     .object({
       contributions: cents.default(0),
-      conversions: z.array(z.object({ year: z.number().int(), amount: cents })).default([]),
+      conversions: z.array(z.object({ year, amount: cents })).default([]),
       firstContributionYear: z.number().int().optional(),
     })
     .optional(),
   allocation: AllocationZ.prefault({ usStocks: 0.6, usBonds: 0.4 }),
   glidePathId: id.optional(),
-  fees: z.object({ expenseRatio: rate.default(0), advisory: rate.default(0) }).prefault({}),
+  fees: z
+    .object({
+      expenseRatio: z.number().min(0).lt(1).default(0),
+      advisory: z.number().min(0).lt(1).default(0),
+    })
+    .prefault({}),
   /** Payroll-level contributions (step 4 of the annual order of operations). */
   contribution: z
     .object({
@@ -291,7 +310,7 @@ export const MilestoneEffectZ = z.discriminatedUnion('type', [
     amount: cents,
     taxable: z.boolean().default(false),
   }),
-  z.object({ type: z.literal('relocate'), state: z.string().length(2), countyFips: z.string().optional() }),
+  z.object({ type: z.literal('relocate'), state: stateCode, countyFips: z.string().optional() }),
   z.object({ type: z.literal('filingStatus'), status: FilingStatusZ }),
 ]);
 export type MilestoneEffect = z.infer<typeof MilestoneEffectZ>;
@@ -313,7 +332,7 @@ export const MilestoneZ = z.object({
   ]),
   personId: id.optional(),
   when: z.discriminatedUnion('type', [
-    z.object({ type: z.literal('year'), year: z.number().int() }),
+    z.object({ type: z.literal('year'), year }),
     z.object({ type: z.literal('age'), personId: id, age: z.number().int() }),
     /** Fires the first year the condition holds at the start of the year. `fi`: investable assets >= fiMultiple x annual spending. */
     z.object({
@@ -421,6 +440,9 @@ export const CoverageZ = z.object({
   /** employer: employee share of the annual premium (today's dollars). cobra: full annual premium before the 2% fee. */
   premiumAnnual: cents.optional(),
   hdhp: z.boolean().default(false),
+  autoMedicare: z.boolean().optional(),
+  effectiveMonth: z.number().int().min(1).max(12).optional(),
+  subsidyEligible: z.boolean().optional(),
   metal: z.enum(['catastrophic', 'bronze', 'silver', 'gold', 'platinum']).default('silver'),
   cobraMonths: z.number().int().min(1).max(36).default(18),
 });
@@ -479,6 +501,7 @@ export const AssumptionsZ = z.object({
     .object({
       /** Deterministic projection return model. */
       mode: z.enum(['fixed', 'historicalAverage']).default('fixed'),
+      stockAdjustment: z.number().min(-1).max(1).optional(),
       /** Expected returns per asset class: GEOMETRIC (compound) nominal annual rates at the plan's inflation rate. */
       fixed: z
         .object({
@@ -490,11 +513,24 @@ export const AssumptionsZ = z.object({
         })
         .prefault({}),
       /** Optional user-defined volatility / correlation for parametric Monte Carlo (SIM-05). */
-      stdDev: z.record(z.string(), z.number()).optional(),
-      correlation: z.array(z.array(z.number())).optional(),
+      stdDev: z.record(z.string(), z.number().nonnegative()).optional(),
+      correlation: z
+        .array(z.array(z.number().min(-1).max(1)).length(ASSET_CLASSES.length))
+        .length(ASSET_CLASSES.length)
+        .refine((matrix) => {
+          if (!matrix.every((row, i) => row[i] === 1 && row.every((v, j) => v === matrix[j]?.[i])))
+            return false;
+          try {
+            cholesky(matrix);
+            return true;
+          } catch {
+            return false;
+          }
+        }, 'Use a symmetric positive-definite correlation matrix with ones on the diagonal.')
+        .optional(),
     })
     .prefault({}),
-  inflation: z.object({ rate: rate.default(0.025), educationExcess: rate.default(0.02) }).prefault({}),
+  inflation: z.object({ rate: rate.gt(-1).default(0.025), educationExcess: rate.default(0.02) }).prefault({}),
   healthcareInflation: z
     .object({
       excessOverCpi: rate.default(0.02),
@@ -557,41 +593,249 @@ export const ScenarioZ = z.object({
 });
 export type Scenario = z.infer<typeof ScenarioZ>;
 
-export const ActualZ = z.object({ date: z.string(), balances: z.record(z.string(), cents) });
+export const ActualZ = z.object({ date: calendarDate, balances: z.record(z.string(), cents) });
 
-export const PlanZ = z.object({
-  id,
-  schemaVersion: z.literal(SCHEMA_VERSION),
-  name: z.string(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  settings: z.object({
-    startYear: z.number().int(),
-    /** start / mid / end of year cash-flow timing (§6.4). */
-    timing: z.enum(['start', 'mid', 'end']).default('mid'),
-    display: z.enum(['real', 'nominal']).default('real'),
-    dataYearPolicy: z.enum(['latest']).default('latest'),
-  }),
-  people: z.array(PersonZ).min(1).max(2),
-  household: z
-    .object({
-      filingStatus: z.array(z.object({ fromYear: z.number().int(), status: FilingStatusZ })).default([]),
-      dependents: z.array(z.object({ name: z.string(), birthYear: z.number().int() })).default([]),
-    })
-    .prefault({}),
-  accounts: z.array(AccountZ).default([]),
-  assets: z.array(AssetZ).default([]),
-  debts: z.array(DebtZ).default([]),
-  incomes: z.array(IncomeZ).default([]),
-  expenses: z.array(ExpenseZ).default([]),
-  milestones: z.array(MilestoneZ).default([]),
-  glidePaths: z.array(GlidePathZ).default([]),
-  strategies: StrategiesZ.prefault({}),
-  healthcare: HealthcareZ.prefault({}),
-  assumptions: AssumptionsZ.prefault({}),
-  scenarios: z.array(ScenarioZ).default([]),
-  actuals: z.array(ActualZ).default([]),
-});
+export const PlanZ = z
+  .object({
+    id,
+    schemaVersion: z.literal(SCHEMA_VERSION),
+    name: z.string(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    settings: z.object({
+      startYear: year,
+      /** Opening balances are measured on the first day of this month in startYear. */
+      openingMonth: z.number().int().min(1).max(12).default(1),
+      openingPayroll: z
+        .record(
+          z.string(),
+          z.object({
+            wages: cents.nonnegative(),
+            pretaxDeferrals: cents.nonnegative(),
+            rothDeferrals: cents.nonnegative(),
+            taxesPaid: cents.nonnegative(),
+          }),
+        )
+        .optional(),
+      /** start / mid / end of year cash-flow timing (§6.4). */
+      timing: z.enum(['start', 'mid', 'end']).default('mid'),
+      display: z.enum(['real', 'nominal']).default('real'),
+      dataYearPolicy: z.enum(['latest']).default('latest'),
+    }),
+    people: z.array(PersonZ).min(1).max(2),
+    household: z
+      .object({
+        filingStatus: z.array(z.object({ fromYear: z.number().int(), status: FilingStatusZ })).default([]),
+        dependents: z.array(z.object({ name: z.string(), birthYear: z.number().int() })).default([]),
+      })
+      .prefault({}),
+    accounts: z.array(AccountZ).default([]),
+    assets: z.array(AssetZ).default([]),
+    debts: z.array(DebtZ).default([]),
+    incomes: z.array(IncomeZ).default([]),
+    expenses: z.array(ExpenseZ).default([]),
+    milestones: z.array(MilestoneZ).default([]),
+    glidePaths: z.array(GlidePathZ).default([]),
+    strategies: StrategiesZ.prefault({}),
+    healthcare: HealthcareZ.prefault({}),
+    assumptions: AssumptionsZ.prefault({}),
+    scenarios: z.array(ScenarioZ).default([]),
+    progressBaseline: z
+      .object({
+        takenAt: z.string(),
+        revision: z.string().optional(),
+        startYear: year,
+        points: z.array(z.object({ year: z.number(), investable: z.number() })).min(1),
+      })
+      .optional(),
+    actuals: z.array(ActualZ).default([]),
+  })
+  .superRefine((plan, ctx) => {
+    const issue = (path: (string | number)[], message: string) =>
+      ctx.addIssue({ code: 'custom', path, message });
+    const collections = [
+      'people',
+      'accounts',
+      'assets',
+      'debts',
+      'incomes',
+      'expenses',
+      'milestones',
+      'glidePaths',
+      'scenarios',
+    ] as const;
+    const ids = new Map<string, Set<string>>();
+    for (const key of collections) {
+      const seen = new Set<string>();
+      for (const [i, entity] of plan[key].entries()) {
+        if (
+          seen.has(entity.id) ||
+          (key !== 'scenarios' && entity.id.startsWith('__')) ||
+          (key === 'people' && entity.id === 'joint')
+        )
+          issue([key, i, 'id'], 'Choose a unique, non-reserved identifier.');
+        seen.add(entity.id);
+      }
+      ids.set(key, seen);
+    }
+    const ref = (collection: string, value: string | undefined, path: (string | number)[]) => {
+      if (value !== undefined && !ids.get(collection)?.has(value))
+        issue(path, 'Unknown reference to ' + collection + ': ' + value);
+    };
+    for (const key of ['accounts', 'assets', 'debts', 'incomes'] as const) {
+      for (const [i, row] of plan[key].entries()) {
+        if (
+          row.ownerId !== 'joint' ||
+          key === 'incomes' ||
+          (key === 'accounts' && !['cash', 'taxable', 'iBond', 'tBill'].includes(plan.accounts[i].type))
+        )
+          ref('people', row.ownerId, [key, i, 'ownerId']);
+      }
+    }
+    for (const [i, a] of plan.accounts.entries()) {
+      if (a.fees.expenseRatio + a.fees.advisory >= 1)
+        issue(['accounts', i, 'fees'], 'Combined annual fees must be below 100%.');
+      ref('glidePaths', a.glidePathId, ['accounts', i, 'glidePathId']);
+      ref('incomes', a.contribution?.incomeId, ['accounts', i, 'contribution', 'incomeId']);
+      const pay = plan.incomes.find((row) => row.id === a.contribution?.incomeId);
+      if (pay && (pay.ownerId !== a.ownerId || !['earned', 'selfEmployment'].includes(pay.taxCharacter)))
+        issue(
+          ['accounts', i, 'contribution', 'incomeId'],
+          'Link earned income belonging to the account owner.',
+        );
+    }
+    const checkReferences = (value: unknown, path: (string | number)[]): void => {
+      if (!value || typeof value !== 'object') return;
+      if (Array.isArray(value)) {
+        value.forEach((item, i) => checkReferences(item, [...path, i]));
+        return;
+      }
+      const row = value as Record<string, unknown>;
+      const collectionsByKey: Record<string, string> = {
+        personId: 'people',
+        milestoneId: 'milestones',
+        accountId: 'accounts',
+        targetAccountId: 'accounts',
+        rothRolloverAccountId: 'accounts',
+        megaBackdoorRothAccountId: 'accounts',
+        proceedsToAccountId: 'accounts',
+        surplusDefaultAccountId: 'accounts',
+        debtId: 'debts',
+        linkedAssetId: 'assets',
+      };
+      for (const [k, v] of Object.entries(row)) {
+        if (typeof v === 'string' && collectionsByKey[k]) ref(collectionsByKey[k], v, [...path, k]);
+        if (k === 'targetId' && typeof v === 'string')
+          ref(row.target === 'income' ? 'incomes' : row.target === 'expense' ? 'expenses' : 'accounts', v, [
+            ...path,
+            k,
+          ]);
+        if (k !== 'patches') checkReferences(v, [...path, k]);
+      }
+    };
+    for (const key of [...collections, 'healthcare', 'strategies'] as const)
+      checkReferences(plan[key], [key]);
+    plan.strategies.withdrawalOrder.customOrder.forEach((id, i) =>
+      ref('accounts', id, ['strategies', 'withdrawalOrder', 'customOrder', i]),
+    );
+    for (const [i, asset] of plan.assets.entries()) {
+      const id = asset.sale?.proceedsToAccountId;
+      if (id && !plan.accounts.some((a) => a.id === id && (a.type === 'taxable' || a.type === 'cash')))
+        issue(
+          ['assets', i, 'sale', 'proceedsToAccountId'],
+          'Sale surplus requires a cash or taxable brokerage destination.',
+        );
+    }
+    for (const [i, p] of plan.people.entries()) {
+      if (new Set(p.residence.map((r) => r.fromYear)).size !== p.residence.length)
+        issue(['people', i, 'residence'], 'Use one residence per effective year.');
+    }
+    if (
+      new Set(plan.household.filingStatus.map((r) => r.fromYear)).size !== plan.household.filingStatus.length
+    )
+      issue(['household', 'filingStatus'], 'Use one filing status per effective year.');
+    if (plan.settings.openingMonth > 1) {
+      const unsupported =
+        plan.healthcare.enabled ||
+        plan.people.some((p) => p.socialSecurity.mode !== 'none') ||
+        plan.assets.length ||
+        plan.debts.length ||
+        plan.milestones.length ||
+        plan.accounts.some(
+          (a) =>
+            !['cash', 'taxable', 'rothIra', 'trad401k', 'roth401k'].includes(a.type) ||
+            a.contribution?.megaBackdoor ||
+            a.contribution?.employerMatch.length ||
+            a.contribution?.employerFixedPct,
+        ) ||
+        plan.incomes.some((i) => i.taxCharacter !== 'earned') ||
+        plan.expenses.some((e) => e.recurrence.type !== 'annual') ||
+        plan.strategies.sepp.length ||
+        plan.strategies.surplusWaterfall.length ||
+        plan.strategies.rothConversion.mode !== 'none' ||
+        plan.strategies.spendingRule.type !== 'fixed' ||
+        plan.accounts.some(
+          (a) =>
+            a.type === 'trad401k' &&
+            plan.settings.startYear -
+              Number(plan.people.find((p) => p.id === a.ownerId)?.birthDate.slice(0, 4)) >=
+              72,
+        );
+      if (unsupported)
+        issue(
+          ['settings', 'openingMonth'],
+          'Midyear openings support wages, employee deferrals, annual living expenses and investment accounts. This plan includes a schedule that requires January opening balances.',
+        );
+      for (const [i, p] of plan.people.entries()) {
+        const ledger = plan.settings.openingPayroll?.[p.id];
+        if (!ledger || ledger.pretaxDeferrals + ledger.rothDeferrals > ledger.wages)
+          issue(
+            ['people', i],
+            'Confirm year-to-date gross wages, deferrals and taxes paid for every person.',
+          );
+      }
+    }
+    for (const [i, a] of plan.accounts.entries()) {
+      for (const [name, target] of [
+        ['megaBackdoorRothAccountId', a.contribution?.megaBackdoorRothAccountId],
+        ['rothRolloverAccountId', a.plan529?.rothRolloverAccountId],
+      ] as const) {
+        const dest = plan.accounts.find((x) => x.id === target);
+        if (
+          dest &&
+          (!['rothIra', 'roth401k'].includes(dest.type) ||
+            (name === 'megaBackdoorRothAccountId' && dest.ownerId !== a.ownerId))
+        )
+          issue(['accounts', i, name], 'Choose a compatible Roth destination.');
+      }
+    }
+    if (plan.people.length === 2) {
+      const years = new Set(plan.people.flatMap((p) => p.residence.map((r) => r.fromYear)));
+      for (const y of years) {
+        if (y > Math.min(...plan.people.map((p) => Number(p.birthDate.slice(0, 4)) + p.longevity.age)))
+          continue;
+        const states = plan.people.map(
+          (p) => p.residence.filter((r) => r.fromYear <= y).sort((a, b) => b.fromYear - a.fromYear)[0]?.state,
+        );
+        if (states.every(Boolean) && states[0] !== states[1]) {
+          issue(
+            ['people'],
+            'Joint state projections require both spouses to live in the same state while both are alive.',
+          );
+          break;
+        }
+      }
+    }
+    const ages = plan.people.map((person) => plan.settings.startYear - Number(person.birthDate.slice(0, 4)));
+    if (
+      ages.some((age) => age < 0 || age > 130) ||
+      !ages.some((age, i) => age <= plan.people[i].longevity.age)
+    )
+      issue(
+        ['people'],
+        'The plan must open during a modeled lifetime. Check birth dates, longevity and the start year.',
+      );
+  });
 export type Plan = z.infer<typeof PlanZ>;
 export type PlanInput = z.input<typeof PlanZ>;
 

@@ -115,31 +115,78 @@ async function readWrappedKey(userId: string): Promise<Wrapped> {
   };
 }
 
-async function begin(user: CloudUser, dek: CryptoKey): Promise<void> {
+async function begin(user: CloudUser, dek: CryptoKey, adopted: string[]): Promise<void> {
   const { startCloudSync } = await import('./sync');
-  await startCloudSync(user, dek);
+  await startCloudSync(user, dek, adopted);
   useCloudAccount.setState({ user, loading: false, error: '' });
 }
 
 // ------------------------------------------------------------------ the account actions
 
+/** The newly generated recovery verifier identifies this exact change. A read-only
+ * recovery lookup reconciles a lost response without replaying a password reset. */
+async function commitRecovery<T>(
+  name: string,
+  verifier: string,
+  version: number,
+  commit: () => Promise<T>,
+  recover: () => Promise<T>,
+): Promise<T> {
+  try {
+    return await commit();
+  } catch (original) {
+    let current: Wrapped;
+    try {
+      current = await accountRequest<Wrapped>('account/recover/begin', {
+        username: name,
+        recoveryAuth: verifier,
+      });
+    } catch {
+      throw new AccountError(
+        `${original instanceof Error ? original.message : 'Cloud update interrupted.'} Keep both codes. After reconnecting, sign in with the intended password and verify the saved replacement code before discarding the old one.`,
+      );
+    }
+    if (current.version !== version)
+      throw new AccountError(
+        'The cloud account changed again. Keep your saved codes and review recovery before retrying.',
+      );
+    return recover();
+  }
+}
 /** New user. Returns the recovery code, which is shown once. */
-export async function signUp(username: string, password: string): Promise<{ recoveryCode: string }> {
+export async function signUp(
+  username: string,
+  password: string,
+  acknowledge: (code: string) => Promise<void>,
+  adopted: string[],
+): Promise<{ recoveryCode: string }> {
   const name = normaliseUsername(username);
   const keys = await derive(name, password);
   const made = await (await crypto()).createAccountBundle(keys.wrapKey);
-  const { user } = await accountRequest<{ user: CloudUser }>('account/register', {
-    username: name,
-    password: keys.authKey,
-    recoveryAuth: made.recoveryAuth,
-    bundle: made.bundle,
-  });
-  await begin(user, made.dek);
+  await acknowledge(made.recoveryCode);
+  const { user } = await commitRecovery(
+    name,
+    made.recoveryAuth,
+    1,
+    () =>
+      accountRequest<{ user: CloudUser }>('account/register', {
+        username: name,
+        password: keys.authKey,
+        recoveryAuth: made.recoveryAuth,
+        bundle: made.bundle,
+      }),
+    () =>
+      accountRequest<{ user: CloudUser }>('auth/sign-in/username', {
+        username: name,
+        password: keys.authKey,
+      }),
+  );
+  await begin(user, made.dek, adopted);
   return { recoveryCode: made.recoveryCode };
 }
 
 /** Existing user. */
-export async function signIn(username: string, password: string): Promise<void> {
+export async function signIn(username: string, password: string, adopted: string[]): Promise<void> {
   const name = normaliseUsername(username);
   const keys = await derive(name, password);
   let user: CloudUser;
@@ -154,7 +201,7 @@ export async function signIn(username: string, password: string): Promise<void> 
     throw e;
   }
   const { bundle } = await readWrappedKey(user.id);
-  await begin(user, await (await crypto()).openAccountBundle(bundle, keys.wrapKey));
+  await begin(user, await (await crypto()).openAccountBundle(bundle, keys.wrapKey), adopted);
 }
 
 /** Forgot password: the recovery code sets a new password. Signs in, and returns the replacement code. */
@@ -162,6 +209,8 @@ export async function resetPassword(
   username: string,
   recoveryCode: string,
   newPassword: string,
+  acknowledge: (code: string) => Promise<void>,
+  adopted: string[],
 ): Promise<{ recoveryCode: string }> {
   const name = normaliseUsername(username);
   const { CryptoError, deriveRecoveryKeys, rewrapAccountBundle } = await crypto();
@@ -183,19 +232,27 @@ export async function resetPassword(
     { recoveryWrap: recovery.recoveryWrap },
     { wrapKey: keys.wrapKey, newRecovery: true },
   );
-  await accountRequest('account/recover', {
-    username: name,
-    recoveryAuth: recovery.recoveryAuth,
-    password: keys.authKey,
-    newRecoveryAuth: next.recoveryAuth,
-    bundle: next.bundle,
-    bundleVersion: started.version,
-  });
+  await acknowledge(next.recoveryCode!);
+  await commitRecovery(
+    name,
+    next.recoveryAuth!,
+    started.version + 1,
+    () =>
+      accountRequest('account/recover', {
+        username: name,
+        recoveryAuth: recovery.recoveryAuth,
+        password: keys.authKey,
+        newRecoveryAuth: next.recoveryAuth,
+        bundle: next.bundle,
+        bundleVersion: started.version,
+      }),
+    async () => ({ ok: true }),
+  );
   const { user } = await accountRequest<{ user: CloudUser }>('auth/sign-in/username', {
     username: name,
     password: keys.authKey,
   });
-  await begin(user, next.dek);
+  await begin(user, next.dek, adopted);
   return { recoveryCode: next.recoveryCode! };
 }
 
@@ -230,7 +287,10 @@ export async function changePassword(currentPassword: string, newPassword: strin
 }
 
 /** A new recovery code; the old one stops working. Needs the password. */
-export async function newRecoveryCode(password: string): Promise<{ recoveryCode: string }> {
+export async function newRecoveryCode(
+  password: string,
+  acknowledge: (code: string) => Promise<void>,
+): Promise<{ recoveryCode: string }> {
   const user = signedIn();
   const keys = await derive(user.username, password);
   const wrapped = await readWrappedKey(user.id);
@@ -241,19 +301,45 @@ export async function newRecoveryCode(password: string): Promise<{ recoveryCode:
   } catch {
     throw new AccountError('That is not your current password.');
   }
-  await accountRequest('account/recovery', {
-    password: keys.authKey,
-    recoveryAuth: rewrapped.recoveryAuth,
-    bundle: rewrapped.bundle,
-    bundleVersion: wrapped.version,
-  });
+  await acknowledge(rewrapped.recoveryCode!);
+  await commitRecovery(
+    user.username,
+    rewrapped.recoveryAuth!,
+    wrapped.version + 1,
+    () =>
+      accountRequest('account/recovery', {
+        password: keys.authKey,
+        recoveryAuth: rewrapped.recoveryAuth,
+        bundle: rewrapped.bundle,
+        bundleVersion: wrapped.version,
+      }),
+    async () => ({ ok: true }),
+  );
   return { recoveryCode: rewrapped.recoveryCode! };
+}
+
+export async function deleteCloudAccount(password: string, confirmation: string): Promise<void> {
+  const user = signedIn();
+  if (confirmation !== user.username) throw new AccountError('Enter the exact account username.');
+  const keys = await derive(user.username, password);
+  await accountRequest(
+    'account/delete',
+    { password: keys.authKey, confirmUsername: confirmation },
+    { 'X-Longview-Account': user.id },
+  );
+  useCloudAccount.setState({ user: null, loading: false, error: '' });
+  await (await import('./sync')).endCloudSession();
 }
 
 export async function refreshAccount(): Promise<CloudUser | null> {
   if (!publicCloud) return null;
   useCloudAccount.setState({ loading: true, error: '' });
   try {
+    const { getSetting, deleteSetting } = await import('../state/db');
+    if (await getSetting('pendingSignOut')) {
+      await accountRequest('auth/sign-out', {});
+      await deleteSetting('pendingSignOut');
+    }
     const data = await accountRequest<{ user: CloudUser } | null>('auth/get-session');
     const user = data?.user ?? null;
     useCloudAccount.setState({ user, loading: false });
@@ -284,8 +370,16 @@ export function signOutAccount(force = false): Promise<void> {
       throw new UnsentChanges(
         'Some changes have not reached the cloud yet (you may be offline). Signing out now would lose them.',
       );
+    const { setSetting, deleteSetting } = await import('../state/db');
+    await setSetting('pendingSignOut', true);
     await sync.endCloudSession();
-    await accountRequest('auth/sign-out', {}).catch(() => undefined);
+    useCloudAccount.setState({
+      user: null,
+      loading: false,
+      error: 'This device is locked. Cloud sign-out awaits a connection.',
+    });
+    await accountRequest('auth/sign-out', {});
+    await deleteSetting('pendingSignOut');
     useCloudAccount.setState({ user: null, loading: false, error: '' });
   })().finally(() => {
     signingOut = null;

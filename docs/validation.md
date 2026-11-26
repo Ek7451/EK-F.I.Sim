@@ -76,22 +76,11 @@ the simulations and every figure the screens derive) found the defects below. Ea
 | Screens    | Progress anchored the reference path at 1 January                                                                                                                            | A plan frozen in November read 9% behind on day one                                         |
 | Screens    | History said incomplete cohorts "repeat"; they stop when the data stops. Outcomes said replayed history ignores your return assumptions; by default it is re-centred on them | Wrong explanation                                                                           |
 
-Found and not changed (stated here so the figures are read correctly):
+The R3 review revisited the November baseline. Schema 3 records the opening valuation month. The FI headline and condition use opening accessible assets and a recurring annual budget. Restricted HSA and education balances are excluded. Ordinary living costs, housing, debt service and healthcare enter the budget. Income taxes, guaranteed income offsets and one-off purchases are excluded. Zero recurring spending produces no FI date. A fixed-date milestone alone does not establish FI.
 
-- **The first plan year is a whole year.** Opening balances are treated as 1 January of the start year, so a plan
-  created late in a year still adds a full year of saving and growth to that year. Later balances run up to a year
-  ahead. Fixing it needs a part-year first step in the engine.
-- The independence milestone compares the start of each year with the previous year's spending, so it cannot fire
-  in the plan's first year.
-- State taxation of Social Security is a yes/no flag per state; age and income exemptions (Colorado at 65, for
-  example) are not modelled, which overstates state tax for retirees there.
-- `asset.sale.proceedsToAccountId` is in the schema but not read; sale proceeds follow the surplus order.
-- Percent-of-portfolio and floor-and-ceiling spending rules ignore other income when sizing spending.
-- Wage-indexed amounts (the Social Security wage base, earnings-test limits) grow with prices, not wages.
-- Under "long-run historical averages" the Compare what-if for returns changes only the classes without bundled
-  history (international stocks, REITs).
-- A year's tax is net of the premium tax credit, so its effective rate can be negative in subsidy years.
-- 2027 Medicare premiums and retirement-plan limits are projections until CMS and the IRS publish them.
+Available sale proceeds go to the selected cash or taxable account after debt, costs, taxes and household cash needs. Percent-of-portfolio and floor-and-ceiling rules size total living spending. The guardrail rule sizes a withdrawal after other income. Earned income drives the Social Security wage base and earnings-test index through the wage-growth assumption. Compare adjusts effective stock-class means. Raw historical replay preserves its historical stock series.
+
+The November baseline used projected 2027 contribution limits and Medicare premiums. The R3 datasets use the November CMS announcement and IRS Notice 2026-66. State tax remains approximate, including retirement-income exemptions and local taxes. Tax liability is net of the premium credit and can be negative in subsidy years.
 
 ## Known limitations of the model
 
@@ -102,7 +91,7 @@ Tax
   include Ohio's base amounts, South Carolina, Connecticut, Utah and Oregon credits and phase-outs,
   Maryland county tax, New York's bracket recapture and Arkansas's table structure. Treat state tax as a
   rough estimate.
-- Contribution limits for 2027 and Medicare premiums for 2027 are projected, not enacted.
+- Contribution limits and Medicare premiums for 2027 use the published agency amounts.
 - Rebalancing happens at the start of the year. The advance premium tax credit is treated as exact, so
   repaying excess credit at tax time is not modelled.
 - The IRMAA life-changing-event appeal is applied in the year it names (an earlier note here said it was not).
@@ -163,7 +152,7 @@ Healthcare and tax details
 
 - Children under 26 are costed on the family's coverage: the employer family tier while a parent has
   employer coverage, family COBRA while it lasts, otherwise the marketplace (at most three children under 21
-  charged). CHIP eligibility is not modelled separately; children follow the household's Medicaid result.
+  charged). CHIP eligibility is estimated at the household level. The expansion-state income assumption can move automatic coverage to Medicaid. Explicit Marketplace enrollment keeps its premiums and estimated out-of-pocket costs, including when income implies Medicaid eligibility.
 - IRMAA in the first two plan years uses MAGI entered for the years before the start, or else the first
   year's own MAGI estimate.
 - Estate tax applies portability for married couples: the survivor adds the first spouse's unused exemption,
@@ -205,3 +194,9 @@ pnpm lighthouse
 
 The Tax-Calculator fixtures are regenerated with `tests/validation/taxcalc/generate_fixtures.py` (see its
 README); the committed fixtures are enough to run V-04.
+
+### Opening balances and year-to-date payroll
+
+Schema 3 treats earlier plans as January 1 valuations. Changing the opening month changes the valuation date within the first tax year. Enter actual balances from the first of the selected month. Each whole month is one twelfth of the year. Growth, annual fees and inflation compound for the remaining fraction. Regular living expenses and scheduled wages use the remaining months. Full annual tax brackets apply to prior and remaining wages, with payroll deferrals deducted once. Taxes already paid reduce the outstanding cash requirement. Annual liability in the tax view includes the opening payroll ledger.
+
+Midyear openings currently cover investment balances, wage income, employee deferrals and annual living expenses. They assume prior taxable income consists entirely of wages. Healthcare, benefits, real property, debt, retirement distributions and other schedules require January valuations until the corresponding year-to-date records can be represented. Imports with unsupported combinations are available for recovery. Re-entering a different balance date requires supplying balances and payroll from that date.

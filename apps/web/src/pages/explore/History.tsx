@@ -190,7 +190,11 @@ export function HistoryPage(): ReactNode {
               <Stat
                 label="Start years that worked"
                 value={`${result.successCount} of ${result.completeCount}`}
-                note={`${formatPct(result.successRate, 1)} of full histories`}
+                note={
+                  result.successRate === null
+                    ? `No full ${result.horizon}-year histories`
+                    : `${formatPct(result.successRate, 1)} of full histories`
+                }
                 data-tour="history-success"
               />
               <Stat
@@ -207,7 +211,7 @@ export function HistoryPage(): ReactNode {
               />
               <Stat
                 label="Median ending wealth"
-                value={formatCompact(result.medianEndingReal)}
+                value={result.medianEndingReal === null ? 'N/A' : formatCompact(result.medianEndingReal)}
                 note="Today's dollars"
               />
               <Stat

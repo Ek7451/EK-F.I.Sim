@@ -1,7 +1,7 @@
 import { afterEach, expect, it, vi } from 'vitest';
 import { sampleEarlyRetiree } from '@fisim/engine';
 import { useStore } from '../state/store';
-import { clearPlanData, putPlan, queue, dequeue, setSetting } from '../state/db';
+import { acknowledgePlan, clearPlanData, putPlan, queue, dequeue, setSetting } from '../state/db';
 import {
   endCloudSession,
   flushCloudSync,
@@ -14,6 +14,9 @@ import {
 } from './sync';
 
 vi.mock('../state/db', () => ({
+  allPlans: vi.fn().mockResolvedValue([]),
+  acknowledgePlan: vi.fn().mockResolvedValue(undefined),
+  adoptWorkspace: vi.fn().mockResolvedValue(undefined),
   addSnapshot: vi.fn().mockResolvedValue(undefined),
   getSetting: vi.fn().mockResolvedValue(undefined),
   setSetting: vi.fn().mockResolvedValue(undefined),
@@ -55,6 +58,8 @@ it('keeps edits made during an upload dirty and preserves their current local co
     'fetch',
     vi.fn(async (url: string, init: RequestInit) => {
       if (url.endsWith(`/plans/${plan.id}`)) {
+        if (init.method === 'GET')
+          return new Response(JSON.stringify(plan), { headers: { 'X-Plan-Version': String(count) } });
         if (++count === 1) {
           uploading = true;
           await new Promise<void>((resolve) => {
@@ -81,6 +86,7 @@ it('keeps edits made during an upload dirty and preserves their current local co
       dirty: true,
       plan: expect.objectContaining({ name: 'Edited while upload was pending' }),
     }),
+    expect.any(String),
   );
   await syncNow(true);
   expect(useStore.getState().meta[plan.id]).toMatchObject({ syncVersion: 2, dirty: false });
@@ -95,7 +101,11 @@ it('keeps edits made during an upload dirty and preserves their current local co
     'mine',
   );
   await syncNow();
-  expect(putPlan).toHaveBeenLastCalledWith(expect.objectContaining({ syncVersion: 3, dirty: false }));
+  expect(acknowledgePlan).toHaveBeenLastCalledWith(
+    plan.id,
+    expect.objectContaining({ name: 'Edited while upload was pending' }),
+    3,
+  );
 });
 
 it('does not delete a newer cloud version when replaying an offline deletion', async () => {
@@ -140,7 +150,7 @@ it('does not delete a newer cloud version when replaying an offline deletion', a
   expect(dequeue).not.toHaveBeenCalled();
 });
 
-it('signing in uploads every plan with no further step, and signing out clears them from the device', async () => {
+it('signing in uploads the explicitly selected plan, and signing out clears them from the device', async () => {
   vi.stubGlobal('navigator', { onLine: true });
   vi.mocked(queue).mockResolvedValue([]);
   const plan = sampleEarlyRetiree(2026);
@@ -163,7 +173,7 @@ it('signing in uploads every plan with no further step, and signing out clears t
     }),
   );
   const key = {} as CryptoKey;
-  await startCloudSync({ id: 'user-1', username: 'alice' }, key);
+  await startCloudSync({ id: 'user-1', username: 'alice' }, key, [plan.id]);
   // Encrypted (here: passed through the mocked cipher) and uploaded at once, to this account only.
   expect(uploads).toEqual([{ url: `/api/v1/plans/${plan.id}`, account: 'user-1' }]);
   expect(setSetting).toHaveBeenCalledWith('cloudKey', { userId: 'user-1', key });
@@ -197,7 +207,7 @@ it('will not let a sign-out lose an edit the cloud has not received', async () =
       return Response.json({ version: 1, updatedAt: plan.updatedAt, size: 1 });
     }),
   );
-  await startCloudSync({ id: 'user-1', username: 'alice' }, {} as CryptoKey);
+  await startCloudSync({ id: 'user-1', username: 'alice' }, {} as CryptoKey, [plan.id]);
   // Now the connection drops and an edit waits on this device.
   vi.stubGlobal('navigator', { onLine: false });
   await useStore.getState().replacePlan({ ...plan, name: 'Edited offline' }, { dirty: true });

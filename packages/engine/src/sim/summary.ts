@@ -47,6 +47,9 @@ export interface McSummary {
   bands: { p10: number[]; p25: number[]; p50: number[]; p75: number[]; p90: number[] };
   /** Share of runs still going (someone alive) by year. */
   activeShare: number[];
+  activeCount: number[];
+  activeFundedCount: number[];
+  fundedAndGoalRate: number | null;
   /** Share of runs still solvent (no shortfall so far) by year. */
   solventShare: number[];
   /** Count of first-failure years. */
@@ -97,7 +100,24 @@ export function summarizeMonteCarlo(
 ): McSummary {
   const years = c.maxYears;
   let runs = 0;
-  for (const ch of chunks) runs += ch.to - ch.from;
+  let previousEnd = -1;
+  for (const ch of [...chunks].sort((a, b) => a.from - b.from)) {
+    if (
+      !Number.isInteger(ch.from) ||
+      !Number.isInteger(ch.to) ||
+      ch.from < 0 ||
+      ch.to <= ch.from ||
+      ch.from < previousEnd ||
+      ch.to > 10000 ||
+      ch.years !== years
+    )
+      throw new Error('Invalid or overlapping simulation batches.');
+    previousEnd = ch.to;
+    runs += ch.to - ch.from;
+  }
+  if (runs === 0) throw new Error('No completed simulation runs.');
+  const activeCount: number[] = [];
+  const activeFundedCount: number[] = [];
   const bands = {
     p10: [] as number[],
     p25: [] as number[],
@@ -112,6 +132,7 @@ export function summarizeMonteCarlo(
   for (let t = 0; t < years; t++) {
     let n = 0;
     let solvent = 0;
+    let activeFunded = 0;
     for (const ch of chunks) {
       const cnt = ch.to - ch.from;
       for (let r = 0; r < cnt; r++) {
@@ -119,11 +140,15 @@ export function summarizeMonteCarlo(
         const fy = ch.failYear[r];
         if (fy < 0 || fy > c.startYear + t) solvent++;
         // Runs that have ended (everyone has died) drop out of the bands instead of carrying a balance forward.
-        if (Number.isNaN(v)) continue;
+        if (t > ch.lastYearIndex[r]) continue;
+        if (!Number.isFinite(v)) throw new Error('Invalid active simulation balance.');
+        if (fy < 0 || fy > c.startYear + t) activeFunded++;
         col[n++] = v;
         usedYears = Math.max(usedYears, t + 1);
       }
     }
+    activeCount.push(n);
+    activeFundedCount.push(activeFunded);
     const sorted = col.subarray(0, n).slice().sort();
     bands.p10.push(quantileSorted(sorted, n, 0.1));
     bands.p25.push(quantileSorted(sorted, n, 0.25));
@@ -152,6 +177,20 @@ export function summarizeMonteCarlo(
   for (const ch of chunks) {
     const cnt = ch.to - ch.from;
     for (let r = 0; r < cnt; r++) {
+      if (
+        ch.lastYearIndex[r] < 0 ||
+        ch.lastYearIndex[r] >= years ||
+        ![0, 1].includes(ch.success[r]) ||
+        ![
+          ch.endingReal[r],
+          ch.estateReal[r],
+          ch.netWorthEndReal[r],
+          ch.lifetimeTaxReal[r],
+          ch.minSpendRatio[r],
+          ch.cutYears[r],
+        ].every(Number.isFinite)
+      )
+        throw new Error('Invalid simulation outcome.');
       if (ch.success[r]) ok++;
       const met = ch.netWorthEndReal[r] >= goal - 0.5;
       if (met) goalOk++;
@@ -199,6 +238,9 @@ export function summarizeMonteCarlo(
         : null,
     bands,
     activeShare,
+    activeCount: activeCount.slice(0, usedYears),
+    activeFundedCount: activeFundedCount.slice(0, usedYears),
+    fundedAndGoalRate: goal > 0 ? bothOk / runs : null,
     solventShare,
     failureYears: [...fail.entries()]
       .map(([year, count]) => ({ year, count }))

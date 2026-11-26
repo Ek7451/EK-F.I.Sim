@@ -48,7 +48,7 @@ export function ProjectionPage(): ReactNode {
   const scenarioId = useStore((s) => s.scenarioId);
   const transaction = useDraft((s) => s.transaction);
   const baseline = useProjectionOf(transaction?.base === base ? base : null, scenarioId);
-  const { result, ms, error, stale, retry } = useProjection();
+  const { result, ms, error, stale, retry } = useProjection(true);
   const view = usePlanView();
   const compact = useCompactWorkspace();
   useEffect(() => {
@@ -73,6 +73,7 @@ export function ProjectionPage(): ReactNode {
       <>
         <PageHead group="explore" title="Projection" />
         <Loading error={error} />
+        {error && <Button onClick={retry}>Retry calculation</Button>}
       </>
     );
   const recs = result.records;
@@ -126,7 +127,11 @@ export function ProjectionPage(): ReactNode {
           icon="wallet"
           label="Net worth today"
           value={formatCompact(s.currentNetWorth)}
-          note={`Start of ${s.startYear}`}
+          note={
+            preview.settings.openingMonth === 1
+              ? `Start of ${s.startYear}`
+              : `Opening · ${s.startYear}-${String(preview.settings.openingMonth).padStart(2, '0')}-01`
+          }
         />
         <Stat
           icon="estate"

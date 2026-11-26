@@ -13,6 +13,8 @@
  * listed in NO_HELP.
  */
 export const HELP: Record<string, string> = {
+  'Switch this period to Medicare at the modeled enrollment age':
+    'Choose whether this coverage ends at the usual Medicare transition. Leave it off when enrollment will be different.',
   'Search accounts':
     'Filter this list by account name. This changes the view only; every account remains in the projection.',
   'Tax treatment':
@@ -151,6 +153,14 @@ export const HELP: Record<string, string> = {
   'Mortgage years': 'Length of the new mortgage, usually 15 or 30 years.',
   'Plan to sell': 'Turn on to sell this property during the plan.',
   Sell: 'When you sell it.',
+  'Where available sale proceeds go':
+    'After the sale, linked debt, taxes and this year’s bills are paid first. Any remaining proceeds can go to a cash or brokerage account.',
+  'Effective month':
+    'Coverage begins in this month of the selected year. Enter 1 for January and 12 for December.',
+  'Eligible for Marketplace premium assistance':
+    'Turn off if an affordable employer offer or other health coverage disqualifies this person. The model also checks filing status, plan tier and annual household income.',
+  'Opening balance month':
+    'Your account balances must match the first day of this month. Enter year-to-date wages, employee deferrals and tax payments for a midyear opening.',
   'Selling costs': 'Agent fees and other costs of selling, as a share of the price. Often 6% to 10%.',
   'Property tax (share of value)':
     "Yearly property tax as a share of the home's value. The US average is about 1%.",

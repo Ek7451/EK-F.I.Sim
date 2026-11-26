@@ -21,17 +21,17 @@ export interface BacktestResult {
   cohorts: Cohort[];
   completeCount: number;
   successCount: number;
-  successRate: number;
+  successRate: number | null;
   worst: Cohort | null;
   best: Cohort | null;
-  medianEndingReal: number;
+  medianEndingReal: number | null;
   partialCount: number;
   dataThrough: number;
 }
 
 export function runBacktest(c: Compiled, opts: { fromYear?: number; toYear?: number } = {}): BacktestResult {
   const m = c.data.market;
-  const horizon = c.maxYears;
+  const horizon = Math.max(...c.people.map((p) => p.birthYear + p.deathAge - c.startYear + 1));
   const cohorts: Cohort[] = [];
   for (let i = 0; i < m.years.length; i++) {
     const sy = m.years[i];
@@ -39,11 +39,11 @@ export function runBacktest(c: Compiled, opts: { fromYear?: number; toYear?: num
     if (opts.toYear !== undefined && sy > opts.toYear) continue;
     const available = m.years.length - i;
     const path = historicalPath(c, i, horizon);
-    const res = runPath(c, path);
+    const res = runPath(c, path, { summaryOnly: true });
     const series: number[] = [];
     let min = Infinity;
     for (let t = 0; t < res.n; t++) {
-      const v = res.investable[t] / res.cpi[t] / (1 + path.inflation[t]);
+      const v = res.investable[t] / res.cpiEnd[t];
       series.push(v);
       if (v < min) min = v;
     }
@@ -68,10 +68,12 @@ export function runBacktest(c: Compiled, opts: { fromYear?: number; toYear?: num
     cohorts,
     completeCount: complete.length,
     successCount: ok,
-    successRate: complete.length ? ok / complete.length : 0,
+    successRate: complete.length ? ok / complete.length : null,
     worst: byWorst[0] ?? null,
     best: byWorst[byWorst.length - 1] ?? null,
-    medianEndingReal: sortedEnd.length ? sortedEnd[Math.floor((sortedEnd.length - 1) / 2)] : 0,
+    medianEndingReal: sortedEnd.length
+      ? (sortedEnd[Math.floor((sortedEnd.length - 1) / 2)] + sortedEnd[Math.floor(sortedEnd.length / 2)]) / 2
+      : null,
     partialCount: cohorts.length - complete.length,
     dataThrough: m.years[m.years.length - 1],
   };

@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { sampleEarlyRetiree } from '@fisim/engine';
+import { loadEngine } from '../engine/load';
 import { useStore } from './store';
 import { putPlan } from './db';
 vi.mock('./db', () => ({
@@ -7,7 +8,8 @@ vi.mock('./db', () => ({
   enqueue: vi.fn().mockResolvedValue(undefined),
   setSetting: vi.fn().mockResolvedValue(undefined),
 }));
-beforeEach(() => {
+beforeEach(async () => {
+  await loadEngine();
   vi.useFakeTimers();
   const plan = sampleEarlyRetiree(2026);
   useStore.setState({
@@ -37,5 +39,6 @@ it('reports a failed write and retries the current revision without losing edits
   expect(useStore.getState().saveStatus[id]).toBe('saved');
   expect(putPlan).toHaveBeenLastCalledWith(
     expect.objectContaining({ plan: expect.objectContaining({ name: 'Unsaved change' }) }),
+    expect.any(String),
   );
 });

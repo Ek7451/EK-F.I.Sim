@@ -69,7 +69,11 @@ export function migrate_v1_to_v2(plan: Raw): Raw {
   return out;
 }
 
-const MIGRATIONS: Record<number, (p: Raw) => Raw> = { 0: migrate_v0_to_v1, 1: migrate_v1_to_v2 };
+const MIGRATIONS: Record<number, (p: Raw) => Raw> = {
+  0: migrate_v0_to_v1,
+  1: migrate_v1_to_v2,
+  2: (p) => ({ ...p, schemaVersion: 3 }),
+};
 
 export interface LoadedPlan {
   plan: Plan | null;
@@ -100,7 +104,18 @@ export function loadPlan(raw: unknown): LoadedPlan {
         original: raw,
         error: `No migration from schema v${v}`,
       };
-    cur = m(cur);
+    try {
+      cur = m(cur);
+    } catch {
+      return {
+        plan: null,
+        fromVersion,
+        migrated: false,
+        readOnly: false,
+        original: raw,
+        error: 'Cannot migrate the stored plan. Its original contents are available for recovery.',
+      };
+    }
   }
   const parsed = PlanZ.safeParse(cur);
   if (!parsed.success)

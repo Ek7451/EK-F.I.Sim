@@ -71,7 +71,7 @@ function maxedCouple(startYear: number): Plan {
   });
   return PlanZ.parse({
     id: 'maxed',
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 'maxed',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -235,6 +235,7 @@ describe('engine invariants', () => {
             p.debts = [];
             p.milestones = [];
             p.healthcare.enabled = false;
+            p.healthcare.people = [];
             p.people[0].birthDate = '1964-01-01';
             p.people[0].longevity.age = 92;
             p.people[0].socialSecurity.mode = 'none';

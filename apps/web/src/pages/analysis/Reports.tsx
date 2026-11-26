@@ -41,6 +41,12 @@ export function ReportsPage(): ReactNode {
     : isDraft
       ? 'Unsaved draft preview'
       : 'as planned';
+  const reportReady =
+    !!result &&
+    !isDraft &&
+    !stale &&
+    !error &&
+    (!withMc || (!mc.running && !mc.partial && !!mc.summary && !mc.error));
   const recs = result?.records ?? [];
   const funded = result ? fundedStat(result) : null;
   return (
@@ -110,13 +116,7 @@ export function ReportsPage(): ReactNode {
             <Button
               variant="primary"
               icon="download"
-              disabled={
-                !result ||
-                isDraft ||
-                stale ||
-                busy ||
-                (withMc && (mc.running || mc.partial || !mc.summary || !!mc.error))
-              }
+              disabled={!reportReady || busy}
               onClick={() => {
                 if (!result) return;
                 setBusy(true);
@@ -146,7 +146,13 @@ export function ReportsPage(): ReactNode {
             </span>
           </div>
           <div className="rpt-tile">
-            <Button icon="reports" onClick={() => window.print()}>
+            <Button
+              icon="reports"
+              disabled={!reportReady}
+              onClick={() => {
+                if (reportReady) window.print();
+              }}
+            >
               Print
             </Button>
             <span>The preview below</span>
@@ -164,7 +170,7 @@ export function ReportsPage(): ReactNode {
           </Button>
         </Notice>
       )}
-      {result ? (
+      {result && reportReady ? (
         <section className="lv-card rpt-paper" data-tour="report-preview" aria-label="Report preview">
           <header className="rpt-head">
             <div className="rpt-title">

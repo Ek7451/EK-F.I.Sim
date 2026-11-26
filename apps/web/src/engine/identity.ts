@@ -14,6 +14,7 @@ export interface ResultIdentity {
 export function resultKey(plan: Plan, scenarioId: string | null): string {
   return JSON.stringify([
     typeof __APP_VERSION__ === 'undefined' ? 'test' : __APP_VERSION__,
+    typeof __BUILD_SHA__ === 'undefined' ? 'test' : __BUILD_SHA__,
     DATA_RELEASE,
     plan,
     scenarioId,

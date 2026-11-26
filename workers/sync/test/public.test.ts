@@ -85,6 +85,50 @@ async function register(call: ReturnType<typeof setup>['call'], username: string
 }
 
 describe('public accounts and encrypted cloud storage', () => {
+  it('A02 deletes the confirmed account, invalidates its session and preserves another account', async () => {
+    const { call, db } = setup();
+    const alice = await register(call, 'alice');
+    const bob = await register(call, 'bob');
+    const body = { confirmUsername: 'alice', password };
+    for (const a of [alice, bob])
+      expect((await call('/api/v1/plans/one', 'plan', { ...a.headers, 'If-Match': '0' }, 'PUT')).status).toBe(
+        200,
+      );
+    expect(
+      (await call('/api/account/delete', { ...body, confirmUsername: 'bob' }, alice.headers)).status,
+    ).toBe(409);
+    expect(
+      (await call('/api/account/delete', { ...body, password: key('wrong') }, alice.headers)).status,
+    ).toBe(401);
+    expect((await call('/api/account/delete', body, alice.headers)).status).toBe(200);
+    expect((await call('/api/v1/plans', undefined, alice.headers)).status).toBe(401);
+    expect((await call('/api/v1/plans/one', undefined, bob.headers)).status).toBe(200);
+    for (const [table, column] of [
+      ['user', 'id'],
+      ['session', 'userId'],
+      ['account', 'userId'],
+      ['cloud_plans', 'user_id'],
+      ['account_recovery', 'user_id'],
+      ['key_bundles', 'user_id'],
+      ['settings', 'user_id'],
+    ])
+      expect(
+        db.prepare(`SELECT count(*) AS n FROM ${table} WHERE ${column}=?`).get(alice.user.id)?.n,
+        table,
+      ).toBe(0);
+  });
+  it('A03 preserves the lifetime ID cap after deletion and permits restoring an existing ID', async () => {
+    const { call, db } = setup();
+    const { headers, user } = await register(call, 'alice');
+    const insert = db.prepare(
+      'INSERT INTO cloud_plans(user_id,plan_id,version,updated_at,size,deleted) VALUES (?,?,1,?,0,1)',
+    );
+    for (let i = 0; i < 200; i++) insert.run(user.id, 'old' + i, '2026-01-01');
+    const denied = await call('/api/v1/plans/new', 'p', { ...headers, 'If-Match': '0' }, 'PUT');
+    expect(denied.status).toBe(403);
+    expect(await denied.text()).toContain('200 distinct');
+    expect((await call('/api/v1/plans/old0', 'p', { ...headers, 'If-Match': '1' }, 'PUT')).status).toBe(200);
+  });
   it('isolates accounts, rejects anonymous/cross-origin access, and commits versioned bytes atomically', async () => {
     const { call } = setup();
     const alice = await register(call, 'alice');

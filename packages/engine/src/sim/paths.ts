@@ -258,25 +258,23 @@ export function generatePath(c: Compiled, settings: PathSettings, seed: number, 
     path.healthExcess[t] = h.stochastic ? h.excessOverCpi + h.stdDev * rng.normal() : h.excessOverCpi;
   // Longevity (SIM-08): independent draws per person give joint survival for couples.
   const improveRate = A.mortalityImprovement;
-  path.deathAge = c.people.map((person) =>
+  const sexes = c.people.map((person) => person.sex ?? (rng.next() < 0.5 ? 'female' : 'male'));
+  path.deathAge = c.people.map((person, i) =>
     person.stochasticLongevity
-      ? Math.min(
-          109,
-          sampleDeathAge(
-            c.data.mortality,
-            person.sex,
-            c.startYear - person.birthYear,
-            rng,
-            improveRate > 0 ? { rate: improveRate, birthYear: person.birthYear } : undefined,
-          ),
+      ? sampleDeathAge(
+          c.data.mortality,
+          sexes[i],
+          c.startYear - person.birthYear,
+          rng,
+          improveRate > 0 ? { rate: improveRate, birthYear: person.birthYear } : undefined,
         )
       : person.deathAge,
   );
   // Long-term-care events (HC-10).
-  path.ltc = c.people.map((person) => {
+  path.ltc = c.people.map((person, i) => {
     const cfg = c.plan.healthcare.people.find((x) => x.personId === person.id)?.ltc;
     if (!cfg || cfg.mode !== 'stochastic') return null;
-    const inc = c.data.ltc.incidence[person.sex];
+    const inc = c.data.ltc.incidence[sexes[i]];
     if (rng.next() >= inc.probability) return null;
     const onset = Math.max(66, Math.round(c.data.ltc.typicalOnsetAge + 6 * rng.normal()));
     const yrs = Math.max(0.25, -Math.log(1 - rng.next()) * inc.avgYears);

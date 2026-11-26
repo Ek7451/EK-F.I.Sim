@@ -5,6 +5,8 @@ import { addSnapshot, allPlans, getSetting, putPlan } from './db';
 vi.mock('./db', () => ({
   addSnapshot: vi.fn().mockResolvedValue(undefined),
   allPlans: vi.fn(),
+  migrateProgressBaselines: vi.fn(),
+  openWorkspace: vi.fn(),
   getSetting: vi.fn(),
   putPlan: vi.fn().mockResolvedValue(undefined),
 }));
@@ -30,7 +32,7 @@ it('stores an intact pre-migration recovery snapshot before writing schema v2', 
     vi.mocked(putPlan).mock.invocationCallOrder[0],
   );
   expect(JSON.stringify(raw)).toBe(backup);
-  expect(useStore.getState().plans[p.id].schemaVersion).toBe(2);
+  expect(useStore.getState().plans[p.id].schemaVersion).toBe(3);
   expect(useStore.getState().plans[p.id].scenarios[0].patches[0].path[1]).toBe(`@${p.milestones[0].id}`);
   expect(loadPlan(JSON.parse(backup)).plan).toEqual(useStore.getState().plans[p.id]);
 });

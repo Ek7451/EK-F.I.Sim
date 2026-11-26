@@ -22,9 +22,14 @@ export interface PiaResult {
 
 const AWI_1977 = 9779.44;
 
+// Published data tables are immutable for the lifetime of a compiled dataset.
+const latestYears = new WeakMap<Record<string, number>, number>();
 function lastYear(rec: Record<string, number>): number {
+  const cached = latestYears.get(rec);
+  if (cached !== undefined) return cached;
   let m = -Infinity;
   for (const y in rec) m = Math.max(m, +y);
+  latestYears.set(rec, m);
   return m;
 }
 

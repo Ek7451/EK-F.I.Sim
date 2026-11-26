@@ -79,7 +79,7 @@ function requestProjection(plan: Plan, scenarioId: string | null): void {
 }
 
 /** Deterministic projection for the plan on screen; recomputes whenever the plan or scenario changes. */
-export function useProjection(): {
+export function useProjection(showLastOnError = false): {
   result: ProjectionResult | null;
   ms: number;
   error: string | null;
@@ -106,7 +106,7 @@ export function useProjection(): {
     if (matches && projectionPlan === plan && plan) measurePreviewPaint(plan);
   }, [matches, projectionPlan, plan]);
   return {
-    result: matches ? projection : null,
+    result: matches && (!error || showLastOnError) ? projection : null,
     ms,
     error,
     stale: !matches || projectionPlan !== plan,

@@ -10,6 +10,7 @@ import {
   compilePlan,
   generatePath,
   prepare,
+  projectCompiled,
   runBacktest,
   runMonteCarlo,
   runMonteCarloChunk,
@@ -20,6 +21,142 @@ import { data, withdrawalPlan, withMarket } from './harness';
 
 const ref = JSON.parse(readFileSync(new URL('./references.json', import.meta.url), 'utf8'));
 const d = data.damodaran!;
+
+describe('F01 opening date and year-to-date payroll', () => {
+  const halfYear = () => {
+    const p = withdrawalPlan({ portfolio: 100000, spend: 0, years: 2, stocks: 1 });
+    p.settings.openingMonth = 7;
+    p.settings.openingPayroll = { p1: { wages: 0, pretaxDeferrals: 0, rothDeferrals: 0, taxesPaid: 0 } };
+    p.assumptions.returns.mode = 'fixed';
+    p.assumptions.returns.fixed.usStocks = 0.1;
+    return p;
+  };
+  it('July opening compounds a half-year of growth without altering annual statutory tables', () => {
+    const p = halfYear();
+    const rec = projectCompiled(compilePlan(p, data)).records;
+    expect(rec[0].investable).toBeCloseTo(100000 * Math.sqrt(1.1), 5);
+    expect(rec[1].investable).toBeCloseTo(100000 * 1.1 ** 1.5, 5);
+    expect(rec[0].cpiEnd).toBeCloseTo(Math.sqrt(1 + p.assumptions.inflation.rate));
+  });
+  it('November payroll contributes only the unused annual deferral allowance', () => {
+    const p = halfYear();
+    p.settings.openingMonth = 11;
+    p.people[0].birthDate = '1986-05-15';
+    p.settings.openingPayroll!.p1 = {
+      wages: 10000000,
+      pretaxDeferrals: 2400000,
+      rothDeferrals: 0,
+      taxesPaid: 1500000,
+    };
+    const compiled = compilePlan(
+      {
+        ...p,
+        incomes: [
+          {
+            id: 'job',
+            name: 'Wages',
+            ownerId: 'p1',
+            kind: 'wages',
+            taxCharacter: 'earned',
+            amount: 12000000,
+          },
+        ],
+        accounts: [
+          ...p.accounts,
+          {
+            id: 'work',
+            name: 'Work',
+            ownerId: 'p1',
+            balance: 0,
+            type: 'trad401k',
+            contribution: { maxOut: true, incomeId: 'job' },
+          },
+        ],
+      } as typeof p,
+      data,
+    );
+    const rec = projectCompiled(compiled).records[0];
+    expect(rec.income.wages).toBeCloseTo(20000, 2);
+    expect(rec.contributions.pretax).toBeCloseTo(500, 2);
+  });
+  it('does not deposit earlier wages twice and credits only the actual tax payments', () => {
+    const p = halfYear();
+    const income = {
+      id: 'job',
+      name: 'Wages',
+      kind: 'wages',
+      ownerId: 'p1',
+      amount: 12000000,
+      taxCharacter: 'earned',
+    };
+    const pi = compilePlan({ ...p, incomes: [income] } as typeof p, data).plan;
+    pi.settings.openingPayroll!.p1 = {
+      wages: 6000000,
+      pretaxDeferrals: 1000000,
+      rothDeferrals: 0,
+      taxesPaid: 1100000,
+    };
+    const paid = projectCompiled(compilePlan(pi, data)).records[0];
+    pi.settings.openingPayroll!.p1.taxesPaid = 0;
+    const unpaid = projectCompiled(compilePlan(pi, data)).records[0];
+    expect(paid.income.wages).toBe(60000);
+    expect(paid.taxes.agi).toBeCloseTo(110000, 3);
+    expect(paid.taxes.total).toBeCloseTo(unpaid.taxes.total, 5);
+    expect(paid.check.cashIn - unpaid.check.cashIn).toBeCloseTo(11000, 5);
+  });
+});
+
+describe('R3 same-series independent historical oracle', () => {
+  // No calls to engine projection, CPI, tax or quantile helpers in the expected values.
+  const years = [2000, 2001, 2002, 2003, 2004];
+  const stocks = [0.21, -0.34, 0.08, 0.12, -0.04];
+  const inflation = [0.04, 0.02, -0.01, 0.03, 0.05];
+  const zeros = years.map(() => 0);
+  const market = withMarket(years, stocks, zeros, zeros, inflation);
+  it.each(['start', 'end'] as const)('F08 checks every balance with %s-of-year withdrawals', (timing) => {
+    const plan = withdrawalPlan({ portfolio: 100000, spend: 6000, years: 3, stocks: 1, timing });
+    const result = runBacktest(compilePlan(plan, market));
+    for (const [i, cohort] of result.cohorts.entries()) {
+      let real = 100000;
+      const count = Math.min(3, years.length - i);
+      expect(cohort.series).toHaveLength(count);
+      for (let j = i; j < i + count; j++) {
+        real =
+          (timing === 'start' ? (real - 6000) * (1 + stocks[j]) : real * (1 + stocks[j]) - 6000) /
+          (1 + inflation[j]);
+        expect(cohort.series[j - i]).toBeCloseTo(real, 5);
+      }
+    }
+  });
+  it.each([0, 1, 2, 4])('F10/F11 calculate statistics from %i complete cohorts', (count) => {
+    const data = withMarket(
+      years.slice(0, count + 1),
+      stocks.slice(0, count + 1),
+      zeros.slice(0, count + 1),
+      zeros.slice(0, count + 1),
+      inflation.slice(0, count + 1),
+    );
+    const c = compilePlan(withdrawalPlan({ portfolio: 100000, spend: 0, years: 2, stocks: 1 }), data, {
+      stochasticLongevity: true,
+    });
+    const result = runBacktest(c);
+    const expected = Array.from(
+      { length: count },
+      (_, i) =>
+        (100000 * (1 + stocks[i]) * (1 + stocks[i + 1])) / (1 + inflation[i]) / (1 + inflation[i + 1]),
+    ).sort((a, b) => a - b);
+    expect(result.horizon).toBe(2);
+    expect(result.completeCount).toBe(count);
+    expect(result.partialCount).toBe(1);
+    if (count)
+      expect(result.medianEndingReal).toBeCloseTo(
+        (expected[Math.floor((count - 1) / 2)] + expected[Math.floor(count / 2)]) / 2,
+        5,
+      );
+    else expect(result.medianEndingReal).toBeNull();
+    expect(result.successRate).toBe(count ? 1 : null);
+  });
+});
 
 describe('V-01 Bengen (1994): 4% initial withdrawal, 50/50, end-of-year withdrawals', () => {
   const treasuries = withMarket(d.years, d.sp500, d.tBond10y, d.tBill3m, d.inflation);
@@ -71,7 +208,7 @@ describe('V-02 Trinity study (1998) Table 3, inflation-adjusted withdrawals', ()
             ),
             { toYear: 1995 - years + 1 },
           );
-          ours.push(Math.round(bt.successRate * 100));
+          ours.push(Math.round(bt.successRate! * 100));
         }
         const pub = table[label][String(years)];
         ours.forEach((v, i) => {
@@ -121,12 +258,12 @@ describe('V-03 FIRECalc / cFIREsim default run ($1M, $40k, 30 years, 75/25, 0.18
   });
   it('success rate within 1 point of cFIREsim', () => {
     console.log(
-      `V-03: success ${(b.successRate * 100).toFixed(2)}% (cFIREsim ${ref.firecalc.cfiresim.successRatePct}%, FIRECalc ${ref.firecalc.firecalc.successRatePct}%); median ending $${Math.round(median)} (cFIREsim $${ref.firecalc.cfiresim.endingBalanceMedian})`,
+      `V-03: success ${(b.successRate! * 100).toFixed(2)}% (cFIREsim ${ref.firecalc.cfiresim.successRatePct}%, FIRECalc ${ref.firecalc.firecalc.successRatePct}%); median ending $${Math.round(median)} (cFIREsim $${ref.firecalc.cfiresim.endingBalanceMedian})`,
     );
-    expect(Math.abs(b.successRate * 100 - ref.firecalc.cfiresim.successRatePct)).toBeLessThanOrEqual(1);
+    expect(Math.abs(b.successRate! * 100 - ref.firecalc.cfiresim.successRatePct)).toBeLessThanOrEqual(1);
   });
   it('success rate within 2 points of FIRECalc (plan tolerance is 1; the two tools differ from each other by 0.9)', () => {
-    expect(Math.abs(b.successRate * 100 - ref.firecalc.firecalc.successRatePct)).toBeLessThanOrEqual(2);
+    expect(Math.abs(b.successRate! * 100 - ref.firecalc.firecalc.successRatePct)).toBeLessThanOrEqual(2);
   });
   it('median ending balance within 10% of cFIREsim (plan tolerance is 2%; gap documented)', () => {
     expect(Math.abs(median / ref.firecalc.cfiresim.endingBalanceMedian - 1)).toBeLessThanOrEqual(0.1);

@@ -23,7 +23,7 @@ import type {
 } from './types';
 
 /** Bump when any dataset changes (plan 14.3): data-YYYY.N. */
-export const DATA_RELEASE = 'data-2026.1';
+export const DATA_RELEASE = 'data-2026.2';
 
 export interface EngineData {
   /** Data release id, recorded in every result. */

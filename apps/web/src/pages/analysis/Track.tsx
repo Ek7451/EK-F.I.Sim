@@ -15,7 +15,7 @@ import { Chart, alpha, axis, short, tooltip, tooltipCard } from '../../charts/Ch
 import { useProjection } from '../../engine/useResults';
 import { ACCOUNT_LABELS } from '../../lib/fields';
 import { PageHead } from '../../shell/Shell';
-import { getSetting, setSetting } from '../../state/db';
+import { useDraft } from '../../state/draft';
 import { usePlan, useStore, useUpdate } from '../../state/store';
 
 /** A calendar date on the chart's time axis, where year y's end sits at y. */
@@ -30,6 +30,7 @@ const gap = (v: number, fmt: (x: number) => string = formatMoney): string =>
 
 interface Baseline {
   takenAt: string;
+  revision?: string;
   startYear: number;
   points: { year: number; investable: number }[];
 }
@@ -37,46 +38,47 @@ interface Baseline {
 export function TrackPage(): ReactNode {
   const plan = usePlan()!;
   const update = useUpdate();
-  const { result } = useProjection();
-  const sandbox = useStore((s) => s.sandbox);
+  const { result, stale, error, identity } = useProjection();
+  const scenarioId = useStore((s) => s.scenarioId);
+  const transaction = useDraft((s) => s.transaction);
+  const canFreeze =
+    !!result?.records.length &&
+    !stale &&
+    !error &&
+    !scenarioId &&
+    !transaction &&
+    identity?.planId === plan.id;
   const dateId = useId();
   const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [draft, setDraft] = useState<Record<string, number>>({});
-  const [baseline, setBaseline] = useState<Baseline | null>(null);
+  const baseline = plan.progressBaseline;
+  const [confirmReplace, setConfirmReplace] = useState(false);
   useEffect(() => {
-    let live = true;
-    setBaseline(null);
     setDraft({});
-    void getSetting<Baseline>(`baseline:${plan.id}`).then((b) => {
-      if (live) setBaseline(b ?? null);
-    });
-    return () => {
-      live = false;
-    };
+    setConfirmReplace(false);
   }, [plan.id]);
   const freeze = (): void => {
-    if (!result) return;
+    if (!result || !canFreeze) return;
     const takenAt = new Date().toISOString();
-    // The opening balances are what you hold on the day you freeze the plan, so the reference path starts
-    // there. Anchoring it at 1 January made a plan frozen in November read as months behind on day one.
-    const today = axisTime(takenAt.slice(0, 10));
     const start = plan.settings.startYear;
     const b: Baseline = {
       takenAt,
+      revision: plan.updatedAt,
       startYear: start,
       points: [
         {
-          year: today > start - 1 && today < start ? today : start - 1,
+          year: axisTime(`${start}-${String(plan.settings.openingMonth).padStart(2, '0')}-01`),
           investable: result.records[0].check.opening,
         },
         ...result.records.map((r) => ({ year: r.year, investable: r.investable })),
       ],
     };
-    setBaseline(b);
-    if (!sandbox) void setSetting(`baseline:${plan.id}`, b);
+    update((d) => {
+      d.progressBaseline = b;
+    });
   };
   const balanceOf = (id: string, fallback: number): number =>
-    draft[id] ?? plan.actuals.at(-1)?.balances[id] ?? fallback;
+    draft[id] ?? plan.actuals.filter((a) => a.date <= date).at(-1)?.balances[id] ?? fallback;
   const log = (): void => {
     const balances: Record<string, number> = {};
     for (const a of plan.accounts) balances[a.id] = balanceOf(a.id, a.balance);
@@ -130,7 +132,10 @@ export function TrackPage(): ReactNode {
                   className="lv-input"
                   type="date"
                   value={date}
-                  onChange={(e) => setDate(e.target.value)}
+                  onChange={(e) => {
+                    setDraft({});
+                    setDate(e.target.value);
+                  }}
                 />
               </label>
             }
@@ -156,7 +161,7 @@ export function TrackPage(): ReactNode {
               <Button
                 variant="primary"
                 onClick={log}
-                disabled={!plan.accounts.length || !dateOk}
+                disabled={!plan.accounts.length || !dateOk || (!baseline && !canFreeze)}
                 data-tour="save-actuals"
               >
                 Save these balances
@@ -268,8 +273,15 @@ export function TrackPage(): ReactNode {
               </span>
               <Button
                 size="sm"
-                onClick={freeze}
-                disabled={!result}
+                onClick={() => {
+                  if (baseline && !confirmReplace) {
+                    setConfirmReplace(true);
+                    return;
+                  }
+                  freeze();
+                  setConfirmReplace(false);
+                }}
+                disabled={!canFreeze}
                 title={
                   baseline
                     ? 'Replace the reference with today’s plan'
@@ -277,7 +289,11 @@ export function TrackPage(): ReactNode {
                 }
                 data-tour="freeze-baseline"
               >
-                {baseline ? 'Replace with today’s plan' : 'Freeze today’s plan'}
+                {confirmReplace
+                  ? 'Confirm replacement'
+                  : baseline
+                    ? 'Replace with today’s plan'
+                    : 'Freeze today’s plan'}
               </Button>
             </div>
           </KpiStrip>

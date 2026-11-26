@@ -69,7 +69,7 @@ function Input({
 }
 
 /** Shown once after creating an account or resetting a password. */
-function RecoveryCode({
+export function RecoveryCode({
   code,
   username,
   onDone,
@@ -80,6 +80,7 @@ function RecoveryCode({
 }): ReactNode {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copyError, setCopyError] = useState(false);
   return (
     <div className="acct-code">
       <p>
@@ -93,12 +94,15 @@ function RecoveryCode({
         <Button
           size="sm"
           icon="copy"
-          onClick={() =>
-            void navigator.clipboard?.writeText(code).then(() => {
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(code);
               setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            })
-          }
+              setCopyError(false);
+            } catch {
+              setCopyError(true);
+            }
+          }}
         >
           {copied ? 'Copied' : 'Copy'}
         </Button>
@@ -115,6 +119,9 @@ function RecoveryCode({
           Download
         </Button>
       </div>
+      {copyError && (
+        <p role="alert">Clipboard unavailable. Select the code to copy it manually, or download it.</p>
+      )}
       <label className="lv-switch acct-saved">
         <input type="checkbox" checked={saved} onChange={(e) => setSaved(e.target.checked)} />
         <span>I have saved my recovery code</span>
@@ -139,6 +146,14 @@ export function AccountDialog(): ReactNode {
   const [error, setError] = useState('');
   const [tried, setTried] = useState(false);
   const [shown, setShown] = useState<{ code: string; username: string; title: string } | null>(null);
+  const ack = useRef<(() => void) | null>(null);
+  const localPlans = useStore((s) => s.plans);
+  const [adopted, setAdopted] = useState<string[]>([]);
+  const acknowledge = (recoveryCode: string) =>
+    new Promise<void>((resolve) => {
+      ack.current = resolve;
+      setShown({ code: recoveryCode, username, title: 'Save this code before continuing' });
+    });
   const prev = useRef(view);
   useEffect(() => {
     // A fresh form each time the dialog opens or switches; the username carries over between forms.
@@ -148,6 +163,7 @@ export function AccountDialog(): ReactNode {
       setCode('');
       setError('');
       setTried(false);
+      setAdopted([]);
     }
     prev.current = view;
   }, [view]);
@@ -172,16 +188,15 @@ export function AccountDialog(): ReactNode {
     };
     try {
       if (view === 'signup') {
-        const r = await signUp(username, password);
-        setShown({ code: r.recoveryCode, username, title: 'Save your recovery code' });
+        await signUp(username, password, acknowledge, adopted);
         close();
+        toPlans();
       } else if (view === 'forgot') {
-        const r = await resetPassword(username, code, password);
-        setShown({ code: r.recoveryCode, username, title: 'Password changed. Save your new recovery code' });
+        await resetPassword(username, code, password, acknowledge, adopted);
         close();
         toPlans();
       } else {
-        await signIn(username, password);
+        await signIn(username, password, adopted);
         close();
         toPlans();
         useStore.getState().notify('Signed in. Your plans now save to the cloud automatically.', 'ok');
@@ -201,9 +216,8 @@ export function AccountDialog(): ReactNode {
           username={shown.username}
           onDone={() => {
             setShown(null);
-            useStore
-              .getState()
-              .notify('You are signed in. Your plans now save to the cloud automatically.', 'ok');
+            ack.current?.();
+            ack.current = null;
           }}
         />
       </Dialog>
@@ -267,6 +281,24 @@ export function AccountDialog(): ReactNode {
             invalid={tried && !!mismatch}
           />
         ) : null}
+        {Object.keys(localPlans).length > 0 && (
+          <fieldset>
+            <legend>Plans to bring into this account</legend>
+            <p>On first sign-in, unchecked plans stay in the guest workspace and return when you sign out.</p>
+            {Object.values(localPlans).map((p) => (
+              <label key={p.id}>
+                <input
+                  type="checkbox"
+                  checked={adopted.includes(p.id)}
+                  onChange={(e) =>
+                    setAdopted((ids) => (e.target.checked ? [...ids, p.id] : ids.filter((id) => id !== p.id)))
+                  }
+                />
+                {p.name}
+              </label>
+            ))}
+          </fieldset>
+        )}
         {tried && problem ? (
           <p className="field-error" role="alert">
             {problem}

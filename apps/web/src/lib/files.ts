@@ -31,6 +31,7 @@ export async function exportBackup(plans: Plan[], passphrase: string): Promise<s
 }
 
 export async function readBackup(file: File, passphrase: string): Promise<unknown[]> {
+  if (file.size > 64 * 1024 * 1024) throw new Error('Backup exceeds the 64 MiB import limit.');
   const data = (await importEncrypted(passphrase, await file.text())) as { kind?: string; plans?: unknown[] };
   if (data?.kind !== 'longview-backup' || !Array.isArray(data.plans))
     throw new Error('This file is not a Longview backup.');
@@ -38,7 +39,10 @@ export async function readBackup(file: File, passphrase: string): Promise<unknow
 }
 
 export function exportCsv(plan: Plan, result: ProjectionResult, label: string): void {
-  const quote = (value: string): string => `"${value.replace(/"/g, '""')}"`;
+  const quote = (value: string): string => {
+    const safe = /^\s*[=+@-]|^[\t\r\n]/u.test(value) ? "'" + value : value;
+    return `"${safe.replace(/"/g, '""')}"`;
+  };
   const metadata = [
     plan.name,
     label,

@@ -263,6 +263,16 @@ describe('healthcare (HC)', () => {
     const co = project(p, data).records[0];
     expect(co.coverage[0]).toBe('aca');
     expect(co.expenses.healthcare.total).toBe(0);
+    const explicit = PlanZ.parse({
+      ...p,
+      healthcare: {
+        ...p.healthcare,
+        people: [{ personId: 'p1', coverage: [{ from: { type: 'year', year: 2026 }, type: 'aca' }] }],
+      },
+    });
+    const enrolled = project(explicit, data).records[0];
+    expect(enrolled.expenses.healthcare.premiums).toBeGreaterThan(3000);
+    expect(enrolled.taxes.ptc).toBe(0);
     p.people[0].residence = [{ state: 'TX', fromYear: 2026 }];
     const tx = project(p, data).records[0];
     expect(tx.expenses.healthcare.premiums).toBeGreaterThan(3000); // coverage gap: full price, no credit

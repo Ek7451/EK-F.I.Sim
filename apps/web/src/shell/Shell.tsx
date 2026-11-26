@@ -39,6 +39,13 @@ export function Shell({
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const mod = e.ctrlKey || e.metaKey;
+      if (
+        e.isComposing ||
+        e.defaultPrevented ||
+        document.querySelector('[aria-modal="true"],dialog[open]') ||
+        (e.target instanceof HTMLElement && e.target.isContentEditable)
+      )
+        return;
       const tag = (e.target as HTMLElement | null)?.tagName;
       if (!mod || tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
       if (e.key.toLowerCase() === 'z' && !e.shiftKey) {
@@ -277,14 +284,18 @@ export function Shell({
           {updateReady ? (
             <Notice tone="ok">
               <div className="lv-spread">
-                <span>A new version is ready. Your work is saved; reload when it suits you.</span>
+                <span>A new version is ready. Finish open edits before reloading.</span>
                 <Button
                   size="sm"
                   variant="primary"
                   disabled={reloading}
-                  onClick={() => {
+                  onClick={async () => {
                     setReloading(true);
-                    applyUpdate();
+                    try {
+                      await applyUpdate();
+                    } finally {
+                      setReloading(false);
+                    }
                   }}
                 >
                   {reloading ? 'Reloading…' : 'Reload now'}
@@ -294,8 +305,27 @@ export function Shell({
           ) : null}
           {newer.map(([id, m]) => (
             <Notice key={id} tone="warn">
-              A plan on this device was saved by a newer version of Longview (schema v{m.newerVersion}). It is
-              kept untouched and hidden until you update the app.
+              {m.validationError
+                ? `A saved plan needs recovery. ${m.validationError}`
+                : `A saved plan needs Longview schema v${m.newerVersion}. Update to open it.`}
+              <Button
+                size="sm"
+                onClick={async () => {
+                  try {
+                    const { db } = await import('../state/db');
+                    const record = await (await db()).get('plans', id);
+                    if (!record) throw new Error();
+                    const { download } = await import('../lib/files');
+                    download('longview-recovery.json', JSON.stringify(record.plan), 'application/json');
+                  } catch {
+                    useStore
+                      .getState()
+                      .notify('Recovery download failed. Your original is still on this device.', 'danger');
+                  }
+                }}
+              >
+                Download original (unencrypted)
+              </Button>
             </Notice>
           ))}
           <Outlet />

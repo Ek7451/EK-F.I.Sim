@@ -66,12 +66,17 @@ function StrategyPreview({
   const recs = result.records;
   const real = (r: (typeof recs)[number], x: number): number => x / r.cpi;
   const conversions = recs.reduce((s, r) => s + real(r, r.rothConversion), 0);
-  const delta = (key: 'endingWealth' | 'lifetimeTaxes'): { dir: 'up' | 'down' | 'flat'; text: string } | undefined => {
+  const delta = (
+    key: 'endingWealth' | 'lifetimeTaxes',
+  ): { dir: 'up' | 'down' | 'flat'; text: string } | undefined => {
     if (!baseline || stale) return undefined;
     const d = outcomeDelta(key, baseline, result);
     if (d === null) return undefined;
     if (Math.abs(d) < 0.5) return { dir: 'flat', text: 'Same as the saved plan' };
-    return { dir: d > 0 ? 'up' : 'down', text: `${d > 0 ? '+' : '−'}${formatCompact(Math.abs(d))} vs saved plan` };
+    return {
+      dir: d > 0 ? 'up' : 'down',
+      text: `${d > 0 ? '+' : '−'}${formatCompact(Math.abs(d))} vs saved plan`,
+    };
   };
   const series: [string, (r: (typeof recs)[number]) => number][] = [
     ['From taxable and cash', (r) => r.withdrawals.taxable + r.withdrawals.cash],
@@ -80,7 +85,11 @@ function StrategyPreview({
     ['From HSA and other', (r) => r.withdrawals.hsa + r.withdrawals.other],
   ];
   return (
-    <section className="lv-kpis pib-preview" aria-label="What this strategy does" data-tour="strategy-preview">
+    <section
+      className="lv-kpis pib-preview"
+      aria-label="What this strategy does"
+      data-tour="strategy-preview"
+    >
       <Stat
         label="Lifetime tax"
         value={formatCompact(result.summary.lifetimeTaxReal)}
@@ -166,7 +175,12 @@ function StrategyPreview({
                   type: 'line',
                   step: 'middle',
                   symbol: 'none',
-                  lineStyle: { width: 2, color: c.dawn[3], shadowColor: alpha(c.dawn[3], 0.6), shadowBlur: 8 },
+                  lineStyle: {
+                    width: 2,
+                    color: c.dawn[3],
+                    shadowColor: alpha(c.dawn[3], 0.6),
+                    shadowBlur: 8,
+                  },
                   itemStyle: { color: c.dawn[3] },
                   areaStyle: { color: alpha(c.dawn[3], 0.18) },
                   data: recs.map((r) => real(r, r.rothConversion)),
@@ -383,8 +397,13 @@ export function StrategyPage(): ReactNode {
                     update((d) => {
                       const [k, id] = v.split(':');
                       if (k === 'ef')
-                        d.strategies.surplusWaterfall.push({ type: 'emergencyFund', accountId: id, months: 6 });
-                      else if (k === 'ac') d.strategies.surplusWaterfall.push({ type: 'account', accountId: id });
+                        d.strategies.surplusWaterfall.push({
+                          type: 'emergencyFund',
+                          accountId: id,
+                          months: 6,
+                        });
+                      else if (k === 'ac')
+                        d.strategies.surplusWaterfall.push({ type: 'account', accountId: id });
                       else if (k === 'db') d.strategies.surplusWaterfall.push({ type: 'debt', debtId: id });
                     })
                   }
@@ -424,7 +443,10 @@ export function StrategyPage(): ReactNode {
                     data-tour="spending-rule-type"
                     options={[
                       { value: 'fixed', label: 'Spend the plan, adjusted for inflation' },
-                      { value: 'guardrails', label: 'Guardrails: cut or raise when the withdrawal rate drifts' },
+                      {
+                        value: 'guardrails',
+                        label: 'Guardrails: cut or raise when the withdrawal rate drifts',
+                      },
                       { value: 'percentOfPortfolio', label: 'A fixed share of the portfolio' },
                       { value: 'floorCeiling', label: 'Share of the portfolio, with a floor and ceiling' },
                     ]}
@@ -438,6 +460,13 @@ export function StrategyPage(): ReactNode {
               </div>
               {rule.type !== 'fixed' ? (
                 <div className="pib-dials" style={{ marginTop: 10 }}>
+                  {(rule.type === 'percentOfPortfolio' || rule.type === 'floorCeiling') && (
+                    <p>
+                      The portfolio percentage sets a total living-expense target. Pension income helps fund
+                      it. Essential costs and one-time expenses are protected. Healthcare, housing costs and
+                      debt payments are calculated separately.
+                    </p>
+                  )}
                   {rule.type === 'percentOfPortfolio' || rule.type === 'floorCeiling' ? (
                     <Dial
                       value={rule.pct}
@@ -788,8 +817,8 @@ export function StrategyPage(): ReactNode {
               <div className="pib-sub">
                 <h3>Early access with 72(t) payments</h3>
                 <HelpTip>
-                  A fixed yearly payment from one pre-tax account, penalty-free, that must continue for five years
-                  or until 59½, whichever is later.
+                  A fixed yearly payment from one pre-tax account, penalty-free, that must continue for five
+                  years or until 59½, whichever is later.
                 </HelpTip>
                 {plan.accounts.some((a) => PRETAX.includes(a.type)) ? (
                   <Button
@@ -953,8 +982,8 @@ export function StrategyPage(): ReactNode {
                     />
                   </div>
                   <p className="pib-lead" style={{ margin: '8px 0 0' }}>
-                    Each conversion is its own lot: spendable penalty-free five tax years later, or any time after
-                    59½.
+                    Each conversion is its own lot: spendable penalty-free five tax years later, or any time
+                    after 59½.
                   </p>
                 </>
               ) : null}

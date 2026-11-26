@@ -2,6 +2,7 @@ import type { Plan, Scenario } from '@fisim/engine';
 import { produce } from 'immer';
 import { create } from 'zustand';
 import { newId, usePlan, useStore } from './store';
+import { validationMessage } from '../engine/load';
 import { markPreview } from '../engine/timing';
 
 export interface DraftTransaction {
@@ -87,6 +88,11 @@ export const useDraft = create<DraftState>((set, get) => ({
   apply: () => {
     const t = get().transaction;
     if (!t || currentBase() !== t.base || Object.keys(get().invalidFields).length) return false;
+    const error = validationMessage(t.plan);
+    if (error) {
+      useStore.getState().notify(error, 'warn');
+      return false;
+    }
     useStore.getState().update((d) => {
       Object.assign(d, t.plan);
     });
@@ -96,6 +102,11 @@ export const useDraft = create<DraftState>((set, get) => ({
   saveScenario: (name) => {
     const t = get().transaction;
     if (!t || currentBase() !== t.base || Object.keys(get().invalidFields).length) return false;
+    const error = validationMessage(t.plan);
+    if (error) {
+      useStore.getState().notify(error, 'warn');
+      return false;
+    }
     const patches = scenarioChanges(t.base, t.plan);
     if (!patches.length) return false;
     useStore.getState().update((d) => {

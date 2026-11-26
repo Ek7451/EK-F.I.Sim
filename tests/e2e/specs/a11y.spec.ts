@@ -13,7 +13,7 @@ async function check(page: Page, label: string): Promise<void> {
     (v) =>
       `${v.id} (${v.impact}): ${v.help}\n  ${v.nodes
         .slice(0, 3)
-        .map((n) => n.target.join(' '))
+        .map((n) => n.target.join(' ') + ' ' + n.failureSummary)
         .join('\n  ')}`,
   );
   expect(summary, `${label}\n${summary.join('\n')}`).toEqual([]);

@@ -16,7 +16,11 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
 
   const move = async (): Promise<void> => {
     setState('moving');
-    if (!(await movePlansHome(list))) setState('too-big');
+    try {
+      if (!(await movePlansHome(list))) setState('too-big');
+    } catch {
+      setState('too-big');
+    }
   };
 
   return (
@@ -28,12 +32,13 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
       <p>
         {count} saved in this browser at the old address. Bring {list.length === 1 ? 'it' : 'them'} with you
         in one step: the plans travel inside the link, straight to the new address in this browser, and are
-        never sent to a server.
+        available to review before importing. Keep the link private. You can also export an encrypted backup
+        instead.
       </p>
       {state === 'too-big' ? (
         <p role="alert">
-          These plans are too large to carry in a link. Open Settings here, download a backup, then import it
-          at {HOME_NAME}.
+          These plans could not be moved in a link. Open Settings here, download a backup, then import it at{' '}
+          {HOME_NAME}.
         </p>
       ) : null}
       <div className="lv-row">
@@ -60,6 +65,9 @@ export function MovedHome({ onStay }: { onStay: () => void }): ReactNode {
             {state === 'moving' ? 'Moving…' : `Move my plans to ${HOME_NAME}`}
           </button>
         )}
+        <button type="button" className="lv-btn" onClick={onStay}>
+          Open original plans here
+        </button>
         <button type="button" className="lv-btn" data-variant="ghost" onClick={goHome}>
           Go without them
         </button>

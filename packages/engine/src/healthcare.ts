@@ -1,3 +1,4 @@
+import type { Coverage } from './schema';
 /** Healthcare helpers (§9): FPL, premium tax credit, age rating, cost sharing, Medicare. */
 import type {
   AcaAgeCurve,
@@ -33,11 +34,15 @@ export function premiumTaxCredit(
   planPremiumAnnual: number,
   magi: number,
   fpl: number,
+  contributionFraction = 1,
 ): number {
   if (fpl <= 0 || slcspAnnual <= 0) return 0;
   const pct = applicablePercentage(ap, magi / fpl);
   if (pct === null) return 0;
-  return Math.max(0, Math.min(planPremiumAnnual, slcspAnnual - pct * Math.max(0, magi)));
+  return Math.max(
+    0,
+    Math.min(planPremiumAnnual, slcspAnnual - pct * Math.max(0, magi) * contributionFraction),
+  );
 }
 
 export function ageRatingFactor(curve: AcaAgeCurve, state: string, age: number): number {
@@ -100,4 +105,68 @@ export function seppAmortization(balance: number, rate: number, lifeExpectancy: 
   if (balance <= 0 || lifeExpectancy <= 0) return 0;
   if (rate === 0) return balance / lifeExpectancy;
   return (balance * rate) / (1 - Math.pow(1 + rate, -lifeExpectancy));
+}
+
+export interface CoveragePeriod {
+  type: Coverage['type'];
+  entry: Coverage | null;
+  first: number;
+  months: number;
+}
+/** Months are zero-based here. Timelines, COBRA expiration, wage coverage and enrollment are independent boundaries. */
+export function coveragePeriods(
+  timeline: { at: number; entry: Coverage }[],
+  year: number,
+  ownWageMonths: number,
+  spouseWageMonths: number,
+  medicareMonth: number,
+  enabled: boolean,
+): CoveragePeriod[] {
+  const periods: CoveragePeriod[] = [];
+  if (!enabled) return [{ first: 0, months: 12, type: 'none', entry: null }];
+  const start = year * 12;
+  const edges = new Set([0, 12]);
+  const edge = (month: number) => {
+    if (month > 0 && month < 12) edges.add(month);
+  };
+  edge(ownWageMonths);
+  edge(spouseWageMonths);
+  edge(medicareMonth - start);
+  for (const row of timeline) {
+    edge(row.at - start);
+    if (row.entry.type === 'cobra') edge(row.at + row.entry.cobraMonths - start);
+  }
+  const boundaries = [...edges].sort((a, b) => a - b);
+  for (let i = 0; i < boundaries.length - 1; i++) {
+    const month = boundaries[i],
+      months = boundaries[i + 1] - month;
+    const now = year * 12 + month;
+    let entry: Coverage | null = null;
+    let latest = -Infinity;
+    for (const row of timeline)
+      if (row.at <= now && row.at >= latest) {
+        entry = row.entry;
+        latest = row.at;
+      }
+    if (
+      (entry?.type === 'employer' && month >= ownWageMonths) ||
+      (entry?.type === 'spouseEmployer' && month >= spouseWageMonths) ||
+      (entry?.type === 'cobra' && now >= latest + entry.cobraMonths)
+    )
+      entry = null;
+    let type: Coverage['type'] =
+      entry?.type ??
+      (month < ownWageMonths ? 'employer' : month < spouseWageMonths ? 'spouseEmployer' : 'aca');
+    if (
+      type !== 'employer' &&
+      type !== 'spouseEmployer' &&
+      (entry?.autoMedicare ?? (type !== 'none' && type !== 'cobra')) &&
+      now >= medicareMonth
+    )
+      type = 'medicare';
+    const last = periods.at(-1);
+    if (last?.type === type && last.entry === entry) last.months += months;
+    else periods.push({ type, entry, first: month, months });
+  }
+  return periods;
 }

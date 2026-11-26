@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { applyScenario, sampleEarlyRetiree } from '@fisim/engine';
 import { scenarioChanges, useDraft } from './draft';
+import { loadEngine } from '../engine/load';
 import { useStore } from './store';
 
 vi.mock('./db', () => ({
@@ -10,7 +11,8 @@ vi.mock('./db', () => ({
 }));
 
 describe('planning transactions', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
+    await loadEngine();
     vi.useFakeTimers();
     const plan = sampleEarlyRetiree(2026);
     useStore.setState({

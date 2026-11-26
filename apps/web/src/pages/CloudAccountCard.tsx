@@ -4,21 +4,22 @@
  * code, and sign out. Plans that changed on two devices are settled here too.
  */
 import { Badge, Button, Card, Field, Notice } from '@fisim/ui';
-import { useEffect, useState, type FormEvent, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   ACCOUNT_PASSWORD_MIN,
   AccountError,
   changePassword,
+  deleteCloudAccount,
   newRecoveryCode,
   openAccountDialog,
   passwordProblem,
   publicCloud,
   useCloudAccount,
 } from '../lib/cloud-account';
-import { saveTextFile, useSync, type SyncConflict } from '../lib/sync-status';
+import { useSync, type SyncConflict } from '../lib/sync-status';
 import { useStore } from '../state/store';
-import { SignOutDialog, cloudStatus } from './AccountDialog';
+import { RecoveryCode, SignOutDialog, cloudStatus } from './AccountDialog';
 import './account.css';
 
 const when = (iso: string | null): string => {
@@ -117,13 +118,22 @@ function NewCode({ username, onDone }: { username: string; onDone: () => void })
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [code, setCode] = useState<string | null>(null);
+  const ack = useRef<(() => void) | null>(null);
   const submit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!password) return setError('Enter your password.');
     setBusy(true);
     setError('');
     try {
-      setCode((await newRecoveryCode(password)).recoveryCode);
+      await newRecoveryCode(
+        password,
+        (value) =>
+          new Promise((resolve) => {
+            ack.current = resolve;
+            setCode(value);
+          }),
+      );
+      onDone();
     } catch (err) {
       setError(err instanceof AccountError ? err.message : 'Could not make a new code. Try again.');
     } finally {
@@ -132,32 +142,15 @@ function NewCode({ username, onDone }: { username: string; onDone: () => void })
   };
   if (code)
     return (
-      <div className="acct-inline acct-code">
-        <p>Your new recovery code. The old one no longer works. Save this one now: it is shown only once.</p>
-        <code className="acct-code-value" data-testid="recovery-code">
-          {code}
-        </code>
-        <div className="lv-row">
-          <Button size="sm" icon="copy" onClick={() => void navigator.clipboard?.writeText(code)}>
-            Copy
-          </Button>
-          <Button
-            size="sm"
-            icon="download"
-            onClick={() =>
-              saveTextFile(
-                'longview-recovery-code.txt',
-                `Longview Planner recovery code\nUsername: ${username}\nRecovery code: ${code}\n`,
-              )
-            }
-          >
-            Download
-          </Button>
-          <Button size="sm" variant="primary" onClick={onDone}>
-            I have saved it
-          </Button>
-        </div>
-      </div>
+      <RecoveryCode
+        code={code}
+        username={username}
+        onDone={() => {
+          setCode(null);
+          ack.current?.();
+          ack.current = null;
+        }}
+      />
     );
   return (
     <form className="acct-inline" onSubmit={(e) => void submit(e)} noValidate>
@@ -228,9 +221,35 @@ export function CloudAccountCard(): ReactNode {
   const account = useCloudAccount();
   const sync = useSync();
   const location = useLocation();
-  const [panel, setPanel] = useState<'password' | 'code' | null>(null);
+  const [panel, setPanel] = useState<'password' | 'code' | 'delete' | null>(null);
   const [signingOut, setSigningOut] = useState(false);
-  const planCount = useStore((s) => Object.keys(s.plans).length);
+  const [confirmName, setConfirmName] = useState('');
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState('');
+  const [deleting, setDeleting] = useState(false);
+  const [usage, setUsage] = useState<{ live: number; bytes: number; rows: number } | null>(null);
+  useEffect(() => {
+    let current = true;
+    setUsage(null);
+    if (account.user) {
+      const id = account.user.id;
+      void fetch('/api/v1/plans', { headers: { 'X-Longview-Account': id }, cache: 'no-store' })
+        .then(async (response) => {
+          if (!response.ok) return;
+          const rows = (await response.json()) as { deleted: boolean; size: number }[];
+          if (current && Array.isArray(rows))
+            setUsage({
+              live: rows.filter((r) => !r.deleted).length,
+              bytes: rows.reduce((n, r) => n + r.size, 0),
+              rows: rows.length,
+            });
+        })
+        .catch(() => {});
+    }
+    return () => {
+      current = false;
+    };
+  }, [account.user, sync.lastSyncAt]);
   useEffect(() => {
     if (location.hash !== '#cloud-account') return;
     document.getElementById('cloud-account')?.scrollIntoView({ block: 'start' });
@@ -295,7 +314,11 @@ export function CloudAccountCard(): ReactNode {
         </div>
         <div>
           <dt>Plans in this account</dt>
-          <dd>{planCount}</dd>
+          <dd>
+            {usage
+              ? `${usage.live} of 20 active · ${usage.bytes.toLocaleString()} of 2,097,152 bytes · ${usage.rows} of 200 lifetime plan IDs`
+              : 'Usage unavailable'}
+          </dd>
         </div>
       </dl>
       {sync.message ? (
@@ -307,7 +330,59 @@ export function CloudAccountCard(): ReactNode {
       <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
         Every change is encrypted on this device and saved to the cloud a moment later. Only you can read it.
       </p>
-      {panel === 'password' ? (
+      {panel === 'delete' ? (
+        <form
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (deleting) return;
+            setDeleting(true);
+            setDeleteError('');
+            try {
+              await deleteCloudAccount(deletePassword, confirmName);
+              setPanel(null);
+            } catch (err) {
+              setDeleteError(err instanceof Error ? err.message : 'Deletion could not be confirmed.');
+            } finally {
+              setDeleting(false);
+              setDeletePassword('');
+            }
+          }}
+        >
+          <p>
+            Deleting this account removes its cloud plans, recovery keys and sessions, and clears this
+            device’s account workspace. Export a backup in Settings first if you want to keep the plans.
+            Offline copies on other devices may still exist. Cloudflare can retain database recovery history
+            for seven days on the current Free plan.
+          </p>
+          <label>
+            Confirm username
+            <input value={confirmName} onChange={(e) => setConfirmName(e.target.value)} />
+          </label>
+          <Secret
+            label="Current password"
+            value={deletePassword}
+            onChange={setDeletePassword}
+            autoComplete="current-password"
+          />
+          {deleteError && <p role="alert">{deleteError}</p>}
+          <Button
+            disabled={deleting || !deletePassword || confirmName !== account.user.username}
+            type="submit"
+          >
+            Permanently delete account
+          </Button>
+          <Button
+            type="button"
+            disabled={deleting}
+            onClick={() => {
+              setPanel(null);
+              setDeletePassword('');
+            }}
+          >
+            Cancel
+          </Button>
+        </form>
+      ) : panel === 'password' ? (
         <ChangePassword onDone={() => setPanel(null)} />
       ) : panel === 'code' ? (
         <NewCode username={account.user.username} onDone={() => setPanel(null)} />
@@ -318,6 +393,9 @@ export function CloudAccountCard(): ReactNode {
           </Button>
           <Button size="sm" onClick={() => setPanel('code')}>
             New recovery code
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => setPanel('delete')}>
+            Delete account
           </Button>
           <Button size="sm" variant="ghost" onClick={() => setSigningOut(true)}>
             Sign out

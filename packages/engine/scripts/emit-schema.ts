@@ -7,6 +7,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { z } from 'zod';
+import { format, resolveConfig } from 'prettier';
 import { PlanZ, SAMPLE_PLANS, SCHEMA_VERSION } from '../src';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
@@ -20,6 +21,9 @@ writeFileSync(join(root, 'schema', `plan.v${SCHEMA_VERSION}.json`), JSON.stringi
 
 const dir = join(root, 'test', 'fixtures', 'plans', `v${SCHEMA_VERSION}`);
 mkdirSync(dir, { recursive: true });
-for (const [id, mk] of Object.entries(SAMPLE_PLANS))
-  writeFileSync(join(dir, `${id}.json`), JSON.stringify(mk(2026), null, 1) + '\n');
+const config = await resolveConfig(dir);
+for (const [id, mk] of Object.entries(SAMPLE_PLANS)) {
+  const filepath = join(dir, `${id}.json`);
+  writeFileSync(filepath, await format(JSON.stringify(mk(2026)), { ...config, filepath }));
+}
 console.log(`wrote schema/plan.v${SCHEMA_VERSION}.json and ${Object.keys(SAMPLE_PLANS).length} fixtures`);

@@ -8,6 +8,7 @@ export function workspaceFixtures(): Record<string, Plan> {
   shortfall.incomes = [];
   shortfall.accounts.forEach((a) => {
     a.balance = 10000;
+    delete a.contribution;
   });
   shortfall.expenses.forEach((e) => {
     e.amount *= 5;
