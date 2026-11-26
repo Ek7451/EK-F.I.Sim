@@ -256,6 +256,7 @@
   align-items: center;
   gap: 8px;
   max-width: 300px;
+  min-width: 0;
   min-height: 36px;
   padding: 0 12px 0 10px;
   border: 1px solid var(--line);
@@ -294,6 +295,13 @@
   color: var(--ink-3);
   font-size: var(--text-sm);
   white-space: nowrap;
+}
+.crumbs {
+  min-width: 0;
+}
+.crumbs span {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .crumbs [aria-current='page'] {
   color: var(--ink);
