@@ -1125,7 +1125,7 @@
     inset: 0;
     z-index: 70;
     height: auto;
-    padding-bottom: 72px;
+    padding-bottom: var(--phone-nav-height);
   }
   .app[data-rail='collapsed'] .rail-text {
     position: static;
@@ -1140,16 +1140,20 @@
   .topbar {
     position: relative;
     padding: 0 12px;
+    background: var(--surface);
+    backdrop-filter: none;
   }
   .content {
-    padding: 12px 12px calc(84px + env(safe-area-inset-bottom));
+    padding: 12px 12px 16px;
     gap: 12px;
   }
   :root {
     --chart-h: 388px;
+    --phone-nav-height: calc(57px + env(safe-area-inset-bottom, 0px));
+    scroll-padding-block: env(safe-area-inset-top, 0px) var(--phone-nav-height);
   }
   .footer {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    padding-bottom: calc(24px + var(--phone-nav-height));
   }
   .bottom-nav {
     display: grid;
@@ -1159,8 +1163,7 @@
     right: 0;
     bottom: 0;
     z-index: 75;
-    background: color-mix(in srgb, var(--surface) 82%, transparent);
-    backdrop-filter: blur(18px) saturate(1.6);
+    background: var(--surface);
     border-top: 1px solid var(--line);
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -1202,7 +1205,7 @@
     padding: 0;
   }
   .toasts {
-    bottom: calc(72px + env(safe-area-inset-bottom));
+    bottom: calc(12px + var(--phone-nav-height));
     left: var(--space-3);
     right: var(--space-3);
   }
@@ -1730,5 +1733,34 @@ main[tabindex='-1']:focus-visible {
   }
   body:has(.rail[data-open='true']) {
     overflow: hidden;
+  }
+}
+
+.chart-container {
+  isolation: isolate;
+  min-width: 0;
+}
+[data-inline-touch][data-input='touch'] .home-chart-tooltip {
+  display: none !important;
+}
+.home-main .home-year {
+  margin-top: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(8rem, 100%), 1fr));
+}
+@media screen and (max-width: 900px) {
+  .app::after {
+    content: '';
+    position: fixed;
+    inset: 0 0 auto;
+    height: env(safe-area-inset-top, 0px);
+    background: var(--surface);
+    pointer-events: none;
+    z-index: 69;
+  }
+  .draft-bar {
+    bottom: calc(var(--phone-nav-height) + 6px);
+  }
+  .lv-dialog .draft-bar {
+    bottom: 0;
   }
 }

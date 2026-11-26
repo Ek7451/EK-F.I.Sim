@@ -17,6 +17,11 @@ export default defineConfig({
     timeout: 60_000,
   },
   projects: [
+    {
+      name: 'iphone',
+      testMatch: /mobile-navigation\.spec/,
+      use: { ...devices['iPhone 13'], browserName: 'webkit' },
+    },
     { name: 'phone', use: { ...devices['Pixel 7'] } },
     {
       name: 'tablet',

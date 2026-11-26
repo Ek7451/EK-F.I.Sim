@@ -117,12 +117,15 @@ export function Chart({
   footer,
   onClick,
   onItemClick,
+  inlineTouchDetail = false,
   onHover,
   onZoom,
   ...rest
 }: {
   /** A click on one mark (a bar segment, a point): which series and which category it belongs to. */
   onItemClick?: (params: { dataIndex: number; seriesName: string; name: string }) => void;
+  /** The caller renders the selected value in document flow for touch users. */
+  inlineTouchDetail?: boolean;
   /** Builds the ECharts option from the current theme colours. */
   build: (c: ChartColors) => EChartsCoreOption;
   deps: unknown[];
@@ -139,6 +142,7 @@ export function Chart({
   const el = useRef<HTMLDivElement>(null);
   const inst = useRef<ReturnType<ECharts['init']> | null>(null);
   const keyboardIndex = useRef(0);
+  const touch = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   // Keep the latest click handler without re-initialising the chart (it would otherwise go stale).
   const clickRef = useRef(onClick);
   clickRef.current = onClick;
@@ -175,7 +179,7 @@ export function Chart({
       // Clicks anywhere in the plot area pick the nearest category, not only clicks on a mark.
       chart.getZr().on('click', (e: { offsetX: number; offsetY: number }) => {
         const pt = [e.offsetX, e.offsetY];
-        if (!clickRef.current || !chart.containPixel({ gridIndex: 0 }, pt)) return;
+        if (touch.current?.moved || !clickRef.current || !chart.containPixel({ gridIndex: 0 }, pt)) return;
         // For a category x axis the first coordinate is the category index.
         const x = chart.convertFromPixel({ gridIndex: 0 }, pt) as number[] | null;
         const idx = Math.round(x?.[0] ?? NaN);
@@ -187,7 +191,7 @@ export function Chart({
       });
       chart.on('click', (p: unknown) => {
         const e = p as { dataIndex?: number; seriesName?: string; name?: string };
-        if (itemClickRef.current && typeof e.dataIndex === 'number')
+        if (!touch.current?.moved && itemClickRef.current && typeof e.dataIndex === 'number')
           itemClickRef.current({
             dataIndex: e.dataIndex,
             seriesName: e.seriesName ?? '',
@@ -195,7 +199,7 @@ export function Chart({
           });
       });
       chart.getZr().on('mousemove', (e: { offsetX: number; offsetY: number }) => {
-        if (!hoverRef.current) return;
+        if (touch.current || !hoverRef.current) return;
         const pt = [e.offsetX, e.offsetY];
         if (!chart.containPixel({ gridIndex: 0 }, pt)) {
           hoverRef.current(null);
@@ -273,7 +277,7 @@ export function Chart({
 
   const t = showTable && table ? table() : null;
   return (
-    <div {...rest}>
+    <div {...rest} className="chart-container">
       {t ? (
         <div
           className="lv-table-wrap"
@@ -312,6 +316,31 @@ export function Chart({
       ) : (
         <div
           ref={el}
+          data-inline-touch={inlineTouchDetail || undefined}
+          onPointerDownCapture={(e) => {
+            if (e.pointerType !== 'touch') {
+              touch.current = null;
+              delete e.currentTarget.dataset.input;
+              return;
+            }
+            touch.current = { x: e.clientX, y: e.clientY, moved: false };
+            e.currentTarget.dataset.input = 'touch';
+            hoverRef.current?.(null);
+          }}
+          onPointerMoveCapture={(e) => {
+            if (e.pointerType === 'mouse') {
+              touch.current = null;
+              delete e.currentTarget.dataset.input;
+            } else if (
+              touch.current &&
+              Math.hypot(e.clientX - touch.current.x, e.clientY - touch.current.y) > 8
+            ) {
+              touch.current.moved = true;
+            }
+          }}
+          onPointerCancelCapture={() => {
+            if (touch.current) touch.current.moved = true;
+          }}
           style={{ width: '100%', height, touchAction: 'pan-y pinch-zoom' }}
           role="img"
           aria-label={label}
@@ -339,6 +368,7 @@ export function Chart({
               ),
             );
             onClick({ dataIndex: keyboardIndex.current });
+            if (inlineTouchDetail && e.currentTarget.dataset.input === 'touch') return;
             inst.current?.dispatchAction({
               type: 'showTip',
               seriesIndex: 0,

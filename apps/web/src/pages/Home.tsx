@@ -252,6 +252,7 @@ export function HomePage(): ReactNode {
   const [viewId, setViewId] = useState<View['id']>(readView);
   const [hover, setHover] = useState<number | null>(null);
   const [pinned, setPinned] = useSelectedYear();
+  useEffect(() => setHover(null), [plan?.id, viewId, result]);
   useEffect(() => {
     if (!result) return;
     const now = { nw: result.summary.endingNetWorthReal, fi: result.summary.fiYear };
@@ -310,6 +311,7 @@ export function HomePage(): ReactNode {
       /* not remembered */
     }
   };
+  const detailRows = view.rows(readColors());
   const step = (by: number): void => pick(VIEWS[(VIEWS.indexOf(view) + by + VIEWS.length) % VIEWS.length].id);
   const recs = result?.records ?? [];
   // The year the strip under the chart describes: the one under the pointer, else the pinned one, else this year.
@@ -443,6 +445,7 @@ export function HomePage(): ReactNode {
                 label={`${view.title}, in today's dollars`}
                 deps={[result, view.id]}
                 height="var(--home-chart-h)"
+                inlineTouchDetail
                 onHover={(p) => setHover(p ? p.dataIndex : null)}
                 onClick={(p) => setPinned(recs[p.dataIndex]?.year ?? null)}
                 footer={
@@ -464,6 +467,7 @@ export function HomePage(): ReactNode {
                     legend: rows.length > 1 ? { type: 'scroll', top: 0, left: 0 } : undefined,
                     tooltip: {
                       ...tooltip(c),
+                      className: 'home-chart-tooltip',
                       trigger: 'axis',
                       formatter: (ps: { dataIndex: number }[]) => {
                         const r = recs[ps[0]?.dataIndex ?? 0];
@@ -517,32 +521,26 @@ export function HomePage(): ReactNode {
             ) : (
               <Skeleton height={260} />
             )}
+            {year && (
+              <section className="home-year" aria-label={`${year.year} at a glance`} data-tour="home-year">
+                <div className="home-year-when">
+                  <strong>{year.year}</strong>
+                  <span>{agesText(year)}</span>
+                </div>
+                {detailRows.map((row) => (
+                  <Stat key={row.name} label={row.name} value={formatMoney(row.value(year))} />
+                ))}
+                {view.total && (
+                  <Stat
+                    label={view.total}
+                    value={formatMoney(detailRows.reduce((sum, row) => sum + row.value(year), 0))}
+                  />
+                )}
+                {year.milestones.length > 0 && <span>{year.milestones.join(', ')}</span>}
+                {isShort(year) && <span>Spending short by {formatMoney(flow(year, year.shortfall))}</span>}
+              </section>
+            )}
           </Card>
-          {year ? (
-            <section
-              className="home-year"
-              aria-label={`${year.year} at a glance`}
-              data-tour="home-year"
-              data-live={hover !== null}
-            >
-              <div className="home-year-when">
-                <strong>{year.year}</strong>
-                <span>{agesText(year)}</span>
-              </div>
-              <Stat label="Net worth" value={formatCompact(bal(year, year.netWorth))} />
-              <Stat label="Income" value={formatCompact(flow(year, year.income.total))} />
-              <Stat label="Spending" value={formatCompact(flow(year, year.expenses.total))} />
-              <Stat
-                label="Taxes"
-                value={formatCompact(flow(year, year.taxes.total))}
-                note={`${formatPct(year.taxes.effectiveRate, 1)} of income`}
-              />
-              <Stat
-                label={year.withdrawals.total > year.contributions.total ? 'Withdrawn' : 'Saved'}
-                value={formatCompact(flow(year, Math.max(year.withdrawals.total, year.contributions.total)))}
-              />
-            </section>
-          ) : null}
         </div>
       </div>
       <nav className="home-actions" aria-label="Next steps" data-tour="data-home">

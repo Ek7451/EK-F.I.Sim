@@ -302,7 +302,7 @@ body:has(.draft-bar) .tour-prompt {
   .tour-prompt {
     left: var(--space-3);
     right: var(--space-3);
-    bottom: calc(66px + env(safe-area-inset-bottom));
+    bottom: calc(var(--phone-nav-height) + 9px);
     max-width: none;
     /* One slim row on a phone too: two lines of text at most, the button and the close beside them. */
     flex-wrap: nowrap;
