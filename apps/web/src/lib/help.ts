@@ -206,6 +206,8 @@ export const HELP: Record<string, string> = {
   'Rises with':
     'What makes this cost go up over time. Most costs follow general inflation; a fixed payment such as a mortgage stays flat.',
   'Yearly increase': 'Your own yearly increase for this cost.',
+  'Extra rate above inflation':
+    'The percentage points added to general inflation each year for this expense. Enter 0 to follow general inflation.',
   'Essential (cannot be cut in a bad year)':
     'A cost you cannot trim, such as housing or food. When a flexible spending rule (guardrails, a share of the portfolio, a floor and ceiling) calls for a cut, it comes out of the other expenses and never this one. Raises apply to everything.',
   'Follows the spending phases':

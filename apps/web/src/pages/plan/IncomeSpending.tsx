@@ -882,6 +882,7 @@ export function SpendingPage(): ReactNode {
                 value={e.inflationIndex}
                 options={[
                   { value: 'cpi', label: 'General inflation' },
+                  { value: 'cpiPlus', label: 'Inflation + extra rate' },
                   { value: 'healthcare', label: 'Healthcare inflation' },
                   { value: 'education', label: 'Education inflation' },
                   { value: 'custom', label: 'A rate I set' },
@@ -894,6 +895,18 @@ export function SpendingPage(): ReactNode {
                 }
                 data-tour="expense-inflation"
               />
+              {e.inflationIndex === 'cpiPlus' ? (
+                <PercentField
+                  label="Extra rate above inflation"
+                  hint="For example, 3% inflation + 2% extra gives a 5% yearly increase."
+                  value={e.extraInflationRate ?? 0}
+                  onChange={(v) =>
+                    set((x) => {
+                      x.extraInflationRate = Math.max(0, Math.min(10, v));
+                    })
+                  }
+                />
+              ) : null}
               {e.inflationIndex === 'custom' ? (
                 <PercentField
                   label="Yearly increase"
