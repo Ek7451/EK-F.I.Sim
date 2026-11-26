@@ -31,6 +31,8 @@ export function runMonteCarloChunk(
   shouldCancel?: () => boolean,
 ): McChunk {
   const years = c.maxYears;
+  if (!Number.isInteger(from) || !Number.isInteger(to) || from < 0 || to <= from || to > 10000)
+    throw new Error('Simulation batches must contain 1 to 10,000 indexed trials.');
   const count = to - from;
   const chunk: McChunk = {
     from,
@@ -53,7 +55,7 @@ export function runMonteCarloChunk(
       break;
     }
     const path = generatePath(c, settings, settings.seed, from + r);
-    const res = runPath(c, path);
+    const res = runPath(c, path, { summaryOnly: true });
     const o = r * years;
     let cuts = 0;
     let minRatio = 1;

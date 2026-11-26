@@ -118,7 +118,9 @@ test('observe-only mode shows my own plan with changes switched off', async ({ p
 test('the wizard offers the welcome tour', async ({ page }) => {
   await page.goto('/start');
   await page.getByLabel('Your first name').fill('Sam');
+  await page.getByLabel('State you live in').selectOption('TX');
   for (let i = 0; i < 5; i++) await page.locator('[data-tour="wizard-next"]').click();
+  await page.getByLabel(/I reviewed the balances/).check();
   await page.locator('[data-tour="wizard-take-tour"]').click();
   await expect(page.getByTestId('tour-progress')).toContainText('Welcome and getting around · step 1 of');
 });

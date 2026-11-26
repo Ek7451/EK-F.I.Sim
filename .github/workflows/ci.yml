@@ -155,6 +155,10 @@ jobs:
             process.exit(1);
           }
           NODE
+      - name: Install Chromium for smoke tests
+        run: pnpm --filter @fisim/e2e exec playwright install --with-deps chromium
+      - name: Browser smoke tests against the built artifact
+        run: pnpm --filter @fisim/e2e test specs/core.spec.ts specs/result-safety.spec.ts --project=desktop --workers=2
       - name: Upload build
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
@@ -163,7 +167,7 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # Browser tests (Playwright: flows, tours, axe) and Lighthouse budgets run locally, not in CI:
+  # Run the full device, accessibility and Lighthouse matrix locally:
   # `pnpm build && pnpm e2e` and `pnpm build && pnpm lighthouse`.
 
   bench:
@@ -237,7 +241,7 @@ jobs:
             pages deploy dist --cwd ../../apps/web
             --project-name=${{ env.PAGES_PROJECT }}
             --branch=pr-${{ github.event.pull_request.number }}
-            --commit-hash=${{ github.event.pull_request.head.sha }}
+            --commit-hash=${{ github.sha }}
       - name: Report the preview URL
         if: steps.cf.outputs.ready == 'true'
         env:

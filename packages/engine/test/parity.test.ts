@@ -43,7 +43,7 @@ const flat = (extra: Over = {}): Over => ({
 const mk = (o: Over): Plan =>
   PlanZ.parse({
     id: 't',
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 't',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -487,10 +487,10 @@ describe('PLAN-13 backdoor Roth (pro-rata) and mega-backdoor Roth', () => {
     expect(y.balances.rk).toBeCloseTo(41500, 6);
   });
   it('mega-backdoor is limited by the pay left after the deferral', () => {
-    // Salary 50,000: deferral 24,500; match 50% x 3,000 = 1,500; room 46,000 but only 25,500 of pay is left.
+    // Salary 50,000: deferral 24,500; match 50% x 3,000 = 1,500; employee FICA is $3,825, leaving $21,675 for the after-tax contribution.
     const y = mega(50000);
     expect(y.contributions.employer).toBeCloseTo(1500, 6);
-    expect(y.contributions.roth).toBeCloseTo(25500, 6);
+    expect(y.contributions.roth).toBeCloseTo(50000 - 24500 - 50000 * 0.0765, 6);
   });
 });
 
@@ -1013,7 +1013,7 @@ describe('HC-08 HSA contributions, Medicare cut-off and withdrawals', () => {
   });
   it('stops contributing once the owner is on Medicare', () => {
     // Retiree on a bronze marketplace plan, funding the HSA from surplus. Born March 1962: 2026 at 64 gets
-    // 4,400 + 1,000 = 5,400 (and it is deducted from AGI); Medicare starts in 2027, so nothing more goes in.
+    // 4,400 + 1,000 = 5,400. March 2027 enrollment leaves January and February eligible.
     const r = run(
       mk({
         people: [person('p1', '1962-03-15')],
@@ -1048,9 +1048,13 @@ describe('HC-08 HSA contributions, Medicare cut-off and withdrawals', () => {
     expect(rec(r, 2026).coverage[0]).toBe('aca');
     expect(rec(r, 2026).balances.hsa).toBeCloseTo(5400, 6);
     expect(rec(r, 2026).taxes.agi).toBeCloseTo(80000 - 5400, 2);
-    expect(rec(r, 2027).coverage[0]).toBe('medicare');
-    expect(rec(r, 2027).balances.hsa).toBeCloseTo(5400, 6);
-    expect(rec(r, 2030).balances.hsa).toBeCloseTo(5400, 6);
+    expect(rec(r, 2027).coverageMonths[0]).toEqual([
+      { type: 'aca', first: 0, months: 2 },
+      { type: 'medicare', first: 2, months: 10 },
+    ]);
+    const total = 5400 + (5500 * 2) / 12;
+    expect(rec(r, 2027).balances.hsa).toBeCloseTo(total, 6);
+    expect(rec(r, 2030).balances.hsa).toBeCloseTo(total, 6);
   });
   // Medicare look-back: someone who works past 65 on an employer HDHP and enrolls in Medicare after retiring gets
   // Part A backdated up to six months, so the HSA limit for the last working year is cut to the months before that:

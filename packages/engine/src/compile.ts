@@ -3,9 +3,9 @@
  * the projection loop runs on. Nothing here depends on a particular return path.
  */
 import type { Account, AccountType, Allocation, Coverage, Plan, YearRef } from './schema';
-import { ASSET_CLASSES } from './schema';
-import type { EngineData } from './data';
-import { applyColas, claimFactor, computePia, fraMonths, awiFor } from './social-security';
+import { ASSET_CLASSES, PlanZ } from './schema';
+import { pickYear, projectFederal, type EngineData } from './data';
+import { applyColas, claimFactor, computePia, fraMonths, awiFor, wageBaseFor } from './social-security';
 // Circular by design: the M1 pre-pass runs one deterministic projection. Only used inside compilePlan at call time.
 
 export const NC = ASSET_CLASSES.length;
@@ -66,7 +66,7 @@ export interface CPerson {
   name: string;
   birthYear: number;
   birthMonth: number;
-  sex: 'male' | 'female';
+  sex?: 'male' | 'female';
   deathAge: number;
   stochasticLongevity: boolean;
   /** Year the person reaches 59 1/2. */
@@ -88,12 +88,34 @@ export interface CPerson {
   rmdStartAge: number;
 }
 
+/** Statutory table selection is shared by every simulated return path. */
+function annualParameters(data: EngineData, year: number, wageGrowth: number) {
+  const fedPick = pickYear(data.federal, year);
+  const ss = pickYear(data.socialSecurity, year);
+  const ratio =
+    awiFor(data.ssSeries, year - 2, wageGrowth) / awiFor(data.ssSeries, ss.dataYear - 2, wageGrowth);
+  const limit = (amount: number) =>
+    ss.dataYear === year ? amount : Math.max(amount, 120 * Math.round((amount * ratio) / 120));
+  return {
+    fedPick,
+    fp: projectFederal(fedPick.value, year),
+    limPick: pickYear(data.limits, year),
+    medPick: pickYear(data.medicare, year),
+    csPick: pickYear(data.costSharing, year),
+    fplPick: pickYear(data.fpl, year - 1),
+    apPick: pickYear(data.applicablePct, year).value,
+    wageBase: wageBaseFor(data.ssSeries, year, wageGrowth),
+    underFra: limit(ss.value.earningsTest.underFra),
+    yearOfFra: limit(ss.value.earningsTest.yearOfFra),
+  };
+}
 export interface Compiled {
   plan: Plan;
   data: EngineData;
   startYear: number;
-  /** Longest possible horizon in years (to the latest fixed death age, or 110 when longevity is stochastic). */
+  /** Longest possible horizon in years (to the latest fixed death age, or the mortality table limit when longevity is stochastic). */
   maxYears: number;
+  annual: ReturnType<typeof annualParameters>[];
   people: CPerson[];
   accounts: CAccount[];
   accountIndex: Map<string, number>;
@@ -210,15 +232,27 @@ export function compilePlan(
     conditionYears?: Record<string, number>;
   } = {},
 ): Compiled {
+  plan = PlanZ.parse(plan);
+  if (
+    plan.people.length === 2 &&
+    (plan.household.filingStatus.some((row) => row.status !== 'mfj') ||
+      plan.milestones.some((m) => m.effects.some((e) => e.type === 'filingStatus' && e.status !== 'mfj')))
+  ) {
+    throw new Error(
+      'Two-person projections support married couples filing jointly. Separate filing units require separate plans.',
+    );
+  }
   // M1: when an earned income ends (or a milestone stops it) on a condition milestone, run the deterministic
   // projection once to find when it fires, then compile again with that year.
   if (!opts.conditionYears && conditionPrepass && earningsNeedConditionYears(plan)) {
     const first = compilePlan(plan, data, { ...opts, conditionYears: {} });
     return compilePlan(plan, data, { ...opts, conditionYears: conditionPrepass(first) });
   }
+  for (const person of plan.people) person.residence.sort((a, b) => a.fromYear - b.fromYear);
+  plan.household.filingStatus.sort((a, b) => a.fromYear - b.fromYear);
   const warnings: string[] = [];
   const startYear = plan.settings.startYear;
-  const infl = plan.assumptions.inflation.rate;
+  const infl = expectedMeans({ plan, data }).inflation;
   const wageGrowth = infl + plan.assumptions.realWageGrowth;
 
   const msIndex = new Map<string, number>();
@@ -257,6 +291,7 @@ export function compilePlan(
       piaAnnualToday = dollars(p.socialSecurity.piaMonthly) * 12;
     } else if (p.socialSecurity.mode === 'earnings') {
       const earnings: Record<number, number> = {};
+      const reported = new Set(p.socialSecurity.earnings.map((row) => row.year));
       for (const e of p.socialSecurity.earnings) earnings[e.year] = dollars(e.amount);
       // Project future covered earnings from this person's earned-income streams.
       let currentEarned = 0;
@@ -264,7 +299,7 @@ export function compilePlan(
         if (personIdx(inc.ownerId) !== pi) continue;
         if (!isEarned(inc)) continue;
         const s = staticYear(plan, inc.start, startYear, earningsMsYear, msIndex);
-        const e = staticYear(plan, inc.end, birthYear + 67, earningsMsYear, msIndex);
+        const e = staticYear(plan, inc.end, Infinity, earningsMsYear, msIndex);
         let from = Math.max(startYear, Number.isNaN(s) ? startYear : s);
         let to = Number.isNaN(e) ? birthYear + 67 : e;
         // Pay ending at an age runs to that birthday, so part of the final year is earned too.
@@ -284,9 +319,10 @@ export function compilePlan(
         });
         const g = inc.growth.basis === 'real' ? (1 + infl) * (1 + inc.growth.rate) - 1 : inc.growth.rate;
         for (let y = from; y < to && y < birthYear + 70; y++) {
+          if (reported.has(y)) continue;
           earnings[y] = (earnings[y] ?? 0) + dollars(inc.amount) * Math.pow(1 + g, y - startYear);
         }
-        if (lastPart > 0 && to >= from && to < birthYear + 70)
+        if (lastPart > 0 && to >= from && to < birthYear + 70 && !reported.has(to))
           earnings[to] =
             (earnings[to] ?? 0) + lastPart * dollars(inc.amount) * Math.pow(1 + g, to - startYear);
         if (from === startYear) currentEarned += dollars(inc.amount);
@@ -335,7 +371,7 @@ export function compilePlan(
       name: p.name,
       birthYear,
       birthMonth,
-      sex: p.sex ?? (pi === 0 ? 'female' : 'male'),
+      sex: p.sex,
       deathAge: p.longevity.age,
       stochasticLongevity: p.longevity.mode === 'stochastic' || !!opts.stochasticLongevity,
       year59Half: half,
@@ -445,10 +481,16 @@ export function compilePlan(
   const expenseIndex = new Map<string, number>();
   plan.expenses.forEach((x, i) => expenseIndex.set(x.id, i));
 
-  const anyStochastic = people.some((p) => p.stochasticLongevity);
+  const terminalAge = data.mortality.male.length;
   const maxYears = Math.max(
     1,
-    ...people.map((p) => p.birthYear + (anyStochastic ? 110 : p.deathAge) - startYear + 1),
+    ...people.map(
+      (p) =>
+        p.birthYear +
+        (p.stochasticLongevity ? Math.max(terminalAge, p.deathAge, startYear - p.birthYear) : p.deathAge) -
+        startYear +
+        1,
+    ),
   );
   const flowExponent = plan.settings.timing === 'start' ? 1 : plan.settings.timing === 'mid' ? 0.5 : 0;
 
@@ -457,6 +499,7 @@ export function compilePlan(
     data,
     startYear,
     maxYears,
+    annual: Array.from({ length: maxYears }, (_, i) => annualParameters(data, startYear + i, wageGrowth)),
     people,
     accounts,
     accountIndex,
@@ -485,12 +528,16 @@ export function defaultCoverage(hasEarnedIncome: boolean): Coverage['type'] {
 export function expectedMeans(c: Pick<Compiled, 'plan' | 'data'>): { classes: number[]; inflation: number } {
   const A = c.plan.assumptions;
   const r = A.returns.fixed;
+  const shock = A.returns.stockAdjustment ?? 0;
   if (A.returns.mode !== 'historicalAverage')
-    return { classes: [r.usStocks, r.usBonds, r.cash, r.intlStocks, r.reits], inflation: A.inflation.rate };
+    return {
+      classes: [r.usStocks + shock, r.usBonds, r.cash, r.intlStocks + shock, r.reits + shock],
+      inflation: A.inflation.rate,
+    };
   const m = c.data.market;
   const geo = (xs: number[]): number => Math.exp(xs.reduce((a, x) => a + Math.log(1 + x), 0) / xs.length) - 1;
   return {
-    classes: [geo(m.usStocks), geo(m.usBonds), geo(m.cash), r.intlStocks, r.reits],
+    classes: [geo(m.usStocks) + shock, geo(m.usBonds), geo(m.cash), r.intlStocks + shock, r.reits + shock],
     inflation: geo(m.inflation),
   };
 }

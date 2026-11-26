@@ -8,49 +8,32 @@
  * in a reload onto the new version.
  */
 
-const AUTO_KEY = 'lv-update-auto';
-
-/** True once the person has touched this page. An update is never applied by itself after that. */
-let interacted = false;
-if (typeof window !== 'undefined') {
-  const touch = (): void => {
-    interacted = true;
-  };
-  window.addEventListener('pointerdown', touch, { once: true, capture: true });
-  window.addEventListener('keydown', touch, { once: true, capture: true });
-}
-
-/** Is a newer version already installed and waiting? (Asked before this page registers the worker.) */
-export async function updateWasWaiting(): Promise<boolean> {
-  try {
-    return !!(await navigator.serviceWorker.getRegistration())?.waiting;
-  } catch {
-    return false;
-  }
-}
-
-/**
- * Should a waiting update be applied without asking? Only when it was already waiting as the page opened, nothing
- * has been touched yet, and this tab has not just tried (so a browser that refuses to switch cannot loop).
- */
-export function canApplyQuietly(wasWaiting: boolean): boolean {
-  if (!wasWaiting || interacted) return false;
-  try {
-    if (sessionStorage.getItem(AUTO_KEY)) return false;
-    sessionStorage.setItem(AUTO_KEY, String(Date.now()));
-    return true;
-  } catch {
-    return false;
-  }
-}
-
 /** Activate the waiting version and reload onto it. */
 export async function applyUpdate(): Promise<void> {
+  const [{ flushLocalWrites, useStore }, { useDraft }] = await Promise.all([
+    import('../state/store'),
+    import('../state/draft'),
+  ]);
+  const ready = () =>
+    useStore.getState().ready &&
+    !useDraft.getState().transaction &&
+    !document.querySelector(
+      '[aria-modal="true"],dialog[open],.acct-code,form.acct-form,[aria-label="Review plan import"]',
+    );
+  if (!ready() || !(await flushLocalWrites()) || !ready()) {
+    useStore
+      .getState()
+      .notify('Finish open edits and account steps, then save your plans before updating.', 'warn');
+    return;
+  }
   let reloaded = false;
   const reload = (): void => {
     if (reloaded) return;
     reloaded = true;
-    window.location.reload();
+    void flushLocalWrites().then((saved) => {
+      if (saved && ready()) window.location.reload();
+      else useStore.getState().notify('The update is ready. Finish your edits before reloading.', 'warn');
+    });
   };
   if (!('serviceWorker' in navigator)) return reload();
   let reg: ServiceWorkerRegistration | undefined;
@@ -71,14 +54,6 @@ export async function applyUpdate(): Promise<void> {
     if (waiting.state === 'activated' || waiting.state === 'redundant') reload();
   });
   waiting.postMessage({ type: 'SKIP_WAITING' });
-  // Last resort, if the browser will not switch workers: drop the registration so the reload is served by the
-  // network. The fresh page registers the worker again.
-  const registration = reg;
-  window.setTimeout(() => {
-    if (reloaded) return;
-    void registration
-      .unregister()
-      .catch(() => false)
-      .then(reload);
-  }, 4000);
+  // If the browser has already switched, a fresh readiness check is still required.
+  window.setTimeout(reload, 4000);
 }

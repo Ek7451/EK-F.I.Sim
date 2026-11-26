@@ -42,6 +42,7 @@ const points = (v: number): string => `${+(Math.abs(v) * 100).toFixed(2)}`;
 
 function variantPatches(plan: Plan, kind: string, value: number): Patch[] {
   const out: Patch[] = [];
+  if ((kind === 'retire' || kind === 'spend') && value === 0) return [];
   if (kind === 'retire')
     plan.milestones.forEach((m) => {
       if (m.kind === 'retirement' && m.when.type === 'age')
@@ -53,15 +54,18 @@ function variantPatches(plan: Plan, kind: string, value: number): Patch[] {
     plan.expenses.forEach((e) =>
       out.push({ path: ['expenses', `@${e.id}`, 'amount'], value: Math.round(e.amount * (1 + value)) }),
     );
-  if (kind === 'returns')
-    (['usStocks', 'intlStocks', 'reits'] as const).forEach((k) =>
-      out.push({
-        path: ['assumptions', 'returns', 'fixed', k],
-        value: +(plan.assumptions.returns.fixed[k] + value).toFixed(6),
-      }),
-    );
+  if (kind === 'returns' && value !== 0)
+    out.push({
+      path: ['assumptions', 'returns', 'stockAdjustment'],
+      value: (plan.assumptions.returns.stockAdjustment ?? 0) + value,
+    });
   if (kind === 'claim')
     plan.people.forEach((person) => {
+      if (
+        person.socialSecurity.mode === 'none' ||
+        (person.socialSecurity.claimAge.years === value && person.socialSecurity.claimAge.months === 0)
+      )
+        return;
       out.push({ path: ['people', `@${person.id}`, 'socialSecurity', 'claimAge', 'years'], value });
       out.push({ path: ['people', `@${person.id}`, 'socialSecurity', 'claimAge', 'months'], value: 0 });
     });
@@ -77,7 +81,17 @@ function variantPatches(plan: Plan, kind: string, value: number): Patch[] {
         ],
       }),
     );
-  return out;
+  return out.filter((patch) => {
+    let node: unknown = plan;
+    for (const part of patch.path) {
+      if (Array.isArray(node) && typeof part === 'string' && part.startsWith('@'))
+        node = node.find((item) => item?.id === part.slice(1));
+      else
+        node =
+          node && typeof node === 'object' ? (node as Record<string | number, unknown>)[part] : undefined;
+    }
+    return JSON.stringify(node) !== JSON.stringify(patch.value);
+  });
 }
 
 /** The last finished result, so a chart stays on screen (marked as updating) while the next one is worked out. */
@@ -101,7 +115,10 @@ export function ComparePage(): ReactNode {
       ? []
       : Object.values(plans)
           .filter((p) => p.id !== plan.id)
-          .map((p) => ({ value: `${p.id}|`, label: p.name }))),
+          .flatMap((p) => [
+            { value: `${p.id}|`, label: p.name },
+            ...p.scenarios.map((sc) => ({ value: `${p.id}|${sc.id}`, label: `${p.name}: ${sc.name}` })),
+          ])),
   ];
   const hasRetirement = plan.milestones.some((m) => m.kind === 'retirement');
   const [a, setA] = useState(options[0].value);
@@ -122,24 +139,44 @@ export function ComparePage(): ReactNode {
   const ra = resolve(keyA);
   const rb = keyB === LIVE ? ra : resolve(keyB);
   // Nothing saved to put on the second side (or the same thing on both): show the what-if being built.
-  const live = keyB === LIVE || (ra.plan === rb.plan && ra.scenario === rb.scenario);
+  const live = keyB === LIVE;
+  const baselineCheck = useMemo(() => {
+    try {
+      return { plan: applyScenario(ra.plan!, ra.scenario), error: null };
+    } catch (error) {
+      return {
+        plan: ra.plan!,
+        error: error instanceof Error ? error.message : 'This scenario could not be applied.',
+      };
+    }
+  }, [ra.plan, ra.scenario]);
+  const baseline = baselineCheck.plan;
   const encoded = kind === 'state' ? stateCode.charCodeAt(0) * 256 + stateCode.charCodeAt(1) : val;
   const experiment = useMemo(
     () => ({
-      ...plan,
+      ...baseline,
       scenarios: [
-        ...plan.scenarios,
-        { id: '__preview', name: 'Preview', patches: variantPatches(plan, kind, encoded) },
+        ...baseline.scenarios,
+        { id: '__preview', name: 'Preview', patches: variantPatches(baseline, kind, encoded) },
       ],
     }),
-    [plan, kind, encoded],
+    [baseline, kind, encoded],
   );
   const requestA = useProjectionRequest(ra.plan, ra.scenario);
-  const requestB = useProjectionRequest(live ? experiment : rb.plan, live ? '__preview' : rb.scenario);
+  const requestB = useProjectionRequest(
+    baselineCheck.error ? null : live ? experiment : rb.plan,
+    live ? '__preview' : rb.scenario,
+  );
   const heldA = useHeld(requestA.result, keyA);
-  const heldB = useHeld(requestB.result, live ? LIVE : keyB);
+  const heldB = useHeld(requestB.result, live ? `${LIVE}|${keyA}` : keyB);
   const A = heldA.shown;
   const B = heldB.shown;
+  const comparable =
+    !!A &&
+    !!B &&
+    A.summary.startYear === B.summary.startYear &&
+    baseline.settings.openingMonth === (live ? baseline : rb.plan)?.settings.openingMonth &&
+    A.records.at(-1)?.year === B.records.at(-1)?.year;
   const updating = heldA.stale || heldB.stale;
 
   const defaults: Record<string, { label: string; def: number; name: (v: number) => string }> = {
@@ -152,7 +189,7 @@ export function ComparePage(): ReactNode {
           : `Retire ${Math.abs(v)} year${Math.abs(v) === 1 ? '' : 's'} ${v < 0 ? 'earlier' : 'later'}`,
     },
     spend: {
-      label: 'Change all spending',
+      label: 'Change scheduled expenses',
       def: 0.1,
       name: (v) => `Spend ${Math.abs(Math.round(v * 100))}% ${v < 0 ? 'less' : 'more'}`,
     },
@@ -173,7 +210,7 @@ export function ComparePage(): ReactNode {
     setB(LIVE);
   };
   const addVariant = (): void => {
-    const patches = variantPatches(plan, kind, encoded);
+    const patches = variantPatches(baseline, kind, encoded);
     if (!patches.length) {
       notify(
         'This plan has nothing for that what-if to change (for example, no retirement milestone).',
@@ -182,10 +219,11 @@ export function ComparePage(): ReactNode {
       return;
     }
     const id = newId('s');
+    const parentPatches = ra.plan?.scenarios.find((sc) => sc.id === ra.scenario)?.patches ?? [];
     update((d) => {
-      d.scenarios.push({ id, name: name.trim() || whatIf, patches });
-    });
-    setB(`${plan.id}|${id}`);
+      d.scenarios.push({ id, name: name.trim() || whatIf, patches: [...parentPatches, ...patches] });
+    }, baseline.id);
+    setB(`${baseline.id}|${id}`);
     setName('');
   };
   const candidatePatches = live
@@ -248,9 +286,9 @@ export function ComparePage(): ReactNode {
         title="Compare scenarios"
         intro="Put two versions of the future side by side. A what-if is a named set of changes on top of your plan, so the plan itself stays as it is."
       />
-      {(requestA.error || requestB.error) && (
+      {(baselineCheck.error || requestA.error || requestB.error) && (
         <Notice tone="danger">
-          {requestA.error || requestB.error}{' '}
+          {baselineCheck.error || requestA.error || requestB.error}{' '}
           <Button
             size="sm"
             onClick={() => {
@@ -262,10 +300,9 @@ export function ComparePage(): ReactNode {
           </Button>
         </Notice>
       )}
-      {A && B && A.summary.startYear !== B.summary.startYear && (
+      {A && B && !comparable && (
         <Notice tone="warn">
-          These plans use different purchasing-power base years. Real-dollar values are not aligned;
-          differences need that context.
+          These plans use different base years or ending dates. Align both dates to compare results.
         </Notice>
       )}
       <div className="cmp-workspace">
@@ -304,7 +341,7 @@ export function ComparePage(): ReactNode {
                 />
               ) : kind === 'spend' ? (
                 <Slider
-                  label="All spending changes by"
+                  label="Scheduled expenses change by"
                   help={null}
                   value={val}
                   min={-0.5}
@@ -318,7 +355,7 @@ export function ComparePage(): ReactNode {
               ) : kind === 'returns' ? (
                 <Slider
                   label="Stock returns change by"
-                  help={null}
+                  help="Changes effective US and international stock and REIT means. Raw historical replay uses the observed series."
                   value={val}
                   min={-0.05}
                   max={0.05}
@@ -347,7 +384,15 @@ export function ComparePage(): ReactNode {
               )}
               <div className="cmp-save">
                 <TextField label="Name (optional)" value={name} onChange={setName} />
-                <Button variant="primary" icon="plus" onClick={addVariant} data-tour="add-variant">
+                <Button
+                  variant="primary"
+                  icon="plus"
+                  disabled={
+                    !!baselineCheck.error || !!requestB.error || !experiment.scenarios.at(-1)!.patches.length
+                  }
+                  onClick={addVariant}
+                  data-tour="add-variant"
+                >
                   Add what-if
                 </Button>
               </div>
@@ -429,7 +474,7 @@ export function ComparePage(): ReactNode {
             ) : null}
           </Card>
         </aside>
-        {A && B ? (
+        {A && B && comparable && !requestA.error && !requestB.error ? (
           <div className="cmp-main" data-updating={updating} aria-busy={updating}>
             <KpiStrip data-tour="compare-outcomes">
               {(['endingWealth', 'lifetimeTaxes', 'retirement', 'fiYear'] as const).map((key) => {

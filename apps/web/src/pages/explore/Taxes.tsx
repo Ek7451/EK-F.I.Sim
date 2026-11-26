@@ -106,8 +106,9 @@ export function TaxesPage(): ReactNode {
   const otherFederal = t.federalIncome - t.ordinaryTax - t.capitalGainsTax;
   const notes: ReactNode[] = [
     recs.some((x) => x.dataStatus === 'projected')
-      ? `Years from ${recs.find((x) => x.dataStatus === 'projected')!.year} use projected tables: the latest enacted figures indexed for inflation.`
-      : 'All years use enacted tables.',
+      ? `Years from ${recs.find((x) => x.dataStatus === 'projected')!.year} use projected federal income tax tables indexed for inflation.`
+      : 'All modeled years have enacted federal income tax tables.',
+    'State income tax estimates use the selected state’s modeled rules. Local income taxes and state-specific adjustments may differ from your return.',
     ...moves.map(
       (x) => `In ${x.year} you move to ${x.state}; state tax switches to that state's tables from that year.`,
     ),
@@ -327,7 +328,7 @@ export function TaxesPage(): ReactNode {
               title={`tax in ${r.year}`}
               lines={ex.lines}
               total={ex.result}
-              source={`Tables: ${r.dataStatus}. In ${m.unit}.`}
+              source={`Federal income tax tables: ${r.dataStatus}. In ${m.unit}.`}
             />
           </header>
           <YearPicker records={recs} year={r.year} onChange={setYear} />
@@ -447,7 +448,16 @@ export function TaxesPage(): ReactNode {
                 r.alive[i] === false ? null : (
                   <li key={i}>
                     <span>{plan.people[i]?.name ?? `Person ${i + 1}`}</span>
-                    <strong>{COVERAGE[coverage] ?? coverage}</strong>
+                    <strong>
+                      {r.coverageMonths[i]
+                        ?.map(
+                          (period) =>
+                            `${COVERAGE[period.type] ?? period.type}${period.months === 12 ? '' : ` (${period.months} months)`}`,
+                        )
+                        .join(' → ') ??
+                        COVERAGE[coverage] ??
+                        coverage}
+                    </strong>
                   </li>
                 ),
               )}

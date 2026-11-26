@@ -259,7 +259,7 @@ export function buildPlan(d: Draft, year: number): PlanInput {
   const firstRetire = ppl[0].salary > 0 ? ppl[0].retireAge : year - ppl[0].birthYear;
   return {
     id: 'new',
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: d.partner ? `${ppl[0].name.trim() ? possessive(ppl[0].name.trim()) : 'Our'} plan` : 'My plan',
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -358,14 +358,39 @@ export function StartPage(): ReactNode {
   const [step, setStep] = useState(0);
   const [busy, setBusy] = useState(false);
   const [finishError, setFinishError] = useState<string | null>(null);
-  const [d, setD] = useState<Draft>(() => ({
-    state: 'TX',
+  const defaults = (): Draft => ({
+    state: '',
     partner: false,
     people: [newPerson(year, false), newPerson(year, true)],
     cash: 15000,
     spending: 55000,
     phases: false,
-  }));
+  });
+  const [d, setD] = useState<Draft>(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem('lv-wizard') ?? 'null');
+      if (saved?.year === year && Array.isArray(saved.d?.people) && saved.d.people.length === 2)
+        return { ...defaults(), ...saved.d };
+    } catch {
+      /* May be unavailable in private browsing. */
+    }
+    return defaults();
+  });
+  const [accepted, setAccepted] = useState(false);
+  const creating = useRef(false);
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('lv-wizard', JSON.stringify({ year, d }));
+    } catch {
+      /* Continue in memory. */
+    }
+  }, [year, d]);
+  const discard = (): void => {
+    setD(defaults());
+    setStep(0);
+    setAccepted(false);
+    setFinishError(null);
+  };
   const up = (p: Partial<Draft>): void => setD((x) => ({ ...x, ...p }));
   const upP = (i: number, p: Partial<PersonDraft>): void =>
     setD((x) => {
@@ -419,24 +444,42 @@ export function StartPage(): ReactNode {
   }, []);
 
   const finish = async (takeTour: boolean): Promise<void> => {
+    if (creating.current || !accepted) return;
+    creating.current = true;
     setBusy(true);
     setFinishError(null);
     try {
       const plan = (await loadEngine()).PlanZ.parse(buildPlan(d, year));
       await createPlan(plan.name, plan);
+      try {
+        sessionStorage.removeItem('lv-wizard');
+      } catch {
+        /* unavailable */
+      }
       setSettings({ onboarded: true });
       nav('/');
       if (takeTour) tour.start('T-B01');
     } catch (e: unknown) {
       setFinishError(e instanceof Error ? e.message : String(e));
     } finally {
+      creating.current = false;
       setBusy(false);
     }
   };
   const sample = async (id: SamplePlanId): Promise<void> => {
-    await createFromSample(id);
-    setSettings({ onboarded: true });
-    nav('/');
+    if (creating.current) return;
+    creating.current = true;
+    setBusy(true);
+    try {
+      await createFromSample(id);
+      setSettings({ onboarded: true });
+      nav('/');
+    } catch (e) {
+      setFinishError(e instanceof Error ? e.message : 'Unable to create the sample.');
+    } finally {
+      creating.current = false;
+      setBusy(false);
+    }
   };
 
   return (
@@ -480,13 +523,27 @@ export function StartPage(): ReactNode {
           )}
         </h2>
 
+        <button type="button" className="lv-btn" onClick={discard}>
+          Discard wizard draft
+        </button>
+        {finishError && step < 5 && <p role="alert">{finishError}</p>}
+        {step === 5 && (
+          <label>
+            <input type="checkbox" checked={accepted} onChange={(e) => setAccepted(e.target.checked)} />I
+            reviewed the balances, income, spending, filing status and other estimates for my plan. My
+            starting balances are as of January 1 of the starting year.
+          </label>
+        )}
         {step === 0 ? (
           <div className="lv-stack">
             <div className="form-grid">
               <SelectField
                 label="State you live in"
                 value={d.state}
-                options={STATES.map((s) => ({ value: s, label: s }))}
+                options={[
+                  { value: '', label: 'Choose your state' },
+                  ...STATES.map((s) => ({ value: s, label: s })),
+                ]}
                 onChange={(v) => up({ state: v })}
               />
             </div>
@@ -719,13 +776,17 @@ export function StartPage(): ReactNode {
             <div className="lv-row">
               <Button
                 variant="primary"
-                disabled={busy}
+                disabled={busy || !accepted || !preview}
                 onClick={() => void finish(true)}
                 data-tour="wizard-take-tour"
               >
                 Create my plan and take the tour
               </Button>
-              <Button disabled={busy} onClick={() => void finish(false)} data-tour="wizard-skip-tour">
+              <Button
+                disabled={busy || !accepted || !preview}
+                onClick={() => void finish(false)}
+                data-tour="wizard-skip-tour"
+              >
                 Create my plan
               </Button>
             </div>
@@ -737,7 +798,21 @@ export function StartPage(): ReactNode {
             Back
           </Button>
           {step < 5 ? (
-            <Button variant="primary" onClick={() => setStep((x) => x + 1)} data-tour="wizard-next">
+            <Button
+              variant="primary"
+              onClick={() => {
+                const invalid =
+                  step === 0 &&
+                  (!d.state || ppl.some((p) => p.birthYear > year || p.planUntil < year - p.birthYear));
+                if (invalid) {
+                  setFinishError('Choose your state and a lifespan that reaches the plan start.');
+                  return;
+                }
+                setFinishError(null);
+                setStep((x) => x + 1);
+              }}
+              data-tour="wizard-next"
+            >
               {step === 4 ? 'Review' : 'Next'}
             </Button>
           ) : (
@@ -750,9 +825,15 @@ export function StartPage(): ReactNode {
           A copy is made for you to edit. The people and figures are invented.
         </p>
         <div className="lv-row">
-          <Button onClick={() => void sample('sample-basic')}>Single, mid-career</Button>
-          <Button onClick={() => void sample('sample-early-retiree')}>Couple retiring at 50</Button>
-          <Button onClick={() => void sample('sample-couple-ss')}>Couple near retirement</Button>
+          <Button disabled={busy} onClick={() => void sample('sample-basic')}>
+            Single, mid-career
+          </Button>
+          <Button disabled={busy} onClick={() => void sample('sample-early-retiree')}>
+            Couple retiring at 50
+          </Button>
+          <Button disabled={busy} onClick={() => void sample('sample-couple-ss')}>
+            Couple near retirement
+          </Button>
           <Link className="lv-btn" to="/settings">
             Import a backup
           </Link>

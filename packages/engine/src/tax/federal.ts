@@ -8,6 +8,7 @@
 import type { Bracket, FederalTaxParams, FilingStatus, TableStatus } from '@fisim/data';
 
 export interface FederalTaxInput {
+  wageBase?: number;
   status: FilingStatus;
   /** Ages at year end of the filer(s). Length 1 or 2. */
   ages: number[];
@@ -199,7 +200,7 @@ export function federalTax(
 ): FederalTaxResult {
   const s = tableStatus(x.status);
   const f = p.fica;
-  const wageBase = f.socialSecurityWageBase * k;
+  const wageBase = x.wageBase ?? f.socialSecurityWageBase * k;
 
   // ---- payroll taxes
   let fica = 0;

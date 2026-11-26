@@ -107,7 +107,7 @@ export async function publicPlans(request: Request, env: PublicEnv, userId: stri
     throw new HttpError(
       403,
       'storage_limit',
-      'Cloud storage is full (20 plans, 2 MiB total). Local saving still works. Export a backup or remove an unused cloud plan.',
+      'Cloud storage limit reached (20 active plans, 2 MiB total, or 200 distinct plan IDs). Export a backup. Deleting plans frees active slots and bytes. At the lifetime ID limit, restore your backup into a new account to start a new workspace.',
     );
   }
   return json({ id, version: expected + 1, updatedAt, size: body.byteLength });

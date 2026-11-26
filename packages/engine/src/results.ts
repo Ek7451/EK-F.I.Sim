@@ -55,7 +55,7 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
   const res = runPath(c, fixedPath(c), { detail: true });
   const recs = res.records!;
   const plan = c.plan;
-  let fiYear: number | null = null;
+  let fiYear = res.fiYear;
   let peak = 0;
   let spend = 0;
   let taxSum = 0;
@@ -64,11 +64,15 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
     const real = toReal(r.netWorth, r);
     if (real > peak) peak = real;
     spend += toReal(r.expenses.total, r, 'flow');
-    const fiSpend = fiSpending(r);
-    if (fiYear === null && fiSpend > 0 && r.investable >= 25 * fiSpend) fiYear = r.year;
+
     // Both sums in today's dollars, so the average sits on the same footing as the lifetime tax beside it.
     taxSum += r.taxes.total / r.cpi;
     // The same base as each year's own rate: income, pre-tax withdrawals, conversions and realized gains.
+    if (r.t === 0 && plan.settings.openingMonth > 1)
+      grossSum += Object.values(plan.settings.openingPayroll ?? {}).reduce(
+        (sum, row) => sum + row.wages / 100,
+        0,
+      );
     grossSum +=
       (r.income.total + r.withdrawals.pretax + r.rothConversion + Math.max(0, r.realizedGains)) / r.cpi;
   }
@@ -77,7 +81,7 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
     const y = res.milestoneYears[m.id];
     if (m.kind === 'retirement' && y !== undefined)
       retirementYear = retirementYear === null ? y : Math.min(retirementYear, y);
-    if (m.kind === 'fi' && y !== undefined) fiYear = y;
+    if (m.kind === 'fi' && m.when.type === 'condition' && m.when.metric === 'fi') fiYear = y ?? null;
   }
   const first = recs[0];
   const last = recs[recs.length - 1];

@@ -1,24 +1,19 @@
 {
   "header": {
-    "source": "https://www.cms.gov/oact/tr/2026",
-    "publisher": "Boards of Trustees, Federal HI and SMI Trust Funds / Centers for Medicare & Medicaid Services",
-    "retrieved": "2026-11-10",
-    "status": "projected",
+    "source": "https://www.cms.gov/newsroom/fact-sheets/2027-medicare-parts-b-premiums-deductibles",
+    "publisher": "Centers for Medicare & Medicaid Services",
+    "retrieved": "2026-11-26",
+    "status": "enacted",
     "lawRefs": [
-      "2026 Medicare Trustees Report, Tables V.E1 and V.E2 (intermediate estimates for 2027)",
+      "CMS November 17, 2026 announcement (CMS-8092-N, CMS-8093-N, CMS-8094-N)",
       "CMS fact sheet \"Medicare Part D - 2027 National Average Monthly Bid Amount Information\" (2026-07-28): base beneficiary premium $41.33",
       "42 U.S.C. 1395r(i) (IRMAA thresholds indexed to CPI-U; top tier frozen through 2027)",
       "42 U.S.C. 1395w-113(a)(7)"
     ],
-    "sha256": "ffa56b9137006872300b0346149eae1613d09a172b6ba118aad48e66dfc48fa8",
+    "sha256": "4f4b73ff1f32bfa5855760812e99ff4ba4bffa4a2eaee4d57c3d3173022320e6",
     "schema": "medicare.v1",
-    "notes": "PROJECTED: as of 2026-11-10 CMS had not yet published the 2027 Parts A & B premiums/deductibles/IRMAA fact sheet (the newsroom was checked; the 2026 one came out 2025-11-14). Part B premium/deductible and Part A premiums/deductible are the 2026 Trustees Report intermediate estimates. FINAL already: Part D base beneficiary premium ($41.33), Part D deductible ($700) and out-of-pocket threshold ($2,400), and therefore the Part D IRMAA surcharges (statutory formula on $41.33). IRMAA thresholds are computed with the statutory CPI-U formula (average of Sep 2025-Aug 2026 over Sep 2017-Aug 2018, rounded to $1,000; joint = 2 x single; MFS upper = $500,000 - lower), which reproduces every published 2020-2026 table. Replace this file when CMS publishes. The `defaults` block is NOT law: it holds editable planning estimates (benchmarks) that the user can override. IRMAA `magiOver` semantics: the top tier legally starts AT the threshold (\"greater than or equal to\" $500,000 / $750,000; MFS second tier ends \"less than\" its upper bound), all other tiers start ABOVE it. Premiums are dollars and cents. sha256 is of the raw source document as downloaded.",
+    "notes": "Part A, Part B and IRMAA amounts are from the November 17, 2026 CMS announcement. Top IRMAA thresholds are inclusive. Defaults for insurance plans and utilization remain editable planning estimates. sha256 is of the raw CMS fact sheet.",
     "flags": {
-      "partB.standardMonthlyPremium": "projected: 2026 Trustees Report intermediate estimate ($209.50)",
-      "partB.annualDeductible": "projected: 2026 Trustees Report intermediate estimate ($292)",
-      "partA": "projected: 2026 Trustees Report intermediate estimates ($600 / $330 / $1,788)",
-      "irmaa.*.magiOver": "projected from CPI-U. BLS published no October 2025 CPI-U (shutdown); it was interpolated here. Averaging the 11 published months instead moves the 2nd-4th single thresholds to $142,000 / $177,000 / $212,000 (joint x2, MFS unchanged); the first threshold ($112,000 / $224,000) is the same either way",
-      "irmaa.*.partBMonthly": "projected: Trustees premium x 1.4 / 2.0 / 2.6 / 3.2 / 3.4, rounded to $0.10 (CMS rounding can differ by $0.10)",
       "defaults.medigapGMonthlyAt65": "estimate; consumer rate surveys for a 65-year-old range about $150-$190/month (2026); varies widely by state and insurer",
       "defaults.medigapNMonthlyAt65": "estimate; consumer rate surveys range about $120-$140/month (2026)",
       "defaults.medigapAgeRating": "assumption (attained-age rating of roughly 2-3% a year above trend); not from a primary source",
@@ -34,13 +29,13 @@
   },
   "year": 2027,
   "partB": {
-    "standardMonthlyPremium": 209.5,
+    "standardMonthlyPremium": 209.4,
     "annualDeductible": 292
   },
   "partA": {
-    "premiumUnder30Quarters": 600,
-    "premium30to39Quarters": 330,
-    "inpatientDeductible": 1788
+    "premiumUnder30Quarters": 597,
+    "premium30to39Quarters": 328,
+    "inpatientDeductible": 1776
   },
   "partD": {
     "nationalBaseBeneficiaryPremium": 41.33,
@@ -51,81 +46,81 @@
     "single": [
       {
         "magiOver": 0,
-        "partBMonthly": 209.5,
+        "partBMonthly": 209.4,
         "partDSurchargeMonthly": 0
       },
       {
         "magiOver": 112000,
-        "partBMonthly": 293.3,
+        "partBMonthly": 293.1,
         "partDSurchargeMonthly": 15.4
       },
       {
         "magiOver": 141000,
-        "partBMonthly": 419,
+        "partBMonthly": 418.8,
         "partDSurchargeMonthly": 39.7
       },
       {
-        "magiOver": 176000,
-        "partBMonthly": 544.7,
+        "magiOver": 177000,
+        "partBMonthly": 544.4,
         "partDSurchargeMonthly": 64
       },
       {
-        "magiOver": 211000,
-        "partBMonthly": 670.4,
+        "magiOver": 212000,
+        "partBMonthly": 670,
         "partDSurchargeMonthly": 88.3
       },
       {
         "magiOver": 500000,
-        "partBMonthly": 712.3,
+        "partBMonthly": 711.8,
         "partDSurchargeMonthly": 96.4
       }
     ],
     "mfj": [
       {
         "magiOver": 0,
-        "partBMonthly": 209.5,
+        "partBMonthly": 209.4,
         "partDSurchargeMonthly": 0
       },
       {
         "magiOver": 224000,
-        "partBMonthly": 293.3,
+        "partBMonthly": 293.1,
         "partDSurchargeMonthly": 15.4
       },
       {
         "magiOver": 282000,
-        "partBMonthly": 419,
+        "partBMonthly": 418.8,
         "partDSurchargeMonthly": 39.7
       },
       {
-        "magiOver": 352000,
-        "partBMonthly": 544.7,
+        "magiOver": 354000,
+        "partBMonthly": 544.4,
         "partDSurchargeMonthly": 64
       },
       {
-        "magiOver": 422000,
-        "partBMonthly": 670.4,
+        "magiOver": 424000,
+        "partBMonthly": 670,
         "partDSurchargeMonthly": 88.3
       },
       {
         "magiOver": 750000,
-        "partBMonthly": 712.3,
+        "partBMonthly": 711.8,
         "partDSurchargeMonthly": 96.4
       }
     ],
     "mfs": [
       {
         "magiOver": 0,
-        "partBMonthly": 209.5,
+        "partBMonthly": 209.4,
         "partDSurchargeMonthly": 0
       },
       {
         "magiOver": 112000,
-        "partBMonthly": 670.4,
+        "partBMonthly": 670,
         "partDSurchargeMonthly": 88.3
       },
       {
         "magiOver": 388000,
-        "partBMonthly": 712.3,
+        "partBMonthly": 711.8,
         "partDSurchargeMonthly": 96.4
       }
     ]

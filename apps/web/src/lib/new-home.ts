@@ -10,20 +10,10 @@ export const HOME = 'https://longviewplanner.pages.dev';
 export const HOME_NAME = 'longviewplanner.pages.dev';
 const OLD_HOST = 'longview-planner.pages.dev';
 const KEY = 'move=';
-/** Remembered at the old address once its plans have moved, so later visits go straight to the new one. */
-const MOVED = 'lv-moved-home';
 /** Links get unreliable well before this; a larger set is moved with a backup file instead. */
 const MAX_LINK = 1_500_000;
 
 export const onOldHome = (): boolean => window.location.hostname === OLD_HOST;
-
-export function alreadyMoved(): boolean {
-  try {
-    return localStorage.getItem(MOVED) === '1';
-  } catch {
-    return false;
-  }
-}
 
 /** Open the same screen at the new address. */
 export function goHome(): void {
@@ -51,9 +41,28 @@ export async function packPlans(plans: Plan[]): Promise<string> {
 }
 
 export async function unpackPlans(packed: string): Promise<unknown[]> {
-  const json = await pipe(fromBase64Url(packed), new DecompressionStream('gzip'));
+  if (packed.length > MAX_LINK) throw new Error('Transfer link is too large.');
+  const stream = new Blob([fromBase64Url(packed).slice()])
+    .stream()
+    .pipeThrough(new DecompressionStream('gzip'));
+  const reader = stream.getReader();
+  const chunks: Uint8Array<ArrayBuffer>[] = [];
+  let length = 0;
+  for (;;) {
+    const part = await reader.read();
+    if (part.done) break;
+    length += part.value.length;
+    if (length > 16 * 1024 * 1024) {
+      await reader.cancel();
+      throw new Error('Transfer exceeds the 16 MiB import limit.');
+    }
+    chunks.push(part.value.slice());
+  }
+  const json = await new Blob(chunks).arrayBuffer();
   const data = JSON.parse(new TextDecoder().decode(json)) as { kind?: string; plans?: unknown[] };
   if (data?.kind !== 'longview-move' || !Array.isArray(data.plans)) throw new Error('Not a plan hand-over.');
+  if (!data.plans.length || data.plans.length > 200)
+    throw new Error('A transfer can contain 1 to 200 plans.');
   return data.plans;
 }
 
@@ -64,40 +73,14 @@ export async function unpackPlans(packed: string): Promise<unknown[]> {
 export async function movePlansHome(plans: Plan[]): Promise<boolean> {
   const packed = await packPlans(plans);
   if (packed.length > MAX_LINK) return false;
-  try {
-    localStorage.setItem(MOVED, '1');
-  } catch {
-    // Without storage the next visit simply offers the move again.
-  }
   window.location.replace(`${HOME}/#${KEY}${packed}`);
   return true;
 }
 
-/**
- * New address: take in plans handed over in the link, after wiping them from the address bar. Returns how many
- * arrived; plans that fail to load are skipped and counted in `failed`.
- */
-export async function receivePlans(
-  importPlan: (raw: unknown) => Promise<string>,
-): Promise<{ moved: number; failed: number }> {
+/** Read once before rendering. Reviewing, canceling and decoding never change saved plans. */
+export function takeTransfer(): string | null {
   const hash = window.location.hash;
-  if (!hash.startsWith(`#${KEY}`)) return { moved: 0, failed: 0 };
-  window.history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
-  let raw: unknown[];
-  try {
-    raw = await unpackPlans(hash.slice(1 + KEY.length));
-  } catch {
-    return { moved: 0, failed: 1 };
-  }
-  let moved = 0;
-  let failed = 0;
-  for (const p of raw) {
-    try {
-      await importPlan(p);
-      moved++;
-    } catch {
-      failed++;
-    }
-  }
-  return { moved, failed };
+  if (!hash.startsWith('#' + KEY)) return null;
+  window.history.replaceState(null, '', window.location.pathname + window.location.search);
+  return hash.slice(1 + KEY.length);
 }

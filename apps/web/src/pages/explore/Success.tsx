@@ -99,7 +99,7 @@ export function SuccessPage(): ReactNode {
               <Stat
                 label={`Leave at least ${formatCompact(summary.legacyGoal.goal)}`}
                 value={formatShare(summary.legacyGoal.metRate)}
-                note={`of runs. Spending covered every year in ${formatShare(summary.fundedRate)}`}
+                note={`Spending covered in ${formatShare(summary.fundedRate)} of runs. Both goals met in ${formatShare(summary.fundedAndGoalRate!)}.`}
                 data-tour="legacy-goal-rate"
               />
             ) : null}
@@ -188,10 +188,28 @@ export function SuccessPage(): ReactNode {
                     Eight runs in ten
                   </span>
                   <span>Today's dollars</span>
+                  <span>Percentiles interpolate between adjacent ranked balances.</span>
+                  {summary.activeCount.some((n) => n < 30) && (
+                    <span>
+                      Some years have fewer than 30 active runs. Their percentile estimates have limited
+                      precision.
+                    </span>
+                  )}
                 </p>
               }
               table={() => ({
-                columns: ['Year', '10th', '25th', 'Median', '75th', '90th', 'Still funded', 'Still alive'],
+                columns: [
+                  'Year',
+                  '10th',
+                  '25th',
+                  'Median',
+                  '75th',
+                  '90th',
+                  'No shortfall to date (all runs)',
+                  'Alive households',
+                  'Alive and funded (all runs)',
+                  'Funded among alive households',
+                ],
                 rows: summary.years.map((y, i) => [
                   y,
                   formatMoney(summary.bands.p10[i]),
@@ -200,7 +218,9 @@ export function SuccessPage(): ReactNode {
                   formatMoney(summary.bands.p75[i]),
                   formatMoney(summary.bands.p90[i]),
                   formatPct(summary.solventShare[i]),
-                  formatPct(summary.activeShare[i]),
+                  summary.activeCount[i],
+                  formatPct(summary.activeFundedCount[i] / summary.runs),
+                  formatPct(summary.activeFundedCount[i] / summary.activeCount[i]),
                 ]),
               })}
               build={(c) => {
@@ -261,7 +281,11 @@ export function SuccessPage(): ReactNode {
                             value: formatMoney(b.p10[i]),
                           },
                         ],
-                        notes: [{ text: `Still funded: ${formatShare(summary.solventShare[i])} of runs` }],
+                        notes: [
+                          {
+                            text: `No shortfall to date (including completed lifetimes): ${formatShare(summary.solventShare[i])} of runs`,
+                          },
+                        ],
                       });
                     },
                   },

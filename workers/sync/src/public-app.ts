@@ -220,7 +220,11 @@ async function route(request: Request, env: PublicEnv): Promise<Response> {
       );
     return json({ ok: true });
   }
-  if (path === '/api/account/change-password' || path === '/api/account/recovery') {
+  if (
+    path === '/api/account/change-password' ||
+    path === '/api/account/recovery' ||
+    path === '/api/account/delete'
+  ) {
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session) throw new HttpError(401, 'sign_in', 'Sign in first.');
     await limit(env, `change:${session.user.id}`, 10, 600);
@@ -232,9 +236,26 @@ async function route(request: Request, env: PublicEnv): Promise<Response> {
       if (isAPIError(e)) throw new HttpError(401, 'password', 'That is not your current password.');
       throw e;
     }
+    const id = session.user.id;
+    if (path === '/api/account/delete') {
+      const owner = await env.DB.prepare('SELECT username FROM user WHERE id = ?')
+        .bind(id)
+        .first<{ username: string }>();
+      if (
+        !owner ||
+        body.confirmUsername !== owner.username ||
+        request.headers.get('X-Longview-Account') !== id
+      )
+        throw new HttpError(409, 'confirm_account', 'Confirm the signed-in username to delete the account.');
+      await env.DB.batch([
+        env.DB.prepare('DELETE FROM key_bundles WHERE user_id = ?').bind(id),
+        env.DB.prepare('DELETE FROM settings WHERE user_id = ?').bind(id),
+        env.DB.prepare('DELETE FROM user WHERE id = ?').bind(id),
+      ]);
+      return json({ deleted: true });
+    }
     const bundle = bundleOf(body.bundle);
     const version = versionOf(body.bundleVersion);
-    const id = session.user.id;
     const now = new Date().toISOString();
     const sameKey = 'EXISTS (SELECT 1 FROM key_bundles WHERE user_id = ? AND version = ?)';
     const first =

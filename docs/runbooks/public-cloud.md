@@ -48,3 +48,9 @@ Apply backward-compatible migrations before publication. For production release,
 For local account development, run D1 migrations locally, set `AUTH_SECRET` in an ignored environment file, build with `VITE_PUBLIC_CLOUD=true`, and run Wrangler Pages dev with `APP_ORIGIN` set to the local URL. The private Access/R2 worker's `wrangler.toml` is separate.
 
 Rollback a Pages deployment in Cloudflare without deleting D1. Leave the additive account/storage migrations intact. D1 Free includes seven days of point-in-time recovery; users should also keep encrypted exports. Review usage in the Cloudflare dashboard before increasing quotas.
+
+## Account erasure and rollback
+
+Account deletion requires a signed-in session, the matching username, current password and account identifier. The server deletes the account and associated keys, plans, settings and sessions. Deletion clears the account workspace on this device. Separately exported backups and offline browser copies on other devices remain under their owners’ control. Cloudflare D1 Free retains database recovery history for seven days. A disaster recovery restore can reintroduce deleted data, so reconcile intervening deletions and invalidate affected sessions before returning a restored database to service. [Cloudflare D1 recovery history](https://developers.cloudflare.com/d1/reference/time-travel/)
+
+A Pages rollback changes the application and worker. Existing schema 3 browser plans require a compatible reader. Preserve their raw records and pre-migration snapshots when rolling back, and retain access to a compatible release for export or recovery. Rehearse with disposable accounts and local storage before promotion.

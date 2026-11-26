@@ -50,7 +50,11 @@ const SUPPLEMENT_SHORT: Record<string, string> = {
   advantage: 'Medicare Advantage',
   none: 'Original Medicare only',
 };
-const USE_SHORT: Record<string, string> = { low: 'Little care', typical: 'Typical care', high: 'A lot of care' };
+const USE_SHORT: Record<string, string> = {
+  low: 'Little care',
+  typical: 'Typical care',
+  high: 'A lot of care',
+};
 
 export function HealthcarePage(): ReactNode {
   const plan = usePlan()!;
@@ -83,7 +87,9 @@ export function HealthcarePage(): ReactNode {
   };
   const recs = result?.records ?? [];
   const net = (r: (typeof recs)[number]): number => (r.expenses.healthcare.total - r.taxes.ptc) / r.cpi;
-  const bridge = recs.filter((r) => r.coverage.some((c) => c === 'aca' || c === 'cobra'));
+  const bridge = recs.filter((r) =>
+    r.coverageMonths.some((periods) => periods.some((row) => row.type === 'aca' || row.type === 'cobra')),
+  );
   const bridgeCost = bridge.reduce((s, r) => s + net(r), 0);
   const lifetime = recs.reduce((s, r) => s + net(r), 0);
   const lastYear = recs.at(-1)?.year ?? plan.settings.startYear;
@@ -91,9 +97,15 @@ export function HealthcarePage(): ReactNode {
   const personFolds = plan.people.map((p, pIndex) => {
     const i = hc.people.findIndex((h) => h.personId === p.id);
     const h = hc.people[i];
-    const timeline = recs.reduce<{ from: number; type: string }[]>((acc, r) => {
-      const t = r.coverage[pIndex];
-      if (t && t !== 'none' && acc.at(-1)?.type !== t) acc.push({ from: r.year, type: t });
+    const timeline = recs.reduce<{ from: number; type: string; label: string }[]>((acc, r) => {
+      if (r.alive[pIndex])
+        for (const period of r.coverageMonths[pIndex])
+          if (acc.at(-1)?.type !== period.type)
+            acc.push({
+              from: r.year + period.first / 12,
+              label: r.year + '-' + String(period.first + 1).padStart(2, '0'),
+              type: period.type,
+            });
       return acc;
     }, []);
     const coverage = (
@@ -103,7 +115,9 @@ export function HealthcarePage(): ReactNode {
         icon="shield"
         summary={
           timeline.length
-            ? timeline.map((t, k) => (k === 0 ? COVER_LABEL[t.type] : `${COVER_LABEL[t.type]} ${t.from}`)).join(' → ')
+            ? timeline
+                .map((t, k) => (k === 0 ? COVER_LABEL[t.type] : `${COVER_LABEL[t.type]} ${t.label}`))
+                .join(' → ')
             : 'Worked out from wages, then the marketplace, then Medicare'
         }
         defaultOpen
@@ -127,17 +141,19 @@ export function HealthcarePage(): ReactNode {
             {timeline.map((t, k) => (
               <Badge
                 key={k}
-                tone={t.type === 'aca' || t.type === 'cobra' ? 'warn' : t.type === 'medicare' ? 'ok' : undefined}
+                tone={
+                  t.type === 'aca' || t.type === 'cobra' ? 'warn' : t.type === 'medicare' ? 'ok' : undefined
+                }
               >
-                {t.from}: {COVER_LABEL[t.type]}
+                {t.label} · {COVER_LABEL[t.type]}
               </Badge>
             ))}
           </div>
         </div>
         {!h || h.coverage.length === 0 ? (
           <Lead>
-            No periods entered, so the plan assumes an employer plan while there are wages, the marketplace after
-            that, and Medicare at 65.
+            No periods entered, so the plan assumes an employer plan while there are wages, the marketplace
+            after that, and Medicare at 65.
           </Lead>
         ) : null}
         {h?.coverage.map((cv, k) => (
@@ -158,7 +174,9 @@ export function HealthcarePage(): ReactNode {
                   `from ${describeWhen(plan, cv.from)}`,
                   cv.type === 'aca' ? `${cv.metal[0].toUpperCase()}${cv.metal.slice(1)} plan` : null,
                   cv.type === 'cobra' ? `${cv.cobraMonths} months` : null,
-                  cv.premiumAnnual && cv.type !== 'aca' ? `${formatMoney(cv.premiumAnnual / 100)} a year` : null,
+                  cv.premiumAnnual && cv.type !== 'aca'
+                    ? `${formatMoney(cv.premiumAnnual / 100)} a year`
+                    : null,
                   cv.hdhp ? 'HSA-eligible' : null,
                 ]
                   .filter(Boolean)
@@ -174,9 +192,52 @@ export function HealthcarePage(): ReactNode {
                 onChange={(v) =>
                   update((d) => {
                     d.healthcare.people[i].coverage[k].type = v;
+                    d.healthcare.people[i].coverage[k].autoMedicare = false;
                   })
                 }
               />
+              <NumberField
+                label="Effective month"
+                min={1}
+                max={12}
+                value={
+                  cv.effectiveMonth ??
+                  (cv.from.type === 'age'
+                    ? Number(
+                        plan.people
+                          .find((person) => cv.from.type === 'age' && person.id === cv.from.personId)
+                          ?.birthDate.slice(5, 7) ?? 1,
+                      )
+                    : 1)
+                }
+                onChange={(v) =>
+                  update((d) => {
+                    d.healthcare.people[i].coverage[k].effectiveMonth = v;
+                  })
+                }
+              />
+              {cv.type === 'aca' && (
+                <Switch
+                  label="Eligible for Marketplace premium assistance"
+                  checked={cv.subsidyEligible ?? true}
+                  onChange={(v) =>
+                    update((d) => {
+                      d.healthcare.people[i].coverage[k].subsidyEligible = v;
+                    })
+                  }
+                />
+              )}
+              {cv.type !== 'medicare' && cv.type !== 'employer' && cv.type !== 'spouseEmployer' && (
+                <Switch
+                  label="Switch this period to Medicare at the modeled enrollment age"
+                  checked={cv.autoMedicare ?? (cv.type !== 'none' && cv.type !== 'cobra')}
+                  onChange={(v) =>
+                    update((d) => {
+                      d.healthcare.people[i].coverage[k].autoMedicare = v;
+                    })
+                  }
+                />
+              )}
               <div className="span-2">
                 <WhenField
                   plan={plan}
@@ -637,9 +698,7 @@ export function HealthcarePage(): ReactNode {
           }
           right={
             two ? (
-              <>
-                {personFolds.slice(1).map((f) => [f.coverage, f.choices])}
-              </>
+              <>{personFolds.slice(1).map((f) => [f.coverage, f.choices])}</>
             ) : (
               <>
                 {personFolds[0]?.choices}
@@ -862,7 +921,11 @@ export function AssumptionsPage(): ReactNode {
                     key={k}
                     label={`${CLASS_LABELS[k]} volatility`}
                     value={A.returns.stdDev?.[k] ?? 0}
-                    hint={mc.method === 'bootstrap' && HISTORY_SETS.has(k) ? 'Not used with replayed history.' : undefined}
+                    hint={
+                      mc.method === 'bootstrap' && HISTORY_SETS.has(k)
+                        ? 'Not used with replayed history.'
+                        : undefined
+                    }
                     onChange={(v) =>
                       update((d) => {
                         const s = { ...(d.assumptions.returns.stdDev ?? {}) };
@@ -911,6 +974,62 @@ export function AssumptionsPage(): ReactNode {
                     })
                   }
                 />
+                <SelectField
+                  label="Opening balance month"
+                  value={String(plan.settings.openingMonth)}
+                  options={Array.from({ length: 12 }, (_, i) => ({
+                    value: String(i + 1),
+                    label:
+                      new Intl.DateTimeFormat('en', { month: 'long', timeZone: 'UTC' }).format(
+                        Date.UTC(2026, i, 1),
+                      ) + ' 1',
+                  }))}
+                  onChange={(v) =>
+                    update((d) => {
+                      d.settings.openingMonth = Number(v);
+                      d.settings.openingPayroll ??= Object.fromEntries(
+                        d.people.map((p) => [
+                          p.id,
+                          { wages: 0, pretaxDeferrals: 0, rothDeferrals: 0, taxesPaid: 0 },
+                        ]),
+                      );
+                    })
+                  }
+                />
+                <p className="lv-small lv-muted">
+                  Use balances from the first day of the selected month. January opens a full-year plan.
+                  Midyear openings cover wages, employee deferrals, investments and recurring expenses. Other
+                  schedules require January balances.
+                </p>
+                {plan.settings.openingMonth > 1 &&
+                  plan.people.map((p) => (
+                    <fieldset key={p.id}>
+                      <legend>{p.name} · already received or paid before the opening date</legend>
+                      <p>
+                        Enter gross wages, payroll deferrals and tax payments from your pay statements. This
+                        opening assumes no other year-to-date taxable income, deductions or credits.
+                      </p>
+                      {(
+                        [
+                          ['wages', 'Year-to-date gross wages'],
+                          ['pretaxDeferrals', 'Year-to-date pre-tax deferrals'],
+                          ['rothDeferrals', 'Year-to-date Roth deferrals'],
+                          ['taxesPaid', 'Income and payroll taxes already paid'],
+                        ] as const
+                      ).map(([key, label]) => (
+                        <MoneyField
+                          key={key}
+                          label={label}
+                          cents={plan.settings.openingPayroll?.[p.id]?.[key] ?? 0}
+                          onChange={(v) =>
+                            update((d) => {
+                              d.settings.openingPayroll![p.id][key] = v;
+                            })
+                          }
+                        />
+                      ))}
+                    </fieldset>
+                  ))}
                 <div className="span-2">
                   <Choice
                     label="Show money in"
@@ -952,7 +1071,9 @@ export function AssumptionsPage(): ReactNode {
               kind="milestone"
               summary={[
                 `${mc.runs.toLocaleString('en-US')} runs`,
-                mc.method === 'bootstrap' ? `replayed history in ${mc.blockLength}-year blocks` : 'random draws',
+                mc.method === 'bootstrap'
+                  ? `replayed history in ${mc.blockLength}-year blocks`
+                  : 'random draws',
                 varies ? 'lifespans vary' : null,
               ]
                 .filter(Boolean)
@@ -1112,8 +1233,8 @@ export function AssumptionsPage(): ReactNode {
               data-tour="glide-paths"
             >
               <Lead>
-                A glide path shifts an account's investment mix as its owner ages. Create one here, then choose it
-                on an account.
+                A glide path shifts an account's investment mix as its owner ages. Create one here, then
+                choose it on an account.
               </Lead>
               {plan.glidePaths.map((g, gi) => (
                 <div key={g.id} className="pib-glide">
@@ -1135,7 +1256,10 @@ export function AssumptionsPage(): ReactNode {
                       onClick={() =>
                         update((d) => {
                           const last = d.glidePaths[gi].points.at(-1)!;
-                          d.glidePaths[gi].points.push({ age: last.age + 10, allocation: { ...last.allocation } });
+                          d.glidePaths[gi].points.push({
+                            age: last.age + 10,
+                            allocation: { ...last.allocation },
+                          });
                         })
                       }
                     >

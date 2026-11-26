@@ -5,13 +5,18 @@ import { StrictMode, useEffect, useState, type ReactNode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { HelpProvider } from '@fisim/ui';
 import { App } from './App';
-import { applyUpdate, canApplyQuietly, updateWasWaiting } from './lib/appUpdate';
+import { applyUpdate } from './lib/appUpdate';
 import { helpText } from './lib/help';
-import { alreadyMoved, goHome, onOldHome, receivePlans } from './lib/new-home';
+import { goHome, onOldHome, takeTransfer, unpackPlans } from './lib/new-home';
+import { lazy, Suspense } from 'react';
+const ImportReview = lazy(() => import('./pages/ImportReview'));
 import { MovedHome } from './pages/MovedHome';
 import { logError } from './state/db';
 import { useStore } from './state/store';
 
+window.addEventListener('storage', (event) => {
+  if (event.key === 'lv-workspace-reset') window.location.reload();
+});
 window.addEventListener('error', (e) => void logError(`error: ${e.message} at ${e.filename}:${e.lineno}`));
 window.addEventListener(
   'unhandledrejection',
@@ -20,11 +25,16 @@ window.addEventListener(
 
 // The app moved to longviewplanner.pages.dev; the old address forwards there (see lib/new-home.ts).
 const oldHome = onOldHome();
+const transfer = takeTransfer();
 
 function Root(): ReactNode {
   const theme = useStore((s) => s.settings.theme);
   const ready = useStore((s) => s.ready);
   const [updateReady, setUpdateReady] = useState(false);
+  const [incoming, setIncoming] = useState<unknown[] | null>(null);
+  const [transferError, setTransferError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
+  const [openingError, setOpeningError] = useState(false);
   const [stay, setStay] = useState(false);
 
   useEffect(() => {
@@ -35,44 +45,30 @@ function Root(): ReactNode {
         const store = useStore.getState();
         if (oldHome) {
           // Nothing saved here (or already moved): straight on to the new address.
-          if (alreadyMoved() || Object.keys(store.plans).length === 0) goHome();
+          if (Object.keys(store.meta).length === 0) goHome();
           return;
         }
-        const { moved, failed } = await receivePlans(store.importPlan);
-        if (moved)
-          store.notify(
-            moved === 1
-              ? 'Moved your plan from the old address. It is saved in this browser.'
-              : `Moved ${moved} plans from the old address. They are saved in this browser.`,
-            'ok',
-          );
-        if (failed)
-          store.notify(
-            `${failed === 1 ? 'A plan' : `${failed} plans`} could not be moved. Nothing was lost: the old address still has every plan.`,
-            'warn',
-          );
-      });
-    // Sync, its encryption code and the service worker are not needed for the first screen, so they load a moment
-    // after it has painted instead of competing with it. An update that arrives while the app is in use waits
-    // for the user (plan 14.3); one that was already waiting as the page opened is applied before anything is
-    // touched, so a returning visitor does not start on the old version.
-    const t = setTimeout(() => {
-      void import('./lib/sync').then((m) => m.initSync());
-      if (import.meta.env.PROD && 'serviceWorker' in navigator) {
-        void Promise.all([import('virtual:pwa-register'), updateWasWaiting()]).then(
-          ([{ registerSW }, wasWaiting]) => {
-            registerSW({
-              onNeedRefresh: () => {
-                if (canApplyQuietly(wasWaiting)) void applyUpdate();
-                else setUpdateReady(true);
-              },
-            });
-          },
+        if (transfer !== null) {
+          try {
+            setIncoming(await unpackPlans(transfer));
+          } catch {
+            setTransferError(true);
+          }
+        }
+      })
+      .catch(() => setOpeningError(true));
+  }, [attempt]);
+  useEffect(() => {
+    if (!ready || oldHome || incoming || transferError) return;
+    const timer = setTimeout(() => {
+      void import('./lib/sync').then((m) => m.initSync()).catch((error) => logError(String(error)));
+      if (import.meta.env.PROD && 'serviceWorker' in navigator)
+        void import('virtual:pwa-register').then(({ registerSW }) =>
+          registerSW({ onNeedRefresh: () => setUpdateReady(true) }),
         );
-      }
     }, 1200);
-    return () => clearTimeout(t);
-  }, []);
+    return () => clearTimeout(timer);
+  }, [ready, incoming, transferError]);
   useEffect(() => {
     const root = document.documentElement;
     if (theme === 'system') delete root.dataset.theme;
@@ -82,11 +78,47 @@ function Root(): ReactNode {
     document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#070919' : '#f2f2fb');
   }, [theme]);
 
+  if (openingError)
+    return (
+      <main className="lv-card" role="alert">
+        <h1>Couldn’t open saved plans</h1>
+        <p>
+          Check browser storage permissions and close other Longview tabs before retrying. Your saved data is
+          retained.
+        </p>
+        <button
+          autoFocus
+          onClick={() => {
+            setOpeningError(false);
+            setAttempt((n) => n + 1);
+          }}
+        >
+          Retry opening plans
+        </button>
+      </main>
+    );
+  if (transferError)
+    return (
+      <main className="lv-card" role="alert">
+        <h1>Transfer could not be opened</h1>
+        <p>
+          Open Longview at the old address and export a backup from Settings. The original plans are still
+          there.
+        </p>
+        <button onClick={() => setTransferError(false)}>Continue without importing</button>
+      </main>
+    );
+  if (incoming)
+    return (
+      <Suspense fallback={<p role="status">Opening transfer…</p>}>
+        <ImportReview raw={incoming} onClose={() => setIncoming(null)} />
+      </Suspense>
+    );
   if (oldHome && !stay) return ready ? <MovedHome onStay={() => setStay(true)} /> : null;
 
   return (
     <HelpProvider value={helpText}>
-      <App updateReady={updateReady} applyUpdate={() => void applyUpdate()} />
+      <App updateReady={updateReady} applyUpdate={applyUpdate} />
     </HelpProvider>
   );
 }

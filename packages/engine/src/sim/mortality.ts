@@ -30,7 +30,7 @@ export function sampleDeathAge(
   const q = sex === 'male' ? table.male : table.female;
   for (let age = Math.max(0, ageNow); age < q.length; age++)
     if (rng.next() < qAt(table, q, age, improve)) return age;
-  return q.length - 1;
+  return Math.max(ageNow, q.length);
 }
 
 /** Probability of surviving from `fromAge` to `toAge` (with the same optional improvement adjustment). */
@@ -42,6 +42,7 @@ export function survivalProbability(
   improve?: { rate: number; birthYear: number },
 ): number {
   const q = sex === 'male' ? table.male : table.female;
+  if (toAge > Math.max(q.length, fromAge)) return 0;
   let s = 1;
   for (let a = fromAge; a < toAge && a < q.length; a++) s *= 1 - qAt(table, q, a, improve);
   return s;

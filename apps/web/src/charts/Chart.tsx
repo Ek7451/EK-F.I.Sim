@@ -562,7 +562,7 @@ export function tooltipCard(
   },
 ): string {
   const row = (r: { name: string; color?: string; value: string }): string =>
-    `<tr><td style="padding:2px 12px 2px 0;color:${c.ink2}">${r.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.color};box-shadow:0 0 0 3px ${alpha(r.color, 0.18)};margin-right:8px"></span>` : ''}${esc(r.name)}</td><td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${r.value}</td></tr>`;
+    `<tr><td style="padding:2px 12px 2px 0;color:${c.ink2}">${r.color ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${r.color};box-shadow:0 0 0 3px ${alpha(r.color, 0.18)};margin-right:8px"></span>` : ''}${esc(r.name)}</td><td style="text-align:right;font-weight:600;font-variant-numeric:tabular-nums">${esc(r.value)}</td></tr>`;
   return [
     `<div style="font-weight:700;font-size:14px;letter-spacing:-0.01em">${esc(t.title)}</div>`,
     t.subtitle
@@ -570,7 +570,7 @@ export function tooltipCard(
       : '<div style="height:6px"></div>',
     `<table style="border-collapse:collapse;font-size:12px">${t.rows.map(row).join('')}`,
     t.total
-      ? `<tr><td style="padding:6px 12px 0 0;border-top:1px solid ${c.line};font-weight:650">${esc(t.total.name)}</td><td style="padding-top:6px;border-top:1px solid ${c.line};text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${t.total.value}</td></tr>`
+      ? `<tr><td style="padding:6px 12px 0 0;border-top:1px solid ${c.line};font-weight:650">${esc(t.total.name)}</td><td style="padding-top:6px;border-top:1px solid ${c.line};text-align:right;font-weight:700;font-variant-numeric:tabular-nums">${esc(t.total.value)}</td></tr>`
       : '',
     '</table>',
     ...(t.notes ?? []).map(

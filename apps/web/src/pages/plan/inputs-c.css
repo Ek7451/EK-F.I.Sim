@@ -57,6 +57,11 @@
     border-color var(--motion-fast) var(--ease),
     box-shadow var(--motion-base) var(--ease);
 }
+.pic-item > button {
+  min-width: 26px;
+  min-height: 26px;
+  flex-shrink: 0;
+}
 .pic-item:hover {
   border-color: var(--primary-line);
   box-shadow: var(--shadow-hover);
@@ -332,6 +337,11 @@
   justify-content: space-between;
   gap: 10px;
   min-width: 0;
+}
+.pic-tile-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
 }
 .pic-tile-links {
   display: flex;

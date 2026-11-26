@@ -1,8 +1,9 @@
 import { DATA_RELEASE, type DatasetInfo } from '@fisim/data';
-import { methodology, type MethodEntry } from '@fisim/engine';
+import { SCHEMA_VERSION, methodology, type MethodEntry } from '@fisim/engine';
 import { Badge, Button, Card, Dialog, Icon, Notice, Segmented, SelectField, TextField } from '@fisim/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation } from 'react-router-dom';
+import ImportReview from './ImportReview';
 import { exportBackup, download, readBackup } from '../lib/files';
 import {
   changeSyncPassphrase,
@@ -415,9 +416,10 @@ function PlansCard(): ReactNode {
 }
 
 function BackupCard(): ReactNode {
+  const [incoming, setIncoming] = useState<unknown[] | null>(null);
   const plans = useStore((s) => s.plans);
   const last = useStore((s) => s.settings.lastBackupAt);
-  const { importPlan, notify, setSettings } = useStore.getState();
+  const { notify, setSettings } = useStore.getState();
   const [pass, setPass] = useState('');
   const [again, setAgain] = useState('');
   const [inPass, setInPass] = useState('');
@@ -450,11 +452,9 @@ function BackupCard(): ReactNode {
     setError('');
     try {
       const raw = await readBackup(f, inPass);
-      for (const p of raw) await importPlan(p);
+      setIncoming(raw);
       setInPass('');
       if (file.current) file.current.value = '';
-      setSettings({ onboarded: true });
-      notify(`Imported ${raw.length} plan${raw.length === 1 ? '' : 's'}.`, 'ok');
     } catch (e) {
       setError(/decrypt|passphrase|auth/i.test(msg(e)) ? 'That passphrase does not open this file.' : msg(e));
     }
@@ -497,6 +497,7 @@ function BackupCard(): ReactNode {
         </section>
         <section data-tour="import-backup">
           <h3>Import a backup</h3>
+          {incoming && <ImportReview raw={incoming} onClose={() => setIncoming(null)} />}
           <div className="form-grid">
             <div className="lv-field">
               <label htmlFor="backup-file">Backup file</label>
@@ -826,6 +827,14 @@ function DeviceCard(): ReactNode {
           <div>
             <dt>App version</dt>
             <dd>{__APP_VERSION__}</dd>
+          </div>
+          <div>
+            <dt>Source revision</dt>
+            <dd style={{ overflowWrap: 'anywhere', minWidth: 0 }}>{__BUILD_SHA__}</dd>
+          </div>
+          <div>
+            <dt>Plan schema</dt>
+            <dd>{SCHEMA_VERSION}</dd>
           </div>
           <div>
             <dt>Data release</dt>

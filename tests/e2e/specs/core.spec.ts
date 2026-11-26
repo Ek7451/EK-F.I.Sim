@@ -6,10 +6,12 @@ test('first visit opens the wizard, which builds a working plan', async ({ page 
   const errors = watchErrors(page);
   await page.goto('/');
   await expect(page).toHaveURL(/\/start$/);
+  await page.getByLabel('State you live in').selectOption('TX');
   await page.getByLabel('Your first name').fill('Riley');
   await page.locator('[data-tour="wizard-next"]').click();
   await page.getByLabel('Yearly pay before tax').fill('95000');
   for (let i = 0; i < 4; i++) await page.locator('[data-tour="wizard-next"]').click();
+  await page.getByLabel(/I reviewed the balances/).check();
   await page.locator('[data-tour="wizard-skip-tour"]').click();
   await expect(page.locator('[data-tour="home-stats"]')).toBeVisible();
   await expect(page.locator('[data-tour="home-stats"]')).toContainText('$');
@@ -22,6 +24,7 @@ test('the wizard asks each partner about pay, saving, lifespan and retirement, a
 }) => {
   const errors = watchErrors(page);
   await page.goto('/start');
+  await page.getByLabel('State you live in').selectOption('TX');
   await page.getByLabel('Your first name').fill('Riley');
   await page.getByRole('switch', { name: 'Plan with a partner' }).check();
   await page.getByLabel("Partner's first name").fill('Jo');
@@ -50,6 +53,7 @@ test('the wizard asks each partner about pay, saving, lifespan and retirement, a
   for (const item of ['Lifespan', 'Investment returns', 'Social Security', 'Healthcare', 'Taxes'])
     await expect(review.getByText(item, { exact: true })).toBeVisible();
   await expect(review).toContainText('Married filing jointly');
+  await page.getByLabel(/I reviewed the balances/).check();
   await page.locator('[data-tour="wizard-skip-tour"]').click();
   await expect(page.locator('[data-tour="home-stats"]')).toBeVisible();
   expect(errors).toEqual([]);
@@ -191,6 +195,9 @@ test('encrypted backup: export, delete, import brings the plan back', async ({ p
   await expect(backup.getByRole('alert')).toContainText('does not open this file');
   await backup.getByLabel('Its passphrase').fill('correct horse battery');
   await backup.getByRole('button', { name: 'Import' }).click();
+  await expect(page.getByRole('heading', { name: 'Review plan import' })).toBeVisible();
+  await expect(page.getByText('No plans on this device yet.')).toBeVisible();
+  await page.getByRole('button', { name: 'Confirm import' }).click();
   await expect(page.locator('[data-tour="settings-plans"]')).toContainText('retiring at 50');
 });
 
@@ -199,7 +206,7 @@ test('reports: CSV and PDF are generated on the device', async ({ page }, info) 
   await go(page, '/plan/assumptions');
   await page
     .getByLabel('Plan name')
-    .fill('A deliberately long household plan name with retirement, education and multigenerational goals');
+    .fill('=A deliberately long household plan name with retirement, education and multigenerational goals');
   await go(page, '/reports');
   const [csv] = await Promise.all([
     page.waitForEvent('download'),
@@ -220,7 +227,9 @@ test('reports: CSV and PDF are generated on the device', async ({ page }, info) 
       .subarray(0, 5)
       .toString(),
   ).toBe('%PDF-');
-  expect(fs.readFileSync((await csv.path())!, 'utf8').split('\n').length).toBeGreaterThan(20);
+  const csvText = fs.readFileSync((await csv.path())!, 'utf8');
+  expect(csvText.split('\n').length).toBeGreaterThan(20);
+  expect(csvText).toContain('"\'=A deliberately long household plan name');
 });
 
 test('compare: a what-if variant shows a difference', async ({ page }) => {

@@ -38,7 +38,7 @@ const person = (id: string, birthDate: string, extra: Over = {}): Over => ({
 const mk = (o: Over): Plan =>
   PlanZ.parse({
     id: 't',
-    schemaVersion: 2,
+    schemaVersion: 3,
     name: 't',
     createdAt: '2026-01-01T00:00:00.000Z',
     updatedAt: '2026-01-01T00:00:00.000Z',
@@ -181,10 +181,10 @@ describe('P2 the independence milestone counts housing, debt payments and health
     const before = rec(res.records, y - 2);
     if (before) expect(before.investable).toBeLessThan(25 * fiSpending(before) * 1.05);
   });
-  it('agrees with the summary’s own 25x test to within a year', () => {
+  it('agrees with the opening-year 25x headline exactly', () => {
     const withMs = project(plan(true), data).summary.fiYear!;
     const without = project(plan(false), data).summary.fiYear!;
-    expect(Math.abs(withMs - without)).toBeLessThanOrEqual(1);
+    expect(withMs).toBe(without);
   });
 });
 

@@ -44,8 +44,11 @@ export function HouseholdPage(): ReactNode {
   const start = plan.settings.startYear;
   const born = (p: Person): number => Number(p.birthDate.slice(0, 4));
   const endYear = Math.max(...plan.people.map((p) => born(p) + p.longevity.age));
-  const filingNow = [...status].reverse().find((f) => f.fromYear <= start) ?? status[0];
-  const home = plan.people[0]?.residence.filter((r) => r.fromYear <= start).at(-1) ?? plan.people[0]?.residence[0];
+  const filingNow =
+    [...status].sort((a, b) => b.fromYear - a.fromYear).find((f) => f.fromYear <= start) ?? status[0];
+  const home =
+    plan.people[0]?.residence.filter((r) => r.fromYear <= start).sort((a, b) => b.fromYear - a.fromYear)[0] ??
+    plan.people[0]?.residence[0];
   const moves = new Set(plan.people.flatMap((p) => p.residence.map((r) => r.state))).size - 1;
 
   return (
@@ -66,7 +69,11 @@ export function HouseholdPage(): ReactNode {
           icon="taxes"
           label="Files as"
           value={STATUS_LABELS[filingNow.status] ?? filingNow.status}
-          note={status.length > 1 ? `${status.length - 1} change${status.length > 2 ? 's' : ''} later` : 'For the whole plan'}
+          note={
+            status.length > 1
+              ? `${status.length - 1} change${status.length > 2 ? 's' : ''} later`
+              : 'For the whole plan'
+          }
         />
         <Stat
           icon="home"
@@ -108,12 +115,11 @@ export function HouseholdPage(): ReactNode {
                           claimAge: { years: 67, months: 0 },
                         },
                       });
-                      if (!d.household.filingStatus.length)
-                        d.household.filingStatus = [{ fromYear: y, status: 'mfj' }];
+                      d.household.filingStatus = [{ fromYear: y, status: 'mfj' }];
                     })
                   }
                 >
-                  Add a partner
+                  Add a spouse (joint return)
                 </Button>
               ) : null
             }
@@ -136,7 +142,9 @@ export function HouseholdPage(): ReactNode {
                             ? 'No Social Security'
                             : `Social Security at ${ss.claimAge.years}${ss.claimAge.months ? ` + ${ss.claimAge.months} mo` : ''}`}
                         </Badge>
-                        {lifespansVary(plan) ? <Badge tone="warn">Lifespan varies in simulations</Badge> : null}
+                        {lifespansVary(plan) ? (
+                          <Badge tone="warn">Lifespan varies in simulations</Badge>
+                        ) : null}
                       </div>
                     </div>
                     <Dial
@@ -190,7 +198,9 @@ export function HouseholdPage(): ReactNode {
               icon="taxes"
               kind="expense"
               summary={status
-                .map((f, i) => (i === 0 ? STATUS_LABELS[f.status] : `${STATUS_LABELS[f.status]} from ${f.fromYear}`))
+                .map((f, i) =>
+                  i === 0 ? STATUS_LABELS[f.status] : `${STATUS_LABELS[f.status]} from ${f.fromYear}`,
+                )
                 .join(' → ')}
               defaultOpen
               storageKey="household:filing"
@@ -209,7 +219,9 @@ export function HouseholdPage(): ReactNode {
                       max={2150}
                       onChange={(v) =>
                         update((d) => {
-                          d.household.filingStatus = status.map((x, j) => (j === i ? { ...x, fromYear: v } : x));
+                          d.household.filingStatus = status.map((x, j) =>
+                            j === i ? { ...x, fromYear: v } : x,
+                          );
                         })
                       }
                     />
@@ -218,13 +230,17 @@ export function HouseholdPage(): ReactNode {
                     <SelectField
                       label="Status"
                       value={f.status}
-                      options={Object.entries(STATUS_LABELS).map(([value, label]) => ({
-                        value: value as typeof f.status,
-                        label,
-                      }))}
+                      options={Object.entries(STATUS_LABELS)
+                        .filter(([value]) => plan.people.length === 1 || value === 'mfj')
+                        .map(([value, label]) => ({
+                          value: value as typeof f.status,
+                          label,
+                        }))}
                       onChange={(v) =>
                         update((d) => {
-                          d.household.filingStatus = status.map((x, j) => (j === i ? { ...x, status: v } : x));
+                          d.household.filingStatus = status.map((x, j) =>
+                            j === i ? { ...x, status: v } : x,
+                          );
                         })
                       }
                     />
@@ -419,7 +435,8 @@ export function HouseholdPage(): ReactNode {
                   set((p) => {
                     p.residence.push({
                       state: p.residence[p.residence.length - 1]?.state ?? 'TX',
-                      fromYear: (p.residence[p.residence.length - 1]?.fromYear ?? plan.settings.startYear) + 10,
+                      fromYear:
+                        (p.residence[p.residence.length - 1]?.fromYear ?? plan.settings.startYear) + 10,
                     });
                   })
                 }
@@ -551,7 +568,9 @@ export function HouseholdPage(): ReactNode {
                   Edit earnings record ({person.socialSecurity.earnings.length} years)
                 </Button>
                 {person.socialSecurity.earnings.length === 0 ? (
-                  <span className="lv-muted lv-small">Empty: the benefit is estimated from current wages.</span>
+                  <span className="lv-muted lv-small">
+                    Empty: the benefit is estimated from current wages.
+                  </span>
                 ) : null}
               </div>
             ) : null}
@@ -567,8 +586,8 @@ export function HouseholdPage(): ReactNode {
         {ePerson ? (
           <>
             <p className="lv-muted lv-small">
-              Copy the taxed Social Security earnings from your statement at ssa.gov. Future years come from the
-              income you enter in the plan.
+              Copy the taxed Social Security earnings from your statement at ssa.gov. Future years come from
+              the income you enter in the plan.
             </p>
             <div className="lv-row">
               <Button
@@ -598,7 +617,11 @@ export function HouseholdPage(): ReactNode {
                 .map((e) => {
                   const i = ePerson.socialSecurity.earnings.findIndex((x) => x.year === e.year);
                   return (
-                    <div className="lv-row" key={e.year} style={{ alignItems: 'flex-end', flexWrap: 'nowrap' }}>
+                    <div
+                      className="lv-row"
+                      key={e.year}
+                      style={{ alignItems: 'flex-end', flexWrap: 'nowrap' }}
+                    >
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <MoneyField
                           label={`${e.year}`}
