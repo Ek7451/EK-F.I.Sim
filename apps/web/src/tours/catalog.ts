@@ -535,15 +535,15 @@ export const TOURS: TourDef[] = [
       s(
         HIST,
         'history-map',
-        'The start-year map',
-        'Each square is one start year. A stronger colour means more left at the end; hatched red ran short. Hardest, Middle and Kindest jump to those years.',
+        'Find a historical run',
+        'Choose an ending year to see that run’s year-by-year investment balances. Tap a year in the heat map for its balance and household ages. Choose by start year also includes partial runs.',
         { placement: 'right' },
       ),
       s(
         HIST,
         'history-chart',
-        'One line per start',
-        'Each line is one start year, and the bright one is the year you picked. Lines that sink early show why poor returns just after retiring hurt most.',
+        'Read the historical path',
+        'The selected run shows recorded calendar years alongside your plan ages. Show all paths compares the start years at the same stage of your plan.',
         { placement: 'left' },
       ),
       s(
@@ -576,7 +576,7 @@ export const TOURS: TourDef[] = [
         ASSUME,
         'returns',
         'Expected returns',
-        'Set a yearly return for each kind of investment with its slider or box, or use long-run historical averages. These drive the expected path.',
+        'Choose long-run historical averages to see the rates for US stocks, US bonds, cash and inflation. You can still set international stocks and REITs. Choose manual figures to edit every rate.',
         { placement: 'right' },
       ),
       s(

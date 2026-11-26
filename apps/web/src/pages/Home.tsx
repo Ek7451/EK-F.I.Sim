@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../lib/chartYears';
 import type { YearRecord } from '@fisim/engine';
 import {
   Button,
@@ -457,7 +458,7 @@ export function HomePage(): ReactNode {
                   const rows = view.rows(readColors());
                   return {
                     columns: ['Year', ...rows.map((x) => x.name)],
-                    rows: recs.map((r) => [r.year, ...rows.map((x) => formatMoney(x.value(r)))]),
+                    rows: recs.map((r) => [yearWithAges(r), ...rows.map((x) => formatMoney(x.value(r)))]),
                   };
                 }}
                 build={(c): EChartsCoreOption => {
@@ -507,6 +508,7 @@ export function HomePage(): ReactNode {
                       data: recs.map((r) => r.year),
                       boundaryGap: view.id !== 'netWorth' && view.id !== 'accounts',
                       ...axis(c),
+                      ...chartYearLabels(c, recs),
                       splitLine: { show: false },
                     },
                     yAxis: {

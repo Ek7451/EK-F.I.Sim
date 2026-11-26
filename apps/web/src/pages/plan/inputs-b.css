@@ -101,6 +101,12 @@
 .pib-dials > .span-all {
   grid-column: 1 / -1;
 }
+.pib-rate-summary {
+  cursor: pointer;
+  padding: 10px 0;
+  font-size: var(--text-sm);
+  font-weight: 650;
+}
 .pib-choice > .lv-segmented {
   align-self: flex-start;
   padding: 2px;

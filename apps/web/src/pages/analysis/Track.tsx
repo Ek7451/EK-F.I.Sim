@@ -12,6 +12,7 @@ import {
 } from '@fisim/ui';
 import { useEffect, useId, useState, type ReactNode } from 'react';
 import { Chart, alpha, axis, short, tooltip, tooltipCard } from '../../charts/Chart';
+import { yearWithAges } from '../../lib/chartYears';
 import { useProjection } from '../../engine/useResults';
 import { ACCOUNT_LABELS } from '../../lib/fields';
 import { PageHead } from '../../shell/Shell';
@@ -37,6 +38,18 @@ interface Baseline {
 
 export function TrackPage(): ReactNode {
   const plan = usePlan()!;
+  const endYearLabel = (year: number): string =>
+    yearWithAges({ year, ages: plan.people.map((p) => year - Number(p.birthDate.slice(0, 4))) });
+  const agesOn = (date: string): string =>
+    plan.people
+      .map((p) => {
+        const age =
+          Number(date.slice(0, 4)) -
+          Number(p.birthDate.slice(0, 4)) -
+          Number(date.slice(5) < p.birthDate.slice(5));
+        return `${p.name}, age ${age}`;
+      })
+      .join(' · ');
   const update = useUpdate();
   const { result, stale, error, identity } = useProjection();
   const scenarioId = useStore((s) => s.scenarioId);
@@ -301,7 +314,7 @@ export function TrackPage(): ReactNode {
             {baseline ? (
               <Chart
                 label="Actual investment balances against the frozen plan projection"
-                deps={[baseline, plan.actuals]}
+                deps={[baseline, plan.actuals, plan.people]}
                 height="var(--trk-chart-h)"
                 footer={
                   <span className="lv-muted lv-small trk-note">
@@ -314,7 +327,7 @@ export function TrackPage(): ReactNode {
                   rows: actuals.map((a) => {
                     const p = planned(a.t);
                     return [
-                      a.date,
+                      `${a.date} · ${agesOn(a.date)}`,
                       formatMoney(a.total),
                       p === null ? '—' : formatMoney(p),
                       p === null ? '—' : gap(a.total - p),
@@ -333,15 +346,19 @@ export function TrackPage(): ReactNode {
                       formatter: (p: { seriesName: string; dataIndex: number; value: [number, number] }) =>
                         tooltipCard(c, {
                           title: p.seriesName,
+                          subtitle:
+                            p.seriesName === 'Actual'
+                              ? agesOn(actuals[p.dataIndex].date)
+                              : endYearLabel(p.dataIndex === 0 ? baseline.startYear : p.value[0]),
                           rows: [
                             {
                               // An entry is labelled by its date; a planned point by the year it closes.
                               name:
                                 p.seriesName === 'Actual'
                                   ? (actuals[p.dataIndex]?.date ?? '')
-                                  : Number.isInteger(p.value[0])
-                                    ? `End of ${p.value[0]}`
-                                    : 'When the plan was frozen',
+                                  : p.dataIndex === 0
+                                    ? 'Opening balance'
+                                    : `End of ${p.value[0]}`,
                               value: formatMoney(p.value[1]),
                             },
                           ],
@@ -354,7 +371,8 @@ export function TrackPage(): ReactNode {
                       ...axis(c),
                       axisLabel: {
                         color: c.ink3,
-                        formatter: (v: number) => (Number.isInteger(v) ? `end ${v}` : ''),
+                        formatter: (v: number) => (Number.isInteger(v) ? endYearLabel(v) : ''),
+                        hideOverlap: true,
                       },
                       splitLine: { show: false },
                     },

@@ -15,125 +15,100 @@ import {
 import { useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
 import { Chart, axis, dawnLine, short, tooltip, tooltipCard } from '../../charts/Chart';
 import { useBacktest } from '../../engine/useResults';
+import { chartYearLabels, householdAges, yearWithAges } from '../../lib/chartYears';
 import { PageHead } from '../../shell/Shell';
 
 type Cohort = BacktestResult['cohorts'][number];
+type HistoricalPoint = { seriesName: string; value: number; dataIndex: number };
 
 const outcomeOf = (co: Cohort): 'partial' | 'funded' | 'short' =>
   !co.complete ? 'partial' : co.success ? 'funded' : 'short';
 
-/** What one start year did, in a phrase (the cell's accessible name and its hover text). */
-const cellLabel = (co: Cohort): string =>
-  !co.complete
-    ? `${co.startYear}: unfinished, history covers ${co.series.length} ${co.series.length === 1 ? 'year' : 'years'}`
-    : co.success
-      ? `${co.startYear}: funded, lowest point ${formatMoney(co.minReal)}, ended with ${formatMoney(co.endingReal)}`
-      : `${co.startYear}: ran short after ${co.lastedYears} ${co.lastedYears === 1 ? 'year' : 'years'}`;
-
-/**
- * Every start year as one small cell, a decade to a row. Funded years are shaded by where they ended (five
- * steps, lightest = least left); years that ran short and years history has not finished are marked by
- * pattern as well as colour. One tab stop; arrow keys move by a year or a decade.
- */
-function CohortMap({
-  cohorts,
-  selected,
-  onSelect,
-}: {
-  cohorts: Cohort[];
-  selected: number | null;
-  onSelect: (year: number) => void;
-}): ReactNode {
+/** One tile per recorded year of the selected replay. All amounts are real year-end investments. */
+function RunHeatMap({ run, result }: { run: Cohort; result: BacktestResult }): ReactNode {
+  const [index, setIndex] = useState(run.series.length - 1);
   const grid = useRef<HTMLDivElement>(null);
-  const byYear = useMemo(() => new Map(cohorts.map((c) => [c.startYear, c])), [cohorts]);
-  // Quintile of ending wealth among the funded, complete cohorts.
-  const level = useMemo(() => {
-    const ends = cohorts
-      .filter((c) => c.complete && c.success)
-      .map((c) => c.endingReal)
-      .sort((a, b) => a - b);
-    return (co: Cohort): number => {
-      if (!ends.length) return 3;
-      let rank = 0;
-      while (rank < ends.length && ends[rank] <= co.endingReal) rank++;
-      return Math.min(5, Math.max(1, Math.ceil((rank / ends.length) * 5)));
+  const low = run.minReal;
+  const high = Math.max(...run.series);
+  const year = run.startYear + index;
+  const planYear = result.planStartYear + index;
+  const move = (event: KeyboardEvent, i: number): void => {
+    const targets: Record<string, number> = {
+      ArrowLeft: i - 1,
+      ArrowRight: i + 1,
+      ArrowUp: i - 5,
+      ArrowDown: i + 5,
+      Home: 0,
+      End: run.series.length - 1,
     };
-  }, [cohorts]);
-  if (!cohorts.length) return null;
-  const first = cohorts[0].startYear;
-  const last = cohorts[cohorts.length - 1].startYear;
-  const decades: number[] = [];
-  for (let d = Math.floor(first / 10) * 10; d <= last; d += 10) decades.push(d);
-  const focusYear = (year: number): void => {
-    const y = Math.max(first, Math.min(last, year));
-    onSelect(y);
-    // Every cell is already in the page, so focus can move at once (no frame to wait for).
-    grid.current?.querySelector<HTMLElement>(`[data-year="${y}"]`)?.focus();
+    if (!(event.key in targets)) return;
+    event.preventDefault();
+    const next = Math.max(0, Math.min(run.series.length - 1, targets[event.key]));
+    grid.current?.querySelectorAll('button')[next]?.focus();
   };
-  const onKey = (e: KeyboardEvent, year: number): void => {
-    const step: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1, ArrowUp: -10, ArrowDown: 10 };
-    if (e.key in step) {
-      e.preventDefault();
-      focusYear(year + step[e.key]);
-    } else if (e.key === 'Home') {
-      e.preventDefault();
-      focusYear(first);
-    } else if (e.key === 'End') {
-      e.preventDefault();
-      focusYear(last);
-    }
-  };
-  const tabYear = selected !== null && byYear.has(selected) ? selected : first;
   return (
-    <div
-      className="hx-map"
-      ref={grid}
-      role="group"
-      aria-label="Historical start years. Arrow keys move by a year or a decade."
-    >
-      <div className="hx-map-head" aria-hidden="true">
-        <span />
-        {Array.from({ length: 10 }, (_, i) => (
-          <span key={i}>{i}</span>
-        ))}
+    <section className="hx-heat" aria-label="Year-by-year investment heat map">
+      <h3>Investments by historical year</h3>
+      <p className="lv-small lv-muted">
+        Each tile shows one year of this run. Tap a year for its balance and plan ages.
+      </p>
+      <div className="hx-heat-grid" ref={grid}>
+        {run.series.map((balance, i) => {
+          const historicalYear = run.startYear + i;
+          const level = high === low ? 3 : 1 + Math.min(4, Math.floor((5 * (balance - low)) / (high - low)));
+          return (
+            <button
+              type="button"
+              key={historicalYear}
+              data-level={level}
+              aria-pressed={index === i}
+              tabIndex={index === i ? 0 : -1}
+              aria-label={`${historicalYear}, ${formatMoney(balance)}, ${householdAges(result.people, result.planStartYear + i)}`}
+              onClick={() => setIndex(i)}
+              onFocus={() => setIndex(i)}
+              onKeyDown={(e) => move(e, i)}
+            >
+              {historicalYear}
+            </button>
+          );
+        })}
       </div>
-      {decades.map((d) => (
-        <div className="hx-map-row" key={d}>
-          <span className="hx-map-decade" aria-hidden="true">
-            {d}s
-          </span>
-          {Array.from({ length: 10 }, (_, i) => {
-            const co = byYear.get(d + i);
-            if (!co) return <span key={i} className="hx-cell" data-empty="" aria-hidden="true" />;
-            const outcome = outcomeOf(co);
-            return (
-              <button
-                type="button"
-                key={i}
-                className="hx-cell"
-                data-year={co.startYear}
-                data-outcome={outcome}
-                data-level={outcome === 'funded' ? level(co) : undefined}
-                aria-pressed={selected === co.startYear}
-                aria-label={cellLabel(co)}
-                title={cellLabel(co)}
-                tabIndex={co.startYear === tabYear ? 0 : -1}
-                onClick={() => onSelect(co.startYear)}
-                onKeyDown={(e) => onKey(e, co.startYear)}
-              />
-            );
-          })}
-        </div>
-      ))}
-    </div>
+      <div className="hx-heat-key lv-small lv-muted">
+        <span>{formatCompact(low)}</span>
+        <i aria-hidden="true" />
+        <span>{formatCompact(high)}</span>
+      </div>
+      <p className="hx-heat-detail" aria-live="polite" aria-atomic="true">
+        <strong>
+          {year} · {formatMoney(run.series[index])}
+        </strong>
+        <span>Year-end investments in today’s dollars</span>
+        <span>
+          Plan year {planYear} · {householdAges(result.people, planYear)}
+        </span>
+      </p>
+    </section>
   );
 }
 
 export function HistoryPage(): ReactNode {
   const { result, running, error, retry, cancel } = useBacktest(true);
   const [selectedStart, setSelectedStart] = useState<number | null>(null);
-  const [allCohorts, setAllCohorts] = useState(true);
-  const selected = result?.cohorts.find((c) => c.startYear === selectedStart) ?? result?.worst ?? null;
+  const [allCohorts, setAllCohorts] = useState(false);
+  const startPicker = useRef<HTMLDetailsElement>(null);
+  const chooseRun = (year: number): void => {
+    setSelectedStart(year);
+    setAllCohorts(false);
+  };
+  const pickStart = (year: number): void => {
+    chooseRun(year);
+    if (startPicker.current) {
+      startPicker.current.open = false;
+      startPicker.current.querySelector('summary')?.focus();
+    }
+  };
+  const selected =
+    result?.cohorts.find((c) => c.startYear === selectedStart) ?? result?.worst ?? result?.cohorts[0] ?? null;
   const median = result
     ? [...result.cohorts].filter((c) => c.complete).sort((a, b) => a.endingReal - b.endingReal)[
         Math.floor((result.completeCount - 1) / 2)
@@ -151,6 +126,7 @@ export function HistoryPage(): ReactNode {
   // Where the selected start year stands among the finished ones, hardest first.
   const rank = selected?.complete ? sorted.findIndex((c) => c.startYear === selected.startYear) + 1 : 0;
   const lowIndex = selected ? selected.series.indexOf(Math.min(...selected.series)) : -1;
+  const showHistoricalYears = !!selected && !allCohorts;
   const role =
     selected && result
       ? selected.startYear === result.worst?.startYear
@@ -166,7 +142,7 @@ export function HistoryPage(): ReactNode {
       <PageHead
         group="explore"
         title="Against history"
-        intro="Your plan replayed from every starting year since 1871, using what markets and inflation actually did next. It shows how the plan copes with a bad run of early years."
+        intro="History tests your plan against consecutive years of recorded returns and inflation. Outcomes simulates possible futures from your plan’s start year."
         actions={
           <>
             <Badge>Estimated</Badge>
@@ -185,7 +161,7 @@ export function HistoryPage(): ReactNode {
         </Card>
       ) : (
         <>
-          <Card variant="hero" data-tour="history-stats">
+          <Card variant="hero" title="Across all historical runs" data-tour="history-stats">
             <div className="hx-band">
               <Stat
                 label="Start years that worked"
@@ -223,52 +199,97 @@ export function HistoryPage(): ReactNode {
           </Card>
           <div className="hx-main">
             <div className="hx-side">
-              <Card title="Pick a start year" data-tour="history-map">
-                <p className="lv-small lv-muted">
-                  Each square is your plan started in that year and run through the {result.horizon} years
-                  that really followed. A stronger colour means more left at the end.
-                </p>
-                <div className="lv-row hx-picks">
-                  {(
-                    [
-                      ['Hardest', result.worst],
-                      ['Middle', median],
-                      ['Kindest', result.best],
-                    ] as [string, Cohort | null | undefined][]
-                  ).map(([label, cohort]) =>
-                    cohort ? (
-                      <Button
-                        key={label}
-                        size="sm"
-                        aria-pressed={selected?.startYear === cohort.startYear}
-                        onClick={() => setSelectedStart(cohort.startYear)}
-                      >
-                        {label} · {cohort.startYear}
-                      </Button>
-                    ) : null,
-                  )}
-                </div>
-                <CohortMap
-                  cohorts={result.cohorts}
-                  selected={selected?.startYear ?? null}
-                  onSelect={setSelectedStart}
-                />
-                <p className="hx-key lv-small lv-muted">
-                  <span>
-                    <i data-level="1" />
-                    <i data-level="3" />
-                    <i data-level="5" />
-                    Funded: less to more left
-                  </span>
-                  <span>
-                    <i data-outcome="short" />
-                    Ran short
-                  </span>
-                  <span>
-                    <i data-outcome="partial" />
-                    Unfinished
-                  </span>
-                </p>
+              <Card title="Pick a historical run" data-tour="history-map">
+                {result.completeCount > 0 && (
+                  <label className="lv-field">
+                    <span className="lv-label">Full run ending in</span>
+                    <select
+                      className="lv-input"
+                      value={selected?.complete ? selected.startYear : ''}
+                      onChange={(e) => chooseRun(Number(e.target.value))}
+                    >
+                      {!selected?.complete && (
+                        <option value="" disabled>
+                          Choose an ending year
+                        </option>
+                      )}
+                      {result.cohorts
+                        .filter((co) => co.complete)
+                        .reverse()
+                        .map((co) => (
+                          <option key={co.startYear} value={co.startYear}>
+                            {co.startYear + result.horizon - 1} (started {co.startYear})
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                )}
+                {selected && (
+                  <p className="hx-picked" role="status" aria-atomic="true">
+                    <strong>
+                      {selected.startYear}–{selected.startYear + selected.series.length - 1}
+                    </strong>
+                    {selected.complete
+                      ? selected.success
+                        ? `Funded all ${selected.years} years.`
+                        : `Ran short after ${selected.lastedYears} years.`
+                      : `Partial replay: ${selected.years} of ${result.horizon} years recorded.`}{' '}
+                    Investments at the end of {selected.startYear + selected.series.length - 1}:{' '}
+                    {formatMoney(selected.endingReal)} in today’s dollars.
+                  </p>
+                )}
+                <details className="hx-start-picker" ref={startPicker}>
+                  <summary>Choose by start year</summary>
+                  <label className="lv-field">
+                    <span className="lv-label">Historical start year</span>
+                    <select
+                      className="lv-input"
+                      value={selected?.startYear ?? ''}
+                      onChange={(e) => pickStart(Number(e.target.value))}
+                    >
+                      {result.cohorts
+                        .slice()
+                        .reverse()
+                        .map((co) => (
+                          <option key={co.startYear} value={co.startYear}>
+                            {co.startYear}–{co.startYear + co.series.length - 1}
+                            {co.complete ? '' : ' (partial)'}
+                          </option>
+                        ))}
+                    </select>
+                  </label>
+                  <p className="lv-small lv-muted">
+                    A full run needs {result.horizon} consecutive years. Later starts replay only through{' '}
+                    {result.dataThrough} and are excluded from the success rate.
+                  </p>
+                  <div className="lv-row hx-picks">
+                    {(
+                      [
+                        ['Hardest', result.worst],
+                        ['Middle', median],
+                        ['Kindest', result.best],
+                      ] as [string, Cohort | null | undefined][]
+                    ).map(([label, cohort]) =>
+                      cohort ? (
+                        <Button
+                          key={label}
+                          size="sm"
+                          aria-pressed={selected?.startYear === cohort.startYear}
+                          onClick={() => pickStart(cohort.startYear)}
+                        >
+                          {label} · {cohort.startYear}
+                        </Button>
+                      ) : null,
+                    )}
+                  </div>
+                </details>
+                {selected && selected.series.length > 0 && (
+                  <RunHeatMap
+                    key={`${selected.startYear}-${selected.series.length}`}
+                    run={selected}
+                    result={result}
+                  />
+                )}
               </Card>
               <Fold
                 title="The ten hardest start years"
@@ -294,7 +315,7 @@ export function HistoryPage(): ReactNode {
                             <button
                               type="button"
                               className="hx-link"
-                              onClick={() => setSelectedStart(c.startYear)}
+                              onClick={() => chooseRun(c.startYear)}
                               aria-label={`Show ${c.startYear}`}
                             >
                               {c.startYear}
@@ -314,7 +335,9 @@ export function HistoryPage(): ReactNode {
             <Card
               title={
                 <span className="lv-label-row">
-                  {selected ? `Starting in ${selected.startYear}` : 'Every start year'}
+                  {selected
+                    ? `Starting in ${selected.startYear} · through ${selected.startYear + selected.series.length - 1}`
+                    : 'Every start year'}
                   <HelpTip>
                     International stocks and REITs follow US stocks here because they have no long public
                     history. Bonds are 10-year Treasuries, which lost more in the 1970s than the intermediate
@@ -385,41 +408,72 @@ export function HistoryPage(): ReactNode {
                 }}
                 footer={
                   <p className="lv-muted lv-small" style={{ margin: 0 }}>
-                    One line per start year, in today's dollars. The lit line is{' '}
-                    {selected?.startYear ?? 'the selection'}; red lines ran short; click a line to select it.
+                    {showHistoricalYears
+                      ? 'Recorded market years, with your age in each corresponding plan year. Investments are in today’s dollars.'
+                      : 'Each line uses a different historical start. The horizontal axis aligns them by your plan year and age.'}
                   </p>
                 }
-                table={() => ({
-                  columns: ['Start year', 'Outcome', 'Years funded', 'Ending wealth', 'Lowest point'],
-                  rows: sorted.map((c) => [
-                    c.startYear,
-                    c.success ? 'Funded' : 'Ran short',
-                    c.lastedYears,
-                    formatMoney(c.endingReal),
-                    formatMoney(c.minReal),
-                  ]),
-                })}
+                table={() =>
+                  showHistoricalYears
+                    ? {
+                        columns: ['Historical year', 'Plan year and ages', 'Investments, today’s dollars'],
+                        rows: selected.series.map((v, i) => [
+                          selected.startYear + i,
+                          `${result.planStartYear + i} · ${householdAges(result.people, result.planStartYear + i)}`,
+                          formatMoney(v),
+                        ]),
+                      }
+                    : {
+                        columns: [
+                          'Start year',
+                          'End year',
+                          'Outcome',
+                          'Years funded',
+                          'Ending wealth',
+                          'Lowest point',
+                        ],
+                        rows: sorted.map((c) => [
+                          c.startYear,
+                          c.startYear + result.horizon - 1,
+                          c.success ? 'Funded' : 'Ran short',
+                          c.lastedYears,
+                          formatMoney(c.endingReal),
+                          formatMoney(c.minReal),
+                        ]),
+                      }
+                }
                 build={(c) => ({
                   grid: { left: 56, right: 16, top: 12, bottom: 46 },
                   tooltip: {
                     ...tooltip(c),
-                    trigger: 'item',
-                    formatter: (p: { seriesName: string; value: number; dataIndex: number }) =>
-                      tooltipCard(c, {
+                    trigger: showHistoricalYears ? 'axis' : 'item',
+                    formatter: (params: HistoricalPoint | HistoricalPoint[]) => {
+                      const p = Array.isArray(params) ? params[0] : params;
+                      if (!p) return '';
+                      return tooltipCard(c, {
                         title: `Started in ${p.seriesName}`,
-                        subtitle: `Year ${p.dataIndex + 1} of the plan · ${Number(p.seriesName) + p.dataIndex} in history`,
+                        subtitle: `${Number(p.seriesName) + p.dataIndex} in history · plan year ${result.planStartYear + p.dataIndex} · ${householdAges(result.people, result.planStartYear + p.dataIndex)}`,
                         rows: [{ name: 'Investments', value: formatMoney(p.value) }],
-                      }),
+                      });
+                    },
                   },
                   xAxis: {
                     type: 'category',
-                    data: Array.from({ length: result.horizon }, (_, i) => i + 1),
-                    name: 'Year of the plan',
+                    data: showHistoricalYears
+                      ? selected.series.map((_, i) => selected.startYear + i)
+                      : Array.from({ length: result.horizon }, (_, i) => result.planStartYear + i),
+                    name: showHistoricalYears ? 'Historical year' : 'Plan year',
                     nameLocation: 'middle',
                     nameGap: 28,
                     nameTextStyle: { color: c.ink3, fontSize: 11 },
                     boundaryGap: false,
                     ...axis(c),
+                    ...chartYearLabels(c, (year) => {
+                      const planYear = showHistoricalYears
+                        ? result.planStartYear + year - selected.startYear
+                        : year;
+                      return yearWithAges({ year, ages: result.people.map((p) => planYear - p.birthYear) });
+                    }),
                     splitLine: { show: false },
                   },
                   yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
@@ -446,7 +500,7 @@ export function HistoryPage(): ReactNode {
                   }),
                 })}
               />
-              {selected && (
+              {allCohorts && selected && (
                 <details className="hx-path">
                   <summary>Year-by-year balances for a {selected.startYear} start</summary>
                   <div
@@ -460,6 +514,7 @@ export function HistoryPage(): ReactNode {
                         <tr>
                           <th scope="col">Year of the plan</th>
                           <th scope="col">Historical year</th>
+                          <th scope="col">Plan year and ages</th>
                           <th scope="col">Investments, today's dollars</th>
                         </tr>
                       </thead>
@@ -468,6 +523,10 @@ export function HistoryPage(): ReactNode {
                           <tr key={i}>
                             <th scope="row">{i + 1}</th>
                             <td>{selected.startYear + i}</td>
+                            <td>
+                              {result.planStartYear + i} ·{' '}
+                              {householdAges(result.people, result.planStartYear + i)}
+                            </td>
                             <td>{formatMoney(v)}</td>
                           </tr>
                         ))}

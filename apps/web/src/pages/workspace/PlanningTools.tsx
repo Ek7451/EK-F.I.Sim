@@ -19,6 +19,7 @@ import { describeChange } from '../../lib/scenarioSummary';
 import { useStore } from '../../state/store';
 import { usePlanView } from '../../state/workspace';
 import { outcomeDelta } from '../../lib/metrics';
+import { projectionRates } from '../../lib/marketRates';
 
 export function useCompactWorkspace(): boolean {
   const [compact, setCompact] = useState(() => window.matchMedia('(max-width: 1280px)').matches);
@@ -263,6 +264,8 @@ export function PlanningEditor({
   onClose: () => void;
 }): ReactNode {
   const editor = useRef<HTMLDivElement>(null);
+  const historicalRates =
+    plan.assumptions.returns.mode === 'historicalAverage' ? projectionRates(plan) : null;
   useEffect(() => {
     if (!window.matchMedia('(max-width: 1280px)').matches)
       editor.current?.querySelector<HTMLInputElement>('input')?.focus();
@@ -393,36 +396,46 @@ export function PlanningEditor({
           ) : null}
           <section className="pe-section" aria-label="Markets">
             <h3>Markets</h3>
-            {plan.assumptions.returns.mode === 'fixed' && (
-              <Slider
-                label="US stock return"
-                value={plan.assumptions.returns.fixed.usStocks}
-                min={-0.05}
-                max={0.15}
-                step={0.0025}
-                format={(v) => formatPct(v, 2)}
-                onChange={(v) =>
-                  edit('Expected stock returns changed', (d) => {
-                    const f = d.assumptions.returns.fixed;
-                    f.intlStocks = +(f.intlStocks + v - f.usStocks).toFixed(6);
-                    f.usStocks = v;
-                  })
-                }
-              />
+            {historicalRates ? (
+              <>
+                <p className="lv-small">
+                  Historical averages · US stocks {formatPct(historicalRates.usStocks, 2)} · inflation{' '}
+                  {formatPct(historicalRates.inflation, 2)}
+                </p>
+                <Link to="/plan/assumptions">View returns and inflation</Link>
+              </>
+            ) : (
+              <>
+                <Slider
+                  label="US stock return"
+                  value={plan.assumptions.returns.fixed.usStocks}
+                  min={-0.05}
+                  max={0.15}
+                  step={0.0025}
+                  format={(v) => formatPct(v, 2)}
+                  onChange={(v) =>
+                    edit('Expected stock returns changed', (d) => {
+                      const f = d.assumptions.returns.fixed;
+                      f.intlStocks = +(f.intlStocks + v - f.usStocks).toFixed(6);
+                      f.usStocks = v;
+                    })
+                  }
+                />
+                <Slider
+                  label="Inflation"
+                  value={plan.assumptions.inflation.rate}
+                  min={0}
+                  max={0.07}
+                  step={0.0025}
+                  format={(v) => formatPct(v, 2)}
+                  onChange={(v) =>
+                    edit('Inflation changed', (d) => {
+                      d.assumptions.inflation.rate = v;
+                    })
+                  }
+                />
+              </>
             )}
-            <Slider
-              label="Inflation"
-              value={plan.assumptions.inflation.rate}
-              min={0}
-              max={0.07}
-              step={0.0025}
-              format={(v) => formatPct(v, 2)}
-              onChange={(v) =>
-                edit('Inflation changed', (d) => {
-                  d.assumptions.inflation.rate = v;
-                })
-              }
-            />
           </section>
           {plan.expenses.length ? (
             <section className="pe-section" aria-label="Spending">

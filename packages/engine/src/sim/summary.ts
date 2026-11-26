@@ -33,6 +33,7 @@ export interface McSummary {
   /** Geometric nominal annual means the runs used, and whether they came from the plan or from raw history. */
   meansUsed: ReturnMeans;
   startYear: number;
+  people: { name: string; birthYear: number }[];
   years: number[];
   /** Share of runs counted a success: spending covered every year, and the legacy goal when it counts. */
   successRate: number;
@@ -229,6 +230,7 @@ export function summarizeMonteCarlo(
       bootstrapMeans: full.bootstrapMeans,
     }),
     startYear: c.startYear,
+    people: c.people.map(({ name, birthYear }) => ({ name, birthYear })),
     years: Array.from({ length: usedYears }, (_, i) => c.startYear + i),
     successRate: runs ? (goal > 0 && est.legacyGoalForSuccess ? bothOk : ok) / runs : 0,
     fundedRate: runs ? ok / runs : 0,

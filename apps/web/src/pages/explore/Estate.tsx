@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../../lib/chartYears';
 import './estate.css';
 import { type YearRecord } from '@fisim/engine';
 import { Button, Card, Explain, Stat, formatCompact, formatMoney, formatPct } from '@fisim/ui';
@@ -156,7 +157,10 @@ export function EstatePage(): ReactNode {
             }
             table={() => ({
               columns: ['Year', ...LAYERS.map((l) => l.short)],
-              rows: recs.map((r) => [r.year, ...LAYERS.map((l) => formatMoney(l.value(r) / r.cpiEnd))]),
+              rows: recs.map((r) => [
+                yearWithAges(r),
+                ...LAYERS.map((l) => formatMoney(l.value(r) / r.cpiEnd)),
+              ]),
             })}
             build={(c) => ({
               grid: { left: 56, right: 16, top: 34, bottom: 30 },
@@ -167,6 +171,7 @@ export function EstatePage(): ReactNode {
                 data: recs.map((r) => r.year),
                 boundaryGap: false,
                 ...axis(c),
+                ...chartYearLabels(c, recs),
                 splitLine: { show: false },
               },
               yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },

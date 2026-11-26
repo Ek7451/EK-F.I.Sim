@@ -18,6 +18,7 @@ import { useState, type ReactNode } from 'react';
 import { useProjection } from '../../engine/useResults';
 import { AllocationEditor, CLASS_LABELS, WhenField, describeWhen } from '../../lib/fields';
 import { helpText } from '../../lib/help';
+import { marketYears, projectionRates } from '../../lib/marketRates';
 import { LifespanSwitch, lifespansVary } from '../../lib/lifespan';
 import { PageHead } from '../../shell/Shell';
 import { newId, usePlan, useUpdate } from '../../state/store';
@@ -718,6 +719,8 @@ export function AssumptionsPage(): ReactNode {
   const A = plan.assumptions;
   const mc = A.monteCarlo;
   const historical = A.returns.mode === 'historicalAverage';
+  const RateControls = historical ? 'details' : 'div';
+  const rates = projectionRates(plan);
   const custom = Object.keys(A.returns.stdDev ?? {}).length;
   const varies = lifespansVary(plan);
   return (
@@ -734,7 +737,7 @@ export function AssumptionsPage(): ReactNode {
               title="Returns and inflation"
               icon="trendUp"
               kind="income"
-              summary={`${historical ? 'Historical averages' : `US stocks ${formatPct(A.returns.fixed.usStocks, 1)}, bonds ${formatPct(A.returns.fixed.usBonds, 1)}`} · inflation ${formatPct(A.inflation.rate, 1)}`}
+              summary={`${historical ? 'Historical averages' : `US stocks ${formatPct(rates.usStocks, 1)}, bonds ${formatPct(rates.usBonds, 1)}`} · inflation ${formatPct(rates.inflation, historical ? 2 : 1)}`}
               defaultOpen
               storageKey="assume:returns"
               data-tour="returns"
@@ -757,146 +760,175 @@ export function AssumptionsPage(): ReactNode {
                   />
                 </div>
               </div>
-              <Lead>
-                Compound rates per year, before inflation is taken out.
-                {historical ? ' History sets US stocks, US bonds, cash and inflation while this is on.' : ''}
-              </Lead>
-              <div className="pib-dials">
-                {ASSET_CLASSES.map((k) => (
-                  <Dial
-                    key={k}
-                    value={A.returns.fixed[k]}
-                    min={-0.02}
-                    max={0.12}
-                    step={0.0025}
-                    onChange={(v) =>
-                      update((d) => {
-                        d.assumptions.returns.fixed[k] = v;
-                      })
-                    }
-                  >
-                    <PercentField
-                      label={`${CLASS_LABELS[k]} return`}
-                      hint={historical && HISTORY_SETS.has(k) ? 'Not used: history sets this.' : undefined}
+              {historical ? (
+                <>
+                  <h3 className="pib-sub">Rates from market history</h3>
+                  <Lead>Annual compound averages for {marketYears}, before inflation.</Lead>
+                  <dl className="lv-facts" aria-label="Rates from market history">
+                    {(['usStocks', 'usBonds', 'cash'] as const).map((k) => (
+                      <div key={k}>
+                        <dt>{CLASS_LABELS[k]} return</dt>
+                        <dd>{formatPct(rates[k], 2)}</dd>
+                      </div>
+                    ))}
+                    <div data-tour="inflation">
+                      <dt>Inflation</dt>
+                      <dd>{formatPct(rates.inflation, 2)}</dd>
+                    </div>
+                  </dl>
+                  {A.returns.stockAdjustment ? (
+                    <Lead>
+                      The US stock rate shown includes your stock return adjustment of{' '}
+                      {formatPct(A.returns.stockAdjustment, 2)}.
+                    </Lead>
+                  ) : null}
+                  <Lead>
+                    Your projection combines these historical rates with your own international stock and REIT
+                    returns. Extra healthcare and education inflation add to the historical inflation rate.
+                  </Lead>
+                </>
+              ) : (
+                <Lead>Compound rates per year, before inflation is taken out.</Lead>
+              )}
+              <RateControls>
+                {historical && <summary className="pib-rate-summary">Edit additional assumptions</summary>}
+                <div className="pib-dials">
+                  {ASSET_CLASSES.filter((k) => !historical || !HISTORY_SETS.has(k)).map((k) => (
+                    <Dial
+                      key={k}
                       value={A.returns.fixed[k]}
+                      min={-0.02}
+                      max={0.12}
+                      step={0.0025}
                       onChange={(v) =>
                         update((d) => {
                           d.assumptions.returns.fixed[k] = v;
                         })
                       }
-                    />
-                  </Dial>
-                ))}
-                <Dial
-                  value={A.inflation.rate}
-                  min={0}
-                  max={0.08}
-                  step={0.0025}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.assumptions.inflation.rate = v;
-                    })
-                  }
-                >
-                  <PercentField
-                    label="Inflation"
-                    hint={historical ? 'Not used: history sets this.' : undefined}
-                    value={A.inflation.rate}
-                    onChange={(v) =>
-                      update((d) => {
-                        d.assumptions.inflation.rate = v;
-                      })
-                    }
-                    data-tour="inflation"
-                  />
-                </Dial>
-                <Dial
-                  value={A.healthcareInflation.excessOverCpi}
-                  min={0}
-                  max={0.05}
-                  step={0.0025}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.assumptions.healthcareInflation.excessOverCpi = v;
-                    })
-                  }
-                >
-                  <PercentField
-                    label="Extra healthcare inflation"
-                    help={`On top of general inflation. ${helpText('Healthcare inflation above general inflation')}`}
+                    >
+                      <PercentField
+                        label={`${CLASS_LABELS[k]} return`}
+                        value={A.returns.fixed[k]}
+                        onChange={(v) =>
+                          update((d) => {
+                            d.assumptions.returns.fixed[k] = v;
+                          })
+                        }
+                      />
+                    </Dial>
+                  ))}
+                  {!historical && (
+                    <Dial
+                      value={A.inflation.rate}
+                      min={0}
+                      max={0.08}
+                      step={0.0025}
+                      onChange={(v) =>
+                        update((d) => {
+                          d.assumptions.inflation.rate = v;
+                        })
+                      }
+                    >
+                      <PercentField
+                        label="Inflation"
+                        value={A.inflation.rate}
+                        onChange={(v) =>
+                          update((d) => {
+                            d.assumptions.inflation.rate = v;
+                          })
+                        }
+                        data-tour="inflation"
+                      />
+                    </Dial>
+                  )}
+                  <Dial
                     value={A.healthcareInflation.excessOverCpi}
+                    min={0}
+                    max={0.05}
+                    step={0.0025}
                     onChange={(v) =>
                       update((d) => {
                         d.assumptions.healthcareInflation.excessOverCpi = v;
                       })
                     }
-                  />
-                </Dial>
-                <Dial
-                  value={A.inflation.educationExcess}
-                  min={0}
-                  max={0.05}
-                  step={0.0025}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.assumptions.inflation.educationExcess = v;
-                    })
-                  }
-                >
-                  <PercentField
-                    label="Extra education inflation"
-                    help={`On top of general inflation. ${helpText('Education inflation above general inflation')}`}
+                  >
+                    <PercentField
+                      label="Extra healthcare inflation"
+                      help={`On top of general inflation. ${helpText('Healthcare inflation above general inflation')}`}
+                      value={A.healthcareInflation.excessOverCpi}
+                      onChange={(v) =>
+                        update((d) => {
+                          d.assumptions.healthcareInflation.excessOverCpi = v;
+                        })
+                      }
+                    />
+                  </Dial>
+                  <Dial
                     value={A.inflation.educationExcess}
+                    min={0}
+                    max={0.05}
+                    step={0.0025}
                     onChange={(v) =>
                       update((d) => {
                         d.assumptions.inflation.educationExcess = v;
                       })
                     }
-                  />
-                </Dial>
-                <Dial
-                  value={A.dividendYield}
-                  min={0}
-                  max={0.06}
-                  step={0.0025}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.assumptions.dividendYield = Math.max(0, v);
-                    })
-                  }
-                >
-                  <PercentField
-                    label="Dividend yield on stocks"
+                  >
+                    <PercentField
+                      label="Extra education inflation"
+                      help={`On top of general inflation. ${helpText('Education inflation above general inflation')}`}
+                      value={A.inflation.educationExcess}
+                      onChange={(v) =>
+                        update((d) => {
+                          d.assumptions.inflation.educationExcess = v;
+                        })
+                      }
+                    />
+                  </Dial>
+                  <Dial
                     value={A.dividendYield}
+                    min={0}
+                    max={0.06}
+                    step={0.0025}
                     onChange={(v) =>
                       update((d) => {
                         d.assumptions.dividendYield = Math.max(0, v);
                       })
                     }
-                  />
-                </Dial>
-                <Dial
-                  value={A.bondYield}
-                  min={0}
-                  max={0.08}
-                  step={0.0025}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.assumptions.bondYield = Math.max(0, v);
-                    })
-                  }
-                >
-                  <PercentField
-                    label="Bond interest yield"
+                  >
+                    <PercentField
+                      label="Dividend yield on stocks"
+                      value={A.dividendYield}
+                      onChange={(v) =>
+                        update((d) => {
+                          d.assumptions.dividendYield = Math.max(0, v);
+                        })
+                      }
+                    />
+                  </Dial>
+                  <Dial
                     value={A.bondYield}
+                    min={0}
+                    max={0.08}
+                    step={0.0025}
                     onChange={(v) =>
                       update((d) => {
                         d.assumptions.bondYield = Math.max(0, v);
                       })
                     }
-                  />
-                </Dial>
-              </div>
+                  >
+                    <PercentField
+                      label="Bond interest yield"
+                      value={A.bondYield}
+                      onChange={(v) =>
+                        update((d) => {
+                          d.assumptions.bondYield = Math.max(0, v);
+                        })
+                      }
+                    />
+                  </Dial>
+                </div>
+              </RateControls>
             </Fold>
             <Fold
               title="Volatility for simulations"

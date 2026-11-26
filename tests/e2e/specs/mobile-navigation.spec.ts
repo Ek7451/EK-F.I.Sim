@@ -1,10 +1,82 @@
 import { expect, test } from '@playwright/test';
-import { seed } from './helpers';
+import { go, seed } from './helpers';
 
 test.beforeEach(async ({ page, isMobile }, info) => {
   test.skip(!isMobile && info.project.name !== 'phone');
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   await seed(page);
+});
+
+test('ending-year and start-year choices update the visible result and historical balances', async ({
+  page,
+}) => {
+  await go(page, '/explore/history');
+  const picker = page.locator('[data-tour="history-map"]');
+  const end = picker.getByRole('combobox', { name: 'Full run ending in' });
+  const result = picker.getByRole('status');
+  const chart = page.locator('[data-tour="history-chart"]');
+  const map = picker.getByRole('region', { name: 'Year-by-year investment heat map' });
+  const tiles = map.getByRole('button');
+  await end.selectOption({ label: '2014 (started 1966)' });
+  await expect(tiles).toHaveCount(49);
+  await expect(tiles.first()).toHaveText('1966');
+  await expect(tiles.last()).toHaveText('2014');
+  await chart.getByRole('button', { name: 'Show as table' }).tap();
+  const last = chart.locator('tbody tr').last();
+  await expect(last.getByRole('rowheader')).toHaveText('2014');
+  const balance2014 = await last.locator('td').last().innerText();
+  await expect(result).toContainText(balance2014);
+  const detail = map.locator('.hx-heat-detail');
+  await expect(detail).toContainText(balance2014);
+  const sharedYear = map.getByRole('button', { name: /^2000,/ });
+  const oldBalance = await sharedYear.getAttribute('aria-label');
+  const overlapColors = () =>
+    tiles.evaluateAll((buttons) =>
+      buttons
+        .filter((button) => Number(button.textContent) >= 1972 && Number(button.textContent) <= 2014)
+        .map((button) => getComputedStyle(button).backgroundColor),
+    );
+  const oldColors = await overlapColors();
+  await end.selectOption({ label: '2020 (started 1972)' });
+  await expect(tiles.first()).toHaveText('1972');
+  await expect(tiles.last()).toHaveText('2020');
+  await expect(map.getByRole('button', { name: /^1966,/ })).toHaveCount(0);
+  await expect(sharedYear).not.toHaveAttribute('aria-label', oldBalance!);
+  expect(await overlapColors()).not.toEqual(oldColors);
+  await expect(last.getByRole('rowheader')).toHaveText('2020');
+  await expect(last.locator('td').last()).not.toHaveText(balance2014);
+  await expect(result).toContainText('1972–2020');
+  await expect(result).toContainText(await last.locator('td').last().innerText());
+  await sharedYear.tap();
+  const sharedRow = chart.getByRole('row', { name: /^2000 / });
+  await expect(detail).toContainText(await sharedRow.locator('td').last().innerText());
+  await expect(detail).toContainText(await sharedRow.locator('td').first().innerText());
+  await picker.getByText('Choose by start year', { exact: true }).tap();
+  await picker.getByRole('combobox', { name: 'Historical start year' }).selectOption('2020');
+  await expect(result).toContainText('2020–2025');
+  await expect(result).toContainText('6 of 49 years');
+  await expect(end).toHaveValue('');
+  await expect(chart.locator('tbody tr')).toHaveCount(6);
+  await expect(tiles).toHaveCount(6);
+  await expect(tiles.first()).toHaveText('2020');
+  await expect(tiles.last()).toHaveText('2025');
+  await expect(detail).toContainText('2025');
+});
+
+test('historical mode shows the market rates and reveals additional inputs on request', async ({ page }) => {
+  await go(page, '/plan/assumptions');
+  const rates = page.locator('[data-tour="returns"]');
+  const mode = rates.getByRole('combobox', { name: 'Expected returns' });
+  await mode.selectOption('historicalAverage');
+  await expect(rates.locator('input[type="range"]:visible')).toHaveCount(0);
+  await expect(rates.getByText('9.36%', { exact: true })).toBeVisible();
+  await rates.getByText('Edit additional assumptions', { exact: true }).tap();
+  await rates.getByRole('textbox', { name: 'International stocks return' }).fill('5.25');
+  await expect(rates.getByText('9.36%', { exact: true })).toBeVisible();
+  await expect(mode).toHaveValue('historicalAverage');
+  await mode.selectOption('fixed');
+  await expect(rates.getByRole('textbox', { name: 'International stocks return' })).toHaveValue('5.25');
+  await expect(rates.getByRole('textbox', { name: 'US stocks return' })).toBeVisible();
 });
 
 test('touch details stay inside the Home chart and the bottom navigation accepts the next tap', async ({
@@ -102,9 +174,10 @@ test('Home chart values remain accessible in the full data table', async ({ page
     await plot.focus();
     await page.keyboard.press('End');
     const year = (await detail.locator('strong').first().innerText()).trim();
+    const ages = await detail.locator('.home-year-when span').innerText();
     const values = await detail.locator('.lv-stat-value').allTextContents();
     await card.getByRole('button', { name: 'Show as table' }).tap();
-    const row = card.getByRole('rowheader', { name: year, exact: true }).locator('..');
+    const row = card.getByRole('rowheader', { name: `${year} · ${ages}`, exact: true }).locator('..');
     await expect(row).toHaveCount(1);
     const cells = await row.getByRole('cell').allTextContents();
     expect(cells.length).toBeGreaterThan(0);

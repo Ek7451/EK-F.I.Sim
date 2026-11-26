@@ -598,7 +598,7 @@ export function tooltipCard(
   return [
     `<div style="font-weight:700;font-size:14px;letter-spacing:-0.01em">${esc(t.title)}</div>`,
     t.subtitle
-      ? `<div style="color:${c.ink3};font-size:11px;margin-bottom:6px">${esc(t.subtitle)}</div>`
+      ? `<div style="color:${c.ink3};font-size:11px;margin-bottom:6px;max-width:min(320px,68vw);white-space:normal;overflow-wrap:anywhere">${esc(t.subtitle)}</div>`
       : '<div style="height:6px"></div>',
     `<table style="border-collapse:collapse;font-size:12px">${t.rows.map(row).join('')}`,
     t.total

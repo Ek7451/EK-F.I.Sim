@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../../lib/chartYears';
 import './taxes.css';
 import {
   explainTax,
@@ -215,7 +216,7 @@ export function TaxesPage(): ReactNode {
                 'Tables',
               ],
               rows: recs.map((x) => [
-                x.year,
+                yearWithAges(x),
                 ...PARTS.map((p) => formatMoney(m.flow(x, p.value(x)))),
                 formatMoney(m.flow(x, x.taxes.ptc)),
                 formatPct(x.taxes.effectiveRate, 1),
@@ -237,6 +238,7 @@ export function TaxesPage(): ReactNode {
                   type: 'category',
                   data: recs.map((x) => String(x.year)),
                   ...axis(c),
+                  ...chartYearLabels(c, recs),
                   axisLabel: { show: false },
                   splitLine: { show: false },
                 },
@@ -245,6 +247,7 @@ export function TaxesPage(): ReactNode {
                   gridIndex: 1,
                   data: recs.map((x) => String(x.year)),
                   ...axis(c),
+                  ...chartYearLabels(c, recs),
                   splitLine: { show: false },
                 },
               ],

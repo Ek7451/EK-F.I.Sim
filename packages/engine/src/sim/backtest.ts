@@ -17,6 +17,8 @@ export interface Cohort {
 }
 
 export interface BacktestResult {
+  planStartYear: number;
+  people: { name: string; birthYear: number }[];
   horizon: number;
   cohorts: Cohort[];
   completeCount: number;
@@ -64,6 +66,8 @@ export function runBacktest(c: Compiled, opts: { fromYear?: number; toYear?: num
   const sortedEnd = complete.map((x) => x.endingReal).sort((a, b) => a - b);
   const byWorst = [...complete].sort((a, b) => a.lastedYears - b.lastedYears || a.endingReal - b.endingReal);
   return {
+    planStartYear: c.startYear,
+    people: c.people.map(({ name, birthYear }) => ({ name, birthYear })),
     horizon,
     cohorts,
     completeCount: complete.length,

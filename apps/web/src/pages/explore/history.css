@@ -25,116 +25,89 @@
   margin: 8px 0;
   gap: 6px;
 }
-
-/* The map: a decade to a row, a year to a cell. */
-.hx-map {
-  display: grid;
-  gap: 3px;
-}
-.hx-map-head,
-.hx-map-row {
-  display: grid;
-  grid-template-columns: 44px repeat(10, minmax(0, 1fr));
-  gap: 3px;
-  align-items: center;
-}
-.hx-map-head > span {
-  text-align: center;
-  font: 550 0.625rem / 1 var(--font-ui);
-  color: var(--ink-3);
-}
-.hx-map-decade {
-  font: 550 0.6875rem / 1 var(--font-ui);
-  color: var(--ink-3);
+.hx-picked {
+  margin: 10px 0 4px;
+  padding-left: 10px;
+  border-left: 3px solid var(--dawn-amber);
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
-.hx-cell {
+.hx-picked strong {
   display: block;
-  height: 17px;
-  min-width: 0;
-  padding: 0;
-  border: 1px solid transparent;
-  border-radius: 5px;
-  background: var(--surface-2);
+}
+.hx-start-picker > summary {
   cursor: pointer;
-  transition:
-    transform var(--motion-fast) var(--ease),
-    box-shadow var(--motion-fast) var(--ease);
+  padding: 10px 0;
+  font-size: var(--text-sm);
+  font-weight: 600;
 }
-.hx-cell[data-empty] {
-  background: none;
-  cursor: default;
+
+.hx-heat h3 {
+  margin: 14px 0 2px;
+  font-size: var(--text-sm);
 }
-.hx-cell[data-level='1'],
-.hx-key i[data-level='1'] {
-  background: color-mix(in srgb, var(--primary) 20%, var(--surface));
+.hx-heat-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
 }
-.hx-cell[data-level='2'] {
-  background: color-mix(in srgb, var(--primary) 38%, var(--surface));
+.hx-heat-grid button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 5px;
+  font: inherit;
+  font-size: var(--text-sm);
+  color: var(--ink);
+  background: color-mix(in srgb, var(--primary) var(--heat), var(--surface));
+  cursor: pointer;
 }
-.hx-cell[data-level='3'],
-.hx-key i[data-level='3'] {
-  background: color-mix(in srgb, var(--primary) 56%, var(--surface));
+.hx-heat-grid [data-level='1'] {
+  --heat: 6%;
 }
-.hx-cell[data-level='4'] {
-  background: color-mix(in srgb, var(--primary) 76%, var(--surface));
+.hx-heat-grid [data-level='2'] {
+  --heat: 18%;
 }
-.hx-cell[data-level='5'],
-.hx-key i[data-level='5'] {
-  background: linear-gradient(135deg, var(--primary), var(--primary-2));
+.hx-heat-grid [data-level='3'] {
+  --heat: 30%;
 }
-/* Ran short: a different colour and a hatch, so it does not rest on colour alone. */
-.hx-cell[data-outcome='short'],
-.hx-key i[data-outcome='short'] {
-  background:
-    repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.45) 0 2px, transparent 2px 5px), var(--danger);
+.hx-heat-grid [data-level='4'] {
+  --heat: 42%;
 }
-/* History has not finished these plans yet: an empty, dashed cell. */
-.hx-cell[data-outcome='partial'],
-.hx-key i[data-outcome='partial'] {
-  background: transparent;
-  border: 1px dashed var(--line-strong);
+.hx-heat-grid [data-level='5'] {
+  --heat: 54%;
 }
-button.hx-cell:hover {
-  transform: scale(1.18);
-  box-shadow: var(--shadow-hover);
-  position: relative;
-  z-index: 1;
-}
-button.hx-cell[aria-pressed='true'] {
+.hx-heat-grid [aria-pressed='true'] {
   outline: 2px solid var(--ink);
-  outline-offset: 1px;
-  box-shadow:
-    0 0 0 4px color-mix(in srgb, var(--dawn-amber) 55%, transparent),
-    0 0 14px var(--dawn-amber);
-  position: relative;
-  z-index: 2;
+  outline-offset: -2px;
+  font-weight: 700;
 }
-button.hx-cell:focus-visible {
-  outline: 2px solid var(--focus);
-  outline-offset: 2px;
-  z-index: 3;
-  position: relative;
+.hx-heat-grid button:focus-visible {
+  outline: 3px solid var(--focus);
 }
-.hx-key {
+.hx-heat-key {
+  margin: 6px 0;
   display: flex;
-  flex-wrap: wrap;
-  gap: 4px 14px;
-  margin-top: 8px;
-}
-.hx-key > span {
-  display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: 6px;
 }
-.hx-key i {
-  display: inline-block;
-  width: 14px;
-  height: 10px;
-  border-radius: 3px;
+.hx-heat-key i {
+  width: 72px;
+  height: 8px;
+  background: linear-gradient(
+    to right,
+    color-mix(in srgb, var(--primary) 6%, var(--surface)),
+    color-mix(in srgb, var(--primary) 54%, var(--surface))
+  );
+  border: 1px solid var(--line);
 }
-.hx-key i:last-of-type {
-  margin-right: 3px;
+.hx-heat-detail {
+  display: grid;
+  gap: 2px;
+  font-size: var(--text-sm);
+}
+.hx-heat-detail span {
+  color: var(--ink-2);
+  font-size: var(--text-xs);
 }
 
 /* The selected year in plain words. */
@@ -235,12 +208,5 @@ button.hx-cell:focus-visible {
   .hx-story-facts {
     flex-wrap: wrap;
     gap: 8px 18px;
-  }
-  .hx-map-head,
-  .hx-map-row {
-    grid-template-columns: 40px repeat(10, minmax(0, 1fr));
-  }
-  .hx-cell {
-    height: 24px;
   }
 }
