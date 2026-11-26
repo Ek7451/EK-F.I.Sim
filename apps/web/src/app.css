@@ -307,6 +307,9 @@
   color: var(--ink);
   font-weight: 600;
 }
+.content:empty {
+  min-height: 100svh;
+}
 .content {
   padding: 8px 20px 12px;
   max-width: 1560px;
