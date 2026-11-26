@@ -1709,3 +1709,26 @@ main[tabindex='-1']:focus-visible {
 .moved-home > h1 {
   font-size: 1.6rem;
 }
+@media (max-width: 900px) {
+  .topbar,
+  .content,
+  .bottom-nav,
+  .rail[data-open='true'] {
+    padding-inline-start: max(12px, env(safe-area-inset-left));
+    padding-inline-end: max(12px, env(safe-area-inset-right));
+  }
+  .bottom-nav {
+    padding-inline-start: env(safe-area-inset-left);
+    padding-inline-end: env(safe-area-inset-right);
+  }
+  .topbar,
+  .rail[data-open='true'] {
+    padding-top: env(safe-area-inset-top);
+  }
+  .topbar {
+    height: calc(var(--topbar-h) + env(safe-area-inset-top));
+  }
+  body:has(.rail[data-open='true']) {
+    overflow: hidden;
+  }
+}

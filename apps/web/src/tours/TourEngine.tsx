@@ -322,7 +322,7 @@ function TourLayer({
   const style: React.CSSProperties = phone
     ? sheetTop
       ? {
-          top: 0,
+          top: 'var(--visible-top, 0px)',
           bottom: 'auto',
           borderRadius: '0 0 var(--radius-3) var(--radius-3)',
           paddingTop: 'calc(var(--space-4) + env(safe-area-inset-top))',

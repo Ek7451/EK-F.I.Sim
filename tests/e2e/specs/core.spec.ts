@@ -1,6 +1,6 @@
 /** Core flows (release gate 16): create, edit, reload, offline, export, import, undo, simulate, report. */
 import { expect, test } from '@playwright/test';
-import webPackage from '../../../apps/web/package.json';
+import webPackage from '../../../apps/web/package.json' with { type: 'json' };
 import { go, ROUTES, seed, watchErrors } from './helpers';
 
 test('Settings links the installed version to its changelog and published manifest', async ({ page }) => {
@@ -9,7 +9,9 @@ test('Settings links the installed version to its changelog and published manife
   await expect(versionRow).toContainText(webPackage.version);
   await versionRow.getByRole('link', { name: 'Changelog' }).click();
   await expect(page.getByRole('heading', { level: 1, name: 'Changelog' })).toBeVisible();
-  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText(webPackage.version);
+  await expect(page.locator('main').getByRole('heading', { level: 2 }).first()).toHaveText(
+    webPackage.version,
+  );
   const response = page.waitForResponse((r) => new URL(r.url()).pathname === '/release.json');
   await page.getByRole('link', { name: 'production release manifest' }).click();
   expect(await (await response).json()).toMatchObject({

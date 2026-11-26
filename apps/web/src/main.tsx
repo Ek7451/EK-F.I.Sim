@@ -14,6 +14,26 @@ import { MovedHome } from './pages/MovedHome';
 import { logError } from './state/db';
 import { useStore } from './state/store';
 
+// The keyboard and browser chrome can reduce the visible area without resizing the layout on iOS.
+const viewport = window.visualViewport;
+if (viewport) {
+  const syncViewport = () => {
+    document.documentElement.style.setProperty('--visible-height', `${viewport.height}px`);
+    document.documentElement.style.setProperty('--visible-top', `${viewport.offsetTop}px`);
+  };
+  syncViewport();
+  viewport.addEventListener('resize', syncViewport);
+  viewport.addEventListener('scroll', syncViewport);
+}
+// WebKit also exposes native two-finger page gestures separately from touch-action.
+document.addEventListener(
+  'gesturestart',
+  (event) => {
+    if (matchMedia('(pointer: coarse)').matches) event.preventDefault();
+  },
+  { passive: false },
+);
+
 window.addEventListener('storage', (event) => {
   if (event.key === 'lv-workspace-reset') window.location.reload();
 });

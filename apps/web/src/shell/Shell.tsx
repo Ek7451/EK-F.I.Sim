@@ -37,6 +37,25 @@ export function Shell({
 
   useEffect(() => setMenu(false), [loc.pathname]);
   useEffect(() => {
+    if (!menu) return;
+    const phoneLayout = window.matchMedia('(max-width: 900px)');
+    const closeOnResize = () => {
+      if (!phoneLayout.matches) setMenu(false);
+    };
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenu(false);
+        document.getElementById('mobile-menu-toggle')?.focus();
+      }
+    };
+    phoneLayout.addEventListener('change', closeOnResize);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      phoneLayout.removeEventListener('change', closeOnResize);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [menu]);
+  useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const mod = e.ctrlKey || e.metaKey;
       if (
@@ -71,7 +90,16 @@ export function Shell({
       <a className="lv-btn skip" href="#main">
         Skip to content
       </a>
-      <nav className="rail" aria-label="Main" data-open={menu} data-tour="nav">
+      <nav
+        id="workspace-navigation"
+        className="rail"
+        aria-label="Main"
+        data-open={menu}
+        data-tour="nav"
+        onClick={(e) => {
+          if (menu && e.target instanceof Element && e.target.closest('a')) setMenu(false);
+        }}
+      >
         <div className="rail-head">
           <Link className="brand" to="/" aria-label="Longview Planner home">
             <img src="/icon.svg" alt="" />
@@ -122,7 +150,12 @@ export function Shell({
           <span className="rail-text">Collapse</span>
         </button>
       </nav>
-      <div className="main">
+      <div
+        className="main"
+        ref={(node) => {
+          if (node) node.inert = menu;
+        }}
+      >
         {sandbox ? (
           <div className="sandbox-banner" role="status" data-tour="sandbox-banner">
             <span>
@@ -359,7 +392,13 @@ export function Shell({
           <Icon name="reports" />
           Reports
         </NavLink>
-        <button type="button" aria-expanded={menu} onClick={() => setMenu((v) => !v)}>
+        <button
+          id="mobile-menu-toggle"
+          type="button"
+          aria-controls="workspace-navigation"
+          aria-expanded={menu}
+          onClick={() => setMenu((v) => !v)}
+        >
           <Icon name={menu ? 'close' : 'more'} />
           {menu ? 'Close' : 'More'}
         </button>
