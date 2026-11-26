@@ -724,7 +724,7 @@ export function AssumptionsPage(): ReactNode {
     <>
       <PageHead
         group="plan"
-        title="Assumptions"
+        title="Assumptions and plan settings"
         intro="The outlook the projection uses. The single-path projection uses the expected returns below; simulations vary them."
       />
       <FoldColumns

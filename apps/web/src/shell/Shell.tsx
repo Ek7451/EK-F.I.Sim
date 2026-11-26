@@ -1,15 +1,13 @@
 import { Badge, Button, Icon, Menu, Notice } from '@fisim/ui';
-import { useEffect, useState, type ReactNode } from 'react';
-import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useStore, type Theme } from '../state/store';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Link, NavLink, Outlet, useLocation, useNavigate, useNavigationType } from 'react-router-dom';
+import { useStore } from '../state/store';
 import { tourForRoute } from '../tours/catalog';
 import { useTour } from '../tours/TourEngine';
-import { DISCLAIMER, NAV, PRIMARY_NAV } from './nav';
+import { DISCLAIMER, NAV, PRIMARY_NAV, ownsRoute } from './nav';
 import { useDraft } from '../state/draft';
 import { publicCloud } from '../lib/cloud-account';
 import { AccountButton, AccountDialog } from '../pages/AccountDialog';
-
-const THEMES: Theme[] = ['system', 'light', 'dark'];
 
 export function Shell({
   updateReady,
@@ -27,34 +25,49 @@ export function Shell({
   const saveStatus = useStore((s) => s.saveStatus[s.settings.activePlanId ?? '']);
   const draft = useDraft((s) => s.transaction);
   const { setActive, undo, redo, setSettings, dismissNotice } = useStore.getState();
-  const [menu, setMenu] = useState(false);
+
   const [reloading, setReloading] = useState(false);
   const loc = useLocation();
   const nav = useNavigate();
+  const menu = loc.state?.workspaceMenu === true;
   const tour = useTour();
   const screenTour = tourForRoute(loc.pathname);
   const newer = Object.entries(meta).filter(([, m]) => m.readOnly);
 
-  useEffect(() => setMenu(false), [loc.pathname]);
+  const navigationType = useNavigationType();
+  const previousMenu = useRef(menu);
+  const previousPath = useRef(loc.pathname);
+  useEffect(() => {
+    if (previousPath.current !== loc.pathname && !loc.hash && !loc.search && !sandbox && !tour.activeId) {
+      document.getElementById('main')?.focus({ preventScroll: true });
+      if (navigationType !== 'POP') window.scrollTo({ top: 0, behavior: 'instant' });
+    } else if (previousMenu.current && !menu) {
+      document.getElementById('mobile-menu-toggle')?.focus({ preventScroll: true });
+    }
+    previousPath.current = loc.pathname;
+    previousMenu.current = menu;
+  }, [loc.pathname, loc.hash, loc.search, menu, navigationType, sandbox, tour.activeId]);
   useEffect(() => {
     if (!menu) return;
     const phoneLayout = window.matchMedia('(max-width: 900px)');
+    document.querySelector<HTMLElement>('.rail[data-open="true"] .nav-group:not(.hide-phone) a')?.focus();
     const closeOnResize = () => {
-      if (!phoneLayout.matches) setMenu(false);
+      if (!phoneLayout.matches) nav(-1);
     };
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        setMenu(false);
+        nav(-1);
         document.getElementById('mobile-menu-toggle')?.focus();
       }
     };
+    closeOnResize();
     phoneLayout.addEventListener('change', closeOnResize);
     window.addEventListener('keydown', closeOnEscape);
     return () => {
       phoneLayout.removeEventListener('change', closeOnResize);
       window.removeEventListener('keydown', closeOnEscape);
     };
-  }, [menu]);
+  }, [menu, nav]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       const mod = e.ctrlKey || e.metaKey;
@@ -79,7 +92,6 @@ export function Shell({
     return () => window.removeEventListener('keydown', onKey);
   }, [undo, redo]);
 
-  const nextTheme = THEMES[(THEMES.indexOf(settings.theme) + 1) % THEMES.length];
   const scenarioId = useStore((s) => s.scenarioId);
   const active = sandbox ? sandbox.plan : settings.activePlanId ? plans[settings.activePlanId] : undefined;
   const scenario = scenarioId ? active?.scenarios.find((x) => x.id === scenarioId) : undefined;
@@ -90,18 +102,9 @@ export function Shell({
       <a className="lv-btn skip" href="#main">
         Skip to content
       </a>
-      <nav
-        id="workspace-navigation"
-        className="rail"
-        aria-label="Main"
-        data-open={menu}
-        data-tour="nav"
-        onClick={(e) => {
-          if (menu && e.target instanceof Element && e.target.closest('a')) setMenu(false);
-        }}
-      >
+      <nav id="workspace-navigation" className="rail" aria-label="Main" data-open={menu} data-tour="nav">
         <div className="rail-head">
-          <Link className="brand" to="/" aria-label="Longview Planner home">
+          <Link className="brand" replace={menu} to="/" aria-label="Longview Planner home">
             <img src="/icon.svg" alt="" />
             <span className="rail-text">
               Longview <small>Planner</small>
@@ -110,23 +113,20 @@ export function Shell({
         </div>
         <div className="rail-scroll">
           {PRIMARY_NAV.map((g) => (
-            <div className="nav-group" key={g.id} data-tour={`nav-${g.id}`}>
+            <div
+              className={`nav-group${g.id === 'workspace' ? ' hide-phone' : ''}`}
+              key={g.id}
+              data-tour={`nav-${g.id}`}
+            >
               <h2 className="rail-text">{g.label}</h2>
               <ul>
                 {g.items.map((it) => (
                   <li key={it.to}>
                     <Link
+                      replace={menu}
                       className="nav-link"
                       to={it.to}
-                      aria-current={
-                        (
-                          it.label === 'Plan'
-                            ? /^\/(plan|explore)\//.test(loc.pathname)
-                            : it.to === loc.pathname
-                        )
-                          ? 'page'
-                          : undefined
-                      }
+                      aria-current={ownsRoute(it.to, loc.pathname) ? 'page' : undefined}
                       title={collapsed ? it.label : undefined}
                     >
                       <Icon name={it.icon} size={18} />
@@ -180,7 +180,9 @@ export function Shell({
                 id: p.id,
                 label: p.name,
                 checked: p.id === settings.activePlanId,
-                onSelect: () => setActive(p.id),
+                onSelect: () => {
+                  if (p.id !== active?.id) setActive(p.id);
+                },
               })),
               { id: '__new', label: 'New plan…', icon: 'plus', divider: true, onSelect: () => nav('/start') },
             ]}
@@ -246,13 +248,6 @@ export function Shell({
               disabled={!history?.redo.length || !!sandbox}
               data-tour="redo"
             />
-            <Button
-              variant="ghost"
-              icon={settings.theme === 'dark' ? 'moon' : 'sun'}
-              label={`Theme: ${settings.theme}. Switch to ${nextTheme}`}
-              onClick={() => setSettings({ theme: nextTheme })}
-              data-tour="theme-toggle"
-            />
             {screenTour ? (
               <Button
                 variant="ghost"
@@ -265,49 +260,46 @@ export function Shell({
           </div>
           {publicCloud ? (
             <>
-              <div className="only-phone">
-                <Menu
-                  label="Toolbar actions"
-                  placement="bottom-end"
-                  items={[
-                    ...(history?.undo.length && !sandbox
-                      ? [{ id: 'undo', label: 'Undo', icon: 'undo', onSelect: undo }]
-                      : []),
-                    ...(history?.redo.length && !sandbox
-                      ? [{ id: 'redo', label: 'Redo', icon: 'redo', onSelect: redo }]
-                      : []),
-                    {
-                      id: 'theme',
-                      label: `Theme: ${settings.theme}. Switch to ${nextTheme}`,
-                      icon: 'sun',
-                      onSelect: () => setSettings({ theme: nextTheme }),
-                    },
-                    ...(screenTour
-                      ? [
-                          {
-                            id: 'tour',
-                            label: `Take the tour: ${screenTour.title}`,
-                            icon: 'help',
-                            onSelect: () => tour.start(screenTour.id),
-                          },
-                        ]
-                      : []),
-                  ]}
-                  trigger={({ open: _open, ...props }) => (
-                    <button
-                      {...props}
-                      type="button"
-                      className="lv-btn"
-                      data-variant="ghost"
-                      data-icon=""
-                      aria-label="Toolbar actions"
-                      title="Toolbar actions"
-                    >
-                      <Icon name="more" size={18} />
-                    </button>
-                  )}
-                />
-              </div>
+              {screenTour || history?.undo.length || history?.redo.length ? (
+                <div className="only-phone">
+                  <Menu
+                    label="Editing and help"
+                    placement="bottom-end"
+                    items={[
+                      ...(history?.undo.length && !sandbox
+                        ? [{ id: 'undo', label: 'Undo', icon: 'undo', onSelect: undo }]
+                        : []),
+                      ...(history?.redo.length && !sandbox
+                        ? [{ id: 'redo', label: 'Redo', icon: 'redo', onSelect: redo }]
+                        : []),
+                      ...(screenTour
+                        ? [
+                            {
+                              id: 'tour',
+                              label: `Take the tour: ${screenTour.title}`,
+                              icon: 'help',
+                              onSelect: () => tour.start(screenTour.id),
+                            },
+                          ]
+                        : []),
+                    ]}
+                    trigger={({ open: _open, ...props }) => (
+                      <button
+                        {...props}
+                        type="button"
+                        className="lv-btn"
+                        data-variant="ghost"
+                        data-icon=""
+                        data-tour="editing-help"
+                        aria-label="Editing and help"
+                        title="Editing and help"
+                      >
+                        <Icon name="more" size={18} />
+                      </button>
+                    )}
+                  />
+                </div>
+              ) : null}
               <AccountButton disabled={!!sandbox} />
             </>
           ) : null}
@@ -336,6 +328,14 @@ export function Shell({
               </div>
             </Notice>
           ) : null}
+          {saveStatus === 'error' && (
+            <Notice tone="danger">
+              <span>Saving this plan failed. </span>
+              <Button size="sm" onClick={() => useStore.getState().retrySave()}>
+                Retry saving
+              </Button>
+            </Notice>
+          )}
           {newer.map(([id, m]) => (
             <Notice key={id} tone="warn">
               {m.validationError
@@ -381,36 +381,31 @@ export function Shell({
         </footer>
       </div>
       <nav className="bottom-nav" aria-label="Main (phone)" data-tour="bottom-nav">
-        <NavLink to="/" end>
-          <Icon name="home" />
-          Home
-        </NavLink>
-        <NavLink
-          to="/explore/projection"
-          className={() => ''}
-          aria-current={/^\/(plan|explore)\//.test(loc.pathname) ? 'page' : undefined}
-        >
-          <Icon name="projection" />
-          Plan
-        </NavLink>
-        <NavLink to="/compare">
-          <Icon name="compare" />
-          Compare
-        </NavLink>
-        <NavLink to="/track">
-          <Icon name="progress" />
-          Progress
-        </NavLink>
-        <NavLink to="/reports">
-          <Icon name="reports" />
-          Reports
-        </NavLink>
+        {PRIMARY_NAV[0].items.map((it) => (
+          <Link
+            key={it.to}
+            to={it.to}
+            aria-current={ownsRoute(it.to, loc.pathname) ? 'page' : undefined}
+            replace={menu}
+          >
+            <Icon name={it.icon} />
+            {it.label}
+          </Link>
+        ))}
         <button
           id="mobile-menu-toggle"
           type="button"
+          data-current={PRIMARY_NAV[1].items.some((it) => ownsRoute(it.to, loc.pathname)) || undefined}
           aria-controls="workspace-navigation"
           aria-expanded={menu}
-          onClick={() => setMenu((v) => !v)}
+          onClick={() =>
+            menu
+              ? nav(-1)
+              : nav(loc.pathname + loc.search + loc.hash, {
+                  state: { ...loc.state, workspaceMenu: true },
+                  preventScrollReset: true,
+                })
+          }
         >
           <Icon name={menu ? 'close' : 'more'} />
           {menu ? 'Close' : 'More'}
@@ -436,6 +431,7 @@ export function Shell({
 
 /** Where a route sits in the navigation, for the top bar ("Explore › Projection"). */
 function breadcrumb(path: string): { group: string; page: string } | null {
+  if (path === '/plan') return { group: 'Workspace', page: 'Edit plan' };
   for (const g of NAV)
     for (const it of g.items)
       if (it.to === path || (it.to !== '/' && path.startsWith(it.to + '/')))
@@ -446,18 +442,39 @@ function breadcrumb(path: string): { group: string; page: string } | null {
 /** Secondary navigation between the screens of one task group (also the phone's way around a group). */
 export function SubNav({ group }: { group: 'plan' | 'explore' }): ReactNode {
   const g = NAV.find((x) => x.id === group)!;
+  const loc = useLocation();
+  const navigate = useNavigate();
   return (
-    <nav className="subnav lv-segmented" aria-label={`${g.label} screens`} data-tour={`subnav-${group}`}>
-      {g.items.map((it) => (
-        <NavLink key={it.to} to={it.to}>
-          <Icon name={it.icon} size={15} />
-          {it.label}
-        </NavLink>
-      ))}
-      <NavLink to={group === 'explore' ? '/plan/household' : '/explore/projection'}>
-        {group === 'explore' ? 'Plan inputs' : '← Projection'}
-      </NavLink>
-    </nav>
+    <>
+      <nav
+        className="subnav lv-segmented hide-phone"
+        aria-label={`${g.label} screens`}
+        data-tour={`subnav-${group}`}
+      >
+        {g.items.map((it) => (
+          <NavLink key={it.to} to={it.to}>
+            <Icon name={it.icon} size={15} />
+            {it.label}
+          </NavLink>
+        ))}
+      </nav>
+      {group === 'plan' ? (
+        <Link className="all-inputs" to="/plan">
+          All plan inputs
+        </Link>
+      ) : (
+        <label className="results-picker only-phone">
+          Results pages
+          <select value={loc.pathname} onChange={(e) => navigate(e.target.value)}>
+            {g.items.map((it) => (
+              <option key={it.to} value={it.to}>
+                {it.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
+    </>
   );
 }
 
@@ -520,13 +537,11 @@ export function PageHead({
   useEffect(() => {
     document.title = `${title} · Longview Planner`;
   }, [title]);
-  // Inside a task group the active pill and the breadcrumb already name the screen, so the row carries the
-  // screen switcher, the one-line description and the actions; the heading stays for assistive tech.
   return (
     <div className="page-head" data-group={group}>
       {group ? <SubNav group={group} /> : null}
       <div className="page-title">
-        <h1 className={group ? 'lv-sr' : undefined}>{title}</h1>
+        <h1>{title}</h1>
         {intro ? <p title={intro}>{intro}</p> : null}
       </div>
       {actions ? <div className="lv-row page-actions">{actions}</div> : null}

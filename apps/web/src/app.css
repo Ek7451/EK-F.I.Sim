@@ -1157,7 +1157,7 @@
   }
   .bottom-nav {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
     position: fixed;
     left: 0;
     right: 0;
@@ -1182,6 +1182,7 @@
     background: none;
   }
   .bottom-nav [aria-current='page'],
+  .bottom-nav [data-current='true'],
   .bottom-nav [aria-expanded='true'] {
     color: var(--primary);
     position: relative;
@@ -1762,5 +1763,82 @@ main[tabindex='-1']:focus-visible {
   }
   .lv-dialog .draft-bar {
     bottom: 0;
+  }
+}
+
+.plan-directory {
+  display: grid;
+  width: min(100%, 48rem);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-3);
+  background: var(--surface);
+}
+.plan-directory a {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  padding: 14px 18px;
+  color: var(--ink);
+  text-decoration: none;
+}
+.plan-directory a + a {
+  border-top: 1px solid var(--line);
+}
+.plan-directory a:hover,
+.plan-directory a:focus-visible {
+  background: var(--primary-soft);
+}
+.plan-directory a span {
+  flex: 1;
+}
+.plan-directory small {
+  display: block;
+  color: var(--ink-2);
+}
+.all-inputs,
+.results-picker,
+.chart-options summary {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  min-height: 44px;
+}
+.chart-options summary {
+  cursor: pointer;
+  text-decoration: underline;
+}
+.results-picker select {
+  padding-inline: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-2);
+  font: inherit;
+  background: var(--surface);
+  color: var(--ink);
+  min-height: 44px;
+}
+.page-title > h1 {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  flex-shrink: 1;
+}
+.page-head[data-group] > .page-title {
+  min-width: min(100%, 12rem);
+}
+@media (max-width: 900px) {
+  .page-head[data-group] > .page-title {
+    order: -1;
+  }
+
+  .bottom-nav button {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 900px) {
+  .rail[data-open='true'] .nav-link {
+    min-height: 44px;
+  }
+  .rail[data-open='true'] .nav-group {
+    margin-top: 0;
   }
 }

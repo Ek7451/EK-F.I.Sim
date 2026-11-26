@@ -14,7 +14,7 @@ test('retirement draft: discard, scenario, one-step undo, reload', async ({ page
   const stats = page.locator('[data-tour="projection-stats"]');
   await expect(stats).toContainText('$');
   const before = (await stats.textContent())!;
-  await page.getByRole('button', { name: 'Edit plan', exact: true }).click();
+  await page.locator('main .page-head').getByRole('button', { name: 'Preview changes', exact: true }).click();
   const age = page.getByLabel('Exact age');
   await expect(age).toHaveValue('50');
   await age.fill('51');
@@ -39,7 +39,7 @@ test('retirement draft: discard, scenario, one-step undo, reload', async ({ page
   await expect(age).toHaveValue('51');
   await expect(page.locator('.save-status')).toHaveText('Saved on device');
   await page.reload();
-  await page.getByRole('button', { name: 'Edit plan', exact: true }).click();
+  await page.locator('main .page-head').getByRole('button', { name: 'Preview changes', exact: true }).click();
   await expect(page.getByLabel('Exact age')).toHaveValue('51');
   await go(page, '/compare');
   await expect(page.getByLabel('Second')).toContainText('Retire at 51');
@@ -61,7 +61,7 @@ test('year stays pinned across analyses and invalid draft input stays local', as
     await expect(page.getByRole('slider', { name: 'Year', exact: true })).toHaveValue(selected);
   }
   await go(page, '/explore/projection');
-  await page.getByRole('button', { name: 'Edit plan', exact: true }).click();
+  await page.locator('main .page-head').getByRole('button', { name: 'Preview changes', exact: true }).click();
   const age = page.getByLabel('Exact age');
   await age.fill('');
   await expect(age).toHaveValue('');
@@ -94,7 +94,7 @@ test('drag cancellation restores the pre-gesture draft; keyboard move can be und
 
 test('phone editor preserves unsaved work and returns focus when closed', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  const edit = page.getByRole('button', { name: 'Edit plan', exact: true });
+  const edit = page.locator('main .page-head').getByRole('button', { name: 'Preview changes', exact: true });
   await edit.click();
   const dialog = page.getByRole('dialog', { name: 'Plan details' });
   await expect(dialog).toBeVisible();
@@ -105,4 +105,28 @@ test('phone editor preserves unsaved work and returns focus when closed', async 
   await page.getByRole('button', { name: 'Discard', exact: true }).click();
   await edit.click();
   await expect(dialog.getByLabel('Exact age')).toHaveValue('50');
+});
+
+test('browsing inputs preserves a preview and a direct edit cannot invalidate it', async ({ page }) => {
+  await page.locator('[data-tour="edit-plan"]').click();
+  await page.getByLabel('Exact age').fill('52');
+  await go(page, '/plan');
+  await page
+    .getByRole('navigation', { name: 'Plan inputs' })
+    .getByRole('link', { name: /^Income/ })
+    .click();
+  await page
+    .getByRole('main')
+    .getByRole('button', { name: /^Edit / })
+    .first()
+    .click();
+  const field = page.getByRole('dialog').getByRole('textbox').first();
+  await field.fill('Pending edit');
+
+  await expect(page.getByRole('heading', { level: 1 })).toHaveText('Finish your preview');
+  await page.getByRole('link', { name: 'Review draft' }).click();
+  await expect(page.getByRole('region', { name: 'Draft changes' })).toContainText('age 52');
+  await page.getByRole('button', { name: 'Discard', exact: true }).click();
+  await go(page, '/plan/income');
+  await expect(page.getByText('Pending edit', { exact: true })).toHaveCount(0);
 });

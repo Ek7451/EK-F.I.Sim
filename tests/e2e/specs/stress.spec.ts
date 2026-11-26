@@ -72,7 +72,7 @@ test('single worker: simulation cancellation and warm input-to-paint profile', a
   const stop = page.getByRole('button', { name: 'Stop', exact: true });
   if (await stop.isVisible()) await stop.click();
   await go(page, '/explore/projection');
-  await page.getByRole('button', { name: 'Edit plan', exact: true }).click();
+  await page.locator('main .page-head').getByRole('button', { name: 'Preview changes', exact: true }).click();
   const age = page.getByLabel('Exact age');
   await age.fill('51');
   await expect(page.getByRole('button', { name: 'Apply to plan' })).toBeEnabled();

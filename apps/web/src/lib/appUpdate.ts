@@ -10,13 +10,13 @@
 
 /** Activate the waiting version and reload onto it. */
 export async function applyUpdate(): Promise<void> {
-  const [{ flushLocalWrites, useStore }, { useDraft }] = await Promise.all([
+  const [{ flushLocalWrites, useStore }, { hasPendingDrafts }] = await Promise.all([
     import('../state/store'),
     import('../state/draft'),
   ]);
   const ready = () =>
     useStore.getState().ready &&
-    !useDraft.getState().transaction &&
+    !hasPendingDrafts() &&
     !document.querySelector(
       '[aria-modal="true"],dialog[open],.acct-code,form.acct-form,[aria-label="Review plan import"]',
     );

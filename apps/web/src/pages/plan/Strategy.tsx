@@ -280,7 +280,7 @@ export function StrategyPage(): ReactNode {
     <>
       <PageHead
         group="plan"
-        title="Strategy"
+        title="Saving and withdrawal strategy"
         intro="The rules the plan follows each year: where spare money goes, where spending money comes from, and how taxes and subsidies are managed along the way."
       />
 

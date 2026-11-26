@@ -30,6 +30,24 @@ describe('planning transactions', () => {
       const m = p.milestones.find((x) => x.kind === 'retirement');
       if (m?.when.type === 'age') m.when.age = age;
     });
+  it('keeps pending previews isolated across plan switches, including plans with the same milestone IDs', () => {
+    const first = base();
+    const second = { ...structuredClone(first), id: 'second-plan' };
+    useStore.setState({ plans: { [first.id]: first, [second.id]: second } });
+    change(51);
+    const firstDraft = useDraft.getState().transaction;
+    useStore.getState().setActive(second.id);
+    expect(useDraft.getState().transaction).toBeNull();
+    change(58);
+    const secondDraft = useDraft.getState().transaction;
+    useStore.getState().setActive(first.id);
+    expect(useDraft.getState().transaction).toBe(firstDraft);
+    useDraft.getState().discard();
+    useStore.getState().setActive(second.id);
+    expect(useDraft.getState().transaction).toBe(secondDraft);
+    useDraft.getState().discard();
+  });
+
   it('many previews leave the baseline untouched, then apply as exactly one undo step', () => {
     const original = base();
     for (const age of [51, 52, 54, 51]) change(age);

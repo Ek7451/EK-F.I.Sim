@@ -968,7 +968,7 @@ export function SettingsPage(): ReactNode {
   return (
     <>
       <PageHead
-        title="Settings"
+        title="App settings"
         intro={
           publicCloud
             ? 'Your account, plans, backups and this device.'
