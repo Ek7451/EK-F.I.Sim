@@ -45,9 +45,9 @@ The v1.0 gate is **not met**. The open items are listed under "Release gate" bel
 | Accessibility                                             | Automated checks met. A manual screen-reader audit has **not** been done.                                           |
 | Performance budgets on both reference devices             | Lighthouse budgets met under simulated throttling. The physical reference phones were **not** measured.             |
 | Security review                                           | Runbook written (`runbooks/security-review.md`); the review itself has **not** been carried out.                    |
-| Sync deployed and restore drill run                       | **Not done.** Nothing has been deployed. The sync Worker and client have only been tested separately.               |
+| Sync deployed and restore drill run                       | The existing production site serves the account API. A schema 3 production restore drill is outstanding.            |
 | Usability check with a new user (T-B01 to T-B05)          | **Not done.**                                                                                                       |
-| CI green                                                  | CI runs on pull requests. Playwright and Lighthouse are run locally, not in CI.                                     |
+| CI green                                                  | Pull requests run the build and desktop browser smoke suite. The full device matrix and Lighthouse run locally.     |
 
 ## November 2026 accuracy review
 

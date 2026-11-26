@@ -53,13 +53,16 @@ it('keeps edits made during an upload dirty and preserves their current local co
   });
   let release = () => {};
   let uploading = false;
+  let remoteSchema: number = plan.schemaVersion;
   let count = 0;
   vi.stubGlobal(
     'fetch',
     vi.fn(async (url: string, init: RequestInit) => {
       if (url.endsWith(`/plans/${plan.id}`)) {
         if (init.method === 'GET')
-          return new Response(JSON.stringify(plan), { headers: { 'X-Plan-Version': String(count) } });
+          return new Response(JSON.stringify({ ...plan, schemaVersion: remoteSchema }), {
+            headers: { 'X-Plan-Version': String(count) },
+          });
         if (++count === 1) {
           uploading = true;
           await new Promise<void>((resolve) => {
@@ -90,6 +93,21 @@ it('keeps edits made during an upload dirty and preserves their current local co
   );
   await syncNow(true);
   expect(useStore.getState().meta[plan.id]).toMatchObject({ syncVersion: 2, dirty: false });
+  remoteSchema = 999;
+  await expect(
+    resolveConflict(
+      {
+        planId: plan.id,
+        planName: plan.name,
+        serverVersion: 2,
+        serverUpdatedAt: plan.updatedAt,
+        deletedOnServer: false,
+      },
+      'mine',
+    ),
+  ).rejects.toThrow('newer schema');
+  expect(count).toBe(2);
+  remoteSchema = plan.schemaVersion;
   await resolveConflict(
     {
       planId: plan.id,

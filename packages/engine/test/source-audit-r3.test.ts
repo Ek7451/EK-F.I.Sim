@@ -82,6 +82,51 @@ describe('R3 input and result integrity', () => {
 });
 
 describe('R3 decision metrics', () => {
+  it('N29 prices six explicitly insured months at the annual income percentage', () => {
+    const p = PlanZ.parse({
+      id: 'months',
+      name: 'Monthly credit',
+      schemaVersion: 3,
+      createdAt: '2026-01-01',
+      updatedAt: '2026-01-01',
+      settings: { startYear: 2026 },
+      people: [
+        {
+          id: 'p',
+          name: 'A',
+          birthDate: '2005-01-02',
+          residence: [{ state: 'TX', fromYear: 2026 }],
+          socialSecurity: { mode: 'none' },
+          longevity: { age: 50 },
+        },
+      ],
+      incomes: [
+        { id: 'job', name: 'Wages', ownerId: 'p', kind: 'wages', taxCharacter: 'earned', amount: 3130000 },
+      ],
+      healthcare: {
+        slcspOverrideAge21Monthly: 50000,
+        people: [
+          {
+            personId: 'p',
+            coverage: [
+              { from: { type: 'year', year: 2026 }, type: 'none' },
+              { from: { type: 'year', year: 2026 }, effectiveMonth: 7, type: 'aca', metal: 'silver' },
+            ],
+          },
+        ],
+      },
+    });
+    const first = projectCompiled(compilePlan(p, data)).records[0];
+    expect(first.coverageMonths[0].map((m) => [m.type, m.months])).toEqual([
+      ['none', 6],
+      ['aca', 6],
+    ]);
+    expect(first.expenses.healthcare.premiums).toBeCloseTo(3000, 2);
+    // A household of one at 200% of the 2025 poverty guideline owes 6.60% of MAGI in 2026.
+    expect(first.taxes.ptc).toBeCloseTo(6 * (500 - (31300 * 0.066) / 12), 2);
+    p.healthcare.people[0].coverage[1].subsidyEligible = false;
+    expect(projectCompiled(compilePlan(p, data)).records[0].taxes.ptc).toBe(0);
+  });
   it('F09 stock shock shifts all three effective stock classes in both assumption modes', () => {
     for (const mode of ['fixed', 'historicalAverage'] as const) {
       const p = sampleBasic(2026);
