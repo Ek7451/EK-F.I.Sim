@@ -333,3 +333,13 @@ body:has(.draft-bar) .tour-prompt {
     display: none !important;
   }
 }
+.tour-card {
+  max-height: calc(var(--visible-height, 100dvh) - 24px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.tour-card[data-sheet='true'] {
+  max-height: var(--visible-height, 100dvh);
+  bottom: max(0px, calc(100dvh - var(--visible-top, 0px) - var(--visible-height, 100dvh)));
+  padding-inline: max(16px, env(safe-area-inset-left)) max(16px, env(safe-area-inset-right));
+}

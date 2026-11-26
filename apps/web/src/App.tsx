@@ -39,6 +39,7 @@ const ReportsPage = page(() => import('./pages/analysis/Reports'), 'ReportsPage'
 const ToursPage = page(help, 'ToursPage');
 const MethodsPage = page(help, 'MethodsPage');
 const SettingsPage = page(help, 'SettingsPage');
+const ChangelogPage = lazy(() => import('./pages/Changelog'));
 
 /** Screens that need a plan send a first-time visitor to the setup wizard. */
 function RequirePlan(): ReactNode {
@@ -141,6 +142,7 @@ export function App({
               <Route path="/help/tours" element={<ToursPage />} />
               <Route path="/help/methods" element={<MethodsPage />} />
               <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/changelog" element={<ChangelogPage />} />
               <Route element={<RequirePlan />}>
                 <Route path="/" element={<HomePage />} />
                 <Route path="/plan/household" element={<HouseholdPage />} />

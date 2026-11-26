@@ -6,6 +6,7 @@ import {
   flip,
   offset,
   shift,
+  size,
   safePolygon,
   useClick,
   useDismiss,
@@ -27,6 +28,22 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
+
+/** Keep anchored panels inside the visible viewport, including short landscape layouts. */
+function floatingBounds(gap: number) {
+  const padding = 12;
+  return [
+    offset(gap),
+    flip({ padding }),
+    shift({ padding, crossAxis: true }),
+    size({
+      padding,
+      apply({ availableHeight, elements }) {
+        elements.floating.style.setProperty('--floating-height', `${Math.max(0, availableHeight)}px`);
+      },
+    }),
+  ];
+}
 
 // ------------------------------------------------------------------ formatting
 
@@ -442,7 +459,8 @@ export function HelpTip({
     onOpenChange: setOpen,
     placement,
     whileElementsMounted: autoUpdate,
-    middleware: [offset(6), flip(), shift({ padding: 12 })],
+    strategy: 'fixed',
+    middleware: floatingBounds(6),
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     useHover(context, { delay: { open: 120, close: 60 }, handleClose: safePolygon() }),
@@ -965,7 +983,8 @@ export function Menu({
     onOpenChange: setOpen,
     placement,
     whileElementsMounted: autoUpdate,
-    middleware: [offset(6), flip(), shift({ padding: 12 })],
+    strategy: 'fixed',
+    middleware: floatingBounds(6),
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     useClick(context),
@@ -1058,11 +1077,10 @@ export function Dialog({
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         ) ?? [],
       ).filter((x) => !x.hasAttribute('disabled') && x.getClientRects().length > 0);
-    (
-      focusables().find((x) => x.tagName === 'INPUT' || x.tagName === 'SELECT') ??
-      focusables()[0] ??
-      el
-    )?.focus();
+    const initialFocus = matchMedia('(pointer: coarse)').matches
+      ? el
+      : (focusables().find((x) => x.tagName === 'INPUT' || x.tagName === 'SELECT') ?? focusables()[0] ?? el);
+    initialFocus?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
         e.stopPropagation();
@@ -1143,7 +1161,8 @@ export function Popover({
     onOpenChange: setOpen,
     placement,
     whileElementsMounted: autoUpdate,
-    middleware: [offset(8), flip(), shift({ padding: 12 })],
+    strategy: 'fixed',
+    middleware: floatingBounds(8),
   });
   const { getReferenceProps, getFloatingProps } = useInteractions([
     useClick(context),
