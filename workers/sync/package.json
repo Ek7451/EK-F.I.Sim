@@ -16,7 +16,7 @@
     "wrangler": "^4.161.0"
   },
   "dependencies": {
-    "better-auth": "1.7.22",
+    "better-auth": "1.7.26",
     "kysely": "^0.29.9",
     "kysely-d1": "^0.4.0"
   }
