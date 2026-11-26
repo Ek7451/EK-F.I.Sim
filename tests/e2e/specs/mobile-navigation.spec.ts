@@ -91,3 +91,24 @@ test('edit income, find HSA use and navigate results and More by their visible l
     .tap();
   await expect(main.getByRole('heading', { name: 'App settings', exact: true })).toBeVisible();
 });
+
+test('Home chart values remain accessible in the full data table', async ({ page }) => {
+  const card = page.locator('[data-tour="home-chart"]');
+  const detail = card.locator('[data-tour="home-year"]');
+  for (const name of ['Net worth', 'Accounts', 'Cash flow', 'Spending', 'Taxes']) {
+    await card.getByRole('button', { name, exact: true }).tap();
+    const plot = card.getByRole('img');
+    await expect(plot.locator('canvas')).toBeVisible();
+    await plot.focus();
+    await page.keyboard.press('End');
+    const year = (await detail.locator('strong').first().innerText()).trim();
+    const values = await detail.locator('.lv-stat-value').allTextContents();
+    await card.getByRole('button', { name: 'Show as table' }).tap();
+    const row = card.getByRole('rowheader', { name: year, exact: true }).locator('..');
+    await expect(row).toHaveCount(1);
+    const cells = await row.getByRole('cell').allTextContents();
+    expect(cells.length).toBeGreaterThan(0);
+    expect(cells).toEqual(values.slice(0, cells.length));
+    await card.getByRole('button', { name: 'Show chart' }).tap();
+  }
+});
