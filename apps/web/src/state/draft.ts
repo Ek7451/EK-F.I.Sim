@@ -117,6 +117,28 @@ export const useDraft = create<DraftState>((set, get) => ({
   },
 }));
 
+// Direct links, Settings and the plan switcher can all change the active plan.
+// Keep each unapplied preview tied to the exact saved revision it was based on.
+const inactiveDrafts = new Map<string, DraftTransaction>();
+useStore.subscribe((state, previous) => {
+  if (state.plans !== previous.plans) {
+    for (const id of inactiveDrafts.keys()) if (!state.plans[id]) inactiveDrafts.delete(id);
+  }
+  const next = state.settings.activePlanId;
+  const old = previous.settings.activePlanId;
+  if (next === old || state.sandbox || previous.sandbox) return;
+  const current = useDraft.getState();
+  if (old && current.transaction?.base.id === old && state.plans[old])
+    inactiveDrafts.set(old, current.transaction);
+  const restored = next ? inactiveDrafts.get(next) : undefined;
+  if (next) inactiveDrafts.delete(next);
+  useDraft.setState({ transaction: restored ?? null, invalidFields: {}, resetId: current.resetId + 1 });
+});
+
+export function hasPendingDrafts(): boolean {
+  return !!useDraft.getState().transaction || inactiveDrafts.size > 0;
+}
+
 export function usePreviewPlan(): Plan | null {
   const base = usePlan();
   const scenario = useStore((s) => s.scenarioId);

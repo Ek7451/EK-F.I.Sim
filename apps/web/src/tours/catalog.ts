@@ -50,7 +50,7 @@ export const TOURS: TourDef[] = [
     samplePlan: 'sample-basic',
     prerequisites: [],
     featureIds: ['UX-01', 'UX-08', 'UX-10', 'SYNC-01'],
-    summary: 'The Overview, moving between screens, switching plans and themes, and where your data lives.',
+    summary: 'The overview, plan inputs, switching plans and where your data lives.',
     steps: [
       s(
         HOME,
@@ -69,14 +69,14 @@ export const TOURS: TourDef[] = [
         HOME,
         'home-views',
         'Five charts, one card',
-        'Switch between net worth, accounts, cash flow, spending and taxes. Hover the chart and the strip under it reads out that year.',
+        'Switch between net worth, accounts, cash flow, spending and taxes. Tap a year or point to it to read its values in the chart card.',
         { placement: 'bottom', ...tryIt('click', 'Try it: choose Cash flow.') },
       ),
       s(
         HOME,
         'nav|bottom-nav',
         'Getting around',
-        'Overview sums up the plan. Plan holds the projection and your inputs. Compare tries what-ifs, Progress logs real balances and Reports exports.',
+        'Edit plan opens your inputs. Results opens the projection and other analyses. Compare explores scenarios. On phones, More opens Progress, Reports and App settings.',
         { placement: 'right' },
       ),
       s(
@@ -88,10 +88,10 @@ export const TOURS: TourDef[] = [
       ),
       s(
         HOME,
-        'theme-toggle',
-        'Light or dark',
-        "This button cycles between your device's setting, light and dark.",
-        { placement: 'bottom', ...tryIt('click', 'Try it: press the theme button.') },
+        'home-edit-plan',
+        'Edit your plan',
+        'Open the directory to find household details, income, spending, healthcare, withdrawal strategy and assumptions.',
+        { placement: 'bottom' },
       ),
       s(
         HOME,
@@ -102,7 +102,7 @@ export const TOURS: TourDef[] = [
       ),
       s(
         HOME,
-        'screen-tour',
+        'screen-tour|editing-help',
         'Help on every screen',
         'This button starts the tour for the screen you are on. Every tour is listed under Help.',
         { placement: 'bottom' },
@@ -292,8 +292,8 @@ export const TOURS: TourDef[] = [
         PROJ,
         'what-if-sliders|edit-plan',
         'Try a change',
-        'Edit plan opens sliders beside the chart. A change stays a draft until you apply it, save it as a scenario or discard it.',
-        { placement: 'bottom', ...tryIt('click', 'Try it: press Edit plan.') },
+        'Preview changes opens sliders beside the chart. A change stays a draft until you apply it, save it as a scenario or discard it.',
+        { placement: 'bottom', ...tryIt('click', 'Try it: press Preview changes.') },
       ),
       s(
         CASH,

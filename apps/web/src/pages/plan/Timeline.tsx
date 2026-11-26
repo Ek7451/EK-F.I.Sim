@@ -462,7 +462,7 @@ export function TimelinePage(): ReactNode {
     <>
       <PageHead
         group="plan"
-        title="Timeline"
+        title="Timeline and milestones"
         intro="Milestones are the turning points of the plan. Income, spending and coverage can start or stop at a milestone, so moving one moves everything tied to it."
         actions={
           <Button

@@ -53,3 +53,62 @@ test('touch details stay inside the Home chart and the bottom navigation accepts
   await nav.getByRole('link', { name: 'Compare' }).tap();
   await expect(page).toHaveURL(/\/compare$/);
 });
+
+test('edit income, find HSA use and navigate results and More by their visible labels', async ({ page }) => {
+  const main = page.getByRole('main');
+  const tabs = page.getByRole('navigation', { name: 'Main (phone)' });
+  await main.getByRole('link', { name: 'Edit plan', exact: true }).tap();
+  const directory = main.getByRole('navigation', { name: 'Plan inputs' });
+  await expect(directory.getByRole('link')).toHaveCount(8);
+  await directory.getByRole('link', { name: /^Income/ }).tap();
+  await main
+    .getByRole('button', { name: /^Edit / })
+    .first()
+    .tap();
+  await expect(page.getByRole('dialog')).toBeVisible();
+  await page.getByRole('dialog').getByRole('button', { name: 'Close', exact: true }).tap();
+  await main.getByRole('link', { name: 'All plan inputs' }).tap();
+  await directory.getByRole('link', { name: /^Saving and withdrawal strategy/ }).tap();
+  await expect(page).toHaveURL(/\/plan\/strategy$/);
+  await expect(main.getByRole('button', { name: 'Pay medical bills', exact: true })).toBeVisible();
+  await tabs.getByRole('link', { name: 'Results' }).tap();
+  await main.getByLabel('Results pages').selectOption('/explore/taxes');
+  await expect(main.getByRole('heading', { name: 'Taxes', exact: true })).toBeVisible();
+  const more = tabs.getByRole('button', { name: 'More' });
+  await more.tap();
+  await page.goBack();
+  await expect(more).toHaveAttribute('aria-expanded', 'false');
+  await more.tap();
+  await page
+    .getByRole('navigation', { name: 'Main', exact: true })
+    .getByRole('link', { name: 'Reports' })
+    .tap();
+  await expect(page).toHaveURL(/\/reports$/);
+  await more.tap();
+  await page
+    .getByRole('navigation', { name: 'Main', exact: true })
+    .getByRole('link', { name: 'App settings' })
+    .tap();
+  await expect(main.getByRole('heading', { name: 'App settings', exact: true })).toBeVisible();
+});
+
+test('Home chart values remain accessible in the full data table', async ({ page }) => {
+  const card = page.locator('[data-tour="home-chart"]');
+  const detail = card.locator('[data-tour="home-year"]');
+  for (const name of ['Net worth', 'Accounts', 'Cash flow', 'Spending', 'Taxes']) {
+    await card.getByRole('button', { name, exact: true }).tap();
+    const plot = card.getByRole('img');
+    await expect(plot.locator('canvas')).toBeVisible();
+    await plot.focus();
+    await page.keyboard.press('End');
+    const year = (await detail.locator('strong').first().innerText()).trim();
+    const values = await detail.locator('.lv-stat-value').allTextContents();
+    await card.getByRole('button', { name: 'Show as table' }).tap();
+    const row = card.getByRole('rowheader', { name: year, exact: true }).locator('..');
+    await expect(row).toHaveCount(1);
+    const cells = await row.getByRole('cell').allTextContents();
+    expect(cells.length).toBeGreaterThan(0);
+    expect(cells).toEqual(values.slice(0, cells.length));
+    await card.getByRole('button', { name: 'Show chart' }).tap();
+  }
+});

@@ -2,6 +2,7 @@ export interface NavItem {
   to: string;
   label: string;
   icon: string;
+  description?: string;
 }
 export interface NavGroup {
   id: string;
@@ -15,19 +16,20 @@ export const PRIMARY_NAV: NavGroup[] = [
     id: 'workspace',
     label: 'Workspace',
     items: [
-      { to: '/', label: 'Overview', icon: 'home' },
-      { to: '/explore/projection', label: 'Plan', icon: 'projection' },
+      { to: '/', label: 'Home', icon: 'home' },
+      { to: '/plan', label: 'Edit plan', icon: 'edit' },
+      { to: '/explore/projection', label: 'Results', icon: 'projection' },
       { to: '/compare', label: 'Compare', icon: 'compare' },
-      { to: '/track', label: 'Progress', icon: 'progress' },
-      { to: '/reports', label: 'Reports', icon: 'reports' },
     ],
   },
   {
     id: 'more',
-    label: 'Support',
+    label: 'More',
     items: [
+      { to: '/track', label: 'Progress', icon: 'progress' },
+      { to: '/reports', label: 'Reports', icon: 'reports' },
+      { to: '/settings', label: 'App settings', icon: 'settings' },
       { to: '/help/tours', label: 'Help', icon: 'help' },
-      { to: '/settings', label: 'Settings', icon: 'settings' },
     ],
   },
 ];
@@ -39,19 +41,49 @@ export const NAV: NavGroup[] = [
     id: 'plan',
     label: 'Plan inputs',
     items: [
-      { to: '/plan/household', label: 'Household', icon: 'household' },
-      { to: '/plan/snapshot', label: 'What you have', icon: 'wallet' },
-      { to: '/plan/income', label: 'Income', icon: 'income' },
-      { to: '/plan/spending', label: 'Spending', icon: 'spending' },
-      { to: '/plan/timeline', label: 'Timeline', icon: 'timeline' },
-      { to: '/plan/strategy', label: 'Strategy', icon: 'strategy' },
-      { to: '/plan/healthcare', label: 'Healthcare', icon: 'health' },
-      { to: '/plan/assumptions', label: 'Assumptions', icon: 'assumptions' },
+      {
+        to: '/plan/household',
+        label: 'Household',
+        description: 'People, residence, filing status and Social Security',
+        icon: 'household',
+      },
+      {
+        to: '/plan/snapshot',
+        label: 'Accounts, assets and debts',
+        description: 'Balances, property, loans and contributions',
+        icon: 'wallet',
+      },
+      { to: '/plan/income', label: 'Income', description: 'Jobs and other income streams', icon: 'income' },
+      {
+        to: '/plan/spending',
+        label: 'Spending',
+        description: 'Recurring and one-time expenses',
+        icon: 'spending',
+      },
+      {
+        to: '/plan/timeline',
+        label: 'Timeline and milestones',
+        description: 'Retirement dates and other life events',
+        icon: 'timeline',
+      },
+      {
+        to: '/plan/strategy',
+        label: 'Saving and withdrawal strategy',
+        description: 'Surplus savings, withdrawal order and HSA use',
+        icon: 'strategy',
+      },
+      { to: '/plan/healthcare', label: 'Healthcare', description: 'Coverage and care costs', icon: 'health' },
+      {
+        to: '/plan/assumptions',
+        label: 'Assumptions and plan settings',
+        description: 'Returns, inflation, start year and dollar display',
+        icon: 'assumptions',
+      },
     ],
   },
   {
     id: 'explore',
-    label: 'Plan',
+    label: 'Results',
     items: [
       { to: '/explore/projection', label: 'Projection', icon: 'projection' },
       { to: '/explore/cashflow', label: 'Cash flow', icon: 'cashflow' },
@@ -84,6 +116,13 @@ export const NAV: NavGroup[] = [
     ],
   },
 ];
+
+export function ownsRoute(to: string, path: string): boolean {
+  if (to === '/explore/projection') return path.startsWith('/explore/');
+  if (to === '/help/tours') return path.startsWith('/help/');
+  if (to === '/settings' && path === '/changelog') return true;
+  return path === to || (to !== '/' && path.startsWith(to + '/'));
+}
 
 export const DISCLAIMER =
   'For personal educational planning only. Not financial, tax, legal or medical advice. Every figure is an estimate.';

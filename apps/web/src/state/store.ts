@@ -6,6 +6,7 @@ import type { Plan, SamplePlanId } from '@fisim/engine';
 import { loadEngine, validationMessage } from '../engine/load';
 import { applyPatches, enablePatches, produceWithPatches, type Patch } from 'immer';
 import { create } from 'zustand';
+import { createContext, useContext } from 'react';
 import {
   addSnapshot,
   allPlans,
@@ -456,5 +457,10 @@ export function usePlan(): Plan | null {
     (s) => s.sandbox?.plan ?? (s.settings.activePlanId ? (s.plans[s.settings.activePlanId] ?? null) : null),
   );
 }
-export const useUpdate = (): State['update'] => useStore((s) => s.update);
+export const InputWriteContext = createContext<State['update'] | null>(null);
+export function useUpdate(): State['update'] {
+  const inputWrite = useContext(InputWriteContext);
+  const update = useStore((s) => s.update);
+  return inputWrite ?? update;
+}
 export const newId = (prefix: string): string => `${prefix}-${uid().slice(0, 8)}`;

@@ -8,6 +8,7 @@ export const SAMPLES = {
 
 export const ROUTES = [
   '/',
+  '/plan',
   '/plan/household',
   '/plan/snapshot',
   '/plan/income',

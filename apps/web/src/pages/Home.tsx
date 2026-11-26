@@ -272,12 +272,6 @@ export function HomePage(): ReactNode {
     : null;
   const actions: { to: string; icon: string; title: string; text: string; tour?: string }[] = [
     {
-      to: '/plan/snapshot',
-      icon: 'wallet',
-      title: 'Build the plan',
-      text: 'Accounts, income, spending, milestones',
-    },
-    {
       to: '/explore/success',
       icon: 'success',
       title: 'Test it',
@@ -330,6 +324,12 @@ export function HomePage(): ReactNode {
     <>
       <PageHead
         title={plan.name}
+        actions={
+          <Link className="lv-btn" data-variant="primary" data-tour="home-edit-plan" to="/plan">
+            <Icon name="edit" size={16} />
+            Edit plan
+          </Link>
+        }
         intro="The headline numbers for this plan, in today's dollars. Every figure is an estimate that updates as you edit."
       />
       <CalculationStatus />
@@ -417,7 +417,7 @@ export function HomePage(): ReactNode {
                   <p>{retirement || 'Add your first milestone'}</p>
                 </div>
                 <Link className="lv-btn" data-variant="primary" data-size="sm" to="/explore/projection">
-                  Explore a change
+                  View projection
                 </Link>
               </div>
             ) : null}

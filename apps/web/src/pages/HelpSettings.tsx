@@ -24,6 +24,7 @@ import { useTour } from '../tours/TourEngine';
 import type { TourDef } from '../tours/types';
 import { CloudAccountCard } from './CloudAccountCard';
 import './help-settings.css';
+import { applyUpdate, checkAppUpdate } from '../lib/appUpdate';
 import { publicCloud } from '../lib/cloud-account';
 
 const msg = (e: unknown): string => (e instanceof Error ? e.message : String(e));
@@ -864,6 +865,17 @@ function DeviceCard(): ReactNode {
   const theme = useStore((st) => st.settings.theme);
   const { notify, setSettings } = useStore.getState();
   const [persisted, setPersisted] = useState<boolean | null>(null);
+  const [updateCheck, setUpdateCheck] = useState<
+    'idle' | 'checking' | 'current' | 'waiting' | 'unavailable' | 'failed'
+  >('idle');
+  const checkVersion = async () => {
+    setUpdateCheck('checking');
+    try {
+      setUpdateCheck(await checkAppUpdate());
+    } catch {
+      setUpdateCheck('failed');
+    }
+  };
   const [usage, setUsage] = useState('');
   useEffect(() => {
     void navigator.storage?.persisted?.().then(setPersisted);
@@ -891,6 +903,34 @@ function DeviceCard(): ReactNode {
             <dt>App version</dt>
             <dd>
               {__APP_VERSION__} · <Link to="/changelog">Changelog</Link>
+              {import.meta.env.PROD && (
+                <div className="lv-stack">
+                  {updateCheck === 'waiting' ? (
+                    <Button size="sm" onClick={() => void applyUpdate()}>
+                      Reload now
+                    </Button>
+                  ) : (
+                    <Button
+                      size="sm"
+                      disabled={updateCheck === 'checking'}
+                      onClick={() => void checkVersion()}
+                    >
+                      {updateCheck === 'checking' ? 'Checking…' : 'Check for update'}
+                    </Button>
+                  )}
+                  <span role="status">
+                    {updateCheck === 'current'
+                      ? 'You have the latest version.'
+                      : updateCheck === 'waiting'
+                        ? 'An update is ready.'
+                        : updateCheck === 'unavailable'
+                          ? 'Reload this page to check for the latest version.'
+                          : updateCheck === 'failed'
+                            ? 'Could not check for updates. Try again when online.'
+                            : ''}
+                  </span>
+                </div>
+              )}
             </dd>
           </div>
           <div>
@@ -968,7 +1008,7 @@ export function SettingsPage(): ReactNode {
   return (
     <>
       <PageHead
-        title="Settings"
+        title="App settings"
         intro={
           publicCloud
             ? 'Your account, plans, backups and this device.'

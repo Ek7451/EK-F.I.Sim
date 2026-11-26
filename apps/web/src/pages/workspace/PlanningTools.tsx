@@ -320,7 +320,7 @@ export function PlanningEditor({
   return (
     <div ref={editor}>
       <Card
-        title="Edit plan"
+        title="Preview changes"
         actions={
           <Button size="sm" variant="ghost" onClick={onClose}>
             Year details
@@ -455,7 +455,7 @@ export function PlanningEditor({
               </div>
             </section>
           ) : null}
-          <Link className="pe-more" to="/plan/household">
+          <Link className="pe-more" to="/plan">
             All plan inputs <Icon name="chevron" size={14} />
           </Link>
         </div>

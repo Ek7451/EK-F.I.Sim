@@ -43,7 +43,7 @@ test('worker failure keeps the last result labeled and Retry starts a fresh work
   const stats = page.locator('[data-tour="projection-stats"]');
   await expect(stats).toContainText('$');
   const before = await stats.textContent();
-  await page.getByRole('button', { name: 'Edit plan', exact: true }).click();
+  await page.locator('main .page-head').getByRole('button', { name: 'Preview changes', exact: true }).click();
   await page.evaluate(() => {
     (window as typeof window & { failNextProjection?: boolean }).failNextProjection = true;
   });

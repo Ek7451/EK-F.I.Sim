@@ -20,6 +20,15 @@ test('Settings links the installed version to its changelog and published manife
   });
 });
 
+test('App settings can check the installed version without waiting for an update prompt', async ({
+  page,
+}) => {
+  await page.goto('/settings');
+  await page.evaluate(() => navigator.serviceWorker.ready.then(() => true));
+  await page.getByRole('button', { name: 'Check for update', exact: true }).click();
+  await expect(page.getByText('You have the latest version.')).toBeVisible();
+});
+
 test('first visit opens the wizard, which builds a working plan', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/');

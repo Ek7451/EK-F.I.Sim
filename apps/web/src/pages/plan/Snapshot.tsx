@@ -143,7 +143,7 @@ export function SnapshotPage(): ReactNode {
     <>
       <PageHead
         group="plan"
-        title="What you have"
+        title="Accounts, assets and debts"
         intro="Balances are typed in by hand and stay on this device. Nothing here connects to a bank."
       />
       <KpiStrip data-tour="snapshot-totals">

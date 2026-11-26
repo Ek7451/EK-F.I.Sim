@@ -80,14 +80,34 @@ function Root(): ReactNode {
   }, [attempt]);
   useEffect(() => {
     if (!ready || oldHome || incoming || transferError) return;
+    let registration: ServiceWorkerRegistration | undefined;
+    let disposed = false;
+    const checkOnReturn = () => {
+      if (document.visibilityState === 'visible' && registration?.active) {
+        if (registration.waiting) setUpdateReady(true);
+        else void registration.update().catch(() => {});
+      }
+    };
+    document.addEventListener('visibilitychange', checkOnReturn);
     const timer = setTimeout(() => {
       void import('./lib/sync').then((m) => m.initSync()).catch((error) => logError(String(error)));
       if (import.meta.env.PROD && 'serviceWorker' in navigator)
         void import('virtual:pwa-register').then(({ registerSW }) =>
-          registerSW({ onNeedRefresh: () => setUpdateReady(true) }),
+          registerSW({
+            onNeedRefresh: () => setUpdateReady(true),
+            onRegisteredSW: (_url, reg) => {
+              if (disposed) return;
+              registration = reg;
+              if (reg?.waiting) setUpdateReady(true);
+            },
+          }),
         );
     }, 1200);
-    return () => clearTimeout(timer);
+    return () => {
+      disposed = true;
+      clearTimeout(timer);
+      document.removeEventListener('visibilitychange', checkOnReturn);
+    };
   }, [ready, incoming, transferError]);
   useEffect(() => {
     const root = document.documentElement;

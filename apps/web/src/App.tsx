@@ -19,6 +19,8 @@ const incomeSpending = (): Promise<typeof import('./pages/plan/IncomeSpending')>
 const health = (): Promise<typeof import('./pages/plan/HealthAssumptions')> =>
   import('./pages/plan/HealthAssumptions');
 
+const InputBoundary = page(() => import('./pages/plan/InputBoundary'), 'InputBoundary');
+const PlanDirectory = page(() => import('./pages/plan/PlanDirectory'), 'PlanDirectory');
 const HouseholdPage = page(() => import('./pages/plan/Household'), 'HouseholdPage');
 const SnapshotPage = page(() => import('./pages/plan/Snapshot'), 'SnapshotPage');
 const IncomePage = page(incomeSpending, 'IncomePage');
@@ -147,14 +149,17 @@ export function App({
               <Route path="/changelog" element={<ChangelogPage />} />
               <Route element={<RequirePlan />}>
                 <Route path="/" element={<HomePage />} />
-                <Route path="/plan/household" element={<HouseholdPage />} />
-                <Route path="/plan/snapshot" element={<SnapshotPage />} />
-                <Route path="/plan/income" element={<IncomePage />} />
-                <Route path="/plan/spending" element={<SpendingPage />} />
-                <Route path="/plan/timeline" element={<TimelinePage />} />
-                <Route path="/plan/strategy" element={<StrategyPage />} />
-                <Route path="/plan/healthcare" element={<HealthcarePage />} />
-                <Route path="/plan/assumptions" element={<AssumptionsPage />} />
+                <Route path="/plan" element={<PlanDirectory />} />
+                <Route element={<InputBoundary />}>
+                  <Route path="/plan/household" element={<HouseholdPage />} />
+                  <Route path="/plan/snapshot" element={<SnapshotPage />} />
+                  <Route path="/plan/income" element={<IncomePage />} />
+                  <Route path="/plan/spending" element={<SpendingPage />} />
+                  <Route path="/plan/timeline" element={<TimelinePage />} />
+                  <Route path="/plan/strategy" element={<StrategyPage />} />
+                  <Route path="/plan/healthcare" element={<HealthcarePage />} />
+                  <Route path="/plan/assumptions" element={<AssumptionsPage />} />
+                </Route>
                 <Route path="/explore/projection" element={<ProjectionPage />} />
                 <Route path="/explore/cashflow" element={<CashFlowPage />} />
                 <Route path="/explore/taxes" element={<TaxesPage />} />

@@ -280,6 +280,7 @@ export function Chart({
     <div {...rest} className="chart-container">
       {t ? (
         <div
+          key="table"
           className="lv-table-wrap"
           style={{ maxHeight: height, overflowY: 'auto' }}
           tabIndex={0}
@@ -315,6 +316,7 @@ export function Chart({
         </div>
       ) : (
         <div
+          key="plot"
           ref={el}
           data-inline-touch={inlineTouchDetail || undefined}
           onPointerDownCapture={(e) => {

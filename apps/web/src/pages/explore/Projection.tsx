@@ -107,7 +107,7 @@ export function ProjectionPage(): ReactNode {
               <Badge>{transaction?.base === base ? 'Draft preview' : 'Saved plan'}</Badge>
             </span>
             <Button data-tour="edit-plan" onClick={editPlan} disabled={!!scenarioId}>
-              Edit plan
+              Preview changes
             </Button>
           </div>
         }
@@ -174,18 +174,23 @@ export function ProjectionPage(): ReactNode {
               <span className="lv-muted lv-small proj-recalc" data-tour="recompute-time" role="status">
                 {stale && !error ? 'Updating…' : `${m.unit} · recalculated in ${ms.toFixed(0)} ms`}
               </span>
-              <Segmented
-                label="Chart mode"
-                value={view.mode}
-                onChange={(mode) => view.set({ mode })}
-                options={[
-                  { value: 'accounts', label: 'Accounts' },
-                  { value: 'netWorth', label: 'Net worth' },
-                ]}
-              />
-              <Button size="sm" onClick={() => view.set({ axis: view.axis === 'year' ? 'age' : 'year' })}>
-                {view.axis === 'year' ? 'Show ages' : 'Show years'}
-              </Button>
+              <details className="chart-options">
+                <summary>Chart options</summary>
+                <div className="lv-row">
+                  <Segmented
+                    label="Chart mode"
+                    value={view.mode}
+                    onChange={(mode) => view.set({ mode })}
+                    options={[
+                      { value: 'accounts', label: 'Accounts' },
+                      { value: 'netWorth', label: 'Net worth' },
+                    ]}
+                  />
+                  <Button size="sm" onClick={() => view.set({ axis: view.axis === 'year' ? 'age' : 'year' })}>
+                    {view.axis === 'year' ? 'Show ages' : 'Show years'}
+                  </Button>
+                </div>
+              </details>
               <Button
                 data-tour="workspace-details"
                 size="sm"
@@ -417,8 +422,8 @@ export function ProjectionPage(): ReactNode {
               title={`End of ${sel.year}`}
               data-tour="year-detail"
               actions={
-                <Button size="sm" onClick={editPlan}>
-                  Edit
+                <Button size="sm" disabled={!!scenarioId} onClick={editPlan}>
+                  Preview changes
                 </Button>
               }
             >

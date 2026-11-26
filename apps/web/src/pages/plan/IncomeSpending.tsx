@@ -180,7 +180,9 @@ export function IncomePage(): ReactNode {
   const plan = usePlan()!;
   const update = useUpdate();
   const [query] = useSearchParams();
-  const [id, setId] = useState<string | null>(query.get('edit'));
+  const linkedId = query.get('edit');
+  const [id, setId] = useState<string | null>(linkedId);
+  useEffect(() => setId(linkedId), [linkedId]);
   const { result } = useProjection();
   const inc = plan.incomes.find((x) => x.id === id);
   const i = plan.incomes.findIndex((x) => x.id === id);
@@ -538,7 +540,9 @@ export function SpendingPage(): ReactNode {
   const plan = usePlan()!;
   const update = useUpdate();
   const [query] = useSearchParams();
-  const [id, setId] = useState<string | null>(query.get('edit'));
+  const linkedId = query.get('edit');
+  const [id, setId] = useState<string | null>(linkedId);
+  useEffect(() => setId(linkedId), [linkedId]);
   const { result } = useProjection();
   const e = plan.expenses.find((x) => x.id === id);
   const i = plan.expenses.findIndex((x) => x.id === id);
