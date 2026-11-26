@@ -721,7 +721,8 @@ export function AssumptionsPage(): ReactNode {
   const historical = A.returns.mode === 'historicalAverage';
   const RateControls = historical ? 'details' : 'div';
   const rates = projectionRates(plan);
-  const custom = Object.keys(A.returns.stdDev ?? {}).length;
+  const volatilityClasses = ASSET_CLASSES.filter((k) => mc.method !== 'bootstrap' || !HISTORY_SETS.has(k));
+  const custom = volatilityClasses.filter((k) => A.returns.stdDev?.[k]).length;
   const varies = lifespansVary(plan);
   return (
     <>
@@ -935,7 +936,7 @@ export function AssumptionsPage(): ReactNode {
               icon="assumptions"
               summary={
                 custom
-                  ? `${custom} of ${ASSET_CLASSES.length} set by you; the rest measured from market history`
+                  ? `${custom} of ${volatilityClasses.length} set by you; the rest measured from market history`
                   : 'Measured from market history'
               }
               storageKey="assume:volatility"
@@ -948,16 +949,11 @@ export function AssumptionsPage(): ReactNode {
                   : ''}
               </Lead>
               <div className="form-grid">
-                {ASSET_CLASSES.map((k) => (
+                {volatilityClasses.map((k) => (
                   <PercentField
                     key={k}
                     label={`${CLASS_LABELS[k]} volatility`}
                     value={A.returns.stdDev?.[k] ?? 0}
-                    hint={
-                      mc.method === 'bootstrap' && HISTORY_SETS.has(k)
-                        ? 'Not used with replayed history.'
-                        : undefined
-                    }
                     onChange={(v) =>
                       update((d) => {
                         const s = { ...(d.assumptions.returns.stdDev ?? {}) };
@@ -1008,6 +1004,7 @@ export function AssumptionsPage(): ReactNode {
                 />
                 <SelectField
                   label="Opening balance month"
+                  help="Use balances from the first day of this month. January opens a full-year plan. Midyear openings cover wages, employee deferrals, investments and recurring expenses. Other schedules require January balances."
                   value={String(plan.settings.openingMonth)}
                   options={Array.from({ length: 12 }, (_, i) => ({
                     value: String(i + 1),
@@ -1028,11 +1025,6 @@ export function AssumptionsPage(): ReactNode {
                     })
                   }
                 />
-                <p className="lv-small lv-muted">
-                  Use balances from the first day of the selected month. January opens a full-year plan.
-                  Midyear openings cover wages, employee deferrals, investments and recurring expenses. Other
-                  schedules require January balances.
-                </p>
                 {plan.settings.openingMonth > 1 &&
                   plan.people.map((p) => (
                     <fieldset key={p.id}>
@@ -1241,16 +1233,18 @@ export function AssumptionsPage(): ReactNode {
               </div>
               <div className="pib-switches" style={{ marginTop: 6 }}>
                 <LifespanSwitch plan={plan} />
-                <Switch
-                  label="Vary healthcare inflation"
-                  help={helpText('Let healthcare inflation vary in simulations')}
-                  checked={A.healthcareInflation.stochastic}
-                  onChange={(v) =>
-                    update((d) => {
-                      d.assumptions.healthcareInflation.stochastic = v;
-                    })
-                  }
-                />
+                {plan.healthcare.enabled && (
+                  <Switch
+                    label="Vary healthcare inflation"
+                    help={helpText('Let healthcare inflation vary in simulations')}
+                    checked={A.healthcareInflation.stochastic}
+                    onChange={(v) =>
+                      update((d) => {
+                        d.assumptions.healthcareInflation.stochastic = v;
+                      })
+                    }
+                  />
+                )}
               </div>
             </Fold>
             <Fold

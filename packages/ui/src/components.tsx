@@ -445,11 +445,13 @@ function useHelp(label: string, help: ReactNode | undefined): ReactNode {
 export function HelpTip({
   children,
   describedBy,
+  label = 'Help',
   placement = 'top',
 }: {
   children: ReactNode;
   /** Id of the label this help is about, so assistive tech reads "Help, <label>". */
   describedBy?: string;
+  label?: string;
   placement?: Placement;
 }): ReactNode {
   const [open, setOpen] = useState(false);
@@ -474,7 +476,7 @@ export function HelpTip({
       <button
         type="button"
         className="lv-help"
-        aria-label="Help"
+        aria-label={label}
         aria-describedby={[describedBy, open ? tipId : undefined].filter(Boolean).join(' ') || undefined}
         aria-expanded={open}
         data-help=""
@@ -1061,12 +1063,14 @@ export function Dialog({
 }: {
   open: boolean;
   title: string;
-  onClose: () => void;
+  onClose?: () => void;
   children: ReactNode;
   footer?: ReactNode;
 }): ReactNode {
   const ref = useRef<HTMLDivElement>(null);
   const titleId = useId();
+  const dismiss = useRef(onClose);
+  dismiss.current = onClose;
   useEffect(() => {
     if (!open) return;
     const prev = document.activeElement as HTMLElement | null;
@@ -1074,7 +1078,7 @@ export function Dialog({
     const focusables = (): HTMLElement[] =>
       Array.from(
         el?.querySelectorAll<HTMLElement>(
-          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+          'button, summary, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
         ) ?? [],
       ).filter((x) => !x.hasAttribute('disabled') && x.getClientRects().length > 0);
     const initialFocus = matchMedia('(pointer: coarse)').matches
@@ -1083,8 +1087,9 @@ export function Dialog({
     initialFocus?.focus({ preventScroll: true });
     const onKey = (e: KeyboardEvent): void => {
       if (e.key === 'Escape') {
+        if (el?.querySelector('[data-help][aria-expanded="true"]')) return;
         e.stopPropagation();
-        onClose();
+        dismiss.current?.();
       } else if (e.key === 'Tab') {
         const f = focusables();
         if (!f.length) return;
@@ -1111,7 +1116,6 @@ export function Dialog({
       document.removeEventListener('focusin', onFocusIn);
       prev?.focus?.();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
   if (!open) return null;
   // A plain portal (not FloatingPortal, which mounts a tick late) so the dialog exists when the focus effect runs.
@@ -1119,7 +1123,7 @@ export function Dialog({
     <div
       className="lv-overlay"
       onMouseDown={(e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) onClose?.();
       }}
     >
       <div
@@ -1132,7 +1136,7 @@ export function Dialog({
       >
         <header>
           <h2 id={titleId}>{title}</h2>
-          <Button variant="ghost" icon="close" label="Close" onClick={onClose} />
+          {onClose && <Button variant="ghost" icon="close" label="Close" onClick={onClose} />}
         </header>
         <div className="lv-dialog-body">{children}</div>
         {footer ? <footer>{footer}</footer> : null}

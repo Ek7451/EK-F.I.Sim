@@ -22,7 +22,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useMonteCarlo, useProjection } from '../engine/useResults';
 import { useStore } from '../state/store';
 import { useDraft, type DraftTransaction } from '../state/draft';
-import { tourById, tourForRoute } from './catalog';
+import { tourById } from './catalog';
 import type { TourDef, TourStep } from './types';
 
 interface StartOptions {
@@ -146,9 +146,7 @@ export function TourProvider({ children }: { children: ReactNode }): ReactNode {
       {children}
       {active ? (
         <TourLayer key={`${active.tour.id}:${active.step}`} active={active} go={go} stop={stop} />
-      ) : (
-        <TourPrompt start={start} />
-      )}
+      ) : null}
     </Ctx.Provider>
   );
 }
@@ -419,53 +417,5 @@ function TourLayer({
         aria-live="polite"
       >{`Step ${index + 1} of ${tour.steps.length}: ${step.title}. ${body}`}</div>
     </>
-  );
-}
-
-/** After one "Not now", stay quiet until the app is next opened so the offers never nag. */
-let quiet = false;
-
-/** One-time offer of a screen's tour the first time the screen is opened (plan 10.2). */
-function TourPrompt({ start }: { start: (id: string) => void }): ReactNode {
-  const loc = useLocation();
-  const settings = useStore((s) => s.settings);
-  const hasPlan = useStore((s) => !!s.settings.activePlanId);
-  const tour = tourForRoute(loc.pathname);
-  if (quiet || !tour || !hasPlan || !settings.onboarded || loc.pathname === '/') return null;
-  if (
-    settings.tours[tour.id]?.completed ||
-    settings.tours[tour.id]?.dismissed ||
-    settings.promptsDismissed.includes(tour.id)
-  )
-    return null;
-  const dismiss = (): void =>
-    useStore.getState().setSettings({ promptsDismissed: [...settings.promptsDismissed, tour.id] });
-  return (
-    <aside className="tour-prompt lv-night" aria-label="Tour suggestion" data-testid="tour-prompt">
-      <Icon name="sparkle" size={15} />
-      <span className="tour-prompt-text">
-        New here? <strong>{tour.title}</strong>, a {tour.minutes}-minute tour.
-      </span>
-      <Button
-        size="sm"
-        variant="primary"
-        onClick={() => {
-          dismiss();
-          start(tour.id);
-        }}
-      >
-        Take the tour
-      </Button>
-      <Button
-        size="sm"
-        variant="ghost"
-        icon="close"
-        label="Not now"
-        onClick={() => {
-          quiet = true;
-          dismiss();
-        }}
-      />
-    </aside>
   );
 }

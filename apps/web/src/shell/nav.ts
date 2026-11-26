@@ -34,6 +34,17 @@ export const PRIMARY_NAV: NavGroup[] = [
   },
 ];
 
+export const SETUP_NAV: NavGroup[] = [
+  {
+    id: 'setup',
+    label: 'Getting started',
+    items: [
+      { to: '/start', label: 'Start a plan', icon: 'plus' },
+      ...PRIMARY_NAV[1].items.filter((item) => item.to === '/settings' || item.to === '/help/tours'),
+    ],
+  },
+];
+
 /** Information architecture organised by task: Plan -> Explore -> Compare -> Track (plan 10). */
 export const NAV: NavGroup[] = [
   { id: 'home', label: 'Overview', items: [{ to: '/', label: 'Home', icon: 'home' }] },

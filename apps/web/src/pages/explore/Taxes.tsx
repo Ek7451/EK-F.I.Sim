@@ -134,6 +134,7 @@ export function TaxesPage(): ReactNode {
       <PageHead
         group="explore"
         title="Taxes"
+        context={m.unit}
         intro={`Estimated federal, payroll and state tax each year, in ${m.unit}. For planning only; this is not a tax return.`}
         actions={
           <span className="lv-row">
@@ -441,49 +442,51 @@ export function TaxesPage(): ReactNode {
             <BracketLadder plan={plan} result={result} record={r} real={m.real} />
           </Sec>
 
-          <Sec
-            title="Healthcare and subsidies"
-            value={`${$(r.expenses.healthcare.total - t.ptc)} after credit`}
-            {...sec('health')}
-          >
-            <ul className="tx-coverage" aria-label={`Coverage in ${r.year}`}>
-              {r.coverage.map((coverage, i) =>
-                r.alive[i] === false ? null : (
-                  <li key={i}>
-                    <span>{plan.people[i]?.name ?? `Person ${i + 1}`}</span>
-                    <strong>
-                      {r.coverageMonths[i]
-                        ?.map(
-                          (period) =>
-                            `${COVERAGE[period.type] ?? period.type}${period.months === 12 ? '' : ` (${period.months} months)`}`,
-                        )
-                        .join(' → ') ??
-                        COVERAGE[coverage] ??
-                        coverage}
-                    </strong>
-                  </li>
-                ),
-              )}
-            </ul>
-            <dl className="lv-facts">
-              <Row k="Gross modeled cost" v={$(r.expenses.healthcare.total)} />
-              <Row k="Premium tax credit" v={minus(t.ptc)} />
-              <Row k="Cost after credit" v={$(r.expenses.healthcare.total - t.ptc)} strong />
-              <Row k="HSA payments (included above)" v={$(r.expenses.healthcare.hsaPaid)} />
-              <Row k="Income for subsidies (MAGI)" v={$(t.magi)} />
-              <Row k="MAGI against the poverty guideline" v={formatPct(t.fplRatio, 0)} />
-              <Row
-                k="Medicare income tier (IRMAA)"
-                v={t.irmaaTier === 0 ? 'Standard' : `Tier ${t.irmaaTier}`}
-              />
-              <Row k="Medicare surcharge" v={$(r.expenses.healthcare.irmaa)} />
-            </dl>
-            <p className="lv-small lv-muted">
-              Premium credits are already inside net taxes; this view does not subtract them again. Medicare
-              tiers use a two-year lookback.{' '}
-              <Link to="/plan/healthcare">Edit coverage and cost assumptions →</Link>
-            </p>
-          </Sec>
+          {plan.healthcare.enabled && (
+            <Sec
+              title="Healthcare and subsidies"
+              value={`${$(r.expenses.healthcare.total - t.ptc)} after credit`}
+              {...sec('health')}
+            >
+              <ul className="tx-coverage" aria-label={`Coverage in ${r.year}`}>
+                {r.coverage.map((coverage, i) =>
+                  r.alive[i] === false ? null : (
+                    <li key={i}>
+                      <span>{plan.people[i]?.name ?? `Person ${i + 1}`}</span>
+                      <strong>
+                        {r.coverageMonths[i]
+                          ?.map(
+                            (period) =>
+                              `${COVERAGE[period.type] ?? period.type}${period.months === 12 ? '' : ` (${period.months} months)`}`,
+                          )
+                          .join(' → ') ??
+                          COVERAGE[coverage] ??
+                          coverage}
+                      </strong>
+                    </li>
+                  ),
+                )}
+              </ul>
+              <dl className="lv-facts">
+                <Row k="Gross modeled cost" v={$(r.expenses.healthcare.total)} />
+                <Row k="Premium tax credit" v={minus(t.ptc)} />
+                <Row k="Cost after credit" v={$(r.expenses.healthcare.total - t.ptc)} strong />
+                <Row k="HSA payments (included above)" v={$(r.expenses.healthcare.hsaPaid)} />
+                <Row k="Income for subsidies (MAGI)" v={$(t.magi)} />
+                <Row k="MAGI against the poverty guideline" v={formatPct(t.fplRatio, 0)} />
+                <Row
+                  k="Medicare income tier (IRMAA)"
+                  v={t.irmaaTier === 0 ? 'Standard' : `Tier ${t.irmaaTier}`}
+                />
+                <Row k="Medicare surcharge" v={$(r.expenses.healthcare.irmaa)} />
+              </dl>
+              <p className="lv-small lv-muted">
+                Premium credits are already inside net taxes; this view does not subtract them again. Medicare
+                tiers use a two-year lookback.{' '}
+                <Link to="/plan/healthcare">Edit coverage and cost assumptions →</Link>
+              </p>
+            </Sec>
+          )}
 
           <Sec title="Things to know" value={`${notes.length} notes`} {...sec('notes')}>
             <ul className="tx-notes" data-tour="tax-notes">

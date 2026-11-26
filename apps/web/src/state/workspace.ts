@@ -7,7 +7,6 @@ interface View {
   range: [number, number];
   mode: 'accounts' | 'netWorth';
   axis: 'year' | 'age';
-  inspector: boolean;
 }
 const initial: View = {
   year: null,
@@ -15,7 +14,6 @@ const initial: View = {
   range: [0, 100],
   mode: 'accounts',
   axis: 'year',
-  inspector: true,
 };
 export const useWorkspace = create<{
   plans: Record<string, View>;

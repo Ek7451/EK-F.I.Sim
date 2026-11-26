@@ -1,6 +1,19 @@
 import { DATA_RELEASE, type DatasetInfo } from '@fisim/data';
 import { SCHEMA_VERSION, methodology, type MethodEntry } from '@fisim/engine';
-import { Badge, Button, Card, Dialog, Icon, Notice, Segmented, SelectField, TextField } from '@fisim/ui';
+import {
+  Badge,
+  Button,
+  Card,
+  Dialog,
+  Fold,
+  HelpTip,
+  Icon,
+  Menu,
+  Notice,
+  Segmented,
+  SelectField,
+  TextField,
+} from '@fisim/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImportReview from './ImportReview';
@@ -118,20 +131,21 @@ export function ToursPage(): ReactNode {
           {basic.every(done) ? <Badge tone="ok">Basics complete</Badge> : null}
           {advanced.every(done) ? <Badge tone="ok">Advanced complete</Badge> : null}
         </span>
-        <p className="hs-band-note">
-          Next and Back (or the arrow keys) move between steps; Esc leaves and your place is saved. The person
-          button runs a tour on your own plan, with changes switched off.
-        </p>
+        <HelpTip label="Tour controls">
+          Use the arrow keys to move between steps. Escape saves your place and leaves the tour.
+          {hasPlan &&
+            ' Choose the person button to follow a tour on your own plan with editing switched off.'}
+        </HelpTip>
       </section>
       <div className="hs-tours" data-tour="tours-catalog">
         <Card title={`Basics · ${basic.length} tours`}>
           <div className="hs-tour-list">{basic.map(tile)}</div>
         </Card>
-        <Card title={`Going further · ${advanced.length} tours`}>
+        <Fold title="Going further" summary={`${advanced.length} tours`} storageKey="advanced-tours">
           <div className="hs-tour-list" data-cols="2">
             {advanced.map(tile)}
           </div>
-        </Card>
+        </Fold>
       </div>
     </>
   );
@@ -181,11 +195,10 @@ export function MethodsPage(): ReactNode {
             {datasets.length} datasets, {projected} of them projected or estimated
           </span>
         </div>
-        <p className="hs-band-note">
-          <Badge tone="ok">Enacted</Badge> figures come from published law and official tables.{' '}
-          <Badge tone="warn">Projected</Badge> figures are the latest enacted values raised with inflation,
-          for years not yet published. Screens that rely on them say so.
-        </p>
+        <HelpTip label="About data status">
+          Enacted figures come from published law and official tables. Projected figures use inflation to
+          estimate values for unpublished years.
+        </HelpTip>
       </section>
       <div className="hs-methods">
         <Card
@@ -237,9 +250,10 @@ export function MethodsPage(): ReactNode {
             </div>
           )}
         </Card>
-        <Card title={`Datasets · ${datasets.length}`} data-tour="data-sources">
+        <Fold title="Datasets" summary={`${datasets.length} sources`} id="datasets">
           <div
             className="lv-table-wrap hs-datasets"
+            data-tour="data-sources"
             tabIndex={0}
             role="region"
             aria-label="Datasets in this release"
@@ -270,7 +284,7 @@ export function MethodsPage(): ReactNode {
           <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
             Marketplace premiums by county load only for the states in your plan and are not listed here.
           </p>
-        </Card>
+        </Fold>
       </div>
     </>
   );
@@ -323,32 +337,46 @@ function PlansCard(): ReactNode {
                 Open
               </Button>
             ) : null}
-            <Button
-              size="sm"
-              variant="ghost"
-              icon="edit"
-              disabled={sandbox}
-              label={`Rename ${p.name}`}
-              onClick={() => setRenaming({ id: p.id, name: p.name })}
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              icon="copy"
-              disabled={sandbox}
-              data-tour="duplicate-plan"
-              label={`Duplicate ${p.name}`}
-              onClick={() =>
-                void duplicatePlan(p.id).then(() => notify(`Copied ${p.name}. The copy is now open.`, 'ok'))
-              }
-            />
-            <Button
-              size="sm"
-              variant="ghost"
-              icon="trash"
-              disabled={sandbox}
-              label={`Delete ${p.name}`}
-              onClick={() => setDeleting(p.id)}
+            <Menu
+              label={`Actions for ${p.name}`}
+              placement="bottom-end"
+              trigger={({ open: _open, ...props }) => (
+                <button
+                  {...props}
+                  type="button"
+                  className="lv-btn"
+                  data-size="sm"
+                  disabled={sandbox}
+                  aria-label={`Actions for ${p.name}`}
+                >
+                  Actions <Icon name="down" size={14} />
+                </button>
+              )}
+              items={[
+                {
+                  id: 'rename',
+                  label: 'Rename',
+                  icon: 'edit',
+                  onSelect: () => setRenaming({ id: p.id, name: p.name }),
+                },
+                {
+                  id: 'duplicate',
+                  label: 'Duplicate',
+                  icon: 'copy',
+                  onSelect: () => {
+                    void duplicatePlan(p.id).then(() =>
+                      notify('Copied the plan. The copy is now open.', 'ok'),
+                    );
+                  },
+                },
+                {
+                  id: 'delete',
+                  label: 'Delete',
+                  icon: 'trash',
+                  divider: true,
+                  onSelect: () => setDeleting(p.id),
+                },
+              ]}
             />
           </li>
         ))}
@@ -477,21 +505,34 @@ export function RecoveryPage(): ReactNode {
 }
 
 function BackupCard(): ReactNode {
+  const { hash } = useLocation();
+  const importSection = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    if (hash === '#import-backup' && importSection.current) {
+      importSection.current.open = true;
+      const trigger = importSection.current.querySelector('summary');
+      trigger?.focus({ preventScroll: true });
+      trigger?.scrollIntoView({ block: 'center' });
+    }
+  }, [hash]);
   const [incoming, setIncoming] = useState<unknown[] | null>(null);
   const plans = useStore((s) => s.plans);
+  const sandbox = useStore((s) => s.sandbox);
   const last = useStore((s) => s.settings.lastBackupAt);
   const { notify, setSettings } = useStore.getState();
   const [pass, setPass] = useState('');
   const [again, setAgain] = useState('');
   const [inPass, setInPass] = useState('');
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
+  const [importError, setImportError] = useState('');
+  const [exportError, setExportError] = useState('');
   const file = useRef<HTMLInputElement>(null);
-  const list = Object.values(plans);
+  const [hasFile, setHasFile] = useState(false);
+  const list = sandbox ? [sandbox.plan] : Object.values(plans);
   const weak = pass.length > 0 && pass.length < 10;
   const doExport = async (): Promise<void> => {
     setBusy(true);
-    setError('');
+    setExportError('');
     try {
       const name = await exportBackup(list, pass);
       setSettings({ lastBackupAt: new Date().toISOString() });
@@ -499,25 +540,27 @@ function BackupCard(): ReactNode {
       setAgain('');
       notify(`Backup saved as ${name}.`, 'ok');
     } catch (e) {
-      setError(msg(e));
+      setExportError(msg(e));
     }
     setBusy(false);
   };
   const doImport = async (): Promise<void> => {
     const f = file.current?.files?.[0];
     if (!f) {
-      setError('Choose a backup file first.');
+      setImportError('Choose a backup file first.');
       return;
     }
     setBusy(true);
-    setError('');
+    setImportError('');
     try {
       const raw = await readBackup(f, inPass);
       setIncoming(raw);
       setInPass('');
-      if (file.current) file.current.value = '';
+      setHasFile(false);
     } catch (e) {
-      setError(/decrypt|passphrase|auth/i.test(msg(e)) ? 'That passphrase does not open this file.' : msg(e));
+      setImportError(
+        /decrypt|passphrase|auth/i.test(msg(e)) ? 'That passphrase does not open this file.' : msg(e),
+      );
     }
     setBusy(false);
   };
@@ -527,58 +570,68 @@ function BackupCard(): ReactNode {
       data-tour="settings-backup"
       actions={<span className="lv-small lv-muted">Last backup: {when(last)}</span>}
     >
-      <p className="lv-muted lv-small">
-        Plans live in this browser, which can clear its storage. Keep an encrypted backup file somewhere safe.
-      </p>
-      <p>
-        <Link to="/settings/recovery">Restore a recovery file</Link> (.json, no passphrase needed)
-      </p>
-      {error ? (
-        <div style={{ marginTop: 8 }}>
-          <Notice tone="danger">{error}</Notice>
-        </div>
-      ) : null}
-      <div className="hs-split">
-        <section data-tour="export-backup">
-          <h3>Export all plans</h3>
-          <div className="form-grid">
-            <Pass
-              label="Backup passphrase"
-              hint="At least 10 characters. A forgotten passphrase cannot be recovered."
-              value={pass}
-              onChange={setPass}
-            />
-            <Pass label="Passphrase again" value={again} onChange={setAgain} />
-          </div>
-          {weak ? <p className="field-error">Use at least 10 characters.</p> : null}
-          <Button
-            icon="download"
-            disabled={busy || list.length === 0 || pass.length < 10 || pass !== again}
-            onClick={() => void doExport()}
-          >
-            Download encrypted backup
-          </Button>
-        </section>
-        <section data-tour="import-backup">
-          <h3>Import a backup</h3>
-          {incoming && <ImportReview raw={incoming} onClose={() => setIncoming(null)} />}
-          <div className="form-grid">
-            <div className="lv-field">
-              <label htmlFor="backup-file">Backup file</label>
-              <input
-                id="backup-file"
-                ref={file}
-                className="lv-input"
-                type="file"
-                accept=".longview,application/json"
-              />
-            </div>
-            <Pass label="Its passphrase" value={inPass} onChange={setInPass} />
-          </div>
-          <Button icon="upload" disabled={busy || !inPass} onClick={() => void doImport()}>
-            Import
-          </Button>
-        </section>
+      <div className="hs-backup-tasks">
+        {list.length > 0 && (
+          <details name="backup-task">
+            <summary>Export all plans</summary>
+            <section data-tour="export-backup">
+              <div className="form-grid">
+                <Pass
+                  label="Backup passphrase"
+                  hint="At least 10 characters. A forgotten passphrase cannot be recovered."
+                  value={pass}
+                  onChange={setPass}
+                />
+                <Pass label="Passphrase again" value={again} onChange={setAgain} />
+              </div>
+              {weak ? <p className="field-error">Use at least 10 characters.</p> : null}
+              <Button
+                icon="download"
+                disabled={busy || list.length === 0 || pass.length < 10 || pass !== again}
+                onClick={() => void doExport()}
+              >
+                Download encrypted backup
+              </Button>
+              {exportError && <Notice tone="danger">{exportError}</Notice>}
+            </section>
+          </details>
+        )}
+        <details name="backup-task" ref={importSection} id="import-backup">
+          <summary>Import a backup</summary>
+          <section data-tour="import-backup">
+            {incoming ? (
+              <ImportReview raw={incoming} onClose={() => setIncoming(null)} />
+            ) : (
+              <>
+                <div className="form-grid">
+                  <div className="lv-field">
+                    <label htmlFor="backup-file">Backup file</label>
+                    <input
+                      id="backup-file"
+                      disabled={busy}
+                      ref={file}
+                      className="lv-input"
+                      type="file"
+                      accept=".longview,application/json"
+                      onChange={(e) => {
+                        setHasFile(!!e.target.files?.length);
+                        setImportError('');
+                      }}
+                    />
+                  </div>
+                  {hasFile && <Pass label="Its passphrase" value={inPass} onChange={setInPass} />}
+                </div>
+                {hasFile && (
+                  <Button icon="upload" disabled={busy || !inPass} onClick={() => void doImport()}>
+                    Import
+                  </Button>
+                )}
+                {importError && <Notice tone="danger">{importError}</Notice>}
+                <Link to="/settings/recovery">Restore a recovery file (.json)</Link>
+              </>
+            )}
+          </section>
+        </details>
       </div>
     </Card>
   );
@@ -627,11 +680,13 @@ function SyncCard(): ReactNode {
   const strong = pass.length >= 12 && pass === again;
   if (publicCloud) return null;
   return (
-    <Card title="Sync between devices" data-tour="settings-sync">
-      <p className="lv-muted lv-small">
-        Optional. Plans are encrypted on this device before upload, so the service only ever holds scrambled
-        data. You need your own sync service address; see the setup guide in the project’s docs folder.
-      </p>
+    <Fold
+      title="Sync between devices"
+      summary={label[sync.status]}
+      defaultOpen={sync.status !== 'off'}
+      data-tour="settings-sync"
+    >
+      <p className="lv-muted lv-small">Enter the address of your self-hosted sync service.</p>
       <div className="lv-row" style={{ marginTop: 8 }} data-tour="sync-status" role="status">
         <Badge
           tone={
@@ -857,7 +912,7 @@ function SyncCard(): ReactNode {
           </div>
         </div>
       </Dialog>
-    </Card>
+    </Fold>
   );
 }
 
@@ -933,6 +988,11 @@ function DeviceCard(): ReactNode {
               )}
             </dd>
           </div>
+        </dl>
+      </div>
+      <details className="hs-device-details">
+        <summary>Storage and diagnostics</summary>
+        <dl className="lv-facts">
           <div>
             <dt>Source revision</dt>
             <dd style={{ overflowWrap: 'anywhere', minWidth: 0 }}>{__BUILD_SHA__}</dd>
@@ -953,53 +1013,50 @@ function DeviceCard(): ReactNode {
             </dd>
           </div>
         </dl>
-      </div>
-      <div className="lv-row" style={{ marginTop: 10 }}>
-        {persisted === false ? (
+        <div className="lv-row" style={{ marginTop: 10 }}>
+          {persisted === false ? (
+            <Button
+              size="sm"
+              onClick={() =>
+                void navigator.storage.persist().then((ok) => {
+                  setPersisted(ok);
+                  notify(
+                    ok
+                      ? 'Storage is now protected.'
+                      : 'The browser declined. Installing the app or keeping a backup helps.',
+                    ok ? 'ok' : 'warn',
+                  );
+                })
+              }
+            >
+              Protect storage
+            </Button>
+          ) : null}
           <Button
             size="sm"
+            data-tour="error-log"
+            title="Stays on this device and holds no plan data. Download it only to report a problem."
             onClick={() =>
-              void navigator.storage.persist().then((ok) => {
-                setPersisted(ok);
-                notify(
-                  ok
-                    ? 'Storage is now protected.'
-                    : 'The browser declined. Installing the app or keeping a backup helps.',
-                  ok ? 'ok' : 'warn',
-                );
-              })
+              void errorLog().then((log) =>
+                download(
+                  'longview-error-log.json',
+                  JSON.stringify(
+                    { app: __APP_VERSION__, data: DATA_RELEASE, userAgent: navigator.userAgent, log },
+                    null,
+                    2,
+                  ),
+                  'application/json',
+                ),
+              )
             }
           >
-            Protect storage
+            Download error log
           </Button>
-        ) : null}
-        <Button
-          size="sm"
-          data-tour="error-log"
-          title="Stays on this device and holds no plan data. Download it only to report a problem."
-          onClick={() =>
-            void errorLog().then((log) =>
-              download(
-                'longview-error-log.json',
-                JSON.stringify(
-                  { app: __APP_VERSION__, data: DATA_RELEASE, userAgent: navigator.userAgent, log },
-                  null,
-                  2,
-                ),
-                'application/json',
-              ),
-            )
-          }
-        >
-          Download error log
-        </Button>
-        <Link className="lv-btn" data-size="sm" to="/help/methods">
-          Data sources
-        </Link>
-      </div>
-      <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
-        The error log stays on this device and holds no plan data. Nothing is sent anywhere.
-      </p>
+          <Link className="lv-btn" data-size="sm" to="/help/methods#datasets">
+            Data sources
+          </Link>
+        </div>
+      </details>
     </Card>
   );
 }
@@ -1007,14 +1064,7 @@ function DeviceCard(): ReactNode {
 export function SettingsPage(): ReactNode {
   return (
     <>
-      <PageHead
-        title="App settings"
-        intro={
-          publicCloud
-            ? 'Your account, plans, backups and this device.'
-            : 'Your plans, backups, sync and this device.'
-        }
-      />
+      <PageHead title="App settings" />
       <div className="hs-settings">
         <div className="hs-col">
           <PlansCard />

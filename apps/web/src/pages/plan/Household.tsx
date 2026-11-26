@@ -202,7 +202,7 @@ export function HouseholdPage(): ReactNode {
                   i === 0 ? STATUS_LABELS[f.status] : `${STATUS_LABELS[f.status]} from ${f.fromYear}`,
                 )
                 .join(' → ')}
-              defaultOpen
+              defaultOpen={status.length > 1}
               storageKey="household:filing"
               data-tour="filing-status"
             >

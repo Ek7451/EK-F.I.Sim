@@ -330,7 +330,7 @@ export function SnapshotPage(): ReactNode {
                 : 'None yet'
             }
             storageKey="snapshot-assets"
-            defaultOpen
+            defaultOpen={plan.assets.length > 0}
             data-tour="assets"
           >
             {plan.assets.length === 0 ? (
@@ -397,7 +397,7 @@ export function SnapshotPage(): ReactNode {
                 : 'None yet'
             }
             storageKey="snapshot-debts"
-            defaultOpen
+            defaultOpen={plan.debts.length > 0}
             data-tour="debts"
           >
             {plan.debts.length === 0 ? (

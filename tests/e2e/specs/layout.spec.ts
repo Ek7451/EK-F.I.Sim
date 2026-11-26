@@ -1,6 +1,6 @@
 /** Protected data-plot area replaces the former card-fit-only policy. */
 import { expect, test, type Locator } from '@playwright/test';
-import { dismissPrompt, go, seed } from './helpers';
+import { go, seed } from './helpers';
 
 test('a two-finger pinch keeps the phone UI at its original scale', async ({ page, browserName }, info) => {
   test.skip(info.project.name !== 'phone' || browserName !== 'chromium');
@@ -96,7 +96,6 @@ test('projection plotting area, responsive widths and theme layouts', async ({ p
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await seed(page);
   await go(page, '/explore/projection');
-  await dismissPrompt(page);
   for (const size of [
     { width: 1440, height: 900 },
     { width: 1366, height: 768 },

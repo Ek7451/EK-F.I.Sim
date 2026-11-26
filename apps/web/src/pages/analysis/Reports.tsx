@@ -67,17 +67,19 @@ export function ReportsPage(): ReactNode {
       {isDraft && <Notice>Apply your draft or save it as a scenario before exporting a report.</Notice>}
       <div className="rpt-bar no-print">
         <section className="lv-card rpt-options" data-tour="report-options" aria-label="What to include">
-          <div className="rpt-version">
-            <SelectField
-              label="Version of the plan"
-              value={scenarioId ?? ''}
-              options={[
-                { value: '', label: 'As planned' },
-                ...plan.scenarios.map((s) => ({ value: s.id, label: s.name })),
-              ]}
-              onChange={(v) => setScenario(v || null)}
-            />
-          </div>
+          {plan.scenarios.length > 0 && (
+            <div className="rpt-version">
+              <SelectField
+                label="Version of the plan"
+                value={scenarioId ?? ''}
+                options={[
+                  { value: '', label: 'As planned' },
+                  ...plan.scenarios.map((s) => ({ value: s.id, label: s.name })),
+                ]}
+                onChange={(v) => setScenario(v || null)}
+              />
+            </div>
+          )}
           <div className="rpt-mc">
             <label className="lv-switch">
               <input

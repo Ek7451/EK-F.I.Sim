@@ -77,6 +77,8 @@ test('the wizard asks each partner about pay, saving, lifespan and retirement, a
   await page.locator('[data-tour="wizard-next"]').click();
 
   const review = page.locator('[data-tour="wizard-review"]');
+  await expect(review.getByText('Annual pay', { exact: true })).toBeVisible();
+  await review.getByText('Model assumptions', { exact: true }).click();
   for (const item of ['Lifespan', 'Investment returns', 'Social Security', 'Healthcare', 'Taxes'])
     await expect(review.getByText(item, { exact: true })).toBeVisible();
   await expect(review).toContainText('Married filing jointly');
@@ -116,6 +118,9 @@ test('every screen renders without errors', async ({ page }) => {
   for (const route of ROUTES) {
     await go(page, route);
     await expect(page.locator('main h1'), route).toBeVisible();
+    await expect(page.getByRole('dialog'), route).toHaveCount(0);
+    await expect(page.getByRole('menu'), route).toHaveCount(0);
+    await expect(page.getByLabel('Tour suggestion'), route).toHaveCount(0);
     await expect(page.getByRole('alert').filter({ hasText: 'Something went wrong' }), route).toHaveCount(0);
     // No sideways scrolling at any size (UX-08).
     expect(
@@ -201,6 +206,8 @@ test('encrypted backup: export, delete, import brings the plan back', async ({ p
   await seed(page);
   await go(page, '/settings');
   const backup = page.locator('[data-tour="settings-backup"]');
+  await expect(backup.getByLabel('Backup passphrase')).toBeHidden();
+  await backup.getByText('Export all plans', { exact: true }).click();
   await backup.getByLabel('Backup passphrase').fill('correct horse battery');
   await backup.getByLabel('Passphrase again').fill('correct horse battery');
   const [dl] = await Promise.all([
@@ -212,10 +219,13 @@ test('encrypted backup: export, delete, import brings the plan back', async ({ p
   const text = (await import('node:fs')).readFileSync(file, 'utf8');
   expect(text).not.toContain('retiring at 50'); // nothing readable in the file
 
-  await page.getByRole('button', { name: /^Delete My plan/ }).click();
+  await page.getByRole('button', { name: /^Actions for My plan/ }).click();
+  await page.getByRole('menuitem', { name: 'Delete', exact: true }).click();
   await page.getByRole('button', { name: 'Delete plan' }).click();
   await expect(page.getByText('No plans on this device yet.')).toBeVisible();
 
+  await backup.getByText('Import a backup', { exact: true }).click();
+  await expect(backup.getByLabel('Its passphrase')).toBeHidden();
   await backup.getByLabel('Backup file').setInputFiles(file);
   await backup.getByLabel('Its passphrase').fill('wrong passphrase');
   await backup.getByRole('button', { name: 'Import' }).click();

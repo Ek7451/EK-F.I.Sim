@@ -501,7 +501,7 @@ export const TOURS: TourDef[] = [
       ),
       s(
         MC,
-        'failure-years',
+        'failure-years|mc-status',
         'When plans ran short',
         'For runs that fell short, this shows the year the money ran out. A late shortfall is a different problem from an early one.',
         { placement: 'left' },
@@ -1077,9 +1077,9 @@ export const TOURS: TourDef[] = [
       ),
       s(
         TRACK,
-        'track-chart',
+        'track-chart|freeze-baseline',
         'Actual versus planned',
-        'The line is the frozen reference and the dots are what you logged. Above the line means ahead of plan.',
+        'After you freeze a reference, the chart shows the projection as a line and your logged balances as dots. Above the line means ahead of plan.',
         { placement: 'left' },
       ),
       s(TRACK, 'track-stats', 'Ahead or behind', 'This band puts a number on the gap at your latest entry.', {

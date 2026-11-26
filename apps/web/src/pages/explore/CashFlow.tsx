@@ -88,6 +88,7 @@ export function CashFlowPage(): ReactNode {
       <PageHead
         group="explore"
         title="Cash flow"
+        context={m.unit}
         intro={`Where each year's money comes from and where it goes, in ${m.unit}.`}
         actions={<ProjectedBadge result={result} />}
       />

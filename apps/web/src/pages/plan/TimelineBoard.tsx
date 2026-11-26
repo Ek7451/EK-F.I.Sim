@@ -3,7 +3,7 @@
  * that starts or stops along the way (income, spending, health coverage, saving from pay).
  */
 import type { Milestone, Plan, ProjectionResult, YearRef } from '@fisim/engine';
-import { Icon, formatCompact, formatPct } from '@fisim/ui';
+import { HelpTip, Icon, formatCompact, formatPct } from '@fisim/ui';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useDraft } from '../../state/draft';
@@ -374,8 +374,14 @@ export function TimelineBoard({
           <div className="tl-life lv-night" data-tour="life-line">
             <div className="tl-row">
               <div className="tl-label tl-life-label">
-                <h2>Life line</h2>
-                <p>Drag a pin, or focus it and press ← →. Escape cancels a drag.</p>
+                <h2>
+                  Life line{' '}
+                  {pins.length > 0 && (
+                    <HelpTip label="How to move a milestone">
+                      Drag a dated pin or focus it and use the left and right arrow keys. Escape cancels a drag.
+                    </HelpTip>
+                  )}
+                </h2>
                 {unreached.length ? (
                   <div className="tl-unreached">
                     <span>Not reached in this projection</span>

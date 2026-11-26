@@ -3,7 +3,7 @@
  * that saving is on (it always is), when it last saved, and the account actions: change password, a new recovery
  * code, and sign out. Plans that changed on two devices are settled here too.
  */
-import { Badge, Button, Card, Field, Notice } from '@fisim/ui';
+import { Badge, Button, Card, Field, HelpTip, Notice } from '@fisim/ui';
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
@@ -259,10 +259,12 @@ export function CloudAccountCard(): ReactNode {
   if (!account.user)
     return (
       <Card id="cloud-account" title="Cloud saving" data-tour="cloud-account">
-        <p className="lv-muted lv-small">
-          Sign in to save your plans to the cloud and open them on any device. Plans are encrypted on this
-          device before they leave it, so only you can read them. Without an account, plans stay in this
-          browser.
+        <p className="lv-small">
+          Sign in to open your plans on another device.{' '}
+          <HelpTip label="About cloud saving">
+            Plans stay in this browser until you sign in. Cloud plans are encrypted on your device before
+            upload.
+          </HelpTip>
         </p>
         {account.error || sync.message ? (
           <div style={{ marginTop: 8 }}>
@@ -327,9 +329,6 @@ export function CloudAccountCard(): ReactNode {
         </div>
       ) : null}
       <Conflicts conflicts={sync.conflicts} />
-      <p className="lv-small lv-muted" style={{ marginTop: 8 }}>
-        Every change is encrypted on this device and saved to the cloud a moment later. Only you can read it.
-      </p>
       {panel === 'delete' ? (
         <form
           onSubmit={async (e) => {
@@ -387,20 +386,23 @@ export function CloudAccountCard(): ReactNode {
       ) : panel === 'code' ? (
         <NewCode username={account.user.username} onDone={() => setPanel(null)} />
       ) : (
-        <div className="lv-row" style={{ marginTop: 10 }}>
-          <Button size="sm" onClick={() => setPanel('password')}>
-            Change password
-          </Button>
-          <Button size="sm" onClick={() => setPanel('code')}>
-            New recovery code
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setPanel('delete')}>
-            Delete account
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => setSigningOut(true)}>
-            Sign out
-          </Button>
-        </div>
+        <details className="hs-device-details">
+          <summary>Manage account</summary>
+          <div className="lv-row">
+            <Button size="sm" onClick={() => setPanel('password')}>
+              Change password
+            </Button>
+            <Button size="sm" onClick={() => setPanel('code')}>
+              New recovery code
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setPanel('delete')}>
+              Delete account
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setSigningOut(true)}>
+              Sign out
+            </Button>
+          </div>
+        </details>
       )}
       <SignOutDialog open={signingOut} onClose={() => setSigningOut(false)} />
     </Card>

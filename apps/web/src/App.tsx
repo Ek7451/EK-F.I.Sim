@@ -47,14 +47,7 @@ const ChangelogPage = lazy(() => import('./pages/Changelog'));
 /** Screens that need a plan send a first-time visitor to the setup wizard. */
 function RequirePlan(): ReactNode {
   const plan = usePlan();
-  return plan ? (
-    <Outlet />
-  ) : (
-    <>
-      <Navigate to="/start" replace />
-      <StartPage />
-    </>
-  );
+  return plan ? <Outlet key={plan.id} /> : <Navigate to="/start" replace />;
 }
 
 /**
