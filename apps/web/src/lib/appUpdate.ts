@@ -8,6 +8,34 @@
  * in a reload onto the new version.
  */
 
+/** Ask the existing PWA registration for a new build without activating it during an edit. */
+export async function checkAppUpdate(): Promise<'current' | 'waiting' | 'unavailable'> {
+  if (!('serviceWorker' in navigator)) return 'unavailable';
+  const reg = await navigator.serviceWorker.getRegistration();
+  if (!reg?.active) return 'unavailable';
+  if (reg.waiting) return 'waiting';
+  await reg.update();
+  const installing = reg.installing;
+  if (installing) {
+    await new Promise<void>((resolve, reject) => {
+      const finish = () => {
+        if (!['installed', 'activated', 'redundant'].includes(installing.state)) return;
+        clearTimeout(timer);
+        installing.removeEventListener('statechange', finish);
+        if (installing.state === 'redundant') reject(new Error('Update installation failed'));
+        else resolve();
+      };
+      const timer = setTimeout(() => {
+        installing.removeEventListener('statechange', finish);
+        reject(new Error('Update check timed out'));
+      }, 60000);
+      installing.addEventListener('statechange', finish);
+      finish();
+    });
+  }
+  return reg.waiting ? 'waiting' : 'current';
+}
+
 /** Activate the waiting version and reload onto it. */
 export async function applyUpdate(): Promise<void> {
   const [{ flushLocalWrites, useStore }, { hasPendingDrafts }] = await Promise.all([

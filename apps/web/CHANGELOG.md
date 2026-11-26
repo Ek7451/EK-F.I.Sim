@@ -4,6 +4,7 @@
 
 - **Edit plan** opens all eight input sections. Use **Results** for projections and other analyses. On a phone, **More** holds Progress, Reports, App settings and Help.
 - **Preview changes** opens the draft editor. A directly saved input lets you resolve an existing draft before changing the base plan.
+- Under **App settings → This device**, **Check for update** shows whether a new version is ready.
 - Mobile navigation uses a solid background. Tap a year on a Home chart to read its values inside the card.
 
 ## 0.2.1

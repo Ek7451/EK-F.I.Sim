@@ -9,7 +9,9 @@ export default function ChangelogPage() {
     <>
       <PageHead title="Changelog" actions={<Link to="/settings">Settings</Link>} />
       <article className="lv-card hs-release-history">
-        <Markdown options={{ disableParsingRawHTML: true }}>{history.replace(/^# .*\n/, '')}</Markdown>
+        <Markdown options={{ disableParsingRawHTML: true }}>
+          {history.replace(/^# [^\r\n]*\r?\n/, '')}
+        </Markdown>
       </article>
     </>
   );
