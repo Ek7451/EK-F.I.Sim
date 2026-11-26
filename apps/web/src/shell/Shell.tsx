@@ -339,26 +339,39 @@ export function Shell({
           {newer.map(([id, m]) => (
             <Notice key={id} tone="warn">
               {m.validationError
-                ? `A saved plan needs recovery. ${m.validationError}`
+                ? 'A saved plan needs recovery. Download the original, then open it in Restore a recovery file.'
                 : `A saved plan needs Longview schema v${m.newerVersion}. Update to open it.`}
-              <Button
-                size="sm"
-                onClick={async () => {
-                  try {
-                    const { db } = await import('../state/db');
-                    const record = await (await db()).get('plans', id);
-                    if (!record) throw new Error();
-                    const { download } = await import('../lib/files');
-                    download('longview-recovery.json', JSON.stringify(record.plan), 'application/json');
-                  } catch {
-                    useStore
-                      .getState()
-                      .notify('Recovery download failed. Your original is still on this device.', 'danger');
-                  }
-                }}
-              >
-                Download original (unencrypted)
-              </Button>
+              {m.validationError && (
+                <details>
+                  <summary>Show plan errors</summary>
+                  {m.validationError}
+                </details>
+              )}
+              <div className="lv-row">
+                <Button
+                  size="sm"
+                  onClick={async () => {
+                    try {
+                      const { db } = await import('../state/db');
+                      const record = await (await db()).get('plans', id);
+                      if (!record) throw new Error();
+                      const { download } = await import('../lib/files');
+                      download('longview-recovery.json', JSON.stringify(record.plan), 'application/json');
+                    } catch {
+                      useStore
+                        .getState()
+                        .notify('Recovery download failed. Your original is still on this device.', 'danger');
+                    }
+                  }}
+                >
+                  Download original (unencrypted)
+                </Button>
+                {m.validationError && loc.pathname !== '/settings/recovery' && (
+                  <Link className="lv-btn" data-size="sm" to="/settings/recovery">
+                    Restore a recovery file
+                  </Link>
+                )}
+              </div>
             </Notice>
           ))}
           <Outlet />

@@ -159,6 +159,11 @@ export async function importRecords(records: ImportRecord[]): Promise<void> {
       await store.put(record);
       await replaceIntent(tx, { planId: record.id, op: 'put', queuedAt: record.updatedAt });
     }
+    if (records.length) {
+      const settings = tx.objectStore('settings');
+      const app = (await settings.get('app')) ?? {};
+      await settings.put({ ...app, activePlanId: records[0].record.id, onboarded: true }, 'app');
+    }
   } catch (error) {
     try {
       tx.abort();

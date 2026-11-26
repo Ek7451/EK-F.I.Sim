@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import type { Plan } from '@fisim/engine';
+import type { LoadedPlan, Plan } from '@fisim/engine';
 import { loadEngine } from '../engine/load';
 import { importRecords, type ImportRecord } from '../state/db';
 import { flushLocalWrites, useStore } from '../state/store';
@@ -8,10 +8,20 @@ interface Entry {
   plan: Plan;
   revision: string | null;
   original?: unknown;
+  recovering: boolean;
+  removedSteps?: LoadedPlan['removedSurplusSteps'];
   action: 'import' | 'copy' | 'replace' | 'skip';
 }
 
-export default function ImportReview({ raw, onClose }: { raw: unknown[]; onClose(): void }): ReactNode {
+export default function ImportReview({
+  raw,
+  recovery = false,
+  onClose,
+}: {
+  raw: unknown[];
+  recovery?: boolean;
+  onClose(saved?: boolean): void;
+}): ReactNode {
   const [entries, setEntries] = useState<Entry[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -25,17 +35,20 @@ export default function ImportReview({ raw, onClose }: { raw: unknown[]; onClose
         const ids = new Set<string>();
         const state = useStore.getState();
         const list = raw.map((item): Entry => {
-          const loaded = loadPlan(item);
+          const loaded = loadPlan(item, recovery ? { reviewRecovery: true } : undefined);
           if (!loaded.plan) throw new Error(loaded.error ?? 'Update Longview to restore this backup.');
           const p = loaded.plan;
           if (ids.has(p.id)) throw new Error('This transfer contains duplicate plan IDs.');
           ids.add(p.id);
-          const revision = state.plans[p.id]?.updatedAt ?? null;
+          const quarantined = recovery ? state.meta[p.id]?.recoveryRevision : undefined;
+          const revision = state.plans[p.id]?.updatedAt ?? quarantined ?? null;
           return {
             plan: p,
             revision,
-            original: loaded.migrated ? item : undefined,
-            action: state.meta[p.id] ? 'copy' : 'import',
+            original: loaded.migrated || loaded.removedSurplusSteps ? item : undefined,
+            removedSteps: loaded.removedSurplusSteps,
+            recovering: quarantined !== undefined,
+            action: quarantined !== undefined ? 'replace' : state.meta[p.id] ? 'copy' : 'import',
           };
         });
         if (current) setEntries(list);
@@ -46,7 +59,7 @@ export default function ImportReview({ raw, onClose }: { raw: unknown[]; onClose
     return () => {
       current = false;
     };
-  }, [raw]);
+  }, [raw, recovery]);
   const commit = async (): Promise<void> => {
     if (lock.current) return;
     lock.current = true;
@@ -60,7 +73,11 @@ export default function ImportReview({ raw, onClose }: { raw: unknown[]; onClose
         if (entry.action === 'skip') continue;
         const state = useStore.getState();
         const copy = entry.action === 'copy';
-        if (!copy && (state.plans[entry.plan.id]?.updatedAt ?? null) !== entry.revision)
+        const revision =
+          state.plans[entry.plan.id]?.updatedAt ??
+          (entry.recovering ? state.meta[entry.plan.id]?.recoveryRevision : undefined) ??
+          null;
+        if (!copy && revision !== entry.revision)
           throw new Error('A local plan changed. Reopen the import to review it.');
         const p = {
           ...entry.plan,
@@ -88,12 +105,26 @@ export default function ImportReview({ raw, onClose }: { raw: unknown[]; onClose
           meta[record.id] = { syncVersion: record.syncVersion, dirty: true, readOnly: false };
           history[record.id] = { undo: [], redo: [] };
         }
-        return { plans: { ...s.plans, ...added }, meta, history };
+        const active = records[0]?.record;
+        return {
+          plans: { ...s.plans, ...added },
+          meta,
+          history,
+          ...(active && {
+            settings: { ...s.settings, activePlanId: active.id, onboarded: true },
+            scenarioId: null,
+          }),
+        };
       });
-      if (records.length)
-        useStore.getState().setSettings({ activePlanId: records[0].record.id, onboarded: true });
-      useStore.getState().notify(`Imported ${records.length} plans.`, 'ok');
-      onClose();
+      useStore
+        .getState()
+        .notify(
+          recovery
+            ? 'Plan restored. Review your surplus priorities in Strategy.'
+            : `Imported ${records.length} plans.`,
+          'ok',
+        );
+      onClose(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Import failed. Reopen the backup to retry.');
     } finally {
@@ -102,38 +133,65 @@ export default function ImportReview({ raw, onClose }: { raw: unknown[]; onClose
     }
   };
   return (
-    <section className="lv-card" aria-label="Review plan import">
-      <h2>Review plan import</h2>
+    <section className="lv-card" aria-label={recovery ? 'Review recovery' : 'Review plan import'}>
+      <h2>{recovery ? 'Review recovery' : 'Review plan import'}</h2>
       <p>
         {cloud
           ? 'Confirmed plans will be encrypted and saved to your signed-in account.'
           : 'Confirmed plans will be saved in this browser.'}
       </p>
-      {error && <p role="alert">{error}</p>}
+      {error && (
+        <p role="alert">
+          {recovery && 'Restore could not finish. Your original is safe. '}
+          {error}
+        </p>
+      )}
       {entries.map((e, i) => (
-        <label className="lv-field" key={e.plan.id}>
-          {e.plan.name} · incoming revision {e.plan.updatedAt}
-          {e.revision && ` · current revision ${e.revision}`}
-          <select
-            disabled={busy}
-            value={e.action}
-            onChange={(ev) => {
-              const action = ev.target.value as Entry['action'];
-              setEntries((rows) => rows.map((r, j) => (i === j ? { ...r, action } : r)));
-            }}
-          >
-            {!e.revision && !useStore.getState().meta[e.plan.id] && <option value="import">Import</option>}
-            <option value="copy">Import as a new copy</option>
-            {e.revision && <option value="replace">Replace the existing plan</option>}
-            <option value="skip">Skip</option>
-          </select>
-        </label>
+        <div key={e.plan.id}>
+          {e.removedSteps && (
+            <>
+              <p>
+                These surplus priorities point to missing accounts. Confirming removes the listed steps. You
+                can choose new destinations in Strategy.
+              </p>
+              <ul>
+                {e.removedSteps.map((step) => (
+                  <li key={step.position}>
+                    Step {step.position} · {step.accountId}
+                  </li>
+                ))}
+              </ul>
+            </>
+          )}
+          {e.recovering && <p>Restoring this plan saves a snapshot of the original on this device.</p>}
+          <label className="lv-field">
+            {e.plan.name} · incoming revision {e.plan.updatedAt}
+            {e.revision && ` · current revision ${e.revision}`}
+            <select
+              disabled={busy}
+              value={e.action}
+              onChange={(ev) => {
+                const action = ev.target.value as Entry['action'];
+                setEntries((rows) => rows.map((r, j) => (i === j ? { ...r, action } : r)));
+              }}
+            >
+              {!e.revision && !useStore.getState().meta[e.plan.id] && <option value="import">Import</option>}
+              <option value="copy">Import as a new copy</option>
+              {e.revision && (
+                <option value="replace">
+                  {e.recovering ? 'Restore the saved plan' : 'Replace the existing plan'}
+                </option>
+              )}
+              <option value="skip">Skip</option>
+            </select>
+          </label>
+        </div>
       ))}
       <button disabled={busy || !entries.some((e) => e.action !== 'skip')} onClick={() => void commit()}>
-        Confirm import
+        {recovery ? 'Confirm restore' : 'Confirm import'}
       </button>
-      <button disabled={busy} onClick={onClose}>
-        Cancel import
+      <button disabled={busy} onClick={() => onClose()}>
+        {recovery ? 'Cancel restore' : 'Cancel import'}
       </button>
     </section>
   );

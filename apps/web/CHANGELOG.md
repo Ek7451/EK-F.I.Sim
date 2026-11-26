@@ -1,5 +1,11 @@
 # Longview Planner changelog
 
+## 0.2.1
+
+Released November 26, 2026
+
+- **Restore a recovery file.** Open the unencrypted JSON from the recovery warning in Settings → Backup → Restore a recovery file. When surplus priorities point to missing accounts, you can review the affected steps and confirm their removal. Restoring the saved plan keeps a snapshot of the original.
+
 ## 0.2.0
 
 Released November 26, 2026

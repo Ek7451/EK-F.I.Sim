@@ -30,6 +30,15 @@ describe('R3 IndexedDB lifecycle', () => {
     expect(await d.queue()).toEqual(before);
     expect(await d.snapshotsFor('a')).toEqual([]);
   });
+  it('commits the restored plan selection and preserves device preferences before returning', async () => {
+    const d = await import('./db');
+    await d.setSetting('app', { theme: 'dark', activePlanId: 'other' });
+    const original = row('recovery', 'one');
+    await d.putPlan(original);
+    await d.importRecords([{ record: row('recovery', 'two'), expectedRevision: 'one' }]);
+    expect(await d.getSetting('app')).toEqual({ theme: 'dark', activePlanId: 'recovery', onboarded: true });
+    expect((await d.snapshotsFor('recovery'))[0].plan).toEqual(original.plan);
+  });
   it('N03 blocks stale updates after delete and after workspace revocation', async () => {
     const d = await import('./db');
     await d.putPlan(row('a', 'one'), null);

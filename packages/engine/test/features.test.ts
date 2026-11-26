@@ -281,6 +281,43 @@ describe('healthcare (HC)', () => {
 });
 
 describe('plan schema and migrations (plan 5.2)', () => {
+  it('previews only missing surplus destinations during explicit recovery', () => {
+    const plan = sampleBasic(2026);
+    const missing = ['a-cash-removed', 'a-rothira-p1', 'a-rothira-p2', 'a-brokerage-p1'].map((accountId) => ({
+      type: 'account' as const,
+      accountId,
+    }));
+    const raw = {
+      ...plan,
+      schemaVersion: 2,
+      strategies: { ...plan.strategies, surplusWaterfall: [...missing, ...plan.strategies.surplusWaterfall] },
+    };
+    expect(loadPlan(raw).plan).toBeNull();
+    const review = loadPlan(raw, { reviewRecovery: true });
+    expect(review.plan).toEqual(plan);
+    expect(review.removedSurplusSteps).toEqual(
+      missing.map((s, i) => ({ position: i + 1, accountId: s.accountId })),
+    );
+    expect(review.original).toEqual(raw);
+    expect(raw.strategies.surplusWaterfall).toHaveLength(
+      missing.length + plan.strategies.surplusWaterfall.length,
+    );
+    for (const unsafe of [
+      { ...raw, schemaVersion: SCHEMA_VERSION + 1 },
+      { ...raw, strategies: { ...raw.strategies, surplusDefaultAccountId: 'missing-default' } },
+      {
+        ...raw,
+        scenarios: [
+          {
+            id: 's1',
+            name: 'Limit',
+            patches: [{ path: ['strategies', 'surplusWaterfall', 2, 'maxAnnual'], value: 999 }],
+          },
+        ],
+      },
+    ])
+      expect(loadPlan(unsafe, { reviewRecovery: true }).plan).toBeNull();
+  });
   const dir = new URL('./fixtures/plans/', import.meta.url);
   it('migrates every fixture of every schema version to the latest and validates it', () => {
     let count = 0;

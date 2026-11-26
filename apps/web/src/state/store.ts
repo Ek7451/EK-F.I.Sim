@@ -65,6 +65,7 @@ export interface PlanMeta {
   /** Schema version found on disk when it is newer than this app. */
   newerVersion?: number;
   validationError?: string;
+  recoveryRevision?: string;
 }
 
 interface State {
@@ -192,6 +193,7 @@ export const useStore = create<State>((set, get) => ({
           dirty: s.dirty,
           readOnly: true,
           validationError: loaded.error ?? 'Stored plan identity mismatch.',
+          recoveryRevision: s.updatedAt,
         };
         continue;
       }
