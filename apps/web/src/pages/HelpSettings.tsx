@@ -2,7 +2,7 @@ import { DATA_RELEASE, type DatasetInfo } from '@fisim/data';
 import { SCHEMA_VERSION, methodology, type MethodEntry } from '@fisim/engine';
 import { Badge, Button, Card, Dialog, Icon, Notice, Segmented, SelectField, TextField } from '@fisim/ui';
 import { useEffect, useRef, useState, type ReactNode } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import ImportReview from './ImportReview';
 import { exportBackup, download, readBackup } from '../lib/files';
 import {
@@ -415,6 +415,66 @@ function PlansCard(): ReactNode {
   );
 }
 
+export function RecoveryPage(): ReactNode {
+  const [incoming, setIncoming] = useState<unknown[] | null>(null);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const navigate = useNavigate();
+  const openFile = async (file: File): Promise<void> => {
+    setError('');
+    setBusy(true);
+    try {
+      if (file.size > 64 * 1024 * 1024) throw new Error('Recovery file exceeds the 64 MiB import limit.');
+      const plan = JSON.parse(await file.text());
+      if (plan?.format === 'fisim-backup')
+        throw new Error('Open this encrypted backup in Settings under Import a backup.');
+      if (typeof plan?.id !== 'string') throw new Error('Choose a Longview plan recovery JSON file.');
+      setIncoming([plan]);
+    } catch (e) {
+      setError(e instanceof SyntaxError ? 'Choose a valid Longview recovery JSON file.' : msg(e));
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <>
+      <PageHead title="Restore a recovery file" actions={<Link to="/settings">Settings</Link>} />
+      {incoming ? (
+        <ImportReview
+          raw={incoming}
+          recovery
+          onClose={(saved) => {
+            setIncoming(null);
+            if (saved) navigate('/settings');
+          }}
+        />
+      ) : (
+        <Card title="Choose your recovery file">
+          <p>
+            Select the unencrypted JSON file saved by Download original. You can review the plan before
+            restoring it.
+          </p>
+          <label className="lv-field">
+            Recovery file (.json)
+            <input
+              className="lv-input"
+              type="file"
+              accept=".json,application/json"
+              disabled={busy}
+              onChange={(event) => {
+                const file = event.currentTarget.files?.[0];
+                event.currentTarget.value = '';
+                if (file) void openFile(file);
+              }}
+            />
+          </label>
+          {error && <p role="alert">{error}</p>}
+        </Card>
+      )}
+    </>
+  );
+}
+
 function BackupCard(): ReactNode {
   const [incoming, setIncoming] = useState<unknown[] | null>(null);
   const plans = useStore((s) => s.plans);
@@ -468,6 +528,9 @@ function BackupCard(): ReactNode {
     >
       <p className="lv-muted lv-small">
         Plans live in this browser, which can clear its storage. Keep an encrypted backup file somewhere safe.
+      </p>
+      <p>
+        <Link to="/settings/recovery">Restore a recovery file</Link> (.json, no passphrase needed)
       </p>
       {error ? (
         <div style={{ marginTop: 8 }}>

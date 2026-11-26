@@ -85,9 +85,10 @@ export interface LoadedPlan {
   /** The untouched input, kept so the caller can snapshot it before migrating. */
   original: unknown;
   error?: string;
+  removedSurplusSteps?: { position: number; accountId: string }[];
 }
 
-export function loadPlan(raw: unknown): LoadedPlan {
+export function loadPlan(raw: unknown, options?: { reviewRecovery: true }): LoadedPlan {
   const obj = (raw ?? {}) as Raw;
   const fromVersion = typeof obj.schemaVersion === 'number' ? obj.schemaVersion : 0;
   if (fromVersion > SCHEMA_VERSION)
@@ -117,7 +118,47 @@ export function loadPlan(raw: unknown): LoadedPlan {
       };
     }
   }
-  const parsed = PlanZ.safeParse(cur);
+  let parsed = PlanZ.safeParse(cur);
+  const removedSurplusSteps: { position: number; accountId: string }[] = [];
+  if (!parsed.success && options?.reviewRecovery) {
+    // Only offer to drop fully formed surplus steps whose destination account is absent.
+    // Use the validator's complete issue list, including issues beyond the banner's first five.
+    const strategies = cur.strategies as Raw | undefined;
+    const steps = strategies?.surplusWaterfall;
+    if (
+      Array.isArray(steps) &&
+      parsed.error.issues.every(
+        ({ path, message }) =>
+          path.length === 4 &&
+          path[0] === 'strategies' &&
+          path[1] === 'surplusWaterfall' &&
+          typeof path[2] === 'number' &&
+          path[3] === 'accountId' &&
+          message.startsWith('Unknown reference to accounts: '),
+      )
+    ) {
+      const missing = new Set(parsed.error.issues.map(({ path }) => Number(path[2])));
+      const remaining = steps.filter((step, index) => {
+        if (!missing.has(index)) return true;
+        removedSurplusSteps.push({ position: index + 1, accountId: step.accountId });
+        return false;
+      });
+      const repaired = PlanZ.safeParse({
+        ...cur,
+        strategies: { ...strategies, surplusWaterfall: remaining },
+      });
+      // A positional scenario edit could point at a different step after removal.
+      if (
+        repaired.success &&
+        !repaired.data.scenarios.some((s) =>
+          s.patches.some(
+            (p) => p.path[0] === 'strategies' && p.path[1] === 'surplusWaterfall' && p.path.length > 2,
+          ),
+        )
+      )
+        parsed = repaired;
+    }
+  }
   if (!parsed.success)
     return {
       plan: null,
@@ -132,6 +173,7 @@ export function loadPlan(raw: unknown): LoadedPlan {
     };
   return {
     plan: parsed.data,
+    ...(removedSurplusSteps.length ? { removedSurplusSteps } : {}),
     fromVersion,
     migrated: fromVersion < SCHEMA_VERSION,
     readOnly: false,
