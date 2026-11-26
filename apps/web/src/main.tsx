@@ -93,9 +93,16 @@ function Root(): ReactNode {
     const root = document.documentElement;
     if (theme === 'system') delete root.dataset.theme;
     else root.dataset.theme = theme;
-    const dark =
-      theme === 'dark' || (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
-    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#070919' : '#f2f2fb');
+    const system = window.matchMedia('(prefers-color-scheme: dark)');
+    const updateChrome = () => {
+      const dark = theme === 'dark' || (theme === 'system' && system.matches);
+      document
+        .querySelector('meta[name="theme-color"]')
+        ?.setAttribute('content', dark ? '#070919' : '#f2f2fb');
+    };
+    updateChrome();
+    system.addEventListener('change', updateChrome);
+    return () => system.removeEventListener('change', updateChrome);
   }, [theme]);
 
   if (openingError)
