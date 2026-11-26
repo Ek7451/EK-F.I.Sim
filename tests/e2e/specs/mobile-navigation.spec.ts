@@ -34,6 +34,8 @@ test('touch details stay inside the Home chart and the bottom navigation accepts
     for (const dy of [10, 25, 45, 70, 100]) {
       await cdp.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y - dy }] });
     }
+    // Release a stationary finger so the next tap exercises navigation after a drag.
+    await page.waitForTimeout(250);
     await cdp.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await expect.poll(() => page.evaluate(() => scrollY)).toBeGreaterThan(start);
     await expect(detail).toHaveAttribute('aria-label', pinned!);
