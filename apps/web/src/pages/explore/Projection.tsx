@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../../lib/chartYears';
 import { explainCashFlow, explainNetWorth, type YearRecord } from '@fisim/engine';
 import {
   Badge,
@@ -222,7 +223,7 @@ export function ProjectionPage(): ReactNode {
             table={() => ({
               columns: ['Year', ...series.map((x) => x[0]), 'Net worth', 'Spending covered'],
               rows: recs.map((r) => [
-                r.year,
+                yearWithAges(r),
                 ...series.map((x) => formatMoney(m.bal(r, x[1](r)))),
                 formatMoney(m.bal(r, r.netWorth)),
                 isShort(r) ? `Short by ${formatMoney(m.flow(r, r.shortfall))}` : 'Yes',
@@ -276,6 +277,7 @@ export function ProjectionPage(): ReactNode {
                   data: recs.map((r) => (view.axis === 'age' ? r.ages.join(' / ') : r.year)),
                   boundaryGap: false,
                   ...axis(c),
+                  ...(view.axis === 'year' ? chartYearLabels(c, recs) : {}),
                   splitLine: { show: false },
                 },
                 { type: 'category', gridIndex: 1, data: recs.map((r) => r.year), show: false },

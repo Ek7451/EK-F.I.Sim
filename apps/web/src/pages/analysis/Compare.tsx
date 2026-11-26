@@ -18,9 +18,10 @@ import {
 } from '@fisim/ui';
 import { useMemo, useRef, useState, type ReactNode } from 'react';
 import { Chart, alpha, axis, dawnFill, dawnLine, short, tooltip } from '../../charts/Chart';
+import { chartYearLabels } from '../../lib/chartYears';
 import { useProjectionRequest } from '../../engine/useResults';
 import { STATES } from '../../lib/fields';
-import { fundedStat } from '../../lib/outcome';
+import { agesText, fundedStat } from '../../lib/outcome';
 import { PageHead } from '../../shell/Shell';
 import { newId, usePlan, useStore, useUpdate } from '../../state/store';
 import { outcomeDelta, outcomeMetrics } from '../../lib/metrics';
@@ -253,6 +254,13 @@ export function ComparePage(): ReactNode {
   const at = (r: ProjectionResult, y: number): number | null => {
     const x = r.records.find((q) => q.year === y);
     return x ? x.netWorth / x.cpiEnd : null;
+  };
+  const comparisonYear = (year: number): string => {
+    const first = A?.records.find((r) => r.year === year);
+    const second = B?.records.find((r) => r.year === year);
+    const left = first && agesText(first);
+    const right = second && agesText(second);
+    return left === right ? `${year} · ${left}` : `${year} · First: ${left ?? '—'} · Second: ${right ?? '—'}`;
   };
   /** A year on each side: the difference in years, or why there is none to give. */
   const yearDiff = (x: number | null, z: number | null): ReactNode => {
@@ -561,7 +569,7 @@ export function ComparePage(): ReactNode {
                           const x = at(A, y);
                           const z = at(B, y);
                           return [
-                            y,
+                            comparisonYear(y),
                             x === null ? '—' : money(x),
                             z === null ? '—' : money(z),
                             x !== null && z !== null ? money(z - x) : '—',
@@ -581,6 +589,7 @@ export function ComparePage(): ReactNode {
                           data: years,
                           boundaryGap: false,
                           ...axis(c),
+                          ...chartYearLabels(c, comparisonYear),
                           splitLine: { show: false },
                         },
                         yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
@@ -631,7 +640,7 @@ export function ComparePage(): ReactNode {
                         rows: years.map((y) => {
                           const x = at(A, y);
                           const z = at(B, y);
-                          return [y, x === null || z === null ? '—' : money(z - x)];
+                          return [comparisonYear(y), x === null || z === null ? '—' : money(z - x)];
                         }),
                       })}
                       build={(c) => ({
@@ -642,7 +651,13 @@ export function ComparePage(): ReactNode {
                           valueFormatter: (v: number | null) =>
                             v === null || v === undefined ? '—' : money(v),
                         },
-                        xAxis: { type: 'category', data: years, ...axis(c), splitLine: { show: false } },
+                        xAxis: {
+                          type: 'category',
+                          data: years,
+                          ...axis(c),
+                          ...chartYearLabels(c, comparisonYear),
+                          splitLine: { show: false },
+                        },
                         yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
                         series: [
                           {

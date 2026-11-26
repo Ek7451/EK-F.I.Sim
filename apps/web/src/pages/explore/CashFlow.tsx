@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../../lib/chartYears';
 import './cashflow.css';
 import { explainCashFlow, type YearRecord } from '@fisim/engine';
 import { Button, Card, Explain, Icon, Popover, Segmented, formatMoney } from '@fisim/ui';
@@ -104,7 +105,7 @@ export function CashFlowPage(): ReactNode {
       <div className="cf-grid">
         <div className="cf-left">
           <Card
-            title={`Money in and out in ${r.year}`}
+            title={`Money in and out in ${yearWithAges(r)}`}
             actions={
               <>
                 <Segmented
@@ -184,7 +185,7 @@ export function CashFlowPage(): ReactNode {
             ) : (
               <div className="sankey-surface" role="region" aria-label="Cash flow diagram" tabIndex={0}>
                 <Chart
-                  label={`Cash flow for ${r.year}: sources on the left, uses on the right`}
+                  label={`Cash flow for ${yearWithAges(r)}: sources on the left, uses on the right`}
                   deps={[r, m.real, flowMode]}
                   height={`max(var(--cf-sankey-h), ${sankeyRows * 30}px)`}
                   onItemClick={(p) => {
@@ -308,7 +309,7 @@ export function CashFlowPage(): ReactNode {
                       <tr key={x.year} aria-selected={x.year === r.year}>
                         <th scope="row">
                           <button type="button" className="cf-year" onClick={() => setYear(x.year)}>
-                            {x.year}
+                            {yearWithAges(x)}
                           </button>
                         </th>
                         {CATEGORIES.map((c) => (
@@ -351,6 +352,7 @@ export function CashFlowPage(): ReactNode {
                     type: 'category',
                     data: recs.map((x) => String(x.year)),
                     ...axis(c),
+                    ...chartYearLabels(c, recs),
                     splitLine: { show: false },
                   },
                   yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },

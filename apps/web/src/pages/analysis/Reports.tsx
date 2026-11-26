@@ -1,3 +1,4 @@
+import { chartYearLabels } from '../../lib/chartYears';
 import './reports.css';
 import { applyScenario } from '@fisim/engine';
 import {
@@ -244,6 +245,7 @@ export function ReportsPage(): ReactNode {
                     data: recs.map((r) => r.year),
                     boundaryGap: false,
                     ...axis(c),
+                    ...chartYearLabels(c, recs),
                     splitLine: { show: false },
                   },
                   yAxis: {

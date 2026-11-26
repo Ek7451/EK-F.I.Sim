@@ -525,7 +525,10 @@ export function defaultCoverage(hasEarnedIncome: boolean): Coverage['type'] {
  * classes and inflation are the compound averages of the bundled market history. The deterministic
  * projection and Monte Carlo both read this, so they centre on the same outlook.
  */
-export function expectedMeans(c: Pick<Compiled, 'plan' | 'data'>): { classes: number[]; inflation: number } {
+export function expectedMeans(c: {
+  plan: Plan;
+  data: { market: Pick<EngineData['market'], 'usStocks' | 'usBonds' | 'cash' | 'inflation'> };
+}): { classes: number[]; inflation: number } {
   const A = c.plan.assumptions;
   const r = A.returns.fixed;
   const shock = A.returns.stockAdjustment ?? 0;

@@ -12,6 +12,7 @@ import type { PDFFont, PDFPage, RGB } from 'pdf-lib';
 import { formatShare } from '@fisim/ui';
 import { DISCLAIMER } from '../shell/nav';
 import { agesText, fundedStat } from './outcome';
+import { projectionRates } from './marketRates';
 
 type Lib = typeof import('pdf-lib');
 
@@ -478,11 +479,13 @@ export async function buildReportPdf(
     });
     text(p1, short(g), plotL - 8, y - 2.5, 7, { color: HEX.ink3, align: 'right' });
   }
-  // Year labels, about eight across.
-  const every = Math.max(1, Math.round(recs.length / 8));
+  // Reserve the final tick so adjacent years cannot overlap at the right edge.
+  const every = Math.max(1, Math.ceil(recs.length / 7));
   recs.forEach((r, i) => {
-    if (i % every === 0 || i === recs.length - 1)
+    if (i === 0 || i === recs.length - 1 || (i % every === 0 && recs.length - 1 - i >= every / 2)) {
       text(p1, String(r.year), px(i), plotB - 13, 7, { color: HEX.ink3, align: 'center' });
+      text(p1, agesText(r), px(i), plotB - 22, 6, { color: HEX.ink3, align: 'center' });
+    }
   });
   // The fill: vertical slices in the dawn spectrum, fading toward the axis.
   const zeroY = py(Math.max(gLo, 0));
@@ -784,18 +787,19 @@ export async function buildReportPdf(
   // ---------------------------------------------------------------- assumptions and sources
 
   const A = plan.assumptions;
+  const rates = projectionRates(plan);
   const proj = recs.find((r) => r.dataStatus === 'projected');
   const assumptions: [string, string][] = [
     [
       'Expected returns',
       A.returns.mode === 'historicalAverage'
-        ? 'Long-run averages of the bundled market history (US stocks, bonds, cash)'
+        ? `Historical: US stocks ${pct(rates.usStocks, 2)}, US bonds ${pct(rates.usBonds, 2)}, cash ${pct(rates.cash, 2)}`
         : `US stocks ${pct(A.returns.fixed.usStocks, 1)}, US bonds ${pct(A.returns.fixed.usBonds, 1)}, cash ${pct(A.returns.fixed.cash, 1)}`,
     ],
     [
       'Inflation',
       A.returns.mode === 'historicalAverage'
-        ? 'Long-run average of the bundled history'
+        ? `${pct(rates.inflation, 2)} (historical average)`
         : pct(A.inflation.rate, 1),
     ],
     [

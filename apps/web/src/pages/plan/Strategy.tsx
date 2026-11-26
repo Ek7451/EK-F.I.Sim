@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../../lib/chartYears';
 import { resolvedCustomOrder, type ProjectionResult, type WaterfallStep } from '@fisim/engine';
 import {
   Button,
@@ -121,7 +122,7 @@ function StrategyPreview({
           table={() => ({
             columns: ['Year', ...series.map(([n]) => n), 'Roth conversion', 'Taxes'],
             rows: recs.map((r) => [
-              r.year,
+              yearWithAges(r),
               ...series.map(([, f]) => formatMoney(real(r, f(r)))),
               formatMoney(real(r, r.rothConversion)),
               formatMoney(real(r, r.taxes.total)),
@@ -151,7 +152,7 @@ function StrategyPreview({
                 data: recs.map((r) => r.year),
                 axisLine: { lineStyle: { color: 'rgba(190,196,255,0.34)' } },
                 axisTick: { show: false },
-                axisLabel: { color: '#a9aedb', fontSize: 10, margin: 6 },
+                ...chartYearLabels({ ink3: '#a9aedb' }, recs),
               },
               yAxis: {
                 type: 'value',

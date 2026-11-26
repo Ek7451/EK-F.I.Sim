@@ -1,3 +1,4 @@
+import { chartYearLabels, yearWithAges } from '../../lib/chartYears';
 import './inputs-c.css';
 import type { Expense, Income, YearRecord } from '@fisim/engine';
 import {
@@ -145,7 +146,7 @@ function ScheduleChart({
       table={() => ({
         columns: ['Year', ...shown.map(([n]) => n), 'Total'],
         rows: records.map((r) => [
-          r.year,
+          yearWithAges(r),
           ...shown.map(([, f]) => formatMoney(f(r) / r.cpi)),
           formatMoney(shown.reduce((t, [, f]) => t + f(r), 0) / r.cpi),
         ]),
@@ -158,6 +159,7 @@ function ScheduleChart({
           type: 'category',
           data: records.map((r) => r.year),
           ...axis(c),
+          ...chartYearLabels(c, records),
           splitLine: { show: false },
         },
         yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, fontSize: 11, formatter: short } },

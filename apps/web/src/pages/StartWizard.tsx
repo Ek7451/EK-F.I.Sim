@@ -858,7 +858,9 @@ function Assumptions({ plan, d, year }: { plan: Plan; d: Draft; year: number }):
     ],
     [
       'Investment returns',
-      `${A.returns.mode === 'fixed' ? '' : 'Long-run historical averages. '}US stocks ${pct(r.usStocks, 1)}, international stocks ${pct(r.intlStocks, 1)}, bonds ${pct(r.usBonds, 1)} and cash ${pct(r.cash, 1)} a year, before inflation of ${pct(A.inflation.rate, 1)}.`,
+      A.returns.mode === 'historicalAverage'
+        ? 'US stocks, US bonds, cash and inflation use the historical averages shown under Returns and inflation.'
+        : `US stocks ${pct(r.usStocks, 1)}, international stocks ${pct(r.intlStocks, 1)}, bonds ${pct(r.usBonds, 1)} and cash ${pct(r.cash, 1)} a year, before inflation of ${pct(A.inflation.rate, 1)}.`,
     ],
     [
       'Investment mix',

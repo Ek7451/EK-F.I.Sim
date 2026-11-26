@@ -339,7 +339,7 @@ export const HELP: Record<string, string> = {
   'Wage growth above inflation':
     'How fast average pay grows above inflation. Used to project Social Security wage indexing.',
   'Expected returns':
-    'The figures I set below: Longview uses the returns you enter. Long-run historical averages: uses the compound averages of US market history since 1871 for US stocks, bonds and cash.\n\nEither way these are compound yearly rates before inflation: 7% means money grows by 7% each year on average over the long run.',
+    'In historical mode, market history supplies annual compound rates for US stocks, US bonds, cash and inflation. You set the rates for international stocks and REITs. Choose “The figures I set below” to use your saved manual rates for all investments and inflation.',
   'Dividend yield on stocks':
     "The share of a stock's value paid out each year as dividends. Dividends in a taxable account are taxed each year. About 1.5% to 2% for the US market.",
   'Bond interest yield':

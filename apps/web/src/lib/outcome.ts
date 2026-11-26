@@ -26,7 +26,7 @@ export function fundedSummary(result: ProjectionResult): FundedSummary {
 }
 
 /** "age 63" or "ages 63 and 61". */
-export function agesText(r: YearRecord): string {
+export function agesText(r: Pick<YearRecord, 'ages'>): string {
   return r.ages.length > 1 ? `ages ${r.ages.join(' and ')}` : `age ${r.ages[0]}`;
 }
 

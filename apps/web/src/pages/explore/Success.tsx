@@ -16,6 +16,7 @@ import { useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { Chart, alpha, axis, barFill, dawnLine, short, tooltip, tooltipCard } from '../../charts/Chart';
 import { useMonteCarlo } from '../../engine/useResults';
+import { chartYearLabels, householdAges, yearWithAges } from '../../lib/chartYears';
 import { PageHead } from '../../shell/Shell';
 import { usePlan } from '../../state/store';
 
@@ -58,12 +59,14 @@ export function SuccessPage(): ReactNode {
   const [showSamples, setShowSamples] = useState(false);
   const mc = plan.assumptions.monteCarlo;
   const cuts = summary?.spendingCuts;
+  const yearLabel = (year: number): string =>
+    summary ? yearWithAges({ year, ages: summary.people.map((p) => year - p.birthYear) }) : String(year);
   return (
     <>
       <PageHead
         group="explore"
         title="Chance of success"
-        intro="Thousands of possible futures, each with its own sequence of returns and inflation. Success means every year's spending was paid for. A simulation is a range of estimates, not a prediction."
+        intro="Outcomes simulates possible futures from your plan’s start year. History replays recorded market years in their original order."
         actions={
           <span className="lv-row">
             <Badge>Estimated</Badge>
@@ -199,7 +202,7 @@ export function SuccessPage(): ReactNode {
               }
               table={() => ({
                 columns: [
-                  'Year',
+                  'Plan year and ages',
                   '10th',
                   '25th',
                   'Median',
@@ -211,7 +214,7 @@ export function SuccessPage(): ReactNode {
                   'Funded among alive households',
                 ],
                 rows: summary.years.map((y, i) => [
-                  y,
+                  `${y} · ${householdAges(summary.people, y)}`,
                   formatMoney(summary.bands.p10[i]),
                   formatMoney(summary.bands.p25[i]),
                   formatMoney(summary.bands.p50[i]),
@@ -257,7 +260,7 @@ export function SuccessPage(): ReactNode {
                       const i = ps[0].dataIndex;
                       return tooltipCard(c, {
                         title: `End of ${summary.years[i]}`,
-                        subtitle: "Investments across runs, today's dollars",
+                        subtitle: householdAges(summary.people, summary.years[i]),
                         rows: [
                           {
                             name: '90th percentile',
@@ -294,6 +297,7 @@ export function SuccessPage(): ReactNode {
                     data: summary.years,
                     boundaryGap: false,
                     ...axis(c),
+                    ...chartYearLabels(c, yearLabel),
                     splitLine: { show: false },
                   },
                   yAxis: { type: 'value', ...axis(c), axisLabel: { color: c.ink3, formatter: short } },
@@ -362,8 +366,11 @@ export function SuccessPage(): ReactNode {
                   deps={[summary]}
                   height={150}
                   table={() => ({
-                    columns: ['Year', 'Runs'],
-                    rows: summary.failureYears.map((f) => [f.year, f.count]),
+                    columns: ['Plan year and ages', 'Runs'],
+                    rows: summary.failureYears.map((f) => [
+                      `${f.year} · ${householdAges(summary.people, f.year)}`,
+                      f.count,
+                    ]),
                   })}
                   build={(c) => {
                     // Every year from the first failure to the last, so a gap between two bars is a real gap in time.
@@ -379,7 +386,13 @@ export function SuccessPage(): ReactNode {
                         valueFormatter: (v: number) =>
                           `${Math.round(v)} ${Math.round(v) === 1 ? 'run' : 'runs'}`,
                       },
-                      xAxis: { type: 'category', data: years, ...axis(c), splitLine: { show: false } },
+                      xAxis: {
+                        type: 'category',
+                        data: years,
+                        ...axis(c),
+                        ...chartYearLabels(c, yearLabel),
+                        splitLine: { show: false },
+                      },
                       yAxis: { type: 'value', minInterval: 1, ...axis(c) },
                       series: [
                         {
