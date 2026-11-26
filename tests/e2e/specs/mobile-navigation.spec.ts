@@ -174,9 +174,10 @@ test('Home chart values remain accessible in the full data table', async ({ page
     await plot.focus();
     await page.keyboard.press('End');
     const year = (await detail.locator('strong').first().innerText()).trim();
+    const ages = await detail.locator('.home-year-when span').innerText();
     const values = await detail.locator('.lv-stat-value').allTextContents();
     await card.getByRole('button', { name: 'Show as table' }).tap();
-    const row = card.getByRole('rowheader', { name: year, exact: true }).locator('..');
+    const row = card.getByRole('rowheader', { name: `${year} · ${ages}`, exact: true }).locator('..');
     await expect(row).toHaveCount(1);
     const cells = await row.getByRole('cell').allTextContents();
     expect(cells.length).toBeGreaterThan(0);
