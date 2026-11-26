@@ -1462,6 +1462,7 @@
         "type": "string",
         "enum": [
          "cpi",
+         "cpiPlus",
          "healthcare",
          "education",
          "custom",
@@ -1472,6 +1473,11 @@
         "default": 0,
         "type": "number",
         "minimum": -1,
+        "maximum": 10
+       },
+       "extraInflationRate": {
+        "type": "number",
+        "minimum": 0,
         "maximum": 10
        },
        "essential": {

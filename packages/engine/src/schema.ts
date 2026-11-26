@@ -272,8 +272,10 @@ export const ExpenseZ = z.object({
   ]),
   /** Annual amount (or the one-time amount) in today's dollars. */
   amount: cents,
-  inflationIndex: z.enum(['cpi', 'healthcare', 'education', 'custom', 'none']).default('cpi'),
+  inflationIndex: z.enum(['cpi', 'cpiPlus', 'healthcare', 'education', 'custom', 'none']).default('cpi'),
   customRate: rate.default(0),
+  /** Added to each year's general inflation rate when inflationIndex is cpiPlus. */
+  extraInflationRate: rate.min(0).optional(),
   essential: z.boolean().default(true),
   /** If true, the go-go / slow-go / no-go phase multipliers apply. */
   followsPhases: z.boolean().default(false),

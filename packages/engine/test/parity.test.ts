@@ -66,6 +66,48 @@ const rec = (recs: YearRecord[], year: number): YearRecord => {
 };
 const run = (p: Plan): YearRecord[] => project(p, data).records;
 
+describe('expense growth above general inflation', () => {
+  it.each([1, 7])(
+    'compounds each year’s CPI plus the expense spread from opening month %i',
+    (openingMonth) => {
+      const base = { amount: D(38000), name: 'Expense' };
+      const plan = mk({
+        settings: {
+          startYear: 2026,
+          openingMonth,
+          openingPayroll: { p1: { wages: 0, pretaxDeferrals: 0, rothDeferrals: 0, taxesPaid: 0 } },
+        },
+        people: [person('p1', '1980-01-01')],
+        accounts: [cash('c', 1_000_000)],
+        expenses: [
+          { ...base, id: 'home', category: 'housing', inflationIndex: 'cpiPlus', extraInflationRate: 0.02 },
+          { ...base, id: 'food', category: 'food', inflationIndex: 'cpiPlus', extraInflationRate: 0 },
+          { ...base, id: 'gas', category: 'transport' },
+          {
+            ...base,
+            id: 'trip',
+            category: 'travel',
+            inflationIndex: 'cpiPlus',
+            extraInflationRate: 0.01,
+            start: { type: 'year', year: 2028 },
+          },
+        ],
+      });
+      const compiled = compilePlan(plan, data);
+      const path = fixedPath(compiled);
+      path.inflation.set([0.03, -0.01]);
+      const [first, second, third] = runPath(compiled, path, { detail: true }).records!;
+      const fraction = (13 - openingMonth) / 12;
+      expect(first.expenses.byCategory.housing).toBeCloseTo(38000 * fraction, 6);
+      expect(second.expenses.byCategory.housing).toBeCloseTo(38000 * 1.05 ** fraction, 6);
+      expect(third.expenses.byCategory.housing).toBeCloseTo(38000 * 1.05 ** fraction * 1.01, 6);
+      expect(third.expenses.byCategory.food).toBe(third.expenses.byCategory.transport);
+      expect(second.expenses.byCategory.travel).toBeUndefined();
+      expect(third.expenses.byCategory.travel).toBeCloseTo(38000 * 1.04 ** fraction, 6);
+    },
+  );
+});
+
 // ------------------------------------------------------------------------------------------------ PLAN-02
 describe('PLAN-02 inherited IRA, annuity and I-bond accounts', () => {
   const inherited = (o: { yearOfDeath: number; started: boolean; timing?: string; ret?: number }): Plan =>

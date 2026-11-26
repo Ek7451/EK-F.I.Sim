@@ -367,7 +367,12 @@ export function runPath(
   const nE = plan.expenses.length;
   const expBase = new Float64Array(nE);
   const expForce = new Int8Array(nE);
-  for (let i = 0; i < nE; i++) expBase[i] = plan.expenses[i].amount / 100;
+  const cpiPlusIndices = new Float64Array(nE).fill(1);
+  const cpiPlusExpenses: number[] = [];
+  for (let i = 0; i < nE; i++) {
+    expBase[i] = plan.expenses[i].amount / 100;
+    if (plan.expenses[i].inflationIndex === 'cpiPlus') cpiPlusExpenses.push(i);
+  }
 
   const debts: DebtState[] = plan.debts.map((d) => ({
     id: d.id,
@@ -1406,16 +1411,24 @@ export function runPath(
       if (expForce[i] === 1 && e.recurrence.type !== 'once') active = y < resolve(e.end, Infinity);
       if (expForce[i] === -1) active = false;
       if (!active) return 0;
-      const idx =
-        e.inflationIndex === 'cpi'
-          ? cpi
-          : e.inflationIndex === 'healthcare'
-            ? health
-            : e.inflationIndex === 'education'
-              ? edu
-              : e.inflationIndex === 'custom'
-                ? Math.pow(1 + e.customRate, t)
-                : 1;
+      let idx = 1;
+      switch (e.inflationIndex) {
+        case 'cpi':
+          idx = cpi;
+          break;
+        case 'cpiPlus':
+          idx = cpiPlusIndices[i];
+          break;
+        case 'healthcare':
+          idx = health;
+          break;
+        case 'education':
+          idx = edu;
+          break;
+        case 'custom':
+          idx = Math.pow(1 + e.customRate, t);
+          break;
+      }
       return (
         expBase[i] *
         idx *
@@ -2986,6 +2999,9 @@ export function runPath(
     cpi *= 1 + infl;
     health *= 1 + periodRate(path.inflation[t] + path.healthExcess[t]);
     edu *= 1 + periodRate(path.inflation[t] + A.inflation.educationExcess);
+    for (const i of cpiPlusExpenses) {
+      cpiPlusIndices[i] *= 1 + periodRate(path.inflation[t] + (plan.expenses[i].extraInflationRate ?? 0));
+    }
     for (let i = 0; i < nI; i++) {
       const inc = plan.incomes[i];
       if (inc.kind === 'pension' && inc.pension) {
