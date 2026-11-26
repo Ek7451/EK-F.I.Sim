@@ -1,6 +1,22 @@
 /** Core flows (release gate 16): create, edit, reload, offline, export, import, undo, simulate, report. */
 import { expect, test } from '@playwright/test';
+import webPackage from '../../../apps/web/package.json';
 import { go, ROUTES, seed, watchErrors } from './helpers';
+
+test('Settings links the installed version to its changelog and published manifest', async ({ page }) => {
+  await page.goto('/settings');
+  const versionRow = page.locator('dl > div').filter({ has: page.getByText('App version', { exact: true }) });
+  await expect(versionRow).toContainText(webPackage.version);
+  await versionRow.getByRole('link', { name: 'Changelog' }).click();
+  await expect(page.getByRole('heading', { level: 1, name: 'Changelog' })).toBeVisible();
+  await expect(page.getByRole('heading', { level: 2 }).first()).toHaveText(webPackage.version);
+  const response = page.waitForResponse((r) => new URL(r.url()).pathname === '/release.json');
+  await page.getByRole('link', { name: 'production release manifest' }).click();
+  expect(await (await response).json()).toMatchObject({
+    version: webPackage.version,
+    changelog: '/changelog',
+  });
+});
 
 test('first visit opens the wizard, which builds a working plan', async ({ page }) => {
   const errors = watchErrors(page);

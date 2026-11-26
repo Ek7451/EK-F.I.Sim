@@ -27,6 +27,7 @@ copyFileSync(resolve(root, 'output/pages-worker/pages.js'), resolve(root, 'apps/
 
 // Include the worker, static files and configuration in one reproducible content digest.
 const dist = resolve(root, 'apps/web/dist');
+const { version } = JSON.parse(readFileSync(resolve(root, 'apps/web/package.json'), 'utf8'));
 const paths = [];
 function walk(dir = '') {
   for (const entry of readdirSync(resolve(dist, dir), { withFileTypes: true })) {
@@ -44,7 +45,13 @@ const source =
 writeFileSync(
   resolve(dist, 'release.json'),
   JSON.stringify(
-    { source, artifactSha256: sha256(JSON.stringify(entries)), files: Object.fromEntries(entries) },
+    {
+      version,
+      changelog: '/changelog',
+      source,
+      artifactSha256: sha256(JSON.stringify(entries)),
+      files: Object.fromEntries(entries),
+    },
     null,
     2,
   ) + '\n',

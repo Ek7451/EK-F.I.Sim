@@ -312,3 +312,14 @@
     width: 100%;
   }
 }
+.hs-release-history {
+  max-width: 76ch;
+  padding: 1.25rem;
+  line-height: 1.6;
+}
+.hs-release-history h2:not(:first-child) {
+  margin-top: 1.75rem;
+}
+.hs-release-history li + li {
+  margin-top: 0.65rem;
+}

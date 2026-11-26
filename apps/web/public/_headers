@@ -12,3 +12,6 @@
 
 /sw.js
   Cache-Control: no-cache
+
+/release.json
+  Cache-Control: no-cache

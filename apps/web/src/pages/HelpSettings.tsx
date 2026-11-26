@@ -826,7 +826,9 @@ function DeviceCard(): ReactNode {
         <dl className="lv-facts">
           <div>
             <dt>App version</dt>
-            <dd>{__APP_VERSION__}</dd>
+            <dd>
+              {__APP_VERSION__} · <Link to="/changelog">Changelog</Link>
+            </dd>
           </div>
           <div>
             <dt>Source revision</dt>
