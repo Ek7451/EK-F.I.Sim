@@ -105,10 +105,17 @@ export default function ImportReview({
           meta[record.id] = { syncVersion: record.syncVersion, dirty: true, readOnly: false };
           history[record.id] = { undo: [], redo: [] };
         }
-        return { plans: { ...s.plans, ...added }, meta, history };
+        const active = records[0]?.record;
+        return {
+          plans: { ...s.plans, ...added },
+          meta,
+          history,
+          ...(active && {
+            settings: { ...s.settings, activePlanId: active.id, onboarded: true },
+            scenarioId: null,
+          }),
+        };
       });
-      if (records.length)
-        useStore.getState().setSettings({ activePlanId: records[0].record.id, onboarded: true });
       useStore
         .getState()
         .notify(
