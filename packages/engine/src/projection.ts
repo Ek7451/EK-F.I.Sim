@@ -29,7 +29,7 @@ import {
   seppAmortization,
   tobaccoRatio,
 } from './healthcare';
-import type { Coverage, YearRef } from './schema';
+import type { ContributionSchedule, Coverage, YearRef } from './schema';
 import {
   claimFactor,
   earningsTestWithholding,
@@ -62,6 +62,10 @@ export interface PathInputs {
   ltc?: ({ onsetAge: number; years: number } | null)[];
 }
 
+function inContributionYears(schedule: ContributionSchedule | undefined, year: number): boolean {
+  return !schedule || (year >= (schedule.firstYear ?? -Infinity) && year <= (schedule.lastYear ?? Infinity));
+}
+
 export interface YearRecord {
   year: number;
   t: number;
@@ -90,6 +94,7 @@ export interface YearRecord {
     total: number;
   };
   contributions: {
+    byAccount: Record<string, { ownerId: string; personal: number; employer: number; automatic: number }>;
     pretax: number;
     roth: number;
     hsa: number;
@@ -1142,6 +1147,21 @@ export function runPath(
           );
 
     // ---------------------------------------------------------- 4. payroll-level contributions
+    const credits: YearRecord['contributions']['byAccount'] | null = detail ? Object.create(null) : null;
+    const credit = (a: number, personal: number, employer = 0, automatic = 0): void => {
+      deposit(a, personal + employer + automatic);
+      if (!credits) return;
+      const account = accts[a];
+      const entry = (credits[account.id] ??= {
+        ownerId: account.joint && nAlive > 1 ? 'joint' : c.people[owner[a]].id,
+        personal: 0,
+        employer: 0,
+        automatic: 0,
+      });
+      entry.personal += personal;
+      entry.employer += employer;
+      entry.automatic += automatic;
+    };
     let cPretax = 0;
     let cRoth = 0;
     let cHsa = 0;
@@ -1231,7 +1251,7 @@ export function runPath(
     for (const { index: a } of payrollOrder) {
       const ac = accts[a];
       const cfg = ac.src.contribution;
-      if (!cfg || contribStopped[a] || ac.synthetic) continue;
+      if (!cfg || contribStopped[a] || ac.synthetic || !inContributionYears(cfg.schedule, y)) continue;
       const oi = owner[a];
       if (!alive[oi]) continue;
       let salary = 0;
@@ -1255,15 +1275,23 @@ export function runPath(
         spentByIncome.set(employerKey, (spentByIncome.get(employerKey) ?? 0) + amount);
       };
       const age = ages[oi];
-      const wantBase = cfg.employeePct * salary + (cfg.employeeAmount / 100) * cpi * fraction;
+      const annualAmount = cfg.schedule?.amountByYear?.[y];
+      const maxOut = cfg.maxOut && annualAmount === undefined;
+      const wantBase =
+        annualAmount === undefined
+          ? cfg.employeePct * salary + (cfg.employeeAmount / 100) * cpi * fraction
+          : (annualAmount / 100) * cpi * fraction;
+      const employerOverride = cfg.employerAmountByYear?.[y];
+      const employerDollars =
+        employerOverride === undefined ? undefined : (employerOverride / 100) * cpi * fraction;
       const comp = Math.min(salary, lim.compensationCap * kLim);
       if (ac.kind === Kind.Hsa) {
         const limit = Math.max(0, hsaLimitFor(oi, hsaContributed) - hsaContributed[oi]);
-        const employer = Math.min(limit, cfg.employerFixedPct * comp);
-        const emp = Math.min(limit - employer, cfg.maxOut ? limit : wantBase, payrollRoom);
+        const employer = Math.min(limit, employerDollars ?? cfg.employerFixedPct * comp);
+        const emp = Math.min(limit - employer, maxOut ? limit : wantBase, payrollRoom);
         consume(emp);
         if (emp + employer <= 0) continue;
-        deposit(a, emp + employer);
+        credit(a, emp, employer);
         hsaContributed[oi] += emp + employer;
         cHsa += emp;
         cEmployer += employer;
@@ -1283,9 +1311,9 @@ export function runPath(
         is457 ||
         isSimple;
       if (ac.type === 'sepIra') {
-        const amt = Math.min(lim.sep.limit * kLim, seRate * seComp(oi), cfg.maxOut ? Infinity : wantBase);
+        const amt = Math.min(lim.sep.limit * kLim, seRate * seComp(oi), maxOut ? Infinity : wantBase);
         if (amt > 0) {
-          deposit(a, amt);
+          credit(a, amt);
           cPretax += amt;
           adjustments += amt;
           coveredByPlan[oi] = true;
@@ -1298,7 +1326,7 @@ export function runPath(
       const baseLimit = isSimple ? lim.simple.limit * kLim : elective;
       const cu = catchUpFor(age, isSimple);
       const room = Math.max(0, baseLimit + cu - used[oi]);
-      let emp = Math.min(room, cfg.maxOut ? room : wantBase, payrollRoom);
+      let emp = Math.min(room, maxOut ? room : wantBase, payrollRoom);
       const previousAdditions = additionsByEmployer.get(employerKey) ?? 0;
       const regularRoom = Math.max(0, Math.min(comp, lim.annualAdditions * kLim) - previousAdditions);
       const regularWanted = Math.min(emp, Math.max(0, baseLimit - used[oi]));
@@ -1317,7 +1345,7 @@ export function runPath(
         emp -= cuPart;
         if (rothAcct >= 0) {
           catchUpToRoth = cuPart;
-          deposit(rothAcct, cuPart);
+          credit(rothAcct, cuPart);
           rothContrib[rothAcct] += cuPart;
           cRoth += cuPart;
           used[oi] += cuPart;
@@ -1327,7 +1355,7 @@ export function runPath(
           );
       }
       if (emp > 0) {
-        deposit(a, emp);
+        credit(a, emp);
         used[oi] += emp;
         if (ac.kind === Kind.Roth) {
           cRoth += emp;
@@ -1351,7 +1379,7 @@ export function runPath(
         match += inTier * tier.matchPct;
         prevTier = tier.upToPctOfSalary;
       }
-      match += cfg.employerFixedPct * comp;
+      match = employerDollars ?? match + cfg.employerFixedPct * comp;
       if (ac.type === 'solo401k') match = Math.min(match, seRate * seComp(oi));
       const regular = Math.min(emp, Math.max(0, baseLimit - (used[oi] - deferred)));
       const additionsRoom = Math.max(
@@ -1368,19 +1396,19 @@ export function runPath(
           );
           if (pre >= 0) dest = pre;
         }
-        deposit(dest, match);
+        credit(dest, 0, match);
         if (accts[dest].kind === Kind.Roth) rothContrib[dest] += 0; // employer money in a Roth account is treated as earnings
         cEmployer += match;
         if (ac.type === 'solo401k') adjustments += match;
       }
       // mega-backdoor Roth: after-tax contributions up to the 415(c) limit, converted in-plan
-      if (cfg.megaBackdoor) {
+      if (cfg.megaBackdoor && annualAmount === undefined) {
         const mb = Math.max(0, Math.min(additionsRoom - match, payrollRoom - deferred));
         const dest = cfg.megaBackdoorRothAccountId
           ? c.accountIndex.get(cfg.megaBackdoorRothAccountId)
           : accts.findIndex((x, xi) => x.kind === Kind.Roth && owner[xi] === oi);
         if (mb > 0 && dest !== undefined && dest >= 0) {
-          deposit(dest, mb);
+          credit(dest, mb);
           rothContrib[dest] += mb;
           cAfterTaxPayroll += mb;
           consume(mb);
@@ -2411,17 +2439,17 @@ export function runPath(
       let saved = 0;
       const iraUse = [iraUsed[0], iraUsed[1]];
       const hsaUse = [hsaContributed[0], hsaContributed[1]];
-      const put = (a: number, amt: number): void => {
+      const put = (a: number, amt: number, automatic = false): void => {
         if (amt <= 0) return;
         rem -= amt;
         saved += amt;
         if (!commit) return;
-        deposit(a, amt);
+        credit(a, automatic ? 0 : amt, 0, automatic ? amt : 0);
         const kd = accts[a].kind;
         if (kd === Kind.Taxable || kd === Kind.Deferred || kd === Kind.Edu) basis[a] += amt;
         else if (kd === Kind.Roth) rothContrib[a] += amt;
       };
-      for (const sale of saleDestinations) put(sale.account, Math.min(rem, sale.amount));
+      for (const sale of saleDestinations) put(sale.account, Math.min(rem, sale.amount), true);
       for (const step of S.surplusWaterfall) {
         if (rem <= 0.5) break;
         if (step.type === 'emergencyFund') {
@@ -2453,8 +2481,9 @@ export function runPath(
           if (a === undefined) continue;
           const ac = accts[a];
           const oi = owner[a];
-          if (!alive[oi]) continue;
-          const cap = step.maxAnnual !== undefined ? (step.maxAnnual / 100) * cpi : Infinity;
+          if (!alive[oi] || !inContributionYears(step.schedule, y)) continue;
+          const annualCap = step.schedule?.amountByYear?.[y] ?? step.maxAnnual;
+          const cap = annualCap !== undefined ? (annualCap / 100) * cpi : Infinity;
           let amt = 0;
           if (ac.type === 'rothIra' || ac.type === 'tradIra') {
             const limit = Math.max(
@@ -2532,7 +2561,7 @@ export function runPath(
             put(a, Math.min(rem, cap));
         }
       }
-      if (rem > 0.005) put(c.sweepAccount, rem);
+      if (rem > 0.005) put(c.sweepAccount, rem, true);
       if (commit) {
         iraUsed[0] = iraUse[0];
         iraUsed[1] = iraUse[1];
@@ -2892,6 +2921,7 @@ export function runPath(
           total: incomeTotal,
         },
         contributions: {
+          byAccount: credits!,
           pretax: cPretax,
           roth: cRoth + cAfterTaxPayroll,
           hsa: cHsa,

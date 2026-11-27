@@ -86,6 +86,19 @@ export const PersonZ = z.object({
 });
 export type Person = z.infer<typeof PersonZ>;
 
+const annualAmounts = z.record(z.string().regex(/^\d{4}$/), cents.nonnegative());
+const contributionSchedule = z
+  .object({
+    firstYear: z.number().int().optional(),
+    lastYear: z.number().int().optional(),
+    amountByYear: annualAmounts.optional(),
+  })
+  .refine(
+    (s) => s.firstYear === undefined || s.lastYear === undefined || s.lastYear >= s.firstYear,
+    'The last contribution year must be on or after the first.',
+  );
+export type ContributionSchedule = z.infer<typeof contributionSchedule>;
+
 export const AccountZ = z.object({
   id,
   ownerId: id,
@@ -114,6 +127,8 @@ export const AccountZ = z.object({
   contribution: z
     .object({
       incomeId: id.optional(),
+      schedule: contributionSchedule.optional(),
+      employerAmountByYear: annualAmounts.optional(),
       /** Employee deferral as a fraction of the linked income, or a flat annual amount (today's dollars). 'max' = the legal limit. */
       employeePct: z.number().min(0).max(1).default(0),
       employeeAmount: cents.default(0),
@@ -352,7 +367,12 @@ export const WaterfallStepZ = z.discriminatedUnion('type', [
   /** Fill a cash account to N months of spending. */
   z.object({ type: z.literal('emergencyFund'), accountId: id, months: z.number().min(0).default(6) }),
   /** Contribute to an account up to its legal limit (or `maxAnnual` if set, today's dollars). */
-  z.object({ type: z.literal('account'), accountId: id, maxAnnual: cents.optional() }),
+  z.object({
+    type: z.literal('account'),
+    accountId: id,
+    maxAnnual: cents.optional(),
+    schedule: contributionSchedule.optional(),
+  }),
   /** Extra principal on a debt. */
   z.object({ type: z.literal('debt'), debtId: id, maxAnnual: cents.optional() }),
 ]);
@@ -774,7 +794,8 @@ export const PlanZ = z
             !['cash', 'taxable', 'rothIra', 'trad401k', 'roth401k'].includes(a.type) ||
             a.contribution?.megaBackdoor ||
             a.contribution?.employerMatch.length ||
-            a.contribution?.employerFixedPct,
+            a.contribution?.employerFixedPct ||
+            Object.values(a.contribution?.employerAmountByYear ?? {}).some((amount) => amount > 0),
         ) ||
         plan.incomes.some((i) => i.taxCharacter !== 'earned') ||
         plan.expenses.some((e) => e.recurrence.type !== 'annual') ||

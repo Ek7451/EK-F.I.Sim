@@ -29,6 +29,34 @@ test('App settings can check the installed version without waiting for an update
   await expect(page.getByText('You have the latest version.')).toBeVisible();
 });
 
+test('savings tracks personal and employer deposits and the year they stop', async ({ page }) => {
+  await seed(page, 'basic');
+  await go(page, '/plan');
+  await page.getByRole('link', { name: /^Savings and contributions/ }).click();
+  await page
+    .getByRole('combobox', { name: 'Contribution account' })
+    .selectOption({ label: '401(k) · Riley' });
+  const breakdown = page.getByRole('table').getByRole('row', { name: /401\(k\)/ });
+  await expect(breakdown).toContainText('$9,200');
+  await expect(breakdown).toContainText('$3,680');
+  await expect(breakdown).toContainText('14.0%');
+  const start = Number(await page.getByRole('slider', { name: 'Year', exact: true }).getAttribute('min'));
+  await page.getByRole('combobox', { name: 'Last contribution year' }).selectOption(String(start));
+  await page.getByText('Change an individual year', { exact: true }).click();
+  await page.getByRole('switch', { name: 'Set personal amount for this year' }).check();
+  await page.getByRole('textbox', { name: `Personal contribution in ${start}` }).fill('2000');
+  await expect(breakdown.getByRole('cell', { name: '$2,000', exact: true })).toHaveCount(2);
+  await expect(breakdown).toContainText('$4,000');
+  await page.getByRole('button', { name: 'Next year' }).click();
+  await expect(breakdown).toContainText('0.0%');
+  await expect(breakdown.getByRole('cell').last()).toHaveText(String(start));
+  await page.getByRole('button', { name: 'Savings rate', exact: true }).click();
+  await expect(page.locator('canvas').first()).toBeVisible();
+  await expect(page.locator('.save-status')).toHaveText('Saved on device');
+  await page.reload();
+  await expect(page.getByRole('combobox', { name: 'Last contribution year' })).toHaveValue(String(start));
+});
+
 test('first visit opens the wizard, which builds a working plan', async ({ page }) => {
   const errors = watchErrors(page);
   await page.goto('/');

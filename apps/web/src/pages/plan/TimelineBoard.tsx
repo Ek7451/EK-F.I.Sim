@@ -3,7 +3,7 @@
  * that starts or stops along the way (income, spending, health coverage, saving from pay).
  */
 import type { Milestone, Plan, ProjectionResult, YearRef } from '@fisim/engine';
-import { HelpTip, Icon, formatCompact, formatPct } from '@fisim/ui';
+import { HelpTip, Icon, formatCompact } from '@fisim/ui';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { useDraft } from '../../state/draft';
@@ -132,7 +132,6 @@ function buildLanes(
     !!sel?.effects.some((e) => 'targetId' in e && e.target === target && e.targetId === id);
 
   const lanes: Lane[] = [];
-  const incomeActive = new Map<string, boolean[]>();
   for (const inc of plan.incomes) {
     const from = resolve(inc.start, first);
     const end = resolve(inc.end, Infinity);
@@ -143,7 +142,6 @@ function buildLanes(
       force = at.get(y) ?? force;
       return force === -1 ? false : force === 1 ? y < end : y >= from && y < end;
     });
-    incomeActive.set(inc.id, active);
     lanes.push({
       id: `inc:${inc.id}`,
       group: 'income',
@@ -227,39 +225,24 @@ function buildLanes(
       linked: refs(...entries.map((c) => c.from)),
     });
   });
-  const earned = plan.incomes.filter((x) => ['wages', 'bonus', 'selfEmployment'].includes(x.kind));
   for (const a of plan.accounts) {
     const c = a.contribution;
-    if (!c) continue;
-    const saves =
-      c.maxOut || c.employeePct > 0 || c.employeeAmount > 0 || c.employerFixedPct > 0 || c.employerMatch.length;
-    if (!saves) continue;
-    const pay = c.incomeId
-      ? [incomeActive.get(c.incomeId)]
-      : earned.filter((x) => x.ownerId === a.ownerId).map((x) => incomeActive.get(x.id));
-    const at = forces('contribution', a.id);
-    let stopped = false;
-    const active = Array.from({ length: n }, (_, i) => {
-      if (at.get(first + i) === -1) stopped = true;
-      return !stopped && pay.some((x) => x?.[i]);
+    const active = result.records.map((r) => {
+      const deposit = r.contributions.byAccount[a.id];
+      return !!deposit && deposit.personal + deposit.employer > 0;
     });
+    if (!c && !active.some(Boolean)) continue;
     lanes.push({
       id: `save:${a.id}`,
       group: 'saving',
       icon: 'piggy',
       name: a.name,
-      note: c.maxOut
-        ? 'up to the limit'
-        : c.employeePct > 0
-          ? `${formatPct(c.employeePct, Number.isInteger(+(c.employeePct * 100).toFixed(4)) ? 0 : 1)} of pay`
-          : c.employeeAmount > 0
-            ? `${formatCompact(c.employeeAmount / 100)}/yr`
-            : 'employer only',
-      to: '/plan/snapshot',
+      note: 'projected contributions',
+      to: `/plan/savings?account=${encodeURIComponent(a.id)}`,
       segs: runs(first, active),
       linked:
         effectOn('contribution', a.id) ||
-        (!!c.incomeId &&
+        (!!c?.incomeId &&
           refs(
             plan.incomes.find((x) => x.id === c.incomeId)?.start,
             plan.incomes.find((x) => x.id === c.incomeId)?.end,

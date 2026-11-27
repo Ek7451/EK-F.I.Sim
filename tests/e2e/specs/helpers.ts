@@ -12,6 +12,7 @@ export const ROUTES = [
   '/plan/household',
   '/plan/snapshot',
   '/plan/income',
+  '/plan/savings',
   '/plan/spending',
   '/plan/timeline',
   '/plan/strategy',
