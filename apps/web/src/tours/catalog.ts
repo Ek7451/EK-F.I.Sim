@@ -576,7 +576,7 @@ export const TOURS: TourDef[] = [
         ASSUME,
         'returns',
         'Expected returns',
-        'Choose long-run historical averages to see the rates for US stocks, US bonds, cash and inflation. You can still set international stocks and REITs. Choose manual figures to edit every rate.',
+        'Choose long-run historical averages for US stocks, US bonds and cash. You can use historical inflation or enter your own annual rate. You can also set the returns for international stocks and REITs.',
         { placement: 'right' },
       ),
       s(

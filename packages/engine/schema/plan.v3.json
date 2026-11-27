@@ -3094,6 +3094,9 @@
          "exclusiveMinimum": -1,
          "maximum": 10
         },
+        "useRateWithHistoricalReturns": {
+         "type": "boolean"
+        },
         "educationExcess": {
          "default": 0.02,
          "type": "number",

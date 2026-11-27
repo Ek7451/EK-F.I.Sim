@@ -55,6 +55,19 @@ const cashAccount = (balance: number): Over => ({
 });
 
 describe('expected returns: one outlook for the projection and the simulations', () => {
+  it.each([0, 0.0425])('uses custom inflation of %s with the same historical nominal returns', (rate) => {
+    const plan = sampleBasic(2026);
+    plan.assumptions.returns.mode = 'historicalAverage';
+    plan.assumptions.inflation.rate = rate;
+    const historical = expectedMeans({ plan, data });
+    plan.assumptions.inflation.useRateWithHistoricalReturns = true;
+    const saved = PlanZ.parse(JSON.parse(JSON.stringify(plan)));
+    expect(expectedMeans({ plan: saved, data })).toEqual({ classes: historical.classes, inflation: rate });
+    expect(project(saved, data).records[1].cpi).toBeCloseTo(1 + rate, 12);
+    saved.assumptions.inflation.useRateWithHistoricalReturns = false;
+    expect(expectedMeans({ plan: saved, data })).toEqual(historical);
+  });
+
   it('under long-run historical averages, Monte Carlo centres on the same history the projection uses', () => {
     const p = structuredClone(sampleBasic(2026));
     p.assumptions.returns.mode = 'historicalAverage';

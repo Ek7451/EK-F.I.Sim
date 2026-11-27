@@ -522,7 +522,7 @@ export function defaultCoverage(hasEarnedIncome: boolean): Coverage['type'] {
 /**
  * The expected (geometric, nominal) annual return per asset class and the expected inflation the plan uses,
  * in class order [usStocks, usBonds, cash, intlStocks, reits]. Under "long-run historical averages" the US
- * classes and inflation are the compound averages of the bundled market history. The deterministic
+ * classes use compound averages from market history. Inflation also uses history unless overridden. The deterministic
  * projection and Monte Carlo both read this, so they centre on the same outlook.
  */
 export function expectedMeans(c: {
@@ -541,7 +541,7 @@ export function expectedMeans(c: {
   const geo = (xs: number[]): number => Math.exp(xs.reduce((a, x) => a + Math.log(1 + x), 0) / xs.length) - 1;
   return {
     classes: [geo(m.usStocks) + shock, geo(m.usBonds), geo(m.cash), r.intlStocks + shock, r.reits + shock],
-    inflation: geo(m.inflation),
+    inflation: A.inflation.useRateWithHistoricalReturns ? A.inflation.rate : geo(m.inflation),
   };
 }
 

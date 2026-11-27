@@ -339,7 +339,11 @@ export const HELP: Record<string, string> = {
   'Wage growth above inflation':
     'How fast average pay grows above inflation. Used to project Social Security wage indexing.',
   'Expected returns':
-    'In historical mode, market history supplies annual compound rates for US stocks, US bonds, cash and inflation. You set the rates for international stocks and REITs. Choose “The figures I set below” to use your saved manual rates for all investments and inflation.',
+    'In historical mode, US stocks, US bonds and cash use historical compound returns. Inflation uses its historical average until you turn on “Use my own inflation rate”. You set the rates for international stocks and REITs.',
+  'Use my own inflation rate':
+    'Use your plan’s annual inflation rate with historical market returns. Turn this off to use the historical inflation average again.',
+  'Annual inflation':
+    'Enter the percentage you expect prices to change each year. The plan saves this rate for use with either return setting.',
   'Dividend yield on stocks':
     "The share of a stock's value paid out each year as dividends. Dividends in a taxable account are taxed each year. About 1.5% to 2% for the US market.",
   'Bond interest yield':

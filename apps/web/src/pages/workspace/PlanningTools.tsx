@@ -399,8 +399,9 @@ export function PlanningEditor({
             {historicalRates ? (
               <>
                 <p className="lv-small">
-                  Historical averages · US stocks {formatPct(historicalRates.usStocks, 2)} · inflation{' '}
-                  {formatPct(historicalRates.inflation, 2)}
+                  Historical US stocks {formatPct(historicalRates.usStocks, 2)} ·{' '}
+                  {plan.assumptions.inflation.useRateWithHistoricalReturns ? 'Custom' : 'Historical'}{' '}
+                  inflation {formatPct(historicalRates.inflation, 2)}
                 </p>
                 <Link to="/plan/assumptions">View returns and inflation</Link>
               </>
