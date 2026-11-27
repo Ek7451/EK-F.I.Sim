@@ -181,7 +181,21 @@ export function SavingsPage() {
                   valueFormatter: (v: unknown) =>
                     v == null ? '—' : unit === 'rate' ? formatPct(Number(v), 1) : formatMoney(Number(v)),
                 },
-                xAxis: { type: 'category', data: years, ...axis(c), ...chartYearLabels(c, records) },
+                xAxis: {
+                  type: 'category',
+                  data: years,
+                  ...axis(c),
+                  axisPointer: chartYearLabels(c, records).axisPointer,
+                  axisLabel: {
+                    color: c.ink3,
+                    fontSize: 11,
+                    hideOverlap: true,
+                    showMinLabel: true,
+                    showMaxLabel: true,
+                    alignMinLabel: 'left',
+                    alignMaxLabel: 'right',
+                  },
+                },
                 yAxis: {
                   type: 'value',
                   ...axis(c),
