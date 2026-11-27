@@ -532,7 +532,13 @@ export const AssumptionsZ = z.object({
         .optional(),
     })
     .prefault({}),
-  inflation: z.object({ rate: rate.gt(-1).default(0.025), educationExcess: rate.default(0.02) }).prefault({}),
+  inflation: z
+    .object({
+      rate: rate.gt(-1).default(0.025),
+      useRateWithHistoricalReturns: z.boolean().optional(),
+      educationExcess: rate.default(0.02),
+    })
+    .prefault({}),
   healthcareInflation: z
     .object({
       excessOverCpi: rate.default(0.02),

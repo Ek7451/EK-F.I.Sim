@@ -719,6 +719,11 @@ export function AssumptionsPage(): ReactNode {
   const A = plan.assumptions;
   const mc = A.monteCarlo;
   const historical = A.returns.mode === 'historicalAverage';
+  const customInflation = A.inflation.useRateWithHistoricalReturns ?? false;
+  const setInflation = (rate: number) =>
+    update((d) => {
+      d.assumptions.inflation.rate = rate;
+    });
   const RateControls = historical ? 'details' : 'div';
   const rates = projectionRates(plan);
   const volatilityClasses = ASSET_CLASSES.filter((k) => mc.method !== 'bootstrap' || !HISTORY_SETS.has(k));
@@ -772,10 +777,12 @@ export function AssumptionsPage(): ReactNode {
                         <dd>{formatPct(rates[k], 2)}</dd>
                       </div>
                     ))}
-                    <div data-tour="inflation">
-                      <dt>Inflation</dt>
-                      <dd>{formatPct(rates.inflation, 2)}</dd>
-                    </div>
+                    {!customInflation && (
+                      <div>
+                        <dt>Historical inflation</dt>
+                        <dd>{formatPct(rates.inflation, 2)}</dd>
+                      </div>
+                    )}
                   </dl>
                   {A.returns.stockAdjustment ? (
                     <Lead>
@@ -785,8 +792,22 @@ export function AssumptionsPage(): ReactNode {
                   ) : null}
                   <Lead>
                     Your projection combines these historical rates with your own international stock and REIT
-                    returns. Extra healthcare and education inflation add to the historical inflation rate.
+                    returns. Extra healthcare and education inflation add to the inflation rate you choose.
                   </Lead>
+                  <div className="form-grid" data-tour="inflation">
+                    <Switch
+                      label="Use my own inflation rate"
+                      checked={customInflation}
+                      onChange={(v) =>
+                        update((d) => {
+                          d.assumptions.inflation.useRateWithHistoricalReturns = v;
+                        })
+                      }
+                    />
+                    {customInflation && (
+                      <PercentField label="Annual inflation" value={A.inflation.rate} onChange={setInflation} />
+                    )}
+                  </div>
                 </>
               ) : (
                 <Lead>Compound rates per year, before inflation is taken out.</Lead>
@@ -824,20 +845,12 @@ export function AssumptionsPage(): ReactNode {
                       min={0}
                       max={0.08}
                       step={0.0025}
-                      onChange={(v) =>
-                        update((d) => {
-                          d.assumptions.inflation.rate = v;
-                        })
-                      }
+                      onChange={setInflation}
                     >
                       <PercentField
                         label="Inflation"
                         value={A.inflation.rate}
-                        onChange={(v) =>
-                          update((d) => {
-                            d.assumptions.inflation.rate = v;
-                          })
-                        }
+                        onChange={setInflation}
                         data-tour="inflation"
                       />
                     </Dial>

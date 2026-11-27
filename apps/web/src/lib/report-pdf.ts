@@ -799,7 +799,7 @@ export async function buildReportPdf(
     [
       'Inflation',
       A.returns.mode === 'historicalAverage'
-        ? `${pct(rates.inflation, 2)} (historical average)`
+        ? `${pct(rates.inflation, 2)} (${A.inflation.useRateWithHistoricalReturns ? 'custom rate' : 'historical average'})`
         : pct(A.inflation.rate, 1),
     ],
     [

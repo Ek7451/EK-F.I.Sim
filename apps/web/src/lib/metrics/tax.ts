@@ -1,4 +1,11 @@
-import { pickYear, type EngineData, type Plan, type ProjectionResult, type YearRecord } from '@fisim/engine';
+import {
+  expectedMeans,
+  pickYear,
+  type EngineData,
+  type Plan,
+  type ProjectionResult,
+  type YearRecord,
+} from '@fisim/engine';
 
 export function taxBracketView(data: EngineData, plan: Plan, result: ProjectionResult, record: YearRecord) {
   const picked = pickYear(data.federal, record.year);
@@ -9,7 +16,7 @@ export function taxBracketView(data: EngineData, plan: Plan, result: ProjectionR
       : referenceCpi !== undefined
         ? record.cpi / referenceCpi
         : record.cpi *
-          Math.pow(1 + plan.assumptions.inflation.rate, plan.settings.startYear - picked.dataYear);
+          Math.pow(1 + expectedMeans({ plan, data }).inflation, plan.settings.startYear - picked.dataYear);
   let bottom = 0;
   const rows = picked.value.ordinaryBrackets[record.filingStatus === 'qss' ? 'mfj' : record.filingStatus].map(
     (bracket) => {
