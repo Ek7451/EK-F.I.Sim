@@ -29,7 +29,8 @@ import { Choice, Dial, FoldColumns, Lead } from './InputsB';
 import './inputs-b.css';
 
 const PRETAX = ['trad401k', 'trad403b', 'tradIra', 'sepIra', 'simpleIra', 'solo401k'];
-const WATERFALL_OK = ['taxable', 'cash', 'rothIra', 'tradIra', 'hsa', 'plan529', 'iBond', 'annuity', 'tBill'];
+import { WATERFALL_OK } from './PayrollSavings';
+import { Link } from 'react-router-dom';
 const BRACKETS = ['0.1', '0.12', '0.22', '0.24', '0.32'].map((r) => ({
   value: r,
   label: `${Math.round(+r * 100)}%`,
@@ -305,6 +306,7 @@ export function StrategyPage(): ReactNode {
               <Lead more="Savings from pay (401(k), HSA) come out first and are set on each account. Whatever is left after tax and spending flows down this list, top to bottom, with every legal limit applied. Anything still left lands in your default account.">
                 After tax and spending, what is left flows down this list from the top.
               </Lead>
+              <Link to="/plan/savings">See savings and contributions by account</Link>
               {steps.length ? (
                 <div className="pib-rows-head">
                   Cap per year (0 = up to the limit), or months held
@@ -335,6 +337,10 @@ export function StrategyPage(): ReactNode {
                             })
                           }
                         />
+                      ) : st.type === 'account' && st.maxAnnual === 0 ? (
+                        <Link to={`/plan/savings?account=${encodeURIComponent(st.accountId)}`}>
+                          Edit paused annual amount
+                        </Link>
                       ) : (
                         <MoneyField
                           label="At most per year (0 = up to the limit)"

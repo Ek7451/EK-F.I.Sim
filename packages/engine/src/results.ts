@@ -3,7 +3,7 @@ import type { DataHeader } from '@fisim/data';
 import { compilePlan, type Compiled } from './compile';
 import type { EngineData } from './data';
 import { fixedPath, runPath, toReal, type PathResult, type YearRecord } from './projection';
-import { applyScenario, type Plan } from './schema';
+import { applyScenario, type Account, type Plan } from './schema';
 
 export interface ProjectionSummary {
   startYear: number;
@@ -30,6 +30,7 @@ export interface ProjectionResult {
   scenarioId: string | null;
   dataRelease: string;
   records: YearRecord[];
+  contributionAccounts: Pick<Account, 'id' | 'name' | 'ownerId' | 'type'>[];
   summary: ProjectionSummary;
   estate: PathResult['estate'];
   milestoneYears: Record<string, number>;
@@ -91,6 +92,9 @@ export function projectCompiled(c: Compiled, scenarioId: string | null = null): 
     scenarioId,
     dataRelease: c.data.release,
     records: recs,
+    contributionAccounts: c.accounts
+      .filter((a) => !a.synthetic || recs.some((r) => r.contributions.byAccount[a.id]))
+      .map(({ src: { id, name, type, ownerId } }) => ({ id, name, type, ownerId })),
     summary: {
       startYear: c.startYear,
       endYear: last ? last.year : c.startYear,

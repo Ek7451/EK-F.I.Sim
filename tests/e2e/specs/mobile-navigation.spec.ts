@@ -147,7 +147,7 @@ test('edit income, find HSA use and navigate results and More by their visible l
   const tabs = page.getByRole('navigation', { name: 'Main (phone)' });
   await main.getByRole('link', { name: 'Edit plan', exact: true }).tap();
   const directory = main.getByRole('navigation', { name: 'Plan inputs' });
-  await expect(directory.getByRole('link')).toHaveCount(8);
+  await expect(directory.getByRole('link', { name: /^Savings and contributions/ })).toBeVisible();
   await directory.getByRole('link', { name: /^Income/ }).tap();
   await main
     .getByRole('button', { name: /^Edit / })

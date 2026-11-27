@@ -23,6 +23,7 @@ const InputBoundary = page(() => import('./pages/plan/InputBoundary'), 'InputBou
 const PlanDirectory = page(() => import('./pages/plan/PlanDirectory'), 'PlanDirectory');
 const HouseholdPage = page(() => import('./pages/plan/Household'), 'HouseholdPage');
 const SnapshotPage = page(() => import('./pages/plan/Snapshot'), 'SnapshotPage');
+const SavingsPage = page(() => import('./pages/plan/Savings'), 'SavingsPage');
 const IncomePage = page(incomeSpending, 'IncomePage');
 const SpendingPage = page(incomeSpending, 'SpendingPage');
 const TimelinePage = page(() => import('./pages/plan/Timeline'), 'TimelinePage');
@@ -147,6 +148,7 @@ export function App({
                   <Route path="/plan/household" element={<HouseholdPage />} />
                   <Route path="/plan/snapshot" element={<SnapshotPage />} />
                   <Route path="/plan/income" element={<IncomePage />} />
+                  <Route path="/plan/savings" element={<SavingsPage />} />
                   <Route path="/plan/spending" element={<SpendingPage />} />
                   <Route path="/plan/timeline" element={<TimelinePage />} />
                   <Route path="/plan/strategy" element={<StrategyPage />} />

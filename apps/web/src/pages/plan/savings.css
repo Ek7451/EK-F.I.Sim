@@ -1,0 +1,62 @@
+.savings-page,
+.saving-rules,
+.saving-schedule {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+.savings-page > *,
+.saving-filters > * {
+  min-width: 0;
+}
+.saving-filters {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.savings-page .lv-small {
+  color: var(--ink-2);
+}
+.savings-page .lv-table th small {
+  display: block;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+.saving-account {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--primary);
+  font: inherit;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+}
+.saving-schedule {
+  margin-block: 0.75rem;
+}
+.saving-history {
+  display: flex;
+  height: 1.4rem;
+  width: 7rem;
+  margin: 0.3rem 0 0 auto;
+  border-bottom: 1px solid var(--line-strong);
+}
+.saving-history span {
+  display: flex;
+  flex-direction: column-reverse;
+  flex: 1;
+  min-width: 0;
+}
+.savings-page .pic-group {
+  min-width: 0;
+}
+@media (max-width: 640px) {
+  .saving-filters {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+  }
+  .saving-filters > :last-child {
+    grid-column: 1 / -1;
+  }
+}

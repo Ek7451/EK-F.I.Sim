@@ -66,6 +66,12 @@ export const NAV: NavGroup[] = [
       },
       { to: '/plan/income', label: 'Income', description: 'Jobs and other income streams', icon: 'income' },
       {
+        to: '/plan/savings',
+        label: 'Savings and contributions',
+        description: 'Annual deposits, employer matches and savings rates by account',
+        icon: 'piggy',
+      },
+      {
         to: '/plan/spending',
         label: 'Spending',
         description: 'Recurring and one-time expenses',

@@ -83,6 +83,67 @@ describe('expected returns: one outlook for the projection and the simulations',
   });
 });
 
+describe('annual contributions credited to each destination', () => {
+  it('reconciles scheduled deposits and automatic surplus and applies one-year amounts and inclusive dates', () => {
+    const p = sampleBasic(2026);
+    p.expenses = [];
+    const workplace = p.accounts.find((a) => a.contribution)!;
+    workplace.contribution!.schedule = {
+      firstYear: 2027,
+      lastYear: 2029,
+      amountByYear: { 2028: 0, 2029: D(1200) },
+    };
+    workplace.contribution!.employerAmountByYear = { 2028: D(2300) };
+    workplace.contribution!.maxOut = true;
+    p.strategies.surplusWaterfall = [
+      {
+        type: 'account',
+        accountId: 'a-roth',
+        maxAnnual: D(1400),
+        schedule: { lastYear: 2028, amountByYear: { 2027: 0, 2028: D(900) } },
+      },
+    ];
+    const result = project(PlanZ.parse(JSON.parse(JSON.stringify(p))), data);
+    const [first, second, third, fourth, fifth] = result.records;
+    expect(first.contributions.byAccount[workplace.id]).toBeUndefined();
+    expect(second.contributions.byAccount[workplace.id].personal).toBeGreaterThan(20000);
+    expect(third.contributions.byAccount[workplace.id].personal).toBe(0);
+    expect(third.contributions.byAccount[workplace.id].employer / third.cpi).toBeCloseTo(2300);
+    expect(fourth.contributions.byAccount[workplace.id].personal / fourth.cpi).toBeCloseTo(1200);
+    expect(fifth.contributions.byAccount[workplace.id]).toBeUndefined();
+    expect(first.contributions.byAccount['a-roth'].personal).toBeCloseTo(1400);
+    expect(second.contributions.byAccount['a-roth']).toBeUndefined();
+    expect(third.contributions.byAccount['a-roth'].personal / third.cpi).toBeCloseTo(900);
+    expect(fourth.contributions.byAccount['a-roth']).toBeUndefined();
+    expect(first.contributions.byAccount['a-brokerage'].automatic).toBeGreaterThan(0);
+    for (const r of result.records) {
+      const entries = Object.values(r.contributions.byAccount);
+      expect(entries.reduce((s, e) => s + e.employer, 0)).toBeCloseTo(r.contributions.employer, 6);
+      expect(entries.reduce((s, e) => s + e.employer + e.personal + e.automatic, 0)).toBeCloseTo(
+        r.contributions.total,
+        6,
+      );
+    }
+  });
+  it('credits the Roth deferral and its employer match to their actual receiving accounts', () => {
+    const p = sampleBasic(2026);
+    const pretax = p.accounts.find((a) => a.contribution)!;
+    p.accounts.push({ ...pretax, id: 'a-roth-work', type: 'roth401k', balance: 0 });
+    delete pretax.contribution;
+    const r = project(p, data).records[0];
+    expect(r.contributions.byAccount['a-roth-work']).toMatchObject({
+      ownerId: 'p1',
+      personal: 9200,
+      employer: 0,
+    });
+    expect(r.contributions.byAccount[pretax.id]).toMatchObject({
+      ownerId: 'p1',
+      personal: 0,
+      employer: 3680,
+    });
+  });
+});
+
 describe('essential expenses are never cut', () => {
   // Retired at the start (no pay), $500k in cash, a rule spending 4% of the portfolio: $20,000 against $40,000
   // planned. The $20,000 essential expense is paid in full and the flexible one takes the whole cut.
