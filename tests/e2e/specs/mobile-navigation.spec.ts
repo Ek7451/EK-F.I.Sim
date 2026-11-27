@@ -78,6 +78,7 @@ test('historical mode shows the market rates and reveals additional inputs on re
   await inflation.fill('4.25');
   await inflation.blur();
   await expect(rates).toContainText('inflation 4.25%');
+  await expect(page.locator('.save-status')).toHaveText('Saved on device');
   await page.reload();
   await expect(override).toBeChecked();
   await expect(inflation).toHaveValue('4.25');
